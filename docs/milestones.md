@@ -99,7 +99,7 @@ BlendShape、表情プリセット、Animator Parameter、基本 Viseme。
 - Runtime `Animations/PoseController`: `HumanPoseHandler` で読込時の姿勢（T ポーズ）の筋肉値を基準に、
   `Arm Down-Up` と `Forearm Stretch` だけを補間（他の筋肉・体の位置は基準のまま）
 - 度合い 0 / 0 では記録しておいたボーンの位置・回転を復元し、リターゲット誤差を出さない
-- `AppSettings.poseArmDown` / `poseElbowBend`（0〜1）で永続化、UI に Arms down / Elbow bend / T-Pose / Attention / Relaxed
+- `AppSettings.poseArmDown` / `poseElbowBend`（0〜1）で永続化、UI に Arms down / Elbow bend / Attention / Relaxed / T-Pose
 - 追加: 既定を気を付け（Arms down 1 / Elbow bend 0）に変更。筋肉値はアバターの可動域（通常 -60°）までしか下がらないため、
   腕は `Arm Down-Up` ではなく上腕ボーンを直接回し、Arms down 1 で真下から外側へ 12°（`ArmSideAngle`）の向きにする。
   手のひらは体側を向く。Relaxed は Arms down 0.85 / Elbow bend 0.3

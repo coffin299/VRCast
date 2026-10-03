@@ -87,7 +87,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 1〜9 / 0 | 表情プリセット切替 / ニュートラル |
 
 パネルの **Pose** で、アバターの向き（Body yaw）と、T ポーズから腕を下ろす度合い（Arms down）・肘の曲げ（Elbow bend、Humanoid のみ）を調整できる（設定は保存される）。
-既定は気を付けの姿勢（Arms down 1 / Elbow bend 0）。ボタンで T-Pose / Attention（気を付け）/ Relaxed（腕を少し開き肘を軽く曲げる）に切り替えられる。
+既定は気を付けの姿勢（Arms down 1 / Elbow bend 0）。ボタンで Attention（気を付け）/ Relaxed（腕を少し開き肘を軽く曲げる）/ T-Pose に切り替えられる。
+ポーズは保存され、次回起動時は前回の値で始まる（初回のみ Attention）。
 **Expressions** には書き出し時に抽出した表情が並び、クリックまたは数字キーで切り替えられる。
 **Face / Physics** で揺れもの（PhysBone 近似）、自動まばたき、マイクによる口パク（リップシンク）を ON/OFF できる。マイクは `<` `>` で選択し、
 Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
