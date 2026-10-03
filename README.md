@@ -17,7 +17,7 @@ OBS (Window Capture / Game Capture)
 
 ## 現在の状態
 
-**Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）** 完了、**Milestone 4（Runtime Physics）** 進行中。
+**Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）** 完了、**Milestone 5（Tracking）** 進行中。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
 
 | 項目 | 状態 |
@@ -33,8 +33,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 待機ポーズ（腕を下ろす・肘の曲げ） | 済 |
 | 表情プリセット（FX の BlendShape クリップから抽出、数字キー切替） | 済 |
 | 自動まばたき（ON/OFF）・マイク音量リップシンク | 済 |
-| 揺れもの（PhysBone 近似・コライダー） | 済（要確認） |
-| カメラトラッキング | 未実装 |
+| 揺れもの（PhysBone 近似・コライダー） | 済 |
+| カメラトラッキング（OpenSeeFace 受信: 頭の向き・まばたき・口） | 済（要確認） |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
 
@@ -84,6 +84,21 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 **Expressions** には書き出し時に抽出した表情が並び、クリックまたは数字キーで切り替えられる。
 **Face / Physics** で揺れもの（PhysBone 近似）、自動まばたき、マイクによる口パク（リップシンク）を ON/OFF できる。マイクは `<` `>` で選択し、
 Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
+
+**Tracking** で Web カメラによるフェイストラッキング（頭の向き・まばたき・口の開閉）を ON にできる。
+トラッカー本体は同梱せず、[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace) の `facetracker.exe` を別途起動して UDP で受信する
+（VSeeFace に同梱の `VSeeFace_Data\StreamingAssets\Binary\facetracker.exe` も使用可）。
+
+```powershell
+# カメラ番号の確認
+.\facetracker.exe -l 1
+# カメラ 0 を 127.0.0.1:11573 へ送信
+.\facetracker.exe -c 0 -W 640 -H 480 -F 30 -i 127.0.0.1 -p 11573
+```
+
+- 受信は `127.0.0.1` のみ（外部からの入力は受け付けない）。ポートはパネルで変更可（既定 11573）。
+- 受信開始時の顔の向きを正面とする。ずれたらカメラを見て **Calibrate** を押す。**Mirror** で左右の反映を切り替える。
+- トラッキング中は自動まばたきより優先し、口はマイク口パクと大きい方を使う。途絶すると 0.5 秒で元の動作に戻る。
 
 パネルの **Rendering** で、背景（透過 / 単色）、ウィンドウ解像度（1280x720 / 1920x1080 / 縦長 720x1280 / 1080x1920）、ライトの強さと向きを変更できる。
 設定は終了時に保存され、次回起動時に復元される。ウィンドウは枠をドラッグしてサイズ変更できる。

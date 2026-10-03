@@ -121,5 +121,15 @@ namespace VRCast.Tests
             Assert.That(settings.micThreshold, Is.EqualTo(0f));
             Assert.That(settings.microphoneDevice, Is.EqualTo(string.Empty));
         }
+
+        [Test]
+        public void Load_OutOfRangeTrackingPort_IsClamped()
+        {
+            _store.Save(new AppSettings { trackingPort = 80 });
+
+            // 特権ポートは下限へ補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.trackingPort, Is.EqualTo(AppSettings.MinTrackingPort));
+        }
     }
 }

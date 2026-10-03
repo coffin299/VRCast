@@ -79,8 +79,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `Rendering/` | 背景透過、解像度、ライティング | Milestone 2 (済) |
 | `Animations/` | 待機ポーズ、表情（BlendShape）、まばたき、リップシンク | Milestone 3 (済) |
 | `Audio/` | マイク入力（音量） | Milestone 3 (済) |
-| `Dynamics/` | PhysBone 相当（揺れもの） | Milestone 4 (進行中) |
-| `Tracking/` | Tracking Provider と Driver | Milestone 5 |
+| `Dynamics/` | PhysBone 相当（揺れもの） | Milestone 4 (済) |
+| `Tracking/` | Tracking Provider と Driver | Milestone 5 (進行中) |
 | `OSC/` | OSC 入出力 | Milestone 6 |
 | `Output/` | Spout / NDI 等 | Milestone 8 |
 
@@ -89,7 +89,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | クラス | 責務 |
 | :--- | :--- |
 | `VRCastLog` | `Debug.Log` をカテゴリ付きで薄くラップ |
-| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、ライト強度・向き、待機ポーズの度合い、自動まばたき、揺れもの ON/OFF、リップシンク・マイク設定） |
+| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、ライト強度・向き、待機ポーズの度合い、自動まばたき、揺れもの ON/OFF、リップシンク・マイク設定、フェイストラッキングの ON/OFF・ポート・鏡像） |
 | `SettingsStore` | `settings.json` の読込・保存。破損時は既定値にフォールバック |
 | `AppBootstrap` | `RuntimeInitializeOnLoadMethod` で起動時に設定を読み込み（初回は既定値で作成）、終了時にウィンドウサイズを含めて保存する |
 
@@ -97,7 +97,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 
 | クラス | 責務 |
 | :--- | :--- |
-| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `MicrophoneInput` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `ExpressionController` / `BlinkController` / `LipSyncController` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込 |
+| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `MicrophoneInput` / `OpenSeeFaceReceiver` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `ExpressionController` / `BlinkController` / `LipSyncController` / `FaceTrackingDriver` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込 |
 | `AvatarPackageReader` | `.vrcaster` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開。`metadata/*.json`（expressions / descriptor / physbones）を読み込み（不正なら空） |
 | `AvatarLoader` | bundle を非同期読込してアバターを生成し、許可リスト外コンポーネントを除去 |
 | `LoadedAvatar` | 生成済みアバターと bundle の組。`Dispose` で両方解放。フレーミング用境界（Humanoid は骨格基準、それ以外は Renderer 基準） |
@@ -107,15 +107,20 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `PoseController` | アバターの向き（Body yaw）と、Humanoid の待機ポーズ。読込時姿勢の筋肉値から腕の上下・肘の曲げだけを補間（0 / 0 で元の姿勢を復元） |
 | `ExpressionController` | 表情プリセットを BlendShape に適用。切替時は読込時の値へ戻してから適用。数字キー 1〜9 / 0 |
 | `BlendShapeOverlay` | BlendShape の検索と、元の値（表情等）を保ったままの上乗せ書き込み |
-| `BlinkController` | ランダム間隔の自動まばたき（ON/OFF 可） |
-| `LipSyncController` | マイク音量で Viseme `aa` または口開閉 BlendShape を上乗せ |
+| `BlinkController` | ランダム間隔の自動まばたき（ON/OFF 可）。外部入力（トラッキング）があればそちらを優先 |
+| `LipSyncController` | マイク音量と外部入力（トラッキング）の大きい方で Viseme `aa` または口開閉 BlendShape を上乗せ |
 | `MicrophoneInput` | マイクのループ録音と音量（RMS、ゲート・感度・平滑化）。デバイス切替・切断時の再開 |
 | `PhysBoneSimulator` | アバターの全 PhysBone を 60Hz 固定ステップで更新。ON/OFF、粒子数上限 |
 | `PhysBoneChain` | 1 PhysBone の Verlet 近似（pull / spring / stiffness / gravity / immobile / 角度制限 / 長さ拘束）と Transform への回転反映 |
 | `PhysBoneCollider` | 球・カプセル・平面コライダーによるボーン線分（半径付き）の押し出し |
-| `MainPanel` | IMGUI パネル（Avatar / Pose / Expressions / Camera / Rendering）。Tab で表示切替 |
+| `IFaceTrackingProvider` / `FaceTrackingFrame` | フェイストラッキング入力元の共通インターフェースと 1 フレーム分の値 |
+| `OpenSeeFacePacket` | OpenSeeFace UDP パケット（1 顔 1785 バイト）の解析と座標変換 |
+| `OpenSeeFaceReceiver` | `127.0.0.1` のみで UDP を受信する Provider。途絶検出・再 bind・受信 fps |
+| `FaceTrackingDriver` | 頭の向きを首・頭ボーンへ、まばたき・口を `BlinkController` / `LipSyncController` へ適用。キャリブレーション・鏡像 |
+| `MainPanel` | IMGUI パネル（Avatar / Pose / Expressions / Face / Tracking / Camera / Rendering）。Tab で表示切替 |
 | `AnimationSection` | MainPanel 内の Pose / Expressions セクション UI |
 | `FaceSection` | MainPanel 内の Face / Physics セクション UI（PhysBone、Auto blink、Lip sync、マイク選択・感度・メーター） |
+| `TrackingSection` | MainPanel 内の Tracking セクション UI（ON/OFF、ポート、Mirror、Calibrate、受信状態） |
 | `AvatarComponentCache` | 表示中アバターのコンポーネントをアバター切替までキャッシュ |
 | `RenderingSection` | MainPanel 内の Rendering セクション UI |
 | `GuiControls` | セクション共通の IMGUI 部品（ラベル付きスライダー） |
@@ -153,4 +158,5 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | :--- | :--- |
 | `AssemblyIsolationTests` | `VRCast.Runtime` / `VRCast.AvatarFormat` が `UnityEditor` / Editor アセンブリ / VRChat SDK を参照していない（`#if UNITY_EDITOR` 内の参照も違反として検出する） |
 | `SettingsStoreTests` | 設定の保存・再読込、ファイル欠落・破損時のフォールバック、値の補正 |
+| `OpenSeeFacePacketTests` | OpenSeeFace パケットの値の位置・四元数の座標変換・長さ不足・非有限値・長さ 0 四元数の拒否 |
 | `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情・descriptor・physbones データの読込・不正時の空扱い |

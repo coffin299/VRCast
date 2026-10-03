@@ -17,6 +17,11 @@ namespace VRCast.Animations
 
         public bool IsAvailable => _mouth != null;
 
+        /// <summary>
+        /// 外部（フェイストラッキング）からの口の開き（0〜1）。マイク音量と大きい方を使う。
+        /// </summary>
+        public float ExternalLevel { get; set; }
+
         public void Initialize(Transform root, LipSyncData data, MicrophoneInput microphone, AppSettings settings)
         {
             _microphone = microphone;
@@ -45,9 +50,10 @@ namespace VRCast.Animations
                 return;
             }
 
-            // 無効時・マイク無しは 0（元の値に戻る）
+            // 無効時・マイク無しはマイク分 0、外部入力と大きい方を上乗せ（両方 0 なら元の値に戻る）
             bool active = _settings.lipSyncEnabled && _microphone != null;
-            _mouth.Write(active ? _microphone.Level * 100f : 0f);
+            float level = Mathf.Max(active ? _microphone.Level : 0f, Mathf.Clamp01(ExternalLevel));
+            _mouth.Write(level * 100f);
         }
     }
 }

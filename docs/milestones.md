@@ -8,8 +8,8 @@
 | 1 | Basic Avatar Runtime | 完了（既知の課題あり） |
 | 2 | Transparent Rendering | 完了 |
 | 3 | Expressions | 完了 |
-| 4 | Runtime Physics | 進行中（要確認） |
-| 5 | Tracking | 未着手 |
+| 4 | Runtime Physics | 完了（既知の課題あり） |
+| 5 | Tracking | 進行中（要確認） |
 | 6 | OSC | 未着手 |
 | 7 | Avatar Conversion Pipeline | 未着手 |
 | 8 | Advanced Output | 未着手 |
@@ -172,6 +172,10 @@ PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider
 - 体・脚へのめり込みがコライダーで抑えられること
 - 揺れ方の強さ（係数 `PullStrength` / `StiffnessStrength` / momentum は見た目で要調整）
 
+確認結果: Marycia で髪・尻尾・スカート（コート）の揺れと静止時の復帰、脚コライダーによる押し出しを確認。
+
+既知の課題: 体を大きく動かした直後はスカートが脚へ一時的にめり込むことがある（上半身配信では許容範囲）。
+
 ## Milestone 5 — Tracking
 
 Tracking インターフェースを完成させ、Provider を 1 種類だけ実装する。
@@ -179,6 +183,25 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 候補: Web カメラによるフェイストラッキング（VSeeFace 相当）。頭の向き・まばたき・口の開閉・視線を
 `BlendShapeOverlay` / Humanoid の首・頭ボーンへ適用し、トラッキング中は自動まばたき・マイク口パクより優先する。
 トラッカー本体は Runtime に組み込まず外部プロセス（例: OpenSeeFace の UDP 出力）から受信する方式を第一候補とする。
+
+採用: OpenSeeFace（`facetracker.exe`）の UDP 出力を受信する。
+
+- Runtime `Tracking/`
+  - `IFaceTrackingProvider` / `FaceTrackingFrame`: Provider 共通の入力（頭の回転・左右の目の開き・口の開き）
+  - `OpenSeeFacePacket`: 1 顔 1785 バイトのパケット解析（四元数は `(-y, -x, z, w)` で Unity 座標系へ。非有限値・長さ不足は破棄）
+  - `OpenSeeFaceReceiver`: `127.0.0.1:<port>` のみ bind、スレッド無しで Update ポーリング。0.5 秒途絶で無効、bind 失敗は 3 秒ごと再試行
+  - `FaceTrackingDriver`: 首 40% / 頭 60% にアバタールート基準で回転（上限 70°、平滑化）。受信開始時（1 秒以上の途絶後も）の向きを正面とし、
+    Calibrate で取り直し。Mirror で Y・Z 軸まわりを反転。揺れものが回転後の頭を基準にするよう他の LateUpdate より先に実行
+  - まばたき・口は同じ BlendShape へ二重に上乗せしないよう `BlinkController.ExternalClosed`（自動まばたきより優先）/
+    `LipSyncController.ExternalLevel`（マイクと大きい方）へ渡す
+- UI: Tracking セクション（ON/OFF、UDP port、Mirror、Calibrate、受信状態と fps）。設定は保存
+- 視線・眉・左右別ウインクは未対応（次段階）
+
+確認項目:
+
+- 頭の上下・左右・傾きが正しい向きで反映されること（Mirror ON/OFF の両方）
+- まばたき・口の開閉の追従としきい値（`EyeClosedValue` / `EyeOpenedValue` / MouthOpen 範囲は要調整）
+- 途絶時に自動まばたき・マイク口パク・正面の頭へ戻ること
 
 ## Milestone 6 — OSC
 
