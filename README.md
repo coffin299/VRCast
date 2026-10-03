@@ -178,9 +178,10 @@ MediaPipe トラッカー（`Tools/MediaPipeTracker/`）は exe 化したもの�
 powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 ```
 
-または `Tools\MediaPipeTracker\build.bat` をダブルクリック（中身は上と同じ。引数で Python のバージョンを指定可: `build.bat 3.11`）。
+または `Tools\MediaPipeTracker\build.bat` をダブルクリック（Python 3.12.x を指定して上と同じ処理を行う。3.12 が無ければその旨を表示して終了）。
 
-- 仮想環境・中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build` に作られる（リポジトリは汚さない。`.pyc` も作らない設定）。
+- 仮想環境は `Tools\MediaPipeTracker\.venv`（`.gitignore` 済み）に作られる。別バージョンで作られていた場合は作り直す。
+- PyInstaller の中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build` に置く（`.pyc` は作らない設定）。
 - 出力（`vrcast_tracker.exe` 一式とモデル 3 種）は `VRCast/Assets/StreamingAssets/MediaPipeTracker/` に置かれ、Unity が StreamingAssets ごとビルドへ同梱する。
 - 実行ファイルは `MediaPipeTracker/` 以下を再帰的に探す。見つからない場合もビルドは続行し、警告ログを出す。
 - 配布時は MediaPipe（Apache-2.0）と同梱ライブラリのライセンス表記を含めること。
