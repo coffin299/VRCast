@@ -319,10 +319,10 @@ namespace VRCast.Tracking
             // 正面からの相対回転（カメラ基準）
             Quaternion delta = _lastFrame.HeadRotation * Quaternion.Inverse(_neutral);
 
-            // 鏡像モードは左右反転（X 軸まわりはそのまま、Y・Z 軸まわりを逆向き）
+            // 鏡像モードは左右反転
             if (_settings.trackingMirror)
             {
-                delta = new Quaternion(delta.x, -delta.y, -delta.z, delta.w);
+                delta = TrackingMath.MirrorRotation(delta);
             }
 
             // 誤検出による極端な角度を制限

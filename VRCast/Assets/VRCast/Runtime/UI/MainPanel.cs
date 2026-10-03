@@ -37,7 +37,7 @@ namespace VRCast.UI
         public void Initialize(
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
             MicrophoneInput microphone, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
-            AppSettings settings, string initialPath)
+            TrackingSkeletonView skeleton, AppSettings settings, string initialPath)
         {
             // 依存の受け取りと入力欄の初期値設定
             _session = session;
@@ -45,7 +45,7 @@ namespace VRCast.UI
             _renderingSection = new RenderingSection(rendering);
             _animationSection = new AnimationSection(session);
             _faceSection = new FaceSection(session, microphone, settings);
-            _trackingSection = new TrackingSection(session, tracker, trackerProcess, settings);
+            _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _pathInput = initialPath ?? string.Empty;
         }
 
