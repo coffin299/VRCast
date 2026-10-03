@@ -83,7 +83,7 @@ VRCAvatarDescriptor の Lip Sync と Eyelids（BlendShape 方式）を変換し�
         "visemes": ["vrc.v_sil", "vrc.v_pp", "...（15 個）"],
         "mouthOpenBlendShape": ""
     },
-    "eyelids": { "meshPath": "Body", "blinkBlendShape": "blink" }
+    "eyelids": { "meshPath": "Body", "blinkBlendShapes": ["blink"] }
 }
 ```
 
@@ -93,7 +93,11 @@ VRCAvatarDescriptor の Lip Sync と Eyelids（BlendShape 方式）を変換し�
 | `lipSync.meshPath` | Viseme 用メッシュのアバタールートからの相対パス |
 | `lipSync.visemes` | 0 個または 15 個（sil, PP, FF, TH, DD, kk, CH, SS, nn, RR, aa, E, I, O, U） |
 | `lipSync.mouthOpenBlendShape` | JawFlap 方式の口開閉 BlendShape 名 |
-| `eyelids.meshPath` / `blinkBlendShape` | まばたき用メッシュと BlendShape 名（空ならまばたき無し） |
+| `eyelids.meshPath` / `blinkBlendShapes` | まばたき用メッシュと BlendShape 名（0〜4 個、左右別なら複数を同時に閉じる。空ならまばたき無し） |
+
+Eyelids が Descriptor で未設定（FX アニメーションでまばたきするアバター等）の場合、Converter は Viseme 用の顔メッシュから
+`まばたき` / `blink` / `eye_blink` / `eyes_close` / `eye_close` / `Fcl_EYE_Close`（大文字小文字無視）、
+または左右の組 `eyeBlinkLeft`+`eyeBlinkRight` / `blink_L`+`blink_R` / `Blink_Left`+`Blink_Right` を優先順に探して書き出す。
 
 不正な場合は expressions.json と同様に警告のみで既定値（none / まばたき無し）として扱う。
 

@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VRCast.AvatarFormat;
 using VRCast.Core;
@@ -20,28 +21,37 @@ namespace VRCast.Animations
         private const float OpenDuration = 0.12f;
         private const float TotalDuration = CloseDuration + HoldDuration + OpenDuration;
 
-        private BlendShapeOverlay _eyelid;
+        // 左右別の BlendShape は同時に閉じる
+        private readonly List<BlendShapeOverlay> _eyelids = new List<BlendShapeOverlay>();
         private AppSettings _settings;
         private float _nextBlinkTime;
 
         // まばたき開始時刻（負なら非まばたき中）
         private float _blinkStart = -1f;
 
-        public bool IsAvailable => _eyelid != null;
+        public bool IsAvailable => _eyelids.Count > 0;
 
         public void Initialize(Transform root, EyelidData data, AppSettings settings)
         {
             _settings = settings;
 
-            // まぶた BlendShape が無ければまばたき無し
-            _eyelid = BlendShapeOverlay.Create(root, data.meshPath, data.blinkBlendShape);
+            // 見つかったまぶた BlendShape だけを対象にする（0 件ならまばたき無し）
+            foreach (string shape in data.blinkBlendShapes)
+            {
+                BlendShapeOverlay eyelid = BlendShapeOverlay.Create(root, data.meshPath, shape);
+                if (eyelid != null)
+                {
+                    _eyelids.Add(eyelid);
+                }
+            }
+
             ScheduleNext();
         }
 
         private void LateUpdate()
         {
             // 対象が無ければ何もしない
-            if (_eyelid == null)
+            if (!IsAvailable)
             {
                 return;
             }
@@ -50,7 +60,7 @@ namespace VRCast.Animations
             if (!_settings.autoBlink)
             {
                 _blinkStart = -1f;
-                _eyelid.Write(0f);
+                Write(0f);
                 return;
             }
 
@@ -76,7 +86,16 @@ namespace VRCast.Animations
                 }
             }
 
-            _eyelid.Write(closed * 100f);
+            Write(closed * 100f);
+        }
+
+        private void Write(float weight)
+        {
+            // 全まぶた BlendShape に同じ値を上乗せ
+            foreach (BlendShapeOverlay eyelid in _eyelids)
+            {
+                eyelid.Write(weight);
+            }
         }
 
         private static float Evaluate(float elapsed)

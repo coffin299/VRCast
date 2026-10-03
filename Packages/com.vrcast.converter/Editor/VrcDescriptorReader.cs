@@ -157,13 +157,17 @@ namespace VRCast.Converter.Editor
 
         private static EyelidData GetEyelids(Component descriptor, Transform root)
         {
-            var data = new EyelidData();
+            // Descriptor の Eyelids 設定を優先し、無ければ顔メッシュの BlendShape 名から推定
+            return GetConfiguredEyelids(descriptor, root) ?? GuessEyelids(descriptor, root) ?? new EyelidData();
+        }
 
+        private static EyelidData GetConfiguredEyelids(Component descriptor, Transform root)
+        {
             // customEyeLookSettings（構造体）を取得し、BlendShape 方式のみ扱う
             object eyeLook = GetField(descriptor, "customEyeLookSettings");
             if (eyeLook == null || GetField(eyeLook, "eyelidType")?.ToString() != "Blendshapes")
             {
-                return data;
+                return null;
             }
 
             // メッシュと [blink, lookingUp, lookingDown] のインデックス
@@ -171,20 +175,89 @@ namespace VRCast.Converter.Editor
             if (mesh == null || mesh.sharedMesh == null
                 || !(GetField(eyeLook, "eyelidsBlendshapes") is int[] indices) || indices.Length == 0)
             {
-                return data;
+                return null;
             }
 
             // blink のインデックスが範囲内なら名前に変換（Runtime は名前で解決する）
             int blink = indices[0];
             if (blink < 0 || blink >= mesh.sharedMesh.blendShapeCount)
             {
-                return data;
+                return null;
             }
 
-            data.meshPath = AnimationUtility.CalculateTransformPath(mesh.transform, root);
-            data.blinkBlendShape = mesh.sharedMesh.GetBlendShapeName(blink);
-            return data;
+            return new EyelidData
+            {
+                meshPath = AnimationUtility.CalculateTransformPath(mesh.transform, root),
+                blinkBlendShapes = new[] { mesh.sharedMesh.GetBlendShapeName(blink) },
+            };
         }
+
+        private static EyelidData GuessEyelids(Component descriptor, Transform root)
+        {
+            // FX アニメーションでまばたきするアバター向けに、Viseme 用の顔メッシュから探す
+            var mesh = GetField(descriptor, "VisemeSkinnedMesh") as SkinnedMeshRenderer;
+            if (mesh == null || mesh.sharedMesh == null)
+            {
+                return null;
+            }
+
+            // 候補を優先順に試し、全 BlendShape が見つかった最初の組を採用
+            foreach (string[] candidate in BlinkCandidates)
+            {
+                string[] names = FindBlendShapes(mesh.sharedMesh, candidate);
+                if (names != null)
+                {
+                    return new EyelidData
+                    {
+                        meshPath = AnimationUtility.CalculateTransformPath(mesh.transform, root),
+                        blinkBlendShapes = names,
+                    };
+                }
+            }
+
+            return null;
+        }
+
+        private static string[] FindBlendShapes(Mesh mesh, string[] candidate)
+        {
+            var names = new string[candidate.Length];
+            for (int i = 0; i < candidate.Length; i++)
+            {
+                // 大文字小文字を無視して一致する BlendShape を探し、実際の名前を記録
+                names[i] = null;
+                for (int j = 0; j < mesh.blendShapeCount; j++)
+                {
+                    string name = mesh.GetBlendShapeName(j);
+                    if (string.Equals(name, candidate[i], StringComparison.OrdinalIgnoreCase))
+                    {
+                        names[i] = name;
+                        break;
+                    }
+                }
+
+                // 1 つでも欠けたら不採用
+                if (names[i] == null)
+                {
+                    return null;
+                }
+            }
+
+            return names;
+        }
+
+        // まばたき BlendShape 名の候補（優先順。左右別の組は両方揃った場合のみ採用）
+        private static readonly string[][] BlinkCandidates =
+        {
+            new[] { "まばたき" },
+            new[] { "blink" },
+            new[] { "eye_blink" },
+            new[] { "eyes_close" },
+            new[] { "eye_close" },
+            new[] { "Fcl_EYE_Close" },
+            new[] { "eyeBlinkLeft", "eyeBlinkRight" },
+            new[] { "blink_L", "blink_R" },
+            new[] { "Blink_Left", "Blink_Right" },
+        };
 
         private static object GetField(object target, string fieldName)
         {

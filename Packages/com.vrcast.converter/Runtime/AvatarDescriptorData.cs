@@ -35,10 +35,23 @@ namespace VRCast.AvatarFormat
             // パスと BlendShape 名は空可・長さ上限あり
             if (!ExpressionSet.IsValidString(lipSync.meshPath, true)
                 || !ExpressionSet.IsValidString(lipSync.mouthOpenBlendShape, true)
-                || !ExpressionSet.IsValidString(eyelids.meshPath, true)
-                || !ExpressionSet.IsValidString(eyelids.blinkBlendShape, true))
+                || !ExpressionSet.IsValidString(eyelids.meshPath, true))
             {
                 return "Descriptor contains an invalid string.";
+            }
+
+            // まばたき BlendShape は上限件数まで、名前は必須
+            if (eyelids.blinkBlendShapes == null || eyelids.blinkBlendShapes.Length > EyelidData.MaxBlinkBlendShapes)
+            {
+                return $"eyelids.blinkBlendShapes must have 0-{EyelidData.MaxBlinkBlendShapes} items.";
+            }
+
+            foreach (string shape in eyelids.blinkBlendShapes)
+            {
+                if (!ExpressionSet.IsValidString(shape, false))
+                {
+                    return "eyelids.blinkBlendShapes contains an invalid name.";
+                }
             }
 
             // Viseme 名は 0 件または 15 件
@@ -77,12 +90,15 @@ namespace VRCast.AvatarFormat
     }
 
     /// <summary>
-    /// まぶた設定。blinkBlendShape が空ならまばたき不可。
+    /// まぶた設定。blinkBlendShapes（左右別の場合は複数）が空ならまばたき不可。
     /// </summary>
     [Serializable]
     public class EyelidData
     {
+        // 1 つのメッシュでまばたきに使う BlendShape 数の上限
+        public const int MaxBlinkBlendShapes = 4;
+
         public string meshPath = string.Empty;
-        public string blinkBlendShape = string.Empty;
+        public string[] blinkBlendShapes = Array.Empty<string>();
     }
 }

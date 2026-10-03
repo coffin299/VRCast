@@ -122,7 +122,8 @@ BlendShape、表情プリセット、Animator Parameter、基本 Viseme。
 ### 3c. 自動まばたき・マイクリップシンク
 
 - Converter `VrcDescriptorReader.GetDescriptorData`: Descriptor の Lip Sync（`VisemeBlendShape` / `JawFlapBlendShape`）と
-  Eyelids（BlendShape 方式の blink）を `metadata/descriptor.json` に書き出す（ボーン方式は未対応）
+  Eyelids（BlendShape 方式の blink）を `metadata/descriptor.json` に書き出す（ボーン方式は未対応）。
+  Eyelids 未設定のアバター（FX でまばたきするもの）は顔メッシュから `まばたき` / `blink` / `eyeBlinkLeft`+`Right` 等を推定
 - Runtime `Audio/MicrophoneInput`: 選択デバイス（空 = 既定）のループ録音から直近 1024 サンプルの RMS を音量 0〜1 に変換。
   しきい値（Mic gate）と感度（Mic gain）、開きは速く閉じは遅く平滑化。無効時は録音しない。切断時は 3 秒ごとに再試行
 - Runtime `Animations/LipSyncController`: Viseme 方式は `aa`、JawFlap 方式は口開閉 BlendShape に音量を上乗せ
