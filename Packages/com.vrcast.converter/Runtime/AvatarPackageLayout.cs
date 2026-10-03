@@ -29,6 +29,9 @@ namespace VRCast.AvatarFormat
         // 任意エントリ: 揺れもの（PhysBone 近似）
         public const string PhysBonesEntry = MetadataPrefix + "physbones.json";
 
+        // 任意エントリ: Constraint（位置・回転・親子・Aim 等）
+        public const string ConstraintsEntry = MetadataPrefix + "constraints.json";
+
         // metadata 1 ファイルの上限サイズ（1 MiB）
         public const long MaxMetadataBytes = 1024 * 1024;
 

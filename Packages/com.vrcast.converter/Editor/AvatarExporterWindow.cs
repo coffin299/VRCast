@@ -82,6 +82,7 @@ namespace VRCast.Converter.Editor
                     $"Expressions: {report.ExpressionCount}\n" +
                     $"Lip sync: {report.LipSyncMode}, blink: {report.HasBlink}, wink: {report.HasWink}\n" +
                     $"PhysBones: {report.PhysBoneCount}\n" +
+                    $"Constraints: {report.ConstraintCount}\n" +
                     $"Removed components: {report.Strip.RemovedComponents}, " +
                     $"missing scripts: {report.Strip.RemovedMissingScripts}, " +
                     $"EditorOnly objects: {report.Strip.RemovedEditorOnlyObjects}";
