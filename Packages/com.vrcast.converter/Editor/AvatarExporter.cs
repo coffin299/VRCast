@@ -5,6 +5,7 @@ using System.IO.Compression;
 using UnityEditor;
 using UnityEngine;
 using VRCast.AvatarFormat;
+using CompressionLevel = System.IO.Compression.CompressionLevel;
 using Object = UnityEngine.Object;
 
 namespace VRCast.Converter.Editor

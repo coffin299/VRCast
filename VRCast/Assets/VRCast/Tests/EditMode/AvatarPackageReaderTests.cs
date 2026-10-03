@@ -6,6 +6,7 @@ using NUnit.Framework;
 using UnityEngine;
 using VRCast.AvatarFormat;
 using VRCast.Avatars;
+using CompressionLevel = System.IO.Compression.CompressionLevel;
 
 namespace VRCast.Tests
 {
