@@ -4,7 +4,7 @@ using VRCast.AvatarFormat;
 namespace VRCast.Avatars
 {
     /// <summary>
-    /// 検証・展開済みの .vavatar。bundle はキャッシュ上のファイルを指す。
+    /// 検証・展開済みの .vrcaster。bundle はキャッシュ上のファイルを指す。
     /// </summary>
     public sealed class AvatarPackage
     {
@@ -21,7 +21,7 @@ namespace VRCast.Avatars
     }
 
     /// <summary>
-    /// .vavatar が不正・読込不能な場合の例外。
+    /// .vrcaster が不正・読込不能な場合の例外。
     /// </summary>
     public class AvatarPackageException : Exception
     {

@@ -6,7 +6,7 @@ VSeeFace のように簡単にアバターを表示・トラッキングし、OB
 ```text
 VRChat アバター (Unity / VCC プロジェクト)
         ↓  com.vrcast.converter (Editor 専用パッケージ)
-MyAvatar.vavatar
+MyAvatar.vrcaster
         ↓
 VRCast.exe (Runtime)
         ↓
@@ -25,7 +25,7 @@ OBS (Window Capture / Game Capture)
 | ログ (`VRCastLog`) / 設定の保存・読込 (`SettingsStore`) | 済 |
 | Windows ビルドスクリプト (`VRCastBuild`) | 済 |
 | アバター書き出し (`VRCast > Avatar Exporter`) | 済（要動作確認） |
-| `.vavatar` 読み込み・表示・オービットカメラ・最小 UI | 済（要動作確認） |
+| `.vrcaster` 読み込み・表示・オービットカメラ・最小 UI | 済（要動作確認） |
 | 背景透過 / OBS 向け設定 | Milestone 2 で実装予定 |
 | 表情・揺れもの・トラッキング | 未実装 |
 
@@ -39,7 +39,7 @@ OBS (Window Capture / Game Capture)
 
 ## 使い方
 
-### 1. アバターを .vavatar に書き出す
+### 1. アバターを .vrcaster に書き出す
 
 アバターがある Unity プロジェクト（VCC プロジェクト可、Unity 2022.3.22f1）に Converter パッケージを導入する。
 
@@ -55,8 +55,8 @@ OBS (Window Capture / Game Capture)
 
 ### 2. VRCast.exe で表示する
 
-- パネルの入力欄に `.vavatar` のパスを入力して **Load**（前後の `"` は自動で除去）。
-- 起動引数でも指定可能: `VRCast.exe --avatar "C:\path\MyAvatar.vavatar"`
+- パネルの入力欄に `.vrcaster` のパスを入力して **Load**（前後の `"` は自動で除去）。
+- 起動引数でも指定可能: `VRCast.exe --avatar "C:\path\MyAvatar.vrcaster"`
 - 最後に読み込んだアバターは次回起動時に自動で読み込まれる。
 
 | 操作 | 内容 |
@@ -72,7 +72,7 @@ OBS (Window Capture / Game Capture)
 .
 ├── docs/                         設計ドキュメント
 │   ├── architecture.md           Runtime / Editor 分離と依存ルール
-│   ├── avatar-package.md         .vavatar フォーマット (v0)
+│   ├── avatar-package.md         .vrcaster フォーマット (v0)
 │   └── milestones.md             開発マイルストーン
 ├── Packages/
 │   └── com.vrcast.converter/     アバター変換パッケージ
@@ -108,7 +108,7 @@ Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルド�
 
 ## アバターの扱いについて
 
-- `.vavatar` は利用者本人がローカルで使うための変換データであり、アバターの再配布を目的としない。
+- `.vrcaster` は利用者本人がローカルで使うための変換データであり、アバターの再配布を目的としない。
   各アバターの利用規約に従うこと。
 - Runtime はアバターを **データとしてのみ** 扱い、アバター内の任意コードは実行しない。
   読込時にパッケージ構造・サイズ・ハッシュを検証し、許可リスト外のコンポーネントを除去する。

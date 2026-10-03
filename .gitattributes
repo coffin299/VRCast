@@ -21,4 +21,4 @@
 *.dll  binary
 *.exe  binary
 *.bundle binary
-*.vavatar binary
+*.vrcaster binary

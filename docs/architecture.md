@@ -24,7 +24,7 @@
 ```mermaid
 flowchart LR
   avatarProject["Avatar Project (VCC / Unity 2022.3.22f1)"] --> exporter["VRCast.Converter.Editor"]
-  exporter --> pkg["MyAvatar.vavatar"]
+  exporter --> pkg["MyAvatar.vrcaster"]
   pkg --> reader["AvatarPackageReader"]
   reader --> loader["AvatarLoader"]
   loader --> session["AvatarSession"]
@@ -72,7 +72,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | :--- | :--- | :--- |
 | `Core/` | ログ、設定、起動処理 | Milestone 0 (済) |
 | `App/` | 起動時の各機能の生成と結線 | Milestone 1 (済) |
-| `Avatars/` | `.vavatar` 検証・展開・読込・生成 | Milestone 1 (済) |
+| `Avatars/` | `.vrcaster` 検証・展開・読込・生成 | Milestone 1 (済) |
 | `Cameras/` | カメラ操作 | Milestone 1 (済) |
 | `UI/` | IMGUI 操作パネル | Milestone 1 (済) |
 | `Rendering/` | 背景透過、解像度、ライティング | Milestone 2 |
@@ -96,7 +96,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | クラス | 責務 |
 | :--- | :--- |
 | `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `MainPanel` を生成して結線。起動引数 `--avatar` または前回のアバターを自動読込 |
-| `AvatarPackageReader` | `.vavatar` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開 |
+| `AvatarPackageReader` | `.vrcaster` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開 |
 | `AvatarLoader` | bundle を非同期読込してアバターを生成し、許可リスト外コンポーネントを除去 |
 | `LoadedAvatar` | 生成済みアバターと bundle の組。`Dispose` で両方解放 |
 | `AvatarSession` | 表示中アバター 1 体の Load / Reload / Unload と状態（読込中・エラー） |
@@ -107,7 +107,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 
 | クラス | 責務 |
 | :--- | :--- |
-| `AvatarPackageLayout` | `.vavatar` のエントリ名・フォーマットバージョン・Prefab パス |
+| `AvatarPackageLayout` | `.vrcaster` のエントリ名・フォーマットバージョン・Prefab パス |
 | `AvatarManifest` | manifest.json のモデルと検証 |
 | `AllowedComponents` | bundle に含めてよいコンポーネントの許可リスト |
 | `HashUtility` | SHA-256 計算 |

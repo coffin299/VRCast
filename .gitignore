@@ -33,7 +33,7 @@ crashlytics-buildsettings.json
 *.unitypackage
 
 # Avatar packages (test output, may contain third-party assets)
-*.vavatar
+*.vrcaster
 
 # OS
 .DS_Store

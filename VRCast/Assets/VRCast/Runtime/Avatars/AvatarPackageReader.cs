@@ -8,7 +8,7 @@ using VRCast.Core;
 namespace VRCast.Avatars
 {
     /// <summary>
-    /// .vavatar を信頼できない入力として検証し、bundle をキャッシュへ展開する。
+    /// .vrcaster を信頼できない入力として検証し、bundle をキャッシュへ展開する。
     /// </summary>
     public static class AvatarPackageReader
     {

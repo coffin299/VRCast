@@ -11,7 +11,7 @@ using Object = UnityEngine.Object;
 namespace VRCast.Converter.Editor
 {
     /// <summary>
-    /// アバター GameObject を .vavatar へ書き出す。
+    /// アバター GameObject を .vrcaster へ書き出す。
     /// 元オブジェクトは変更せず、複製を除去処理して一時 Prefab → AssetBundle → ZIP の順に生成する。
     /// </summary>
     public static class AvatarExporter

@@ -50,7 +50,7 @@ namespace VRCast.Tests
                 windowWidth = 1920,
                 windowHeight = 1080,
                 backgroundColor = Color.green,
-                lastAvatarPath = "C:/Avatars/Test.vavatar",
+                lastAvatarPath = "C:/Avatars/Test.vrcaster",
             };
             Assert.That(_store.Save(saved), Is.True);
 
@@ -59,7 +59,7 @@ namespace VRCast.Tests
             Assert.That(loaded.windowWidth, Is.EqualTo(1920));
             Assert.That(loaded.windowHeight, Is.EqualTo(1080));
             Assert.That(loaded.backgroundColor, Is.EqualTo(Color.green));
-            Assert.That(loaded.lastAvatarPath, Is.EqualTo("C:/Avatars/Test.vavatar"));
+            Assert.That(loaded.lastAvatarPath, Is.EqualTo("C:/Avatars/Test.vrcaster"));
         }
 
         [Test]

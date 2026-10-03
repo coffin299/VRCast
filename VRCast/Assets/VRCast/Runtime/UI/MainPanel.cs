@@ -78,7 +78,7 @@ namespace VRCast.UI
 
         private void DrawAvatarSection()
         {
-            GUILayout.Label("Avatar (.vavatar path)");
+            GUILayout.Label("Avatar (.vrcaster path)");
             _pathInput = GUILayout.TextField(_pathInput);
 
             GUILayout.BeginHorizontal();
