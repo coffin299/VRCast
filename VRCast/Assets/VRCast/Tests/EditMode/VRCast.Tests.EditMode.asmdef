@@ -3,6 +3,7 @@
     "rootNamespace": "VRCast.Tests",
     "references": [
         "VRCast.Runtime",
+        "VRCast.AvatarFormat",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
