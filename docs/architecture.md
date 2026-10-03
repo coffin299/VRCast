@@ -115,7 +115,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `HashUtility` | SHA-256 計算 |
 | `AvatarExporter` | 複製 → FX 既定状態の焼き込み → 除去 → 一時 Prefab → AssetBundle → ZIP の書き出し |
 | `VrcDescriptorReader` | VRChat SDK 非依存（リフレクション）で `VRCAvatarDescriptor` の FX コントローラーと Expression Parameters 既定値を取得 |
-| `FxDefaultStateBaker` | FX の各レイヤーで既定値により到達するステートのモーションを 0 秒時点で複製へ適用 |
+| `FxDefaultStateBaker` | FX の各レイヤーで既定値により到達するステートのモーションから、表示 ON/OFF・BlendShape・マテリアル差し替えの 0 秒時点の値を複製へ適用 |
 | `ComponentStripper` | 許可リスト外コンポーネント・Missing Script・EditorOnly オブジェクト・Animator Controller の除去 |
 | `AvatarExporterWindow` | `VRCast > Avatar Exporter` ウィンドウ |
 

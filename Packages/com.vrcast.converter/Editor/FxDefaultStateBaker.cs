@@ -1,12 +1,13 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
 
 namespace VRCast.Converter.Editor
 {
     /// <summary>
-    /// FX コントローラーの初期状態（パラメーター既定値で到達するステート）のアニメーションを
-    /// 0 秒時点で複製アバターへ焼き込む。小物トグルの既定 ON/OFF 等を反映するための近似処理。
+    /// FX コントローラーの初期状態（パラメーター既定値で到達するステート）のアニメーションのうち、
+    /// 表示 ON/OFF・BlendShape・マテリアル差し替えを 0 秒時点の値で複製アバターへ焼き込む近似処理。
     /// </summary>
     public static class FxDefaultStateBaker
     {
@@ -15,6 +16,15 @@ namespace VRCast.Converter.Editor
 
         // Direct BlendTree の子を有効とみなす重みの下限
         private const float DirectWeightThreshold = 0.5f;
+
+        // ON/OFF 系カーブを ON とみなす値の下限
+        private const float OnThreshold = 0.5f;
+
+        // 適用対象のプロパティ名
+        private const string ActivePropertyName = "m_IsActive";
+        private const string EnabledPropertyName = "m_Enabled";
+        private const string BlendShapePrefix = "blendShape.";
+        private const string MaterialPropertyPrefix = "m_Materials.Array.data[";
 
         /// <summary>
         /// 焼き込んだアニメーションクリップ数を返す。
@@ -47,10 +57,95 @@ namespace VRCast.Converter.Editor
             // レイヤー順に適用（後のレイヤーが優先される Animator の挙動に合わせる）
             foreach (AnimationClip clip in clips)
             {
-                clip.SampleAnimation(target, 0f);
+                ApplyClipAtStart(target, clip);
             }
 
             return clips.Count;
+        }
+
+        /// <summary>
+        /// クリップの 0 秒時点の値のうち、見た目の ON/OFF に関わるものだけを適用する。
+        /// SampleAnimation は Humanoid のマッスルを既定ポーズへ戻し、Constraint 前提の Transform 値も
+        /// 書き込んでしまうため使わない。Transform・マッスル・マテリアルプロパティは対象外。
+        /// </summary>
+        private static void ApplyClipAtStart(GameObject root, AnimationClip clip)
+        {
+            // 数値カーブ: GameObject 有効状態 / Renderer 有効状態 / BlendShape
+            foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(clip))
+            {
+                AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+                if (curve == null)
+                {
+                    continue;
+                }
+
+                ApplyFloat(AnimationUtility.GetAnimatedObject(root, binding), binding.propertyName, curve.Evaluate(0f));
+            }
+
+            // 参照カーブ: マテリアル差し替え
+            foreach (EditorCurveBinding binding in AnimationUtility.GetObjectReferenceCurveBindings(clip))
+            {
+                ObjectReferenceKeyframe[] keys = AnimationUtility.GetObjectReferenceCurve(clip, binding);
+                if (keys == null || keys.Length == 0)
+                {
+                    continue;
+                }
+
+                ApplyMaterial(AnimationUtility.GetAnimatedObject(root, binding), binding.propertyName, keys[0].value as Material);
+            }
+        }
+
+        private static void ApplyFloat(Object animated, string propertyName, float value)
+        {
+            // GameObject の有効状態
+            if (animated is GameObject go && propertyName == ActivePropertyName)
+            {
+                go.SetActive(value >= OnThreshold);
+                return;
+            }
+
+            // Renderer の有効状態
+            if (animated is Renderer renderer && propertyName == EnabledPropertyName)
+            {
+                renderer.enabled = value >= OnThreshold;
+                return;
+            }
+
+            // BlendShape の重み（"blendShape.<名前>"）
+            if (animated is SkinnedMeshRenderer skinned && skinned.sharedMesh != null
+                && propertyName.StartsWith(BlendShapePrefix, System.StringComparison.Ordinal))
+            {
+                int index = skinned.sharedMesh.GetBlendShapeIndex(propertyName.Substring(BlendShapePrefix.Length));
+                if (index >= 0)
+                {
+                    skinned.SetBlendShapeWeight(index, value);
+                }
+            }
+        }
+
+        private static void ApplyMaterial(Object animated, string propertyName, Material material)
+        {
+            // Renderer の "m_Materials.Array.data[i]" のみ対象
+            if (!(animated is Renderer renderer) || material == null
+                || !propertyName.StartsWith(MaterialPropertyPrefix, System.StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            // 末尾の "]" を除いた添字を取り出す
+            string indexText = propertyName.Substring(MaterialPropertyPrefix.Length).TrimEnd(']');
+            if (!int.TryParse(indexText, out int index))
+            {
+                return;
+            }
+
+            // 範囲内ならその枠だけ差し替え
+            Material[] materials = renderer.sharedMaterials;
+            if (index >= 0 && index < materials.Length)
+            {
+                materials[index] = material;
+                renderer.sharedMaterials = materials;
+            }
         }
 
         private static Dictionary<string, float> BuildParameterValues(

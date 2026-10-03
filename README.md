@@ -54,9 +54,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、背景透過�
 
 - 書き出されるのは Unity 標準コンポーネント（Transform / Animator / Renderer / MeshFilter）とそのメッシュ・マテリアル・シェーダー・テクスチャのみ。
 - VRChat コンポーネント・スクリプト・Animator Controller は書き出し用の複製から除去される（元のアバターは変更されない）。
-- 除去前に、FX レイヤーの初期状態（Expression Parameters の既定値で到達するステート）のアニメーションを 0 秒時点で焼き込む。
-  小物トグルの既定 ON/OFF や初期表情などが VRChat 上の初期状態に近づく（近似処理のため完全一致ではない）。
-- 書き出し先は Windows スタンドアロン用 AssetBundle。Android (Quest) ビルドターゲットのプロジェクトでは切替に時間がかかる。
+- 除去前に、FX レイヤーの初期状態（Expression Parameters の既定値で到達するステート）から、
+  小物の表示 ON/OFF・BlendShape・マテリアル差し替えを焼き込む（ポーズと Transform は変更しない。近似処理のため完全一致ではない）。- 書き出し先は Windows スタンドアロン用 AssetBundle。Android (Quest) ビルドターゲットのプロジェクトでは切替に時間がかかる。
 
 ### 2. VRCast.exe で表示する
 

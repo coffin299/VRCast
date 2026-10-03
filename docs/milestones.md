@@ -57,7 +57,11 @@
 
 VRChat SDK を参照せず、リフレクションで `VRCAvatarDescriptor` の FX コントローラーと Expression Parameters の既定値を読む。
 各レイヤー（重み 0 と Synced を除く）で既定ステートから、既定値で条件が成立する遷移（Any State 優先、最大 16 回）を辿り、
-到達ステートのモーションを 0 秒時点で複製に `SampleAnimation` する。
+到達ステートのモーションの 0 秒時点の値を複製に適用する。
+
+- 適用するのは GameObject 有効状態（`m_IsActive`）、Renderer 有効状態（`m_Enabled`）、BlendShape、マテリアル差し替えのみ
+- `SampleAnimation` は使わない（Humanoid のマッスルが既定ポーズに戻る、Constraint 前提の Transform 値で小物がずれるため）
+- Transform・マッスル・マテリアルプロパティ（色等）のカーブは対象外
 
 - BlendTree: Direct は重みパラメーター ≥ 0.5 の子をすべて、1D は最も近い閾値の子、2D は先頭の子を採用
 - VRChat 組み込みパラメーター（`IsLocal` 等）は 0 とみなす
