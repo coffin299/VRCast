@@ -245,8 +245,8 @@ namespace VRCast.Tracking
         {
             // 前後の移動は前後の傾き（X 軸まわり）、左右の移動は横の傾き（Z 軸まわり）へ
             float degreesPerUnit = LeanDegreesPerUnit * _settings.trackingBodyLean;
-            float pitch = Mathf.Clamp(offset.z * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
-            float roll = Mathf.Clamp(-offset.x * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
+            float pitch = Mathf.Clamp(-offset.z * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
+            float roll = Mathf.Clamp(offset.x * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
             return Quaternion.Euler(pitch, 0f, roll);
         }
 
