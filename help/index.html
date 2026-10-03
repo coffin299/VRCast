@@ -153,10 +153,10 @@
     <tr><td><span class="ja">ライト</span><span class="en">Light</span></td>
         <td><span class="ja"><span class="ui">環境光</span> はアバター全体を均一に明るく、<span class="ui">太陽光</span> は一方向から照らします。
             暗いときは <span class="ui">晴れ</span> プリセットを押すか環境光を上げてください。<span class="ui">太陽光の色</span> は低いほど暖色。
-            <span class="ui">向き</span> 0 で正面から当たります。</span>
+            <span class="ui">向き</span> 0 で正面から当たります。ライトで明るくならないときは <span class="ui">アバターの明るさ</span> を上げます。</span>
             <span class="en"><span class="ui">Ambient</span> lights the whole avatar evenly; <span class="ui">Sunlight</span> shines from one direction.
             If the avatar looks dark, press the <span class="ui">Sunny</span> preset or raise Ambient. Lower <span class="ui">Sun color</span> is warmer.
-            <span class="ui">Direction</span> 0 lights the avatar from the front.</span></td></tr>
+            <span class="ui">Direction</span> 0 lights the avatar from the front. If lights do not help, raise <span class="ui">Avatar brightness</span>.</span></td></tr>
   </table>
   <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情（数字キー 1〜9、0 でニュートラル）を変更できます。</p>
   <p class="en">In the <span class="ui">Pose</span> tab you can change the avatar's direction, arm pose and expressions (number keys 1-9, 0 for neutral).</p>
@@ -226,10 +226,12 @@
   <h3><span class="ja">アバターが暗い</span><span class="en">The avatar looks dark</span></h3>
   <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
     <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
-    lilToon 等は明るさの上限（マテリアルの設定）があるため、太陽光を上げても一定以上は明るくなりません。</p>
+    lilToon 等は明るさがテクスチャの色までに制限されるため、太陽光を上げても一定以上は明るくなりません。
+    その場合は <span class="ui">アバターの明るさ</span> を上げてください（1 = マテリアルのまま）。</p>
   <p class="en">Press the <span class="ui">Sunny</span> preset in the <span class="ui">Display</span> tab or raise <span class="ui">Ambient</span>.
     Set <span class="ui">Direction</span> near 0 to light the avatar from the front.
-    Shaders such as lilToon cap brightness (a material setting), so raising Sunlight stops helping past a point.</p>
+    Shaders such as lilToon cap brightness at the texture color, so raising Sunlight stops helping past a point.
+    In that case, raise <span class="ui">Avatar brightness</span> (1 = material as is).</p>
   <h3><span class="ja">OBS で背景が抜けない</span><span class="en">The background is not transparent in OBS</span></h3>
   <p class="ja">VRCast の背景を <span class="ui">透過</span> にし、OBS は <span class="ui">ゲームキャプチャ</span>（ウィンドウキャプチャではなく）で
     <span class="ui">透過を許可</span> にチェックが入っているか確認してください。</p>
