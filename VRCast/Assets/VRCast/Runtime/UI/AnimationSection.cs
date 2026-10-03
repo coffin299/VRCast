@@ -82,11 +82,6 @@ namespace VRCast.UI
 
             // よく使う 3 状態へのショートカット
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button("T-Pose"))
-            {
-                _pose.ArmDown = 0f;
-                _pose.ElbowBend = 0f;
-            }
 
             // 気を付け（既定）: 腕を下ろし切り、肘はまっすぐ
             if (GUILayout.Button("Attention"))
@@ -100,6 +95,13 @@ namespace VRCast.UI
             {
                 _pose.ArmDown = 0.85f;
                 _pose.ElbowBend = 0.3f;
+            }
+
+            // 読込時の姿勢（通常 T ポーズ）
+            if (GUILayout.Button("T-Pose"))
+            {
+                _pose.ArmDown = 0f;
+                _pose.ElbowBend = 0f;
             }
 
             GUILayout.EndHorizontal();
