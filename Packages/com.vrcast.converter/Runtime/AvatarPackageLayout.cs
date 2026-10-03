@@ -23,6 +23,9 @@ namespace VRCast.AvatarFormat
         // 任意エントリ: 表情プリセット
         public const string ExpressionsEntry = MetadataPrefix + "expressions.json";
 
+        // 任意エントリ: リップシンク・まぶた設定
+        public const string DescriptorEntry = MetadataPrefix + "descriptor.json";
+
         // metadata 1 ファイルの上限サイズ（1 MiB）
         public const long MaxMetadataBytes = 1024 * 1024;
 

@@ -17,7 +17,7 @@ MyAvatar.vrcaster
 ├── avatar.bundle        必須。Unity AssetBundle（StandaloneWindows64, LZ4）
 └── metadata/            任意。VRChat 固有設定を変換した JSON
     ├── expressions.json 表情プリセット（FX から抽出、表情が無ければ省略）
-    ├── descriptor.json  (予定) 視点位置・Viseme 設定など
+    ├── descriptor.json  リップシンク・まぶた設定（どちらも無ければ省略）
     └── physbones.json   (予定) PhysBone 相当パラメータ
 ```
 
@@ -71,6 +71,32 @@ FX コントローラー内の「BlendShape カーブのみ」のクリップを
 
 任意データのため、Runtime は不正・読込不能でも警告のみでアバター表示を続ける（表情は空扱い）。
 
+## metadata/descriptor.json
+
+VRCAvatarDescriptor の Lip Sync と Eyelids（BlendShape 方式）を変換したもの。
+
+```json
+{
+    "lipSync": {
+        "mode": "visemeBlendShape",
+        "meshPath": "Body",
+        "visemes": ["vrc.v_sil", "vrc.v_pp", "...（15 個）"],
+        "mouthOpenBlendShape": ""
+    },
+    "eyelids": { "meshPath": "Body", "blinkBlendShape": "blink" }
+}
+```
+
+| フィールド | 内容 |
+| :--- | :--- |
+| `lipSync.mode` | `none` / `visemeBlendShape` / `jawFlapBlendShape`（ボーン方式は `none`） |
+| `lipSync.meshPath` | Viseme 用メッシュのアバタールートからの相対パス |
+| `lipSync.visemes` | 0 個または 15 個（sil, PP, FF, TH, DD, kk, CH, SS, nn, RR, aa, E, I, O, U） |
+| `lipSync.mouthOpenBlendShape` | JawFlap 方式の口開閉 BlendShape 名 |
+| `eyelids.meshPath` / `blinkBlendShape` | まばたき用メッシュと BlendShape 名（空ならまばたき無し） |
+
+不正な場合は expressions.json と同様に警告のみで既定値（none / まばたき無し）として扱う。
+
 ## avatar.bundle
 
 - アバター Prefab を 1 つだけ含む。アセットパスは固定で `Assets/__VRCastExport/avatar.prefab`。
@@ -90,7 +116,7 @@ FX コントローラー内の「BlendShape カーブのみ」のクリップを
 | エントリ名 | 上記の許可リストのみ |
 | manifest.json | 64 KiB 以下、JSON として有効、全必須フィールドが妥当 |
 | avatar.bundle | ZIP 上のサイズ = `bundleSize`、展開量を `bundleSize` で打ち切り、SHA-256 = `bundleSha256` |
-| metadata/*.json | 1 MiB 以下、展開量を申告サイズで打ち切り。内容は `ExpressionSet.Validate` 等で検証（失敗は警告のみ） |
+| metadata/*.json | 1 MiB 以下、展開量を申告サイズで打ち切り。内容は `IMetadata.Validate` で検証（失敗は警告のみ） |
 | 生成後 | 許可リスト外のコンポーネントを破棄（Missing Script は件数を警告） |
 
 展開先: `Application.temporaryCachePath/avatars/<bundleSha256>/avatar.bundle`。同じハッシュのファイルがあれば再利用する。

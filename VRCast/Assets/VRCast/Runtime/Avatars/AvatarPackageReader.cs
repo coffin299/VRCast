@@ -55,8 +55,9 @@ namespace VRCast.Avatars
                     // manifest を読み込んで検証
                     AvatarManifest manifest = ReadManifest(zip);
 
-                    // 任意の表情データを読み込み（不正なら空扱い）
-                    ExpressionSet expressions = ReadExpressions(zip);
+                    // 任意の metadata を読み込み（不正なら空扱い）
+                    var expressions = ReadMetadata<ExpressionSet>(zip, AvatarPackageLayout.ExpressionsEntry);
+                    var descriptor = ReadMetadata<AvatarDescriptorData>(zip, AvatarPackageLayout.DescriptorEntry);
 
                     // bundle をキャッシュへ展開（ハッシュ検証込み）
                     string bundlePath = ExtractBundle(zip, manifest, cacheRoot);
@@ -68,7 +69,7 @@ namespace VRCast.Avatars
                             $"Unity version mismatch: package {manifest.unityVersion}, runtime {Application.unityVersion}.");
                     }
 
-                    return new AvatarPackage(manifest, info.FullName, bundlePath, expressions);
+                    return new AvatarPackage(manifest, info.FullName, bundlePath, expressions, descriptor);
                 }
             }
             catch (InvalidDataException e)
@@ -168,36 +169,37 @@ namespace VRCast.Avatars
             return manifest;
         }
 
-        private static ExpressionSet ReadExpressions(ZipArchive zip)
+        private static T ReadMetadata<T>(ZipArchive zip, string entryName)
+            where T : class, IMetadata, new()
         {
             // 任意エントリのため、無ければ空
-            ZipArchiveEntry entry = zip.GetEntry(AvatarPackageLayout.ExpressionsEntry);
+            ZipArchiveEntry entry = zip.GetEntry(entryName);
             if (entry == null)
             {
-                return new ExpressionSet();
+                return new T();
             }
 
             try
             {
                 // 上限付きで読み込み、JSON として解釈
                 string json = ReadTextEntry(entry, AvatarPackageLayout.MaxMetadataBytes);
-                ExpressionSet expressions = JsonUtility.FromJson<ExpressionSet>(json);
+                var data = JsonUtility.FromJson<T>(json);
 
                 // 空 JSON や内容不正はアバター表示を妨げないよう警告のみ
-                string error = expressions == null ? "empty" : expressions.Validate();
+                string error = data == null ? "empty" : data.Validate();
                 if (error != null)
                 {
-                    VRCastLog.Warning(LogCategory, $"Ignored invalid expressions.json: {error}");
-                    return new ExpressionSet();
+                    VRCastLog.Warning(LogCategory, $"Ignored invalid {entryName}: {error}");
+                    return new T();
                 }
 
-                return expressions;
+                return data;
             }
             catch (Exception e) when (e is AvatarPackageException || e is ArgumentException)
             {
                 // サイズ超過や JSON 構文エラーも警告のみ
-                VRCastLog.Warning(LogCategory, $"Ignored unreadable expressions.json: {e.Message}");
-                return new ExpressionSet();
+                VRCastLog.Warning(LogCategory, $"Ignored unreadable {entryName}: {e.Message}");
+                return new T();
             }
         }
 

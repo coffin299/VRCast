@@ -24,6 +24,7 @@ namespace VRCast.Avatars
         public string SourcePath { get; }
         public int RendererCount { get; }
         public ExpressionSet Expressions { get; }
+        public AvatarDescriptorData Descriptor { get; }
 
         public bool IsHumanoid => Animator != null && Animator.isHuman;
 
@@ -34,6 +35,7 @@ namespace VRCast.Avatars
             Manifest = package.Manifest;
             SourcePath = package.SourcePath;
             Expressions = package.Expressions;
+            Descriptor = package.Descriptor;
 
             // ルートの Animator と描画対象数を記録
             Animator = instance.GetComponent<Animator>();

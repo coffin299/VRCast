@@ -2,8 +2,10 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
+using VRCast.AvatarFormat;
 
 namespace VRCast.Converter.Editor
 {
@@ -97,6 +99,91 @@ namespace VRCast.Converter.Editor
             }
 
             return result;
+        }
+
+        /// <summary>
+        /// リップシンク・まぶた設定を Runtime 用データに変換する。パスは root からの相対パス。
+        /// </summary>
+        public static AvatarDescriptorData GetDescriptorData(Component descriptor, Transform root)
+        {
+            return new AvatarDescriptorData
+            {
+                lipSync = GetLipSync(descriptor, root),
+                eyelids = GetEyelids(descriptor, root),
+            };
+        }
+
+        private static LipSyncData GetLipSync(Component descriptor, Transform root)
+        {
+            var data = new LipSyncData();
+
+            // Viseme / 口開閉に使うメッシュが無ければ none
+            var mesh = GetField(descriptor, "VisemeSkinnedMesh") as SkinnedMeshRenderer;
+            if (mesh == null)
+            {
+                return data;
+            }
+
+            data.meshPath = AnimationUtility.CalculateTransformPath(mesh.transform, root);
+
+            // LipSyncStyle の列挙名で分岐（ボーン方式等は未対応）
+            switch (GetField(descriptor, "lipSync")?.ToString())
+            {
+                case "VisemeBlendShape":
+                    // 15 個揃っている場合のみ採用
+                    if (GetField(descriptor, "VisemeBlendShapes") is string[] visemes
+                        && visemes.Length == AvatarDescriptorData.VisemeCount)
+                    {
+                        data.mode = LipSyncData.ModeVisemeBlendShape;
+                        data.visemes = Array.ConvertAll(visemes, name => name ?? string.Empty);
+                    }
+
+                    break;
+
+                case "JawFlapBlendShape":
+                    // 口開閉 BlendShape 名がある場合のみ採用
+                    if (GetField(descriptor, "MouthOpenBlendShapeName") is string mouthOpen
+                        && !string.IsNullOrEmpty(mouthOpen))
+                    {
+                        data.mode = LipSyncData.ModeJawFlapBlendShape;
+                        data.mouthOpenBlendShape = mouthOpen;
+                    }
+
+                    break;
+            }
+
+            return data;
+        }
+
+        private static EyelidData GetEyelids(Component descriptor, Transform root)
+        {
+            var data = new EyelidData();
+
+            // customEyeLookSettings（構造体）を取得し、BlendShape 方式のみ扱う
+            object eyeLook = GetField(descriptor, "customEyeLookSettings");
+            if (eyeLook == null || GetField(eyeLook, "eyelidType")?.ToString() != "Blendshapes")
+            {
+                return data;
+            }
+
+            // メッシュと [blink, lookingUp, lookingDown] のインデックス
+            var mesh = GetField(eyeLook, "eyelidsSkinnedMesh") as SkinnedMeshRenderer;
+            if (mesh == null || mesh.sharedMesh == null
+                || !(GetField(eyeLook, "eyelidsBlendshapes") is int[] indices) || indices.Length == 0)
+            {
+                return data;
+            }
+
+            // blink のインデックスが範囲内なら名前に変換（Runtime は名前で解決する）
+            int blink = indices[0];
+            if (blink < 0 || blink >= mesh.sharedMesh.blendShapeCount)
+            {
+                return data;
+            }
+
+            data.meshPath = AnimationUtility.CalculateTransformPath(mesh.transform, root);
+            data.blinkBlendShape = mesh.sharedMesh.GetBlendShapeName(blink);
+            return data;
         }
 
         private static object GetField(object target, string fieldName)

@@ -7,7 +7,7 @@
 | 0 | プロジェクト基盤 | 完了 |
 | 1 | Basic Avatar Runtime | 完了（既知の課題あり） |
 | 2 | Transparent Rendering | 完了 |
-| 3 | Expressions | 進行中（待機ポーズ・表情プリセット） |
+| 3 | Expressions | 進行中（待機ポーズ・表情・まばたき・リップシンク） |
 | 4 | Runtime Physics | 未着手 |
 | 5 | Tracking | 未着手 |
 | 6 | OSC | 未着手 |
@@ -119,7 +119,27 @@ BlendShape、表情プリセット、Animator Parameter、基本 Viseme。
 - 表情ボタン・数字キーで顔が切り替わり、Neutral で元に戻ること
 - 表情以外のクリップ（小物トグル等）が一覧に混ざりすぎないこと
 
-残り: Animator Parameter、基本 Viseme（マイク音量 → 口形状）、まばたき。
+### 3c. 自動まばたき・マイクリップシンク
+
+- Converter `VrcDescriptorReader.GetDescriptorData`: Descriptor の Lip Sync（`VisemeBlendShape` / `JawFlapBlendShape`）と
+  Eyelids（BlendShape 方式の blink）を `metadata/descriptor.json` に書き出す（ボーン方式は未対応）
+- Runtime `Audio/MicrophoneInput`: 選択デバイス（空 = 既定）のループ録音から直近 1024 サンプルの RMS を音量 0〜1 に変換。
+  しきい値（Mic gate）と感度（Mic gain）、開きは速く閉じは遅く平滑化。無効時は録音しない。切断時は 3 秒ごとに再試行
+- Runtime `Animations/LipSyncController`: Viseme 方式は `aa`、JawFlap 方式は口開閉 BlendShape に音量を上乗せ
+- Runtime `Animations/BlinkController`: 2〜6 秒のランダム間隔で blink を閉じる→保持→開く（計 0.22 秒）
+- `BlendShapeOverlay`: 元の値（表情等）と上乗せ値の大きい方を書き込む。表情切替で元の値が変わっても追従するため、
+  表情・まばたき・口が互いを壊さない（Milestone 5 でトラッキング値を同じ仕組みで重ねる）
+- UI `FaceSection`: Auto blink / Lip sync の ON/OFF、マイク選択、Mic gain / Mic gate、音量メーター（設定は保存）
+
+確認項目:
+
+- まばたきが自然な間隔で起き、OFF で止まること
+- 話すと口が動き、無音時に閉じること（環境ノイズで開く場合は Mic gate を上げる）
+- 表情切替中もまばたき・口が動き、表情が崩れないこと
+
+残り: Animator Parameter（OSC と合わせて Milestone 6 で扱う可能性あり）。
+
+カメラによる表情・まばたき・口の制御（VSeeFace 相当）は Milestone 5 で扱う。
 
 ## Milestone 4 — Runtime Physics
 
@@ -128,6 +148,10 @@ PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider
 ## Milestone 5 — Tracking
 
 Tracking インターフェースを完成させ、Provider を 1 種類だけ実装する。
+
+候補: Web カメラによるフェイストラッキング（VSeeFace 相当）。頭の向き・まばたき・口の開閉・視線を
+`BlendShapeOverlay` / Humanoid の首・頭ボーンへ適用し、トラッキング中は自動まばたき・マイク口パクより優先する。
+トラッカー本体は Runtime に組み込まず外部プロセス（例: OpenSeeFace の UDP 出力）から受信する方式を第一候補とする。
 
 ## Milestone 6 — OSC
 

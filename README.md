@@ -32,7 +32,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 背景透過・解像度プリセット・ライト調整 | 済 |
 | 待機ポーズ（腕を下ろす・肘の曲げ） | 済 |
 | 表情プリセット（FX の BlendShape クリップから抽出、数字キー切替） | 済 |
-| Viseme・まばたき・揺れもの・トラッキング | 未実装 |
+| 自動まばたき（ON/OFF）・マイク音量リップシンク | 済（要確認） |
+| カメラトラッキング・揺れもの | 未実装 |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
 
@@ -59,6 +60,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 - 除去前に、FX レイヤーの初期状態（Expression Parameters の既定値で到達するステート）から、
   小物の表示 ON/OFF・BlendShape・マテリアル差し替えを焼き込む（ポーズと Transform は変更しない。近似処理のため完全一致ではない）。
 - FX 内の BlendShape だけを動かすクリップ（表情クリップ）を表情プリセットとして `metadata/expressions.json` に書き出す。
+- Avatar Descriptor の Lip Sync（Viseme / JawFlap BlendShape）と Eyelids（BlendShape）設定を `metadata/descriptor.json` に書き出す。
 - 書き出し先は Windows スタンドアロン用 AssetBundle。Android (Quest) ビルドターゲットのプロジェクトでは切替に時間がかかる。
 
 ### 2. VRCast.exe で表示する
@@ -77,6 +79,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 
 パネルの **Pose** で、T ポーズから腕を下ろす度合い（Arms down）と肘の曲げ（Elbow bend）を調整できる（Humanoid のみ、設定は保存される）。
 **Expressions** には書き出し時に抽出した表情が並び、クリックまたは数字キーで切り替えられる。
+**Face** で自動まばたきとマイクによる口パク（リップシンク）を ON/OFF できる。マイクは `<` `>` で選択し、
+Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
 
 パネルの **Rendering** で、背景（透過 / 単色）、ウィンドウ解像度（1280x720 / 1920x1080 / 縦長 720x1280 / 1080x1920）、ライトの強さと向きを変更できる。
 設定は終了時に保存され、次回起動時に復元される。ウィンドウは枠をドラッグしてサイズ変更できる。

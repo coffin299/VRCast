@@ -109,5 +109,17 @@ namespace VRCast.Tests
             Assert.That(settings.poseArmDown, Is.EqualTo(1f));
             Assert.That(settings.poseElbowBend, Is.EqualTo(0f));
         }
+
+        [Test]
+        public void Load_OutOfRangeMicrophone_IsClamped()
+        {
+            _store.Save(new AppSettings { micGain = 100f, micThreshold = -1f, microphoneDevice = null });
+
+            // 感度・しきい値は範囲内へ、デバイス名は空文字へ補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.micGain, Is.EqualTo(AppSettings.MaxMicGain));
+            Assert.That(settings.micThreshold, Is.EqualTo(0f));
+            Assert.That(settings.microphoneDevice, Is.EqualTo(string.Empty));
+        }
     }
 }
