@@ -4,7 +4,7 @@
 
 | # | 名称 | 状態 |
 | :--- | :--- | :--- |
-| 0 | プロジェクト基盤 | 実装済み（要ビルド確認） |
+| 0 | プロジェクト基盤 | 完了 |
 | 1 | Basic Avatar Runtime | 未着手 |
 | 2 | Transparent Rendering | 未着手 |
 | 3 | Expressions | 未着手 |
