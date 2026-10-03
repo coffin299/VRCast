@@ -12,8 +12,11 @@ namespace VRCast.Tracking
     public class HandTrackingDriver : MonoBehaviour
     {
         // 平滑化（One Euro）: 静止時のカットオフ（Hz）と速度への追従係数。腕は単位ベクトル、手は m 単位の点
-        private const float ArmMinCutoff = 1.5f;
-        private const float ArmBeta = 0.5f;
+        private const float ArmMinCutoff = 0.8f;
+        private const float ArmBeta = 0.3f;
+
+        // 腕の奥行き（カメラ方向）の倍率。単眼推定の奥行きは揺れが大きいため弱めて使う
+        private const float ArmDepthScale = 0.5f;
         private const float HandMinCutoff = 1.5f;
         private const float HandBeta = 20f;
 
@@ -296,8 +299,8 @@ namespace VRCast.Tracking
             bool hasArm = received && data.HasArm;
             if (hasArm)
             {
-                Vector3 upper = ToAvatar(data.Elbow - data.Shoulder).normalized;
-                Vector3 lower = ToAvatar(data.Wrist - data.Elbow).normalized;
+                Vector3 upper = ToAvatar(DampDepth(data.Elbow - data.Shoulder)).normalized;
+                Vector3 lower = ToAvatar(DampDepth(data.Wrist - data.Elbow)).normalized;
                 if (rig.ArmWeight <= 0f)
                 {
                     rig.UpperFilter.Reset(upper);
@@ -332,6 +335,12 @@ namespace VRCast.Tracking
             bool keepHand = Time.time - rig.HandSeenTime < LostGraceSeconds;
             rig.ArmWeight = Mathf.MoveTowards(rig.ArmWeight, keepArm ? 1f : 0f, fade);
             rig.HandWeight = Mathf.MoveTowards(rig.HandWeight, keepHand ? 1f : 0f, fade);
+        }
+
+        private static Vector3 DampDepth(Vector3 cameraVector)
+        {
+            // カメラ基準の奥行き成分だけを弱める
+            return new Vector3(cameraVector.x, cameraVector.y, cameraVector.z * ArmDepthScale);
         }
 
         private Vector3 ToAvatar(Vector3 cameraVector)
