@@ -1,5 +1,7 @@
 # VRCast
 
+<p align="center"><img src="docs/images/vrcast-icon.png" alt="VRCast" width="160"></p>
+
 VRChat 向け 3D アバターを、Unity プロジェクトごとではなく **アバター単体に近い形** で動かす軽量スタンドアロン Runtime。
 VSeeFace のように簡単にアバターを表示・トラッキングし、OBS などの配信ソフトへ出力することを目指す。
 
@@ -178,7 +180,8 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 ├── docs/                         設計ドキュメント
 │   ├── architecture.md           Runtime / Editor 分離と依存ルール
 │   ├── avatar-package.md         .vrcaster フォーマット (v0)
-│   └── milestones.md             開発マイルストーン
+│   ├── milestones.md             開発マイルストーン
+│   └── images/vrcast-icon.png    アイコンの元画像 (1254px)
 ├── Packages/
 │   └── com.vrcast.converter/     アバター変換パッケージ
 │       ├── Runtime/              共有フォーマット定義 (VRCast.AvatarFormat)
@@ -188,6 +191,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 │   └── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
+        ├── Branding/AppIcon.png  アプリアイコン (512px、ビルド時に設定)
         ├── Runtime/              スタンドアロンで動くコード (VRCast.Runtime)
         ├── Editor/               Editor 専用コード (VRCast.Editor)
         └── Tests/                EditMode テスト
@@ -206,6 +210,8 @@ Unity Hub で `VRCast/` フォルダを開くか、以下をコマンドライ�
 ```
 
 Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルドできる。
+ビルド時に `Assets/VRCast/Branding/AppIcon.png` をアプリアイコン（exe・タスクバー・タイトルバー）に設定する。
+差し替える場合は同じパスに透過付きの正方形 PNG（512px 以上推奨）を置く。
 
 ### MediaPipe トラッカーの同梱
 
