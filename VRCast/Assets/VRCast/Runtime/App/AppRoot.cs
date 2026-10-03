@@ -8,6 +8,7 @@ using VRCast.Cameras;
 using VRCast.Core;
 using VRCast.Dynamics;
 using VRCast.Rendering;
+using VRCast.Tracking;
 using VRCast.UI;
 
 namespace VRCast.App
@@ -24,6 +25,7 @@ namespace VRCast.App
         private OrbitCameraController _orbit;
         private AppSettings _settings;
         private MicrophoneInput _microphone;
+        private OpenSeeFaceReceiver _tracker;
         private string _initialAvatarPath;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -71,10 +73,14 @@ namespace VRCast.App
             _microphone = gameObject.AddComponent<MicrophoneInput>();
             _microphone.Initialize(_settings);
 
+            // フェイストラッキング受信（アプリ全体で 1 つ）
+            _tracker = gameObject.AddComponent<OpenSeeFaceReceiver>();
+            _tracker.Initialize(_settings);
+
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
-                _session, _orbit, rendering, _microphone, _settings, _initialAvatarPath);
+                _session, _orbit, rendering, _microphone, _tracker, _settings, _initialAvatarPath);
         }
 
         private void Start()
@@ -97,13 +103,18 @@ namespace VRCast.App
 
         private void OnAvatarLoaded(LoadedAvatar avatar)
         {
-            // 待機ポーズ・表情・まばたき・リップシンク・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
+            // 待機ポーズ・表情・まばたき・リップシンク・トラッキング・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
             avatar.Instance.AddComponent<ExpressionController>().Initialize(root, avatar.Expressions);
-            avatar.Instance.AddComponent<BlinkController>().Initialize(root, avatar.Descriptor.eyelids, _settings);
-            avatar.Instance.AddComponent<LipSyncController>().Initialize(
-                root, avatar.Descriptor.lipSync, _microphone, _settings);
+            var blink = avatar.Instance.AddComponent<BlinkController>();
+            blink.Initialize(root, avatar.Descriptor.eyelids, _settings);
+            var lipSync = avatar.Instance.AddComponent<LipSyncController>();
+            lipSync.Initialize(root, avatar.Descriptor.lipSync, _microphone, _settings);
+
+            // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
+            avatar.Instance.AddComponent<FaceTrackingDriver>().Initialize(
+                avatar.Animator, _tracker, blink, lipSync, _settings);
 
             // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化）
             avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);

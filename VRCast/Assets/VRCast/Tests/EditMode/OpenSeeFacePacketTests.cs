@@ -1,0 +1,91 @@
+using System;
+using NUnit.Framework;
+using UnityEngine;
+using VRCast.Tracking;
+
+namespace VRCast.Tests
+{
+    /// <summary>
+    /// OpenSeeFace パケット解析の値の位置・座標変換・不正入力の拒否を検証する。
+    /// </summary>
+    public class OpenSeeFacePacketTests
+    {
+        // 解析対象の値の先頭位置（OpenSeeFacePacket と同じ配置）
+        private const int RightEyeOffset = 20;
+        private const int LeftEyeOffset = 24;
+        private const int QuaternionOffset = 33;
+        private const int MouthOpenOffset = 1729 + 12 * 4;
+
+        [Test]
+        public void TryParse_ValidPacket_ReadsValues()
+        {
+            // 単位四元数・目の開き・口の特徴量を書き込んだパケット
+            byte[] packet = CreatePacket(Quaternion.identity, 0.9f, 0.3f, 0.8f);
+
+            // 解析できること
+            Assert.That(OpenSeeFacePacket.TryParse(packet, 0, packet.Length, out FaceTrackingFrame frame), Is.True);
+
+            // 目は左右そのまま、口は特徴量の上限で 1 になること
+            Assert.That(frame.EyeOpenRight, Is.EqualTo(0.9f).Within(1e-5f));
+            Assert.That(frame.EyeOpenLeft, Is.EqualTo(0.3f).Within(1e-5f));
+            Assert.That(frame.MouthOpen, Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(Quaternion.Angle(frame.HeadRotation, Quaternion.identity), Is.LessThan(0.01f));
+        }
+
+        [Test]
+        public void TryParse_ConvertsQuaternionAxes()
+        {
+            // OpenSeeFace の (x, y, z, w) は Unity の (-y, -x, z, w) になること
+            var source = new Quaternion(0.1f, 0.2f, 0.3f, 0.927f);
+            byte[] packet = CreatePacket(source, 1f, 1f, 0f);
+
+            Assert.That(OpenSeeFacePacket.TryParse(packet, 0, packet.Length, out FaceTrackingFrame frame), Is.True);
+            Quaternion expected = Quaternion.Normalize(new Quaternion(-0.2f, -0.1f, 0.3f, 0.927f));
+            Assert.That(Quaternion.Angle(frame.HeadRotation, expected), Is.LessThan(0.01f));
+        }
+
+        [Test]
+        public void TryParse_ShortPacket_ReturnsFalse()
+        {
+            // 1 顔分に満たない長さは拒否すること
+            byte[] packet = CreatePacket(Quaternion.identity, 1f, 1f, 0f);
+            Assert.That(OpenSeeFacePacket.TryParse(packet, 0, OpenSeeFacePacket.FrameSize - 1, out _), Is.False);
+        }
+
+        [Test]
+        public void TryParse_NonFiniteValue_ReturnsFalse()
+        {
+            // NaN を含むフレームは拒否すること
+            byte[] packet = CreatePacket(Quaternion.identity, float.NaN, 1f, 0f);
+            Assert.That(OpenSeeFacePacket.TryParse(packet, 0, packet.Length, out _), Is.False);
+        }
+
+        [Test]
+        public void TryParse_ZeroQuaternion_ReturnsFalse()
+        {
+            // 長さ 0 の四元数は回転として使えないため拒否すること
+            byte[] packet = CreatePacket(new Quaternion(0f, 0f, 0f, 0f), 1f, 1f, 0f);
+            Assert.That(OpenSeeFacePacket.TryParse(packet, 0, packet.Length, out _), Is.False);
+        }
+
+        private static byte[] CreatePacket(Quaternion rotation, float rightEye, float leftEye, float mouth)
+        {
+            // 1 顔分のゼロ埋めパケットに対象の値だけ書き込む
+            var packet = new byte[OpenSeeFacePacket.FrameSize];
+            WriteFloat(packet, RightEyeOffset, rightEye);
+            WriteFloat(packet, LeftEyeOffset, leftEye);
+            WriteFloat(packet, QuaternionOffset, rotation.x);
+            WriteFloat(packet, QuaternionOffset + 4, rotation.y);
+            WriteFloat(packet, QuaternionOffset + 8, rotation.z);
+            WriteFloat(packet, QuaternionOffset + 12, rotation.w);
+            WriteFloat(packet, MouthOpenOffset, mouth);
+            return packet;
+        }
+
+        private static void WriteFloat(byte[] packet, int offset, float value)
+        {
+            // リトルエンディアンで書き込む（テスト環境は Windows x64）
+            Buffer.BlockCopy(BitConverter.GetBytes(value), 0, packet, offset, sizeof(float));
+        }
+    }
+}

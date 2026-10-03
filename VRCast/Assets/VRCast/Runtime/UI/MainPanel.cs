@@ -4,11 +4,12 @@ using VRCast.Avatars;
 using VRCast.Cameras;
 using VRCast.Core;
 using VRCast.Rendering;
+using VRCast.Tracking;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI による最小操作パネル（Avatar / Pose / Expressions / Face / Camera / Rendering）。Tab キーで表示切替。
+    /// IMGUI による最小操作パネル（Avatar / Pose / Expressions / Face / Tracking / Camera / Rendering）。Tab キーで表示切替。
     /// </summary>
     public class MainPanel : MonoBehaviour
     {
@@ -28,13 +29,14 @@ namespace VRCast.UI
         private RenderingSection _renderingSection;
         private AnimationSection _animationSection;
         private FaceSection _faceSection;
+        private TrackingSection _trackingSection;
         private string _pathInput = string.Empty;
         private bool _visible = true;
         private Rect _windowRect = new Rect(10f, 10f, WindowWidth, 0f);
 
         public void Initialize(
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
-            MicrophoneInput microphone, AppSettings settings, string initialPath)
+            MicrophoneInput microphone, IFaceTrackingProvider tracker, AppSettings settings, string initialPath)
         {
             // 依存の受け取りと入力欄の初期値設定
             _session = session;
@@ -42,6 +44,7 @@ namespace VRCast.UI
             _renderingSection = new RenderingSection(rendering);
             _animationSection = new AnimationSection(session);
             _faceSection = new FaceSection(session, microphone, settings);
+            _trackingSection = new TrackingSection(session, tracker, settings);
             _pathInput = initialPath ?? string.Empty;
         }
 
@@ -84,6 +87,8 @@ namespace VRCast.UI
             _animationSection.Draw();
             GUILayout.Space(8f);
             _faceSection.Draw();
+            GUILayout.Space(8f);
+            _trackingSection.Draw();
             GUILayout.Space(8f);
             DrawCameraSection();
             GUILayout.Space(8f);

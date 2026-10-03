@@ -31,6 +31,11 @@ namespace VRCast.Animations
 
         public bool IsAvailable => _eyelids.Count > 0;
 
+        /// <summary>
+        /// 外部（フェイストラッキング）からの閉じ具合（0〜1）。値がある間は自動まばたきより優先する。
+        /// </summary>
+        public float? ExternalClosed { get; set; }
+
         public void Initialize(Transform root, EyelidData data, AppSettings settings)
         {
             _settings = settings;
@@ -53,6 +58,14 @@ namespace VRCast.Animations
             // 対象が無ければ何もしない
             if (!IsAvailable)
             {
+                return;
+            }
+
+            // 外部入力がある間はその値を使い、自動まばたきは止める
+            if (ExternalClosed.HasValue)
+            {
+                _blinkStart = -1f;
+                Write(Mathf.Clamp01(ExternalClosed.Value) * 100f);
                 return;
             }
 

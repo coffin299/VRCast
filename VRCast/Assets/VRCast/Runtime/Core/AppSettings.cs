@@ -24,6 +24,11 @@ namespace VRCast.Core
         public const float MaxMicGain = 10f;
         public const float MaxMicThreshold = 0.2f;
 
+        // フェイストラッキング受信ポートの既定値（OpenSeeFace / VSeeFace と同じ）と範囲
+        public const int DefaultTrackingPort = 11573;
+        public const int MinTrackingPort = 1024;
+        public const int MaxTrackingPort = 65535;
+
         public int version = CurrentVersion;
         public int windowWidth = 1280;
         public int windowHeight = 720;
@@ -57,6 +62,11 @@ namespace VRCast.Core
         public float micGain = 1f;
         public float micThreshold = 0.01f;
 
+        // フェイストラッキング（OpenSeeFace の UDP 受信。鏡像 = 本人の動きを鏡のように反映）
+        public bool trackingEnabled;
+        public int trackingPort = DefaultTrackingPort;
+        public bool trackingMirror = true;
+
         /// <summary>
         /// 読み込んだ値を安全な範囲に補正する。
         /// </summary>
@@ -86,6 +96,8 @@ namespace VRCast.Core
             micGain = Mathf.Clamp(micGain, MinMicGain, MaxMicGain);
             // しきい値は 0〜上限に制限
             micThreshold = Mathf.Clamp(micThreshold, 0f, MaxMicThreshold);
+            // 受信ポートは特権ポートを避けた範囲に制限
+            trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
         }
     }
 }
