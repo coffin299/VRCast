@@ -36,6 +36,7 @@ namespace VRCast.Converter.Editor
             public bool HasBlink;
             public bool HasWink;
             public int PhysBoneCount;
+            public int ConstraintCount;
             public ComponentStripper.Result Strip;
         }
 
@@ -120,6 +121,10 @@ namespace VRCast.Converter.Editor
                 PhysBoneSet physBones = PhysBoneExtractor.Extract(source);
                 report.PhysBoneCount = physBones.bones.Length;
 
+                // Constraint（除去前に元アバターから読む）
+                ConstraintSet constraints = ConstraintExtractor.Extract(source);
+                report.ConstraintCount = constraints.constraints.Length;
+
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
@@ -165,6 +170,11 @@ namespace VRCast.Converter.Editor
                 if (physBones.bones.Length > 0)
                 {
                     metadata[AvatarPackageLayout.PhysBonesEntry] = physBones;
+                }
+
+                if (constraints.constraints.Length > 0)
+                {
+                    metadata[AvatarPackageLayout.ConstraintsEntry] = constraints;
                 }
 
                 foreach (KeyValuePair<string, IMetadata> entry in metadata)

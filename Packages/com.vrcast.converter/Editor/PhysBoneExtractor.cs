@@ -1,6 +1,5 @@
 using System.Collections;
 using System.Collections.Generic;
-using UnityEditor;
 using UnityEngine;
 using VRCast.AvatarFormat;
 
@@ -63,7 +62,7 @@ namespace VRCast.Converter.Editor
 
             var data = new PhysBoneData
             {
-                rootPath = PathOf(chainRoot, root),
+                rootPath = ReflectionUtility.PathOf(chainRoot, root),
                 ignorePaths = ConvertTransforms(ReflectionUtility.GetField(bone, "ignoreTransforms"), root),
                 endpointPosition = ReflectionUtility.GetField(bone, "endpointPosition") is Vector3 endpoint ? endpoint : Vector3.zero,
                 multiChildType = ConvertMultiChild(ReflectionUtility.GetField(bone, "multiChildType")?.ToString()),
@@ -128,7 +127,7 @@ namespace VRCast.Converter.Editor
 
             return new PhysBoneColliderData
             {
-                path = PathOf(target, root),
+                path = ReflectionUtility.PathOf(target, root),
                 shape = shapeName,
                 radius = Mathf.Clamp(ReflectionUtility.GetFloat(collider, "radius", 0f), 0f, PhysBoneSet.MaxRadius),
                 height = Mathf.Clamp(ReflectionUtility.GetFloat(collider, "height", 0f), 0f, PhysBoneSet.MaxRadius * 2f),
@@ -149,7 +148,7 @@ namespace VRCast.Converter.Editor
                 {
                     if (item is Transform transform && transform != null && paths.Count < PhysBoneSet.MaxPathsPerBone)
                     {
-                        paths.Add(PathOf(transform, root));
+                        paths.Add(ReflectionUtility.PathOf(transform, root));
                     }
                 }
             }
@@ -192,12 +191,6 @@ namespace VRCast.Converter.Editor
                 default:
                     return PhysBoneData.MultiChildIgnore;
             }
-        }
-
-        private static string PathOf(Transform target, Transform root)
-        {
-            // アバタールートからの相対パス（ルート自身は空）
-            return AnimationUtility.CalculateTransformPath(target, root);
         }
     }
 }

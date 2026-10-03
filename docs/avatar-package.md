@@ -18,7 +18,8 @@ MyAvatar.vrcaster
 └── metadata/            任意。VRChat 固有設定を変換した JSON
     ├── expressions.json 表情プリセット（FX から抽出、表情が無ければ省略）
     ├── descriptor.json  リップシンク・まぶた設定（どちらも無ければ省略）
-    └── physbones.json   揺れもの（PhysBone・コライダー、無ければ省略）
+    ├── physbones.json   揺れもの（PhysBone・コライダー、無ければ省略）
+    └── constraints.json Constraint（VRC / Unity 標準、無ければ省略）
 ```
 
 上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
@@ -161,6 +162,63 @@ Eyelids が Descriptor で未設定（FX アニメーションでまばたきす
 
 上限: bones 256、colliders 256。不正な場合は警告のみで揺れもの無しとして扱う。
 
+## metadata/constraints.json
+
+VRC Constraint（`VRCPositionConstraint` / `VRCRotationConstraint` / `VRCScaleConstraint` / `VRCParentConstraint` /
+`VRCAimConstraint` / `VRCLookAtConstraint`）と Unity 標準の同種 Constraint を Runtime 評価用に変換したもの。
+回転はすべて四元数（オイラー角は Converter が変換）。
+
+```json
+{
+    "constraints": [
+        {
+            "type": "parent",
+            "targetPath": "Props/Sword",
+            "active": true, "weight": 1.0, "localSpace": false,
+            "positionAxes": 7, "rotationAxes": 7, "scaleAxes": 7,
+            "positionAtRest": { "x": 0.0, "y": 0.0, "z": 0.0 },
+            "positionOffset": { "x": 0.0, "y": 0.0, "z": 0.0 },
+            "rotationAtRest": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 },
+            "rotationOffset": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 },
+            "scaleAtRest": { "x": 1.0, "y": 1.0, "z": 1.0 },
+            "scaleOffset": { "x": 1.0, "y": 1.0, "z": 1.0 },
+            "aimAxis": { "x": 0.0, "y": 0.0, "z": 1.0 },
+            "upAxis": { "x": 0.0, "y": 1.0, "z": 0.0 },
+            "worldUpType": "sceneUp",
+            "worldUpVector": { "x": 0.0, "y": 1.0, "z": 0.0 },
+            "worldUpPath": "",
+            "roll": 0.0, "useUpObject": false,
+            "sources": [
+                {
+                    "path": "Armature/Hips/Spine/Chest/Shoulder_R/UpperArm_R/LowerArm_R/Hand_R",
+                    "weight": 1.0,
+                    "positionOffset": { "x": 0.0, "y": 0.05, "z": 0.0 },
+                    "rotationOffset": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 }
+                }
+            ]
+        }
+    ]
+}
+```
+
+| フィールド | 内容 |
+| :--- | :--- |
+| `type` | `position` / `rotation` / `scale` / `parent` / `aim` / `lookAt` |
+| `targetPath` | 動かす Transform（アバタールートからの相対パス。ルート自身は Runtime で無視） |
+| `active` / `weight` | 無効なら評価しない。weight 0〜1（0 = 静止値、1 = ソースどおり） |
+| `localSpace` | ソースのローカル値をそのままターゲットのローカル値へ使う（VRC の Solve In Local Space。Aim / LookAt は無視） |
+| `positionAxes` / `rotationAxes` / `scaleAxes` | 影響する軸のビットマスク（X = 1, Y = 2, Z = 4）。外れた軸は現在値を保つ |
+| `*AtRest` | 重み 0・有効なソースが無いときのローカル値 |
+| `positionOffset` / `rotationOffset` / `scaleOffset` | 結果に加える（位置）・掛ける（回転・スケール）オフセット（ターゲットの親空間） |
+| `aimAxis` / `upAxis` | Aim: ソースへ向けるローカル軸・上へ向けるローカル軸（長さ 0 不可） |
+| `worldUpType` / `worldUpVector` / `worldUpPath` | Aim の上方向: `sceneUp` / `objectUp` / `objectRotationUp` / `vector` / `none` |
+| `roll` / `useUpObject` | LookAt: 視線軸まわりの回転（度）、上方向に `worldUpPath` の上を使うか |
+| `sources[].path` / `weight` | ソース Transform と重み 0〜1（重み付き平均） |
+| `sources[].positionOffset` / `rotationOffset` | Parent 用のソースのローカル空間でのオフセット |
+
+上限: constraints 512、1 つあたり sources 32、位置・スケール ±1000。アバター外を指すソース・範囲外の値を含む Constraint は
+Converter が除外する。Freeze To World は対象外（通常の Constraint として評価）。不正な場合は警告のみで Constraint 無しとして扱う。
+
 ## avatar.bundle
 
 - アバター Prefab を 1 つだけ含む。アセットパスは固定で `Assets/__VRCastExport/avatar.prefab`。
@@ -169,7 +227,7 @@ Eyelids が Descriptor で未設定（FX アニメーションでまばたきす
 - Animator Controller は含めない（VRChat 固有の StateMachineBehaviour を含むため）。表情等は Milestone 3 で metadata 化する。
   代わりに FX レイヤーの初期状態（小物トグル・初期表情等）を書き出し時に GameObject / Renderer の有効状態、BlendShape、マテリアル差し替えへ焼き込む（Transform・ポーズは変更しない）。
 - VRChat コンポーネント（Avatar Descriptor, PhysBone, Constraint 等）・自作 MonoBehaviour は含めない。
-  Runtime で使う設定は Converter が `metadata/*.json` に変換する（Descriptor・PhysBone は対応済み、Constraint 等は Milestone 7）。
+  Runtime で使う設定は Converter が `metadata/*.json` に変換する（Descriptor・PhysBone・Constraint）。
 
 ## Runtime 側の検証
 

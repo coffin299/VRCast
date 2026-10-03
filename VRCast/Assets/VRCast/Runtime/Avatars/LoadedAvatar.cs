@@ -26,6 +26,7 @@ namespace VRCast.Avatars
         public ExpressionSet Expressions { get; }
         public AvatarDescriptorData Descriptor { get; }
         public PhysBoneSet PhysBones { get; }
+        public ConstraintSet Constraints { get; }
 
         public bool IsHumanoid => Animator != null && Animator.isHuman;
 
@@ -38,6 +39,7 @@ namespace VRCast.Avatars
             Expressions = package.Expressions;
             Descriptor = package.Descriptor;
             PhysBones = package.PhysBones;
+            Constraints = package.Constraints;
 
             // ルートの Animator と描画対象数を記録
             Animator = instance.GetComponent<Animator>();

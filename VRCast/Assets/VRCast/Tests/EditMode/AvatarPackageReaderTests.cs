@@ -246,6 +246,45 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Extract_WithConstraints_ParsesConstraintsAndSources()
+        {
+            // ソース 1 つの Parent Constraint を同梱
+            var constraints = new ConstraintSet
+            {
+                constraints = new[]
+                {
+                    new ConstraintData
+                    {
+                        type = ConstraintData.TypeParent,
+                        targetPath = "Item",
+                        sources = new[] { new ConstraintSourceData { path = "Hips/Hand", positionOffset = Vector3.up } },
+                    },
+                },
+            };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ConstraintsEntry, JsonUtility.ToJson(constraints));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Constraints.constraints, Has.Length.EqualTo(1));
+            Assert.That(package.Constraints.constraints[0].type, Is.EqualTo(ConstraintData.TypeParent));
+            Assert.That(package.Constraints.constraints[0].sources[0].positionOffset, Is.EqualTo(Vector3.up));
+        }
+
+        [Test]
+        public void Extract_ConstraintWithUnknownType_IgnoredAsEmpty()
+        {
+            // 未知の種類を含む constraints.json は全体が空扱いになること
+            var constraints = new ConstraintSet { constraints = new[] { new ConstraintData { type = "twist" } } };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ConstraintsEntry, JsonUtility.ToJson(constraints));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Constraints.constraints, Is.Empty);
+        }
+
+        [Test]
         public void Extract_WithoutExpressions_ReturnsEmpty()
         {
             string path = WritePackage(CreateManifest(DummyBundle), DummyBundle);
@@ -259,6 +298,7 @@ namespace VRCast.Tests
         [TestCase("avatar.bundle", true)]
         [TestCase("metadata/", true)]
         [TestCase("metadata/physbones.json", true)]
+        [TestCase("metadata/constraints.json", true)]
         [TestCase("metadata/sub/x.json", false)]
         [TestCase("metadata/x.txt", false)]
         [TestCase("../manifest.json", false)]

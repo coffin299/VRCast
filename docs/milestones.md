@@ -9,8 +9,8 @@
 | 2 | Transparent Rendering | 完了 |
 | 3 | Expressions | 完了 |
 | 4 | Runtime Physics | 完了（既知の課題あり） |
-| 5 | Tracking | 完了（視線・ウインクは要確認） |
-| 6 | OSC | 未着手 |
+| 5 | Tracking | 完了（MediaPipe: 顔・腕・手・視線・ウインク） |
+| 6 | OSC | 見送り（要望があれば実装） |
 | 7 | Avatar Conversion Pipeline | 未着手 |
 | 8 | Advanced Output | 未着手 |
 
@@ -230,7 +230,10 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 手を動かすため、既定の入力元を MediaPipe に変更（OpenSeeFace は代替として残し、Tracking セクションで切替）。
 
 - トラッカー: `Tools/MediaPipeTracker/vrcast_tracker.py`（Face / Pose（lite）/ Hand Landmarker、動画モード、CPU）。
-  引数は facetracker と同じ形（`-l 1` / `-c` / `-i` / `-p`、追加で `--no-hands`）にして起動処理を共通化。
+  引数は facetracker と同じ形（`-l 1` / `-c` / `-i` / `-p`、追加で `--no-hands` / `--parent-pid`）にして起動処理を共通化。
+  VRCast は自分の PID を渡し、トラッカーは親の終了（異常終了を含む）を検出して自分も終了する。
+  キャッシュが溜まらないよう、exe はフォルダ形式（`_MEI` 展開なし）、OpenCV の OpenCL とカーネルキャッシュは無効、
+  ビルドの中間ファイル・PyInstaller / pip のキャッシュは残さない。
   カメラ名は DirectShow（pygrabber）で取得し、UTF-8 で出力。`build.ps1`（ダブルクリック用の `build.bat` から呼び出し可）で exe 化し、モデル 3 種と一緒に `StreamingAssets/MediaPipeTracker/` へ配置
   （Python 3.12.x、仮想環境は `Tools/MediaPipeTracker/.venv`、中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build`、`.pyc` を作らない設定）
 - 送信形式: 1 フレーム 1 パケットの UTF-8 JSON（プロトコル番号 `v`、顔の変換行列 4×4、BlendShape 51 種、腕 6 点と可視度、本人の左手・右手 21 点）。
@@ -253,13 +256,40 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 - MediaPipe での頭の向き・まばたき（左右）・口・視線の向き（BlendShape の左右が本人基準であること）
 - CPU 負荷とフレームレート（腕・手 OFF で手の推定が止まること）
 
+確認結果: 同梱 MediaPipe トラッカー（`build.bat` で exe 化）の自動起動・顔・腕・手の追従を確認（良好）。
+視線（左右・上下）・左右別ウインク・両目を閉じたときの視線の保持を、Mirror ON/OFF の両方で確認。
+
 ## Milestone 6 — OSC
 
 OSC 受信・送信、Parameter Mapping（Milestone 3 から移した Animator Parameter を含む）。OSC 無効でも基本表示は動作すること。
 
+見送り: 現時点で用途が無いため実装しない。GitHub の Issue 等で要望があれば、用途（外部からの表情切替・小物トグル・
+VMC プロトコルの受信 / 送信）を決めて着手する。
+
 ## Milestone 7 — Avatar Conversion Pipeline
 
 VRChat SDK コンポーネント（Descriptor, PhysBone, Constraint 等）を `metadata/*.json` へ変換。
+Descriptor（Milestone 3）・PhysBone（Milestone 4）は対応済みのため、ここでは Constraint を扱う。
+
+- Converter `ConstraintExtractor`: VRC Constraint（リフレクション、SDK 非依存）と Unity 標準の Position / Rotation / Scale /
+  Parent / Aim / LookAt Constraint を `metadata/constraints.json` に書き出す（重み・軸・静止値・オフセット・ソース・Aim の上方向・
+  Solve In Local Space）。アバター外を指すソース・範囲外の値を含む Constraint は除外。Freeze To World は対象外。
+  リフレクションの共通処理（bool / Vector3 フィールド、相対パス）は `ReflectionUtility` に集約
+- Runtime `Dynamics/`
+  - `ConstraintEvaluator`: 1 Constraint の評価。ソースの重み付き平均（回転は半球を揃えた四元数平均）→ 親空間へ変換 →
+    オフセット → 静止値から weight ぶん寄せる → 影響しない軸は現在値を保つ。Parent はソースのローカル空間のオフセット、
+    Aim は「aimAxis → ソース方向、upAxis → 上方向」の回転、LookAt は Z 軸をソースへ向けて roll
+  - `ConstraintSolver`: トラッキング適用後・揺れもの計算前（実行順 -50）に毎フレーム評価。他の Constraint のターゲット
+    （またはその子孫）を参照するものを後に並べる（循環は打ち切り）。アバタールート自身は動かさない
+- 書き出し画面の結果表示に Constraint 数を追加
+
+確認項目:
+
+- Constraint で手・頭に追従する小物が、腕・頭のトラッキングに合わせて動くこと
+- 書き出し結果の Constraints 数と Runtime ログ（`Resolved n/m constraints`）が一致すること
+- 揺れものの付いた小物が Constraint の移動に合わせて揺れること
+
+既知の制限: Constraint のソースが揺れものボーンの場合は 1 フレーム遅れる（Constraint を揺れものより先に評価するため）。
 
 ## Milestone 8 — Advanced Output
 

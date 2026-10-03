@@ -26,6 +26,10 @@ import time
 # 実行時に __pycache__ を作らない
 sys.dont_write_bytecode = True
 
+# OpenCV の OpenCL を使わず、カーネルのキャッシュ（%TEMP%\opencv\...）も書かせない（cv2 の import 前に設定する）
+os.environ["OPENCV_OPENCL_DEVICE"] = "disabled"
+os.environ["OPENCV_OPENCL_CACHE_ENABLE"] = "0"
+
 import cv2  # noqa: E402
 import mediapipe as mp  # noqa: E402
 from mediapipe.tasks.python import BaseOptions  # noqa: E402
@@ -92,7 +96,43 @@ def parse_arguments():
     parser.add_argument("--fps", type=int, default=DEFAULT_FPS)
     # 手の推定を止める（腕・手を使わないときの CPU 負荷軽減）
     parser.add_argument("--no-hands", action="store_true")
+    # 親プロセス（VRCast）の PID。終了したらトラッカーも終了する
+    parser.add_argument("--parent-pid", type=int, default=0)
     return parser.parse_args()
+
+
+class ParentWatch:
+    """親プロセスの終了を検出する（VRCast が異常終了してもトラッカーを残さない）。
+
+    プロセスハンドルを保持して待つため、PID が再利用されても誤判定しない。
+    """
+
+    # OpenProcess のアクセス権と WaitForSingleObject の戻り値
+    SYNCHRONIZE = 0x00100000
+    WAIT_TIMEOUT = 0x00000102
+
+    def __init__(self, pid):
+        """pid のプロセスを開く（開けなければ既に終了しているとみなす）。"""
+        import ctypes
+
+        self._kernel32 = ctypes.windll.kernel32
+        self._handle = self._kernel32.OpenProcess(
+            self.SYNCHRONIZE, False, pid)
+
+    def alive(self):
+        """親プロセスが動作中なら True。"""
+        # 開けなかった親は終了済み
+        if not self._handle:
+            return False
+        # 待たずに状態だけ確認（タイムアウト = まだ動作中）
+        return (self._kernel32.WaitForSingleObject(self._handle, 0)
+                == self.WAIT_TIMEOUT)
+
+    def close(self):
+        """プロセスハンドルを閉じる。"""
+        if self._handle:
+            self._kernel32.CloseHandle(self._handle)
+            self._handle = None
 
 
 def configure_output():
@@ -306,6 +346,13 @@ def run(arguments):
         print(f"Failed to open camera {arguments.capture}", file=sys.stderr)
         return 1
 
+    # OpenCV の OpenCL（T-API）を明示的に無効化
+    cv2.ocl.setUseOpenCL(False)
+
+    # 親プロセスの指定があれば監視する（手動実行時は監視しない）
+    watch = (ParentWatch(arguments.parent_pid)
+             if arguments.parent_pid > 0 else None)
+
     face, pose, hands = create_landmarkers(not arguments.no_hands)
     sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     target = (arguments.ip, arguments.port)
@@ -317,6 +364,11 @@ def run(arguments):
     last_timestamp = -1
     try:
         while True:
+            # 親プロセスが終了していればカメラを解放して終了
+            if watch is not None and not watch.alive():
+                print("Parent process exited", file=sys.stderr)
+                return 0
+
             ok, frame = capture.read()
             # 読めないフレームが続いたらカメラ切断とみなして終了
             if not ok:
@@ -351,9 +403,11 @@ def run(arguments):
                 # 受信側が未起動などの送信エラーは無視して続ける
                 pass
     finally:
-        # カメラ・推定器・ソケットを解放
+        # カメラ・推定器・ソケット・監視ハンドルを解放
         capture.release()
         sender.close()
+        if watch is not None:
+            watch.close()
         for landmarker in (face, pose, hands):
             if landmarker is not None:
                 landmarker.close()

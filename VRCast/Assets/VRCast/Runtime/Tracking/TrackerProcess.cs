@@ -29,6 +29,9 @@ namespace VRCast.Tracking
         // MediaPipe 版で手の推定を止める引数（腕・手を使わないときの CPU 負荷軽減）
         private const string NoHandsArgument = " --no-hands";
 
+        // MediaPipe 版に親プロセス（VRCast）の PID を渡す引数（親の終了を検出して自分も終了する）
+        private const string ParentPidArgument = " --parent-pid ";
+
         // 一覧の 1 行（"0: カメラ名"）
         private static readonly Regex CameraLine = new Regex(@"^\s*(\d+)\s*:\s*(.+?)\s*$");
 
@@ -42,6 +45,7 @@ namespace VRCast.Tracking
         private readonly Dictionary<TrackingSource, string> _bundledPaths = new Dictionary<TrackingSource, string>();
 
         private AppSettings _settings;
+        private int _ownProcessId;
         private Process _process;
         private int _startedPort;
         private string _startedCamera;
@@ -72,6 +76,12 @@ namespace VRCast.Tracking
         public void Initialize(AppSettings settings)
         {
             _settings = settings;
+
+            // トラッカーへ渡す自分の PID（起動ごとに取得しないよう保持）
+            using (Process current = Process.GetCurrentProcess())
+            {
+                _ownProcessId = current.Id;
+            }
 
             // 全入力元の同梱版を探しておく
             foreach (TrackingSource source in (TrackingSource[])Enum.GetValues(typeof(TrackingSource)))
@@ -267,6 +277,12 @@ namespace VRCast.Tracking
                 if (mediaPipe && !_startedHands)
                 {
                     arguments += NoHandsArgument;
+                }
+
+                // MediaPipe 版には自分の PID を渡し、VRCast が異常終了してもトラッカー（とカメラ）を残さない
+                if (mediaPipe)
+                {
+                    arguments += ParentPidArgument + _ownProcessId;
                 }
 
                 var process = new Process { StartInfo = CreateStartInfo(path, arguments, mediaPipe) };

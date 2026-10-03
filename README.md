@@ -35,8 +35,9 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 自動まばたき（ON/OFF）・マイク音量リップシンク | 済 |
 | 揺れもの（PhysBone 近似・コライダー） | 済 |
 | カメラトラッキング（OpenSeeFace 同梱: 頭の向き・上半身の傾き・まばたき・口） | 済 |
-| 視線（目ボーン）・左右別ウインク | 済（要確認） |
-| MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 実装済（要確認） |
+| 視線（目ボーン）・左右別ウインク | 済 |
+| MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 済 |
+| Constraint（VRC / Unity 標準の Position・Rotation・Scale・Parent・Aim・LookAt） | 済 |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
 
@@ -67,6 +68,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
   Eyelids 未設定の場合は顔メッシュの `まばたき` / `blink` / `eyeBlinkLeft`+`eyeBlinkRight` 等をまばたき用として推定する。
   ウインク用 BlendShape（`ウィンク`+`ウィンク右`、`wink_L`+`wink_R` 等）も推定して書き出す。
 - PhysBone / PhysBone Collider の主要パラメーターを `metadata/physbones.json` に書き出す（Runtime で近似的に揺らす）。
+- VRC Constraint と Unity 標準の Constraint を `metadata/constraints.json` に書き出す（Runtime で毎フレーム評価。手に持たせた小物等が追従する）。
+  アバター外を指すソースと Freeze To World は対象外。
 - 書き出し先は Windows スタンドアロン用 AssetBundle。Android (Quest) ビルドターゲットのプロジェクトでは切替に時間がかかる。
 
 ### 2. VRCast.exe で表示する
@@ -107,7 +110,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 ```powershell
 # カメラ番号とデバイス名の確認
 .\vrcast_tracker.exe -l 1
-# カメラ 0 を 127.0.0.1:11573 へ送信（--no-hands で手の推定を止める）
+# カメラ 0 を 127.0.0.1:11573 へ送信（--no-hands で手の推定を止める、--parent-pid <PID> でそのプロセスの終了時に自動終了）
 .\vrcast_tracker.exe -c 0 -i 127.0.0.1 -p 11573
 ```
 
@@ -181,7 +184,14 @@ powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 または `Tools\MediaPipeTracker\build.bat` をダブルクリック（Python 3.12.x を指定して上と同じ処理を行う。3.12 が無ければその旨を表示して終了）。
 
 - 仮想環境は `Tools\MediaPipeTracker\.venv`（`.gitignore` 済み）に作られる。別バージョンで作られていた場合は作り直す。
-- PyInstaller の中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build` に置く（`.pyc` は作らない設定）。
+- PyInstaller の中間ファイル・キャッシュは `%LOCALAPPDATA%\VRCast\tracker-build` に置き、完了後に削除する（`.pyc` は作らない設定、pip のキャッシュも残さない）。
+
+キャッシュ・一時ファイルが溜まらないようにしている点:
+
+- exe はフォルダ形式（単一ファイル形式は起動のたびに `%TEMP%\_MEIxxxx` へ展開し、強制終了で残り続けるため使わない）。
+- OpenCV の OpenCL を無効化し、カーネルのキャッシュ（`%TEMP%\opencv\...`）を書かせない。
+- トラッカーの出力は VRCast が読み捨て（最後の 1 行だけ保持）、ログファイルは作らない。
+- VRCast が異常終了してもトラッカーが自分で終了する（`--parent-pid`）。カメラを掴んだまま残らない。
 - 出力（`vrcast_tracker.exe` 一式とモデル 3 種）は `VRCast/Assets/StreamingAssets/MediaPipeTracker/` に置かれ、Unity が StreamingAssets ごとビルドへ同梱する。
 - 実行ファイルは `MediaPipeTracker/` 以下を再帰的に探す。見つからない場合もビルドは続行し、警告ログを出す。
 - 配布時は MediaPipe（Apache-2.0）と同梱ライブラリのライセンス表記を含めること。

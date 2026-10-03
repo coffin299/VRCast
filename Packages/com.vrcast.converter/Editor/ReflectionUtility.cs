@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Reflection;
+using UnityEditor;
 using UnityEngine;
 
 namespace VRCast.Converter.Editor
@@ -33,6 +34,30 @@ namespace VRCast.Converter.Editor
         public static float GetFloat(object target, string fieldName, float fallback)
         {
             return GetField(target, fieldName) is float value ? value : fallback;
+        }
+
+        /// <summary>
+        /// bool フィールドを返す。無ければ既定値。
+        /// </summary>
+        public static bool GetBool(object target, string fieldName, bool fallback)
+        {
+            return GetField(target, fieldName) is bool value ? value : fallback;
+        }
+
+        /// <summary>
+        /// Vector3 フィールドを返す。無ければ既定値。
+        /// </summary>
+        public static Vector3 GetVector3(object target, string fieldName, Vector3 fallback)
+        {
+            return GetField(target, fieldName) is Vector3 value ? value : fallback;
+        }
+
+        /// <summary>
+        /// アバタールートからの相対パス（ルート自身は空）。メタデータの Transform 参照に使う。
+        /// </summary>
+        public static string PathOf(Transform target, Transform root)
+        {
+            return AnimationUtility.CalculateTransformPath(target, root);
         }
 
         /// <summary>

@@ -123,6 +123,9 @@ namespace VRCast.App
             // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);
 
+            // Constraint（揺れものの静止姿勢に反映されるよう先に初期化）
+            avatar.Instance.AddComponent<ConstraintSolver>().Initialize(avatar.Constraints);
+
             // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化）
             avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);
 
