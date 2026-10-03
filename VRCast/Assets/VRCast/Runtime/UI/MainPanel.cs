@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VRCast.Animations;
 using VRCast.Audio;
 using VRCast.Avatars;
 using VRCast.Cameras;
