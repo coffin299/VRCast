@@ -35,6 +35,9 @@ namespace VRCast.Dynamics
             public bool Fixed;
             public bool RotationLocked;
 
+            // 複数子 Ignore の子はチェーンの起点として位置を固定（回転は子の方向へ向ける）
+            public bool Anchored;
+
             // root からの段数（チェーン沿いのカーブ評価用）
             public int Depth;
 
@@ -132,7 +135,7 @@ namespace VRCast.Dynamics
 
             // 階層を粒子に展開
             var chain = new PhysBoneChain(data, colliders);
-            chain.AddRecursive(root, -1, ignored, humanBones, maxParticles);
+            chain.AddRecursive(root, -1, false, ignored, humanBones, maxParticles);
 
             // root だけでは揺れるものが無い
             if (chain._particles.Count < 2)
@@ -146,7 +149,8 @@ namespace VRCast.Dynamics
         }
 
         private void AddRecursive(
-            Transform transform, int parent, HashSet<Transform> ignored, HashSet<Transform> humanBones, int maxParticles)
+            Transform transform, int parent, bool anchored, HashSet<Transform> ignored, HashSet<Transform> humanBones,
+            int maxParticles)
         {
             // 粒子数の上限
             if (_particles.Count >= maxParticles)
@@ -162,6 +166,7 @@ namespace VRCast.Dynamics
                 RestLocalPosition = transform.localPosition,
                 RestLocalRotation = transform.localRotation,
                 Fixed = humanBones.Contains(transform),
+                Anchored = anchored,
             });
 
             // 除外されていない子
@@ -174,14 +179,14 @@ namespace VRCast.Dynamics
                 }
             }
 
-            // 複数の子を持つ Ignore 設定の Transform は回転させない
+            // 複数の子を持つ Ignore 設定の Transform は回転させず、子を新しいチェーンの起点にする
             Particle particle = _particles[index];
-            particle.RotationLocked = particle.Fixed
-                || (children.Count > 1 && _data.multiChildType == PhysBoneData.MultiChildIgnore);
+            bool ignoreMultiChild = children.Count > 1 && _data.multiChildType == PhysBoneData.MultiChildIgnore;
+            particle.RotationLocked = particle.Fixed || ignoreMultiChild;
 
             foreach (Transform child in children)
             {
-                AddRecursive(child, index, ignored, humanBones, maxParticles);
+                AddRecursive(child, index, ignoreMultiChild, ignored, humanBones, maxParticles);
             }
 
             // 末端には endpointPosition の仮想粒子を付けて末端ボーンも回転させる
@@ -283,8 +288,8 @@ namespace VRCast.Dynamics
                 Vector3 restVector = particle.RestPosition - parent.RestPosition;
                 Vector3 target = parent.Position + restVector;
 
-                // 固定粒子は目標へそのまま追従
-                if (particle.Fixed)
+                // 固定粒子・チェーン起点は目標（静止位置）へそのまま追従
+                if (particle.Fixed || particle.Anchored)
                 {
                     particle.Position = target;
                     particle.PreviousPosition = target;
