@@ -1,0 +1,40 @@
+# Unity generated
+/VRCast/[Ll]ibrary/
+/VRCast/[Tt]emp/
+/VRCast/[Oo]bj/
+/VRCast/[Ll]ogs/
+/VRCast/[Uu]ser[Ss]ettings/
+/VRCast/[Mm]emoryCaptures/
+/VRCast/[Rr]ecordings/
+/VRCast/[Bb]uild/
+/VRCast/[Bb]uilds/
+
+# IDE / solution files
+/VRCast/.vs/
+/VRCast/.vscode/
+/VRCast/.idea/
+/VRCast/*.csproj
+/VRCast/*.sln
+/VRCast/*.slnx
+/VRCast/*.user
+/VRCast/*.pidb
+/VRCast/*.booproj
+/VRCast/*.svd
+/VRCast/*.pdb
+/VRCast/*.mdb
+/VRCast/*.opendb
+/VRCast/*.VC.db
+
+# Unity crash / debug artifacts
+sysinfo.txt
+crashlytics-buildsettings.json
+*.apk
+*.aab
+*.unitypackage
+
+# Avatar packages (test output, may contain third-party assets)
+*.vavatar
+
+# OS
+.DS_Store
+Thumbs.db

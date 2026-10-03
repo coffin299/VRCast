@@ -1,0 +1,24 @@
+* text=auto
+
+# Unity YAML assets: keep LF and let Git merge as text
+*.unity     text eol=lf
+*.prefab    text eol=lf
+*.asset     text eol=lf
+*.meta      text eol=lf
+*.mat       text eol=lf
+*.anim      text eol=lf
+*.controller text eol=lf
+*.asmdef    text eol=lf
+*.json      text eol=lf
+*.cs        text eol=lf diff=csharp
+*.md        text eol=lf
+
+# Binary assets
+*.png  binary
+*.jpg  binary
+*.psd  binary
+*.fbx  binary
+*.dll  binary
+*.exe  binary
+*.bundle binary
+*.vavatar binary
