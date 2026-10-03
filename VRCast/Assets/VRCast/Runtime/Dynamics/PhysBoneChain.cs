@@ -35,6 +35,18 @@ namespace VRCast.Dynamics
             public bool Fixed;
             public bool RotationLocked;
 
+            // root からの段数（チェーン沿いのカーブ評価用）
+            public int Depth;
+
+            // カーブ適用済みのパラメーター
+            public float Pull;
+            public float Momentum;
+            public float Stiffness;
+            public float Gravity;
+            public float Immobile;
+            public float Radius;
+            public float MaxAngle;
+
             // シミュレーション状態と、フレーム開始時の静止姿勢でのワールド位置
             public Vector3 Position;
             public Vector3 PreviousPosition;
@@ -44,20 +56,43 @@ namespace VRCast.Dynamics
         private readonly List<Particle> _particles = new List<Particle>();
         private readonly PhysBoneData _data;
         private readonly List<PhysBoneCollider> _colliders;
-        private readonly float _momentum;
-        private readonly float _radius;
         private Vector3 _lastRootPosition;
 
         public int ParticleCount => _particles.Count;
 
-        private PhysBoneChain(PhysBoneData data, List<PhysBoneCollider> colliders, float radius)
+        private PhysBoneChain(PhysBoneData data, List<PhysBoneCollider> colliders)
         {
             _data = data;
             _colliders = colliders;
-            _radius = radius;
+        }
 
-            // spring が大きいほど速度を保って揺れ続ける
-            _momentum = Mathf.Lerp(MinMomentum, MaxMomentum, data.spring);
+        private void ResolveParameters(float scale)
+        {
+            // 最も深い粒子を 1 とした位置でカーブを評価する
+            int maxDepth = 0;
+            foreach (Particle particle in _particles)
+            {
+                maxDepth = Mathf.Max(maxDepth, particle.Depth);
+            }
+
+            foreach (Particle particle in _particles)
+            {
+                float t = maxDepth > 0 ? particle.Depth / (float)maxDepth : 0f;
+
+                // 基本値 × 倍率カーブ（0〜1 の量は範囲内に丸める）
+                particle.Pull = Mathf.Clamp01(_data.pull * PhysBoneData.EvaluateCurve(_data.pullCurve, t));
+                float spring = Mathf.Clamp01(_data.spring * PhysBoneData.EvaluateCurve(_data.springCurve, t));
+                particle.Stiffness = Mathf.Clamp01(_data.stiffness * PhysBoneData.EvaluateCurve(_data.stiffnessCurve, t));
+                particle.Gravity = Mathf.Clamp(_data.gravity * PhysBoneData.EvaluateCurve(_data.gravityCurve, t), -1f, 1f);
+                particle.Immobile = Mathf.Clamp01(_data.immobile * PhysBoneData.EvaluateCurve(_data.immobileCurve, t));
+                particle.MaxAngle = Mathf.Clamp(_data.maxAngle * PhysBoneData.EvaluateCurve(_data.maxAngleCurve, t), 0f, 180f);
+
+                // 半径は root のスケールで拡縮
+                particle.Radius = Mathf.Max(0f, _data.radius * PhysBoneData.EvaluateCurve(_data.radiusCurve, t)) * scale;
+
+                // spring が大きいほど速度を保って揺れ続ける
+                particle.Momentum = Mathf.Lerp(MinMomentum, MaxMomentum, spring);
+            }
         }
 
         /// <summary>
@@ -95,12 +130,19 @@ namespace VRCast.Dynamics
                 }
             }
 
-            // 階層を粒子に展開（半径は root のスケールに合わせる）
-            var chain = new PhysBoneChain(data, colliders, data.radius * Mathf.Abs(root.lossyScale.x));
+            // 階層を粒子に展開
+            var chain = new PhysBoneChain(data, colliders);
             chain.AddRecursive(root, -1, ignored, humanBones, maxParticles);
 
             // root だけでは揺れるものが無い
-            return chain._particles.Count >= 2 ? chain : null;
+            if (chain._particles.Count < 2)
+            {
+                return null;
+            }
+
+            // カーブを評価して粒子ごとのパラメーターを確定
+            chain.ResolveParameters(Mathf.Abs(root.lossyScale.x));
+            return chain;
         }
 
         private void AddRecursive(
@@ -151,12 +193,14 @@ namespace VRCast.Dynamics
 
         private int AddParticle(Particle particle)
         {
-            // 親の子リストへ登録（親は常に先に追加されている）
+            // 親の子リストへ登録し段数を決める（親は常に先に追加されている）
             int index = _particles.Count;
             _particles.Add(particle);
             if (particle.Parent >= 0)
             {
-                _particles[particle.Parent].Children.Add(index);
+                Particle parent = _particles[particle.Parent];
+                parent.Children.Add(index);
+                particle.Depth = parent.Depth + 1;
             }
 
             return index;
@@ -207,10 +251,11 @@ namespace VRCast.Dynamics
             }
 
             // root の移動量のうち immobile 分だけ粒子も一緒に動かす（1 = 遅れなし）
-            Vector3 delta = (_particles[0].RestPosition - _lastRootPosition) * _data.immobile;
+            Vector3 movement = _particles[0].RestPosition - _lastRootPosition;
             _lastRootPosition = _particles[0].RestPosition;
             for (int i = 1; i < _particles.Count; i++)
             {
+                Vector3 delta = movement * _particles[i].Immobile;
                 _particles[i].Position += delta;
                 _particles[i].PreviousPosition += delta;
             }
@@ -247,12 +292,12 @@ namespace VRCast.Dynamics
                 }
 
                 // 慣性（spring）と目標への引き戻し（pull）
-                Vector3 velocity = (particle.Position - particle.PreviousPosition) * _momentum;
-                velocity += (target - particle.Position) * (_data.pull * PullStrength);
+                Vector3 velocity = (particle.Position - particle.PreviousPosition) * particle.Momentum;
+                velocity += (target - particle.Position) * (particle.Pull * PullStrength);
 
                 // 重力。静止時に下を向いているほど gravityFalloff で弱める
                 float downness = Mathf.Max(0f, Vector3.Dot(restVector.normalized, Vector3.down));
-                float gravity = _data.gravity * (1f - _data.gravityFalloff * downness);
+                float gravity = particle.Gravity * (1f - _data.gravityFalloff * downness);
                 velocity += Vector3.down * (gravity * GravityAcceleration * dt * dt);
 
                 // 位置を更新
@@ -260,12 +305,12 @@ namespace VRCast.Dynamics
                 particle.Position += velocity;
 
                 // 形状の維持（stiffness）
-                particle.Position = Vector3.Lerp(particle.Position, target, _data.stiffness * StiffnessStrength);
+                particle.Position = Vector3.Lerp(particle.Position, target, particle.Stiffness * StiffnessStrength);
 
                 // 角度制限（静止方向からの円錐）
                 if (_data.limitType == PhysBoneData.LimitAngle)
                 {
-                    particle.Position = LimitAngle(parent.Position, particle.Position, restVector);
+                    particle.Position = LimitAngle(parent.Position, particle.Position, restVector, particle.MaxAngle);
                 }
 
                 // 長さ拘束 → ボーン線分とコライダーの衝突 → 再度長さ拘束（衝突で回転した結果を長さに戻す）
@@ -274,7 +319,7 @@ namespace VRCast.Dynamics
                 {
                     foreach (PhysBoneCollider collider in _colliders)
                     {
-                        collider.Collide(parent.Position, ref particle.Position, _radius);
+                        collider.Collide(parent.Position, ref particle.Position, particle.Radius);
                     }
 
                     KeepLength(particle, parent.Position, restVector, target);
@@ -291,18 +336,18 @@ namespace VRCast.Dynamics
                 : target;
         }
 
-        private Vector3 LimitAngle(Vector3 parentPosition, Vector3 position, Vector3 restVector)
+        private static Vector3 LimitAngle(Vector3 parentPosition, Vector3 position, Vector3 restVector, float maxAngle)
         {
             // 静止方向との角度が上限以内ならそのまま
             Vector3 direction = position - parentPosition;
             float angle = Vector3.Angle(restVector, direction);
-            if (angle <= _data.maxAngle || direction.sqrMagnitude < Epsilon)
+            if (angle <= maxAngle || direction.sqrMagnitude < Epsilon)
             {
                 return position;
             }
 
             // 静止方向から上限角だけ傾けた方向へ戻す
-            Vector3 limited = Vector3.Slerp(restVector.normalized, direction.normalized, _data.maxAngle / angle);
+            Vector3 limited = Vector3.Slerp(restVector.normalized, direction.normalized, maxAngle / angle);
             return parentPosition + limited * direction.magnitude;
         }
 

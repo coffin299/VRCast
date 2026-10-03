@@ -96,8 +96,71 @@ namespace VRCast.AvatarFormat
         public string limitType = LimitNone;
         public float maxAngle;
 
+        // チェーン沿い（root = 0 → 末端 = 1）の倍率カーブを等間隔サンプリングしたもの。空なら倍率 1
+        public float[] pullCurve = Array.Empty<float>();
+        public float[] springCurve = Array.Empty<float>();
+        public float[] stiffnessCurve = Array.Empty<float>();
+        public float[] gravityCurve = Array.Empty<float>();
+        public float[] immobileCurve = Array.Empty<float>();
+        public float[] radiusCurve = Array.Empty<float>();
+        public float[] maxAngleCurve = Array.Empty<float>();
+
+        // カーブのサンプル数上限と倍率の範囲
+        public const int MaxCurveSamples = 16;
+        public const float MaxCurveValue = 10f;
+
+        /// <summary>
+        /// サンプリング済みカーブを位置 t（0〜1）で線形補間する。空なら 1。
+        /// </summary>
+        public static float EvaluateCurve(float[] samples, float t)
+        {
+            // カーブ無し
+            if (samples == null || samples.Length == 0)
+            {
+                return 1f;
+            }
+
+            // 1 点なら定数
+            if (samples.Length == 1)
+            {
+                return samples[0];
+            }
+
+            // 隣接サンプル間で補間
+            float position = Mathf.Clamp01(t) * (samples.Length - 1);
+            int index = Mathf.Min((int)position, samples.Length - 2);
+            return Mathf.Lerp(samples[index], samples[index + 1], position - index);
+        }
+
+        private static bool IsValidCurve(float[] samples)
+        {
+            // 件数上限と各値の範囲
+            if (samples == null || samples.Length > MaxCurveSamples)
+            {
+                return false;
+            }
+
+            foreach (float value in samples)
+            {
+                if (!PhysBoneSet.InRange(value, -MaxCurveValue, MaxCurveValue))
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
         public string Validate(int colliderCount)
         {
+            // カーブ
+            if (!IsValidCurve(pullCurve) || !IsValidCurve(springCurve) || !IsValidCurve(stiffnessCurve)
+                || !IsValidCurve(gravityCurve) || !IsValidCurve(immobileCurve) || !IsValidCurve(radiusCurve)
+                || !IsValidCurve(maxAngleCurve))
+            {
+                return "PhysBone has an invalid curve.";
+            }
+
             // パス類
             if (!ExpressionSet.IsValidString(rootPath, true) || ignorePaths == null
                 || ignorePaths.Length > PhysBoneSet.MaxPathsPerBone)
