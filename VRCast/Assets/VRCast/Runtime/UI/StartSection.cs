@@ -155,10 +155,10 @@ namespace VRCast.UI
         {
             GuiControls.BeginStep(4, Loc.T("Hide this panel", "このパネルを隠す"), null);
             GuiControls.Hint(Loc.T(
-                "This panel also appears in OBS. Press the Tab key to hide it and make the whole window transparent "
-                + "(press again to show).",
-                "このパネルは OBS にも映ります。Tab キーでパネルを隠し、背景を含めてウィンドウ全体を透過します"
-                + "（もう一度押すと表示）。"));
+                "This panel also appears in OBS. Press the Tab key to hide it. While hidden, the background is "
+                + "transparent in OBS Game Capture even if transparency is off (press again to show).",
+                "このパネルは OBS にも映ります。Tab キーで隠せます。隠している間は透過が OFF でも"
+                + " OBS のゲームキャプチャでは背景が抜けます（もう一度押すと表示）。"));
             GuiControls.EndCard();
         }
 

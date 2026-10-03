@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using VRCast.Core;
-using VRCast.Platform;
 
 namespace VRCast.Rendering
 {
@@ -31,19 +30,17 @@ namespace VRCast.Rendering
         private UnityEngine.Camera _camera;
         private Light _light;
         private AppSettings _settings;
-        private bool _windowTransparent;
+        private bool _forceTransparent;
 
         /// <summary>
-        /// ウィンドウ自体を透過させる（パネルを隠している間。OBS のウィンドウキャプチャ向け）。
-        /// 設定の背景には関係なく、背景を透明な黒にしてデスクトップが見えるようにする。保存はしない。
+        /// 設定に関係なく背景を透過させる（パネルを隠している間）。保存はしない。
         /// </summary>
-        public bool WindowTransparent
+        public bool ForceTransparent
         {
-            get => _windowTransparent;
+            get => _forceTransparent;
             set
             {
-                _windowTransparent = value;
-                WindowTransparency.SetTransparent(value);
+                _forceTransparent = value;
                 ApplyBackground();
             }
         }
@@ -232,16 +229,9 @@ namespace VRCast.Rendering
             // スカイボックスは使わず常に単色クリア
             _camera.clearFlags = CameraClearFlags.SolidColor;
 
-            // ウィンドウ透過中は乗算済み alpha で合成されるため、色も含めて完全に透明にする
-            if (_windowTransparent)
-            {
-                _camera.backgroundColor = Color.clear;
-                return;
-            }
-
             // 透過時は色だけ塗って alpha 0（ウィンドウは alpha を無視して色を表示、ゲームキャプチャは alpha で抜く）
             Color color = _settings.backgroundColor;
-            color.a = _settings.transparentBackground ? 0f : 1f;
+            color.a = _settings.transparentBackground || _forceTransparent ? 0f : 1f;
             _camera.backgroundColor = color;
         }
 

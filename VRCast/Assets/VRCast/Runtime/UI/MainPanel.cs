@@ -16,7 +16,7 @@ namespace VRCast.UI
     /// <summary>
     /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンを常に表示する。
-    /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間はウィンドウごと透過）。
+    /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（日本語 / 英語）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
     /// </summary>
     public class MainPanel : MonoBehaviour
@@ -166,7 +166,7 @@ namespace VRCast.UI
                 return;
             }
 
-            // 表示切替（隠すとウィンドウごと透過）
+            // 表示切替（隠すと背景も透過）
             if (Input.GetKeyDown(ToggleKey))
             {
                 SetVisible(!_visible);
@@ -181,9 +181,9 @@ namespace VRCast.UI
 
         private void SetVisible(bool visible)
         {
-            // 隠している間は背景も含めてウィンドウを透過させ、表示に戻したら元の背景に戻す
+            // 隠している間は設定に関係なく背景を透過させ、表示に戻したら設定どおりに戻す
             _visible = visible;
-            _rendering.WindowTransparent = !visible;
+            _rendering.ForceTransparent = !visible;
         }
 
         private void OnGUI()
