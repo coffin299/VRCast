@@ -64,6 +64,13 @@ namespace VRCast.Dynamics
 
             VRCastLog.Info(LogCategory,
                 $"Built {_chains.Count}/{set.bones.Length} chains, {particles} particles, {_colliders.Count} colliders.");
+
+            // スケール起因の不具合を切り分けるため、ワールド空間でのコライダー寸法を記録
+            foreach (PhysBoneCollider collider in _colliders)
+            {
+                collider.UpdateWorld();
+                VRCastLog.Info(LogCategory, "Collider " + collider.Describe());
+            }
         }
 
         private static HashSet<Transform> CollectHumanBones(Animator animator)

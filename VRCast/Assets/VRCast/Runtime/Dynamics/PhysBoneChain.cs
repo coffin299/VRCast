@@ -262,24 +262,33 @@ namespace VRCast.Dynamics
                 // 形状の維持（stiffness）
                 particle.Position = Vector3.Lerp(particle.Position, target, _data.stiffness * StiffnessStrength);
 
-                // コライダーとの衝突
-                foreach (PhysBoneCollider collider in _colliders)
-                {
-                    collider.Collide(ref particle.Position, _radius);
-                }
-
                 // 角度制限（静止方向からの円錐）
                 if (_data.limitType == PhysBoneData.LimitAngle)
                 {
                     particle.Position = LimitAngle(parent.Position, particle.Position, restVector);
                 }
 
-                // 親からの距離を静止時の長さに保つ
-                Vector3 direction = particle.Position - parent.Position;
-                particle.Position = direction.sqrMagnitude > Epsilon
-                    ? parent.Position + direction.normalized * restVector.magnitude
-                    : target;
+                // 長さ拘束 → ボーン線分とコライダーの衝突 → 再度長さ拘束（衝突で回転した結果を長さに戻す）
+                KeepLength(particle, parent.Position, restVector, target);
+                if (_colliders.Count > 0)
+                {
+                    foreach (PhysBoneCollider collider in _colliders)
+                    {
+                        collider.Collide(parent.Position, ref particle.Position, _radius);
+                    }
+
+                    KeepLength(particle, parent.Position, restVector, target);
+                }
             }
+        }
+
+        private static void KeepLength(Particle particle, Vector3 parentPosition, Vector3 restVector, Vector3 target)
+        {
+            // 親からの距離を静止時の長さに保つ（方向が定まらなければ目標位置）
+            Vector3 direction = particle.Position - parentPosition;
+            particle.Position = direction.sqrMagnitude > Epsilon
+                ? parentPosition + direction.normalized * restVector.magnitude
+                : target;
         }
 
         private Vector3 LimitAngle(Vector3 parentPosition, Vector3 position, Vector3 restVector)

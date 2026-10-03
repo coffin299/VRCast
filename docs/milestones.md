@@ -155,7 +155,9 @@ PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider
   - `PhysBoneSimulator`: 60Hz 固定ステップ（1 フレーム最大 3 ステップ）、アバター 1 体 4096 粒子まで
   - `PhysBoneChain`: 毎フレーム静止回転へ戻して静止位置を求め、Verlet（慣性 = spring、引き戻し = pull、形状維持 = stiffness、
     重力 = gravity × falloff）→ コライダー → 角度制限 → 長さ拘束、最後に親から順に子粒子方向へ回転
-  - `PhysBoneCollider`: 球・カプセル・平面（insideBounds 対応）
+  - `PhysBoneCollider`: 球・カプセル・平面（insideBounds 対応）。粒子の点ではなく**ボーン線分（半径付き）**と
+    コライダー芯の最近接点で判定し、めり込み量をてこ比（1/接触位置）で子粒子へ伝える（ボーン数の少ないスカートのすり抜け対策）。
+    起動時にワールド寸法をログ出力
   - Humanoid ボーンは揺らさない（待機ポーズ・トラッキングと競合させない）
 - UI: Face / Physics セクションに PhysBone ON/OFF（チェーン数表示、設定は保存）
 - 確認用に Pose へ Body yaw（アバタールートの向き、`AppSettings.avatarYaw`）を追加。トラッキング導入前は体を回したときの揺れで確認する
