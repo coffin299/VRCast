@@ -12,8 +12,11 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     pose        体が映っているか
     arms        左肩・右肩・左肘・右肘・左手首・右手首の world 座標（m）
     visibility  arms の各点の可視度
-    leftHand    本人の左手 21 点の world 座標（映っていなければ空）
-    rightHand   本人の右手 21 点の world 座標（映っていなければ空）
+    leftHand    左手 21 点の world 座標（映っていなければ空）
+    rightHand   右手 21 点の world 座標（映っていなければ空）
+
+左右と world 座標の x は MediaPipe の出力どおり（本人の左右とは逆の鏡像基準）。
+本人基準への変換は VRCast 側で行う。
 """
 
 import argparse
@@ -272,17 +275,16 @@ def distance(a, b):
 
 
 def side_from_label(handedness):
-    """手の左右ラベルから本人の左右を返す。
+    """手の左右ラベルから送信キーを返す。
 
-    MediaPipe は鏡像（自撮り）入力を前提にラベルを付けるため、反転しない
-    カメラ映像では逆になる。
+    手のラベルも体のラベルと同じ鏡像基準のため、そのまま対応させる。
     """
     label = handedness[0].category_name if handedness else "Left"
-    return "rightHand" if label == "Left" else "leftHand"
+    return "leftHand" if label == "Left" else "rightHand"
 
 
 def assign_hands(hand_result, pose_result):
-    """検出した手を本人の左手・右手へ割り当てる。
+    """検出した手を体のラベルと同じ基準の左手・右手へ割り当てる。
 
     体が映っていれば手首の位置が近い方、映っていなければ左右ラベルで決める。
     """

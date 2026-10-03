@@ -240,11 +240,13 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
   カメラ名は DirectShow（pygrabber）で取得し、UTF-8 で出力。`build.ps1`（ダブルクリック用の `build.bat` から呼び出し可）で exe 化し、モデル 3 種と一緒に `StreamingAssets/MediaPipeTracker/` へ配置
   （Python 3.12.x、仮想環境は `Tools/MediaPipeTracker/.venv`、中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build`、`.pyc` を作らない設定）
 - 送信形式: 1 フレーム 1 パケットの UTF-8 JSON（プロトコル番号 `v`、顔の変換行列 4×4、BlendShape 51 種、腕 6 点と可視度、本人の左手・右手 21 点）。
-  手の左右は体の手首に近い方で決め、体が映っていなければ左右ラベル（非鏡像入力では逆になる）で決める
+  手の左右は体の手首に近い方で決め、体が映っていなければ手の左右ラベル（体のラベルと同じ鏡像基準）で決める
 - Runtime:
   - `MediaPipePacket`: 頭の回転 `(x, -y, -z, w)`・位置 `(x, y, -z)`（cm → dm）、`eyeBlink*` → 目の開き（左右は映像基準のため入れ替え）、`jawOpen` → 口、
-    `eyeLook*` → 視線（1.0 = 30°）、腕・手の点は `(-x, -y, z)`（world 座標の x は映像の左向き）。壊れた部分（顔・腕・手）だけを無効にする
-  - 修正: 当初は腕・手の x を反転しておらず、Mirror ON で本人の右腕がアバターの左腕として体を横切り、ウインクも左右逆だった
+    `eyeLook*` → 視線（1.0 = 30°）、腕・手の点は `(-x, -y, z)`（world 座標の x は映像の左向き）。
+    腕・手の左右ラベルも鏡像基準のため入れ替えて本人の左右にする。壊れた部分（顔・腕・手）だけを無効にする
+  - 修正: 当初は腕・手の左右と x、まばたきの左右を MediaPipe の出力どおり本人基準として扱っており、Mirror ON でも鏡像にならなかった。
+    トラッカーは MediaPipe の左右のまま送り（体が映っていないときの手のラベルも同じ基準）、変換は `MediaPipePacket` に集約
   - `TrackingReceiver`（旧 `OpenSeeFaceReceiver`）: 入力元に合わせて解析を切替。顔と腕手の途絶は別々に判定
   - `TrackerProcess`（旧 `FaceTrackerProcess`）: 入力元ごとの同梱版、入力元・手の ON/OFF の変更で一覧取得・再起動
   - `HandTrackingDriver`: 上腕 → 前腕 → 手首（手首 → 中指の付け根と、小指 → 人差し指の付け根で決まる向き）→ 指 15 節の順に、

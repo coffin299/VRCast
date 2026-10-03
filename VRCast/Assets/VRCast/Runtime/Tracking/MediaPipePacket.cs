@@ -32,7 +32,7 @@ namespace VRCast.Tracking
             "mouthUpperUpLeft", "mouthUpperUpRight", "noseSneerLeft", "noseSneerRight",
         };
 
-        // 腕の点の数と並び（左肩・右肩・左肘・右肘・左手首・右手首）
+        // 腕の点の数と並び（MediaPipe ラベルの左肩・右肩・左肘・右肘・左手首・右手首。本人の左右とは逆）
         public const int ArmPointCount = 6;
         public const int LeftShoulder = 0;
         public const int RightShoulder = 1;
@@ -158,8 +158,9 @@ namespace VRCast.Tracking
                 ReadArms(message.arms, message.visibility, ref body);
             }
 
-            body.Left.Hand = ReadHand(message.leftHand);
-            body.Right.Hand = ReadHand(message.rightHand);
+            // 手の左右は体のラベルに合わせて送られてくるため、腕と同じく入れ替える
+            body.Left.Hand = ReadHand(message.rightHand);
+            body.Right.Hand = ReadHand(message.leftHand);
             return true;
         }
 
@@ -216,9 +217,9 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 本人の左腕・右腕
-            body.Left = ReadArm(points, visibility, LeftShoulder, LeftElbow, LeftWrist);
-            body.Right = ReadArm(points, visibility, RightShoulder, RightElbow, RightWrist);
+            // MediaPipe の左右ラベルは映像上の左右（本人とは逆）なので、入れ替えて本人の左腕・右腕にする
+            body.Left = ReadArm(points, visibility, RightShoulder, RightElbow, RightWrist);
+            body.Right = ReadArm(points, visibility, LeftShoulder, LeftElbow, LeftWrist);
         }
 
         private static ArmTrackingData ReadArm(float[] points, float[] visibility, int shoulder, int elbow, int wrist)
