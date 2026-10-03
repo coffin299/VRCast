@@ -36,7 +36,7 @@ namespace VRCast.UI
 
         public void Initialize(
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
-            MicrophoneInput microphone, IFaceTrackingProvider tracker, FaceTrackerProcess trackerProcess,
+            MicrophoneInput microphone, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
             AppSettings settings, string initialPath)
         {
             // 依存の受け取りと入力欄の初期値設定

@@ -9,9 +9,18 @@
 /VRCast/[Bb]uild/
 /VRCast/[Bb]uilds/
 
-# Bundled third-party binaries (OpenSeeFace; copied in locally, shipped in builds)
+# Bundled tracker binaries (OpenSeeFace / MediaPipe tracker; built or copied in locally, shipped in builds)
 /VRCast/Assets/StreamingAssets/OpenSeeFace/
 /VRCast/Assets/StreamingAssets/OpenSeeFace.meta
+/VRCast/Assets/StreamingAssets/MediaPipeTracker/
+/VRCast/Assets/StreamingAssets/MediaPipeTracker.meta
+
+# Python (MediaPipe tracker tool)
+__pycache__/
+*.pyc
+/Tools/MediaPipeTracker/build/
+/Tools/MediaPipeTracker/dist/
+/Tools/MediaPipeTracker/*.spec
 
 # IDE / solution files
 /VRCast/.vs/

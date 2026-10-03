@@ -133,5 +133,15 @@ namespace VRCast.Tests
             Assert.That(settings.trackingBodyLean, Is.EqualTo(AppSettings.MaxTrackingBodyLean));
             Assert.That(settings.trackingGaze, Is.EqualTo(0f));
         }
+
+        [Test]
+        public void Load_UnknownTrackingSource_FallsBackToMediaPipe()
+        {
+            _store.Save(new AppSettings { trackingSource = (TrackingSource)99 });
+
+            // 未知の入力元は既定の MediaPipe へ補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.trackingSource, Is.EqualTo(TrackingSource.MediaPipe));
+        }
     }
 }
