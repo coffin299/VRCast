@@ -209,4 +209,4 @@ powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 
 ## License
 
-[MIT](LICENSE)
+[Apache License 2.0](LICENSE)
