@@ -18,9 +18,6 @@ namespace VRCast.Platform
         // ログのカテゴリ名
         private const string LogCategory = "FileDrop";
 
-        // Unity のプレイヤーウィンドウのクラス名
-        private const string UnityWindowClass = "UnityWndClass";
-
         // Win32 定数（フック種別・処理対象・取り出し済みメッセージ・ドロップ通知・件数取得・パス長）
         private const int WhGetMessage = 3;
         private const int HcAction = 0;
@@ -32,17 +29,11 @@ namespace VRCast.Platform
 
         private delegate IntPtr HookProc(int code, IntPtr wParam, IntPtr lParam);
 
-        private delegate bool EnumWindowsProc(IntPtr window, IntPtr lParam);
-
         // ネイティブ側から呼ばれるコールバック（GC で回収されないよう静的に保持）
         private static readonly HookProc HookCallback = OnHook;
-        private static readonly EnumWindowsProc EnumCallback = OnEnumWindow;
 
         // フックから Update へ渡すドロップ済みパス（メインスレッドのみで使う）
         private static readonly List<string> Pending = new List<string>();
-
-        // ウィンドウ検索の結果
-        private static IntPtr _foundWindow;
 
         private IntPtr _window;
         private IntPtr _hook;
@@ -65,15 +56,6 @@ namespace VRCast.Platform
 
         [DllImport("user32.dll")]
         private static extern IntPtr CallNextHookEx(IntPtr hook, int code, IntPtr wParam, IntPtr lParam);
-
-        [DllImport("user32.dll")]
-        private static extern bool EnumThreadWindows(uint threadId, EnumWindowsProc callback, IntPtr lParam);
-
-        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
-        private static extern int GetClassNameW(IntPtr window, StringBuilder name, int maxCount);
-
-        [DllImport("kernel32.dll")]
-        private static extern uint GetCurrentThreadId();
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         private static extern IntPtr GetModuleHandleW(string moduleName);
@@ -116,10 +98,8 @@ namespace VRCast.Platform
         private void Register()
         {
             // メインスレッド（ウィンドウのメッセージを処理するスレッド）の Unity ウィンドウを探す
-            uint threadId = GetCurrentThreadId();
-            _foundWindow = IntPtr.Zero;
-            EnumThreadWindows(threadId, EnumCallback, IntPtr.Zero);
-            _window = _foundWindow;
+            uint threadId = UnityWindow.CurrentThreadId;
+            _window = UnityWindow.Find();
             if (_window == IntPtr.Zero)
             {
                 VRCastLog.Warning(LogCategory, "Unity window not found. Drag and drop is disabled.");
@@ -150,21 +130,6 @@ namespace VRCast.Platform
                 DragAcceptFiles(_window, false);
                 _window = IntPtr.Zero;
             }
-        }
-
-        [MonoPInvokeCallback(typeof(EnumWindowsProc))]
-        private static bool OnEnumWindow(IntPtr window, IntPtr lParam)
-        {
-            // Unity のウィンドウクラスなら記録して列挙を終える
-            var name = new StringBuilder(64);
-            GetClassNameW(window, name, name.Capacity);
-            if (name.ToString() == UnityWindowClass)
-            {
-                _foundWindow = window;
-                return false;
-            }
-
-            return true;
         }
 
         [MonoPInvokeCallback(typeof(HookProc))]

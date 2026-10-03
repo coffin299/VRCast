@@ -65,6 +65,7 @@ namespace VRCast.UI
         public GUIStyle Title { get; private set; }
         public GUIStyle SectionTitle { get; private set; }
         public GUIStyle Hint { get; private set; }
+        public GUIStyle KeyHint { get; private set; }
         public GUIStyle Value { get; private set; }
         public GUIStyle Centered { get; private set; }
         public GUIStyle Card { get; private set; }
@@ -158,6 +159,16 @@ namespace VRCast.UI
             SectionTitle.margin.bottom = 6;
             Hint = new GUIStyle(Skin.label) { fontSize = 12 };
             Hint.normal.textColor = TextDim;
+
+            // 見出し行のキー操作の案内（目立つようアクセント色の太字）
+            KeyHint = new GUIStyle(Skin.label)
+            {
+                fontSize = 15,
+                fontStyle = FontStyle.Bold,
+                wordWrap = false,
+                alignment = TextAnchor.MiddleRight,
+            };
+            KeyHint.normal.textColor = Accent;
             Value = new GUIStyle(Hint) { alignment = TextAnchor.MiddleRight, wordWrap = false };
             Centered = new GUIStyle(Skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = false };
             Success = new GUIStyle(Skin.label) { fontStyle = FontStyle.Bold, wordWrap = false };

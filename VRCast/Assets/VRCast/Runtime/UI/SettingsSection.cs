@@ -129,7 +129,9 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("About", "このアプリについて"));
             GuiControls.Hint($"VRCast {Application.version}");
-            GuiControls.Hint(Loc.T("Tab key: show / hide this panel", "Tab キー: このパネルの表示 / 非表示"));
+            GuiControls.Hint(Loc.T(
+                "Tab key: show / hide this panel (the window turns transparent while hidden)",
+                "Tab キー: このパネルの表示 / 非表示（隠している間はウィンドウごと透過）"));
             GuiControls.Hint(Loc.T("Settings are saved when the app closes", "設定は終了時に保存されます"));
             GuiControls.EndCard();
         }

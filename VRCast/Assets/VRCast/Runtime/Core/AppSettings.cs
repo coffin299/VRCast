@@ -26,7 +26,7 @@ namespace VRCast.Core
 
         // アバターの明るさ（マテリアルの色の倍率）の範囲
         public const float MinAvatarBrightness = 0.5f;
-        public const float MaxAvatarBrightness = 2.5f;
+        public const float MaxAvatarBrightness = 10f;
 
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
