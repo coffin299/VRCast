@@ -63,7 +63,7 @@ flowchart LR
 | `VRCastLog` | `Debug.Log` をカテゴリ付きで薄くラップ |
 | `AppSettings` | 永続化する設定値（ウィンドウサイズ、背景色、最後に開いたアバター） |
 | `SettingsStore` | `settings.json` の読込・保存。破損時は既定値にフォールバック |
-| `AppBootstrap` | `RuntimeInitializeOnLoadMethod` で起動時に設定を読み込む |
+| `AppBootstrap` | `RuntimeInitializeOnLoadMethod` で起動時に設定を読み込み（初回は既定値で作成）、終了時に保存する |
 
 ## Editor
 

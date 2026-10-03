@@ -67,7 +67,8 @@ Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルド�
 ## 設定ファイル
 
 Runtime の設定は `%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\settings.json` に保存される。
-ファイルが存在しない・壊れている場合は既定値で起動する。
+初回起動時に既定値で作成され、終了時に現在の設定で上書き保存される。
+ファイルが壊れている場合は既定値で起動する。読込・保存の結果は `Player.log` に `[VRCast][Settings]` として出力される。
 
 ## アバターの扱いについて
 

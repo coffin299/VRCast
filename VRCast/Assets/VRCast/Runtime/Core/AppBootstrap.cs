@@ -1,3 +1,4 @@
+using System.IO;
 using UnityEngine;
 
 namespace VRCast.Core
@@ -26,6 +27,12 @@ namespace VRCast.Core
             // 既定パスの設定ファイルを読み込む
             _store = SettingsStore.CreateDefault();
             Settings = _store.Load();
+
+            // 初回起動時は既定値でファイルを作成し、終了処理に頼らず編集可能な状態にする
+            if (!File.Exists(_store.FilePath))
+            {
+                _store.Save(Settings);
+            }
 
             // ウィンドウサイズの変更はスタンドアロン実行時のみ行う（Editor の Game View は触らない）
             if (!Application.isEditor)
