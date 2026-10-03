@@ -153,5 +153,25 @@ namespace VRCast.Tests
             AppSettings settings = _store.Load();
             Assert.That(settings.trackingBodyMotion, Is.EqualTo(BodyMotion.Lean));
         }
+
+        [Test]
+        public void Load_UnknownUiLanguage_FallsBackToAuto()
+        {
+            _store.Save(new AppSettings { uiLanguage = (UiLanguage)99 });
+
+            // 未知の表示言語は OS 準拠へ補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.uiLanguage, Is.EqualTo(UiLanguage.Auto));
+        }
+
+        [Test]
+        public void Load_OutOfRangeUiScale_IsClamped()
+        {
+            _store.Save(new AppSettings { uiScale = 10f });
+
+            // 範囲外の UI 倍率は上限へ丸められること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.uiScale, Is.EqualTo(AppSettings.MaxUiScale));
+        }
     }
 }

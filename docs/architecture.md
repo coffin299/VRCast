@@ -90,13 +90,15 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `Tracking/` | Tracking Provider と Driver（顔・腕・手） | Milestone 5 (済) |
 | `OSC/` | OSC 入出力 | Milestone 6 |
 | `Output/` | 仮想カメラ出力（UnityCapture） | Milestone 8 (仮想カメラ済) |
+| `Platform/` | OS 機能（ウィンドウへのファイルのドロップ、ファイル選択ダイアログ。Win32 P/Invoke） | 操作パネルの刷新 (済) |
 
 ## Core
 
 | クラス | 責務 |
 | :--- | :--- |
 | `VRCastLog` | `Debug.Log` をカテゴリ付きで薄くラップ |
-| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、仮想カメラの ON/OFF、ライト強度・向き、待機ポーズの度合い、自動まばたき、揺れもの ON/OFF、リップシンク・マイク設定、トラッキングの ON/OFF・入力元（MediaPipe / OpenSeeFace）・ポート・鏡像・体の動かし方と強さ・視線の強さ・腕と手の ON/OFF・トラッカーのパス・カメラ名） |
+| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、仮想カメラの ON/OFF、ライト強度・向き、待機ポーズの度合い、自動まばたき、揺れもの ON/OFF、リップシンク・マイク設定、トラッキングの ON/OFF・入力元（MediaPipe / OpenSeeFace）・ポート・鏡像・体の動かし方と強さ・視線の強さ・腕と手の ON/OFF・トラッカーのパス・カメラ名、表示言語・UI の大きさ） |
+| `UiLanguage` | 操作パネルの表示言語（Auto = 0: OS に合わせる / English = 1 / Japanese = 2、設定に数値で保存） |
 | `TrackingSource` | トラッキングの入力元（MediaPipe = 0 / OpenSeeFace = 1、設定に数値で保存） |
 | `BodyMotion` | 頭の位置に合わせた体の動かし方（Lean = 0: 足を固定して背骨・胸を傾ける / Move = 1: 腰ごと移動 / LeanAndMove = 2、設定に数値で保存） |
 | `SettingsStore` | `settings.json` の読込・保存。破損時は既定値にフォールバック |
@@ -106,7 +108,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 
 | クラス | 責務 |
 | :--- | :--- |
-| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `VirtualCameraOutput` / `MicrophoneInput` / `TrackingReceiver` / `TrackingSkeletonView` / `TrackerProcess` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `ExpressionController` / `BlinkController` / `LipSyncController` / `FaceTrackingDriver` / `HandTrackingDriver` / `ConstraintSolver` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込 |
+| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `VirtualCameraOutput` / `MicrophoneInput` / `TrackingReceiver` / `TrackingSkeletonView` / `TrackerProcess` / `FileDropReceiver` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `ExpressionController` / `BlinkController` / `LipSyncController` / `FaceTrackingDriver` / `HandTrackingDriver` / `ConstraintSolver` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込 |
 | `AvatarPackageReader` | `.vrcaster` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開。`metadata/*.json`（expressions / descriptor / physbones / constraints）を読み込み（不正なら空） |
 | `AvatarLoader` | bundle を非同期読込してアバターを生成し、許可リスト外コンポーネントを除去 |
 | `LoadedAvatar` | 生成済みアバターと bundle の組。`Dispose` で両方解放。フレーミング用境界（Humanoid は骨格基準、それ以外は Renderer 基準） |
@@ -136,14 +138,21 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `TrackerProcess` | 同梱（`StreamingAssets/MediaPipeTracker/` / `StreamingAssets/OpenSeeFace/`）または指定されたトラッカーの自動起動・再試行・停止、カメラ一覧（`-l 1`）の取得・解析、デバイス名 → 番号の解決。入力元・手の ON/OFF の変更で再起動。MediaPipe 版へは自分の PID（`--parent-pid`）を渡し、異常終了時もトラッカーを残さない |
 | `FaceTrackingDriver` | 頭の向きを首・頭ボーンへ、頭の位置を背骨・胸の傾き / 腰の移動（`BodyMotion` で切替）へ、視線を目ボーンへ、まばたき（左右別）・口を `BlinkController` / `LipSyncController` へ適用。キャリブレーション・鏡像 |
 | `HandTrackingDriver` | 腕（上腕・前腕）と手首・指 15 節を、子ボーンへの向きがトラッキングの点の向きに一致するよう回転。映っていない腕は待機ポーズへフェード、未使用時はボーンに触れない。鏡像 |
-| `MainPanel` | IMGUI パネル（Avatar / Pose / Expressions / Face / Tracking / Camera / Rendering / Output）。Tab で表示切替 |
-| `AnimationSection` | MainPanel 内の Pose / Expressions セクション UI |
-| `FaceSection` | MainPanel 内の Face / Physics セクション UI（PhysBone、Auto blink、Lip sync、マイク選択・感度・メーター） |
-| `TrackingSection` | MainPanel 内の Tracking セクション UI（ON/OFF、入力元の切替、腕と手の ON/OFF と状態、カメラ選択・一覧更新・再起動、同梱版が無いときのトラッカーのパス、ポート、Mirror、Raw view と顔の数値、Reset pose（頭・上半身・目線）/ Reset gaze（目線のみ）、受信状態） |
+| `MainPanel` | IMGUI パネル。左のタブ（Avatar / Pose / Face / Tracking / Display / Output / Settings）で選んだセクションだけを縦スクロール領域に描画。高さを画面内に制限し位置を画面内に保つ。見出しでドラッグ移動、Tab で表示切替。描画前に表示言語・テーマ・UI 倍率（`GUI.matrix`）を適用し、パネル上のマウス操作中はカメラ操作を止める |
+| `UiTheme` | ダークテーマ。既定スキンを複製し、角丸（9-slice）・スイッチ型トグル・細いスライダー・スクロールバーのテクスチャと OS の日本語フォントを実行時に生成（OnGUI 内で作成、破棄時に解放） |
+| `Loc` | 表示言語（`UiLanguage`。Auto は `Application.systemLanguage` が日本語なら日本語）の反映と、使う場所に書いた英語・日本語の組からの選択 |
+| `AvatarSection` | Avatar タブ（ドロップ・Browse・パス入力による読み込み、Reload / Unload、読込状態・アバター情報）。読み込む前に空・拡張子違い・存在しないファイルを確認し、表示言語に合わせたエラーを出す |
+| `AvatarFiles` | 読み込み対象（拡張子 `.vrcaster`）の判定と、複数パスからの最初の対象の選択 |
+| `FileDropReceiver` | Windows のスタンドアロン実行時に Unity のウィンドウへ `DragAcceptFiles` でドロップを許可し、メインスレッドの `WH_GETMESSAGE` フックで `WM_DROPFILES` を取り出してパスを `Update` で通知 |
+| `FileDialog` | Windows の「ファイルを開く」ダイアログ（`GetOpenFileNameW`、モーダル） |
+| `AnimationSection` | Pose タブ（向き・待機ポーズ、表情） |
+| `FaceSection` | Face タブ（PhysBone、Auto blink、Lip sync、マイク選択・感度・メーター） |
+| `TrackingSection` | Tracking タブ（ON/OFF、入力元の切替、腕と手の ON/OFF と状態、カメラ選択・一覧更新・再起動、同梱版が無いときのトラッカーのパス、ポート、受信状態 / Mirror、体の動かし方と強さ、視線 / Reset pose・Reset gaze、頭の移動量 / Raw view と顔の数値） |
+| `DisplaySection` | Display タブ（カメラの FOV・リセット、背景、解像度プリセット、ライト） |
+| `OutputSection` | Output タブ（仮想カメラの ON/OFF、ドライバーの登録状態・Install / Reinstall / Uninstall、送信状態） |
+| `SettingsSection` | Settings タブ（表示言語、UI の大きさのプリセット、バージョン） |
 | `AvatarComponentCache` | 表示中アバターのコンポーネントをアバター切替までキャッシュ |
-| `RenderingSection` | MainPanel 内の Rendering セクション UI |
-| `OutputSection` | MainPanel 内の Output セクション UI（仮想カメラの ON/OFF、ドライバーの登録状態・Install / Reinstall / Uninstall、送信状態） |
-| `GuiControls` | セクション共通の IMGUI 部品（ラベル付きスライダー、`<` `>` の巡回選択） |
+| `GuiControls` | セクション共通の IMGUI 部品（見出し付きカード、補足文、ラベル付きスライダー、`<` `>` の巡回選択・列挙値選択） |
 | `PathUtility` | 入力パスの整形（前後の空白・`"` を除去） |
 
 ## Converter (`com.vrcast.converter`)
