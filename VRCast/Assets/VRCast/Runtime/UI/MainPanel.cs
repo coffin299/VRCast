@@ -13,9 +13,9 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Avatar / Pose / Face / Tracking / Display / Output / Settings）で
+    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。画面に収まる高さに制限し、Tab キーで表示切替。
-    /// 表示言語（日本語 / 英語）と UI の大きさは設定に従う。
+    /// 表示言語（日本語 / 英語）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
     /// </summary>
     public class MainPanel : MonoBehaviour
     {
@@ -33,9 +33,13 @@ namespace VRCast.UI
         private const float HeaderHeight = 36f;
         private const float SidebarWidth = 132f;
 
+        // 見出しのヘルプボタンの幅
+        private const float HelpButtonWidth = 32f;
+
         // タブの並び
         private enum Tab
         {
+            Start,
             Avatar,
             Pose,
             Face,
@@ -51,6 +55,9 @@ namespace VRCast.UI
         private FileDropReceiver _fileDrop;
         private OrbitCameraController _orbit;
         private AppSettings _settings;
+        private RenderingController _rendering;
+        private VirtualCameraOutput _virtualCamera;
+        private StartSection _startSection;
         private AvatarSection _avatarSection;
         private AnimationSection _animationSection;
         private FaceSection _faceSection;
@@ -64,7 +71,7 @@ namespace VRCast.UI
 
         // 表示状態・選択中のタブ・タブごとのスクロール位置
         private bool _visible = true;
-        private Tab _tab = Tab.Avatar;
+        private Tab _tab = Tab.Start;
         private readonly Vector2[] _scroll = new Vector2[TabCount];
         private Rect _windowRect = new Rect(ScreenMargin, ScreenMargin, WindowWidth, MaxWindowHeight);
 
@@ -79,13 +86,16 @@ namespace VRCast.UI
             _fileDrop = fileDrop;
             _orbit = orbit;
             _settings = settings;
+            _rendering = rendering;
+            _virtualCamera = virtualCamera;
             _avatarSection = new AvatarSection(session, initialPath);
+            _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
             _animationSection = new AnimationSection(session);
             _faceSection = new FaceSection(session, microphone, settings);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering);
             _outputSection = new OutputSection(virtualCamera);
-            _settingsSection = new SettingsSection(settings);
+            _settingsSection = new SettingsSection(settings, ResetAllSettings);
 
             // ウィンドウへのドロップで読み込む
             _fileDrop.FilesDropped += OnFilesDropped;
@@ -93,11 +103,51 @@ namespace VRCast.UI
 
         private void OnFilesDropped(IReadOnlyList<string> paths)
         {
-            // 結果が見えるよう Avatar タブへ切り替え、非対応ファイルのときは隠していても表示する
-            _tab = Tab.Avatar;
+            // 非対応ファイルのときは隠していても表示し、エラーが見える Avatar タブへ
             if (!_avatarSection.LoadDropped(paths))
             {
                 _visible = true;
+                _tab = Tab.Avatar;
+            }
+        }
+
+        private void OpenLink(StartLink link)
+        {
+            // Start タブの案内から各タブへ
+            switch (link)
+            {
+                case StartLink.Face:
+                    _tab = Tab.Face;
+                    break;
+                case StartLink.Tracking:
+                    _tab = Tab.Tracking;
+                    break;
+                case StartLink.Output:
+                    _tab = Tab.Output;
+                    break;
+                default:
+                    _tab = Tab.Avatar;
+                    break;
+            }
+        }
+
+        private void ResetAllSettings()
+        {
+            // 設定値を既定に戻す（ウィンドウサイズ・最後のアバターは保持）
+            _settings.ResetToDefaults();
+
+            // 設定変更時にしか反映しない機能へ反映し直す（他は毎フレーム設定を読む）
+            _rendering.ApplyAll();
+            _virtualCamera.Enabled = _settings.virtualCameraEnabled;
+            _trackingSection.SyncFromSettings();
+
+            // 表示中アバターの向き・待機ポーズ（GetComponent は Unity の null 判定が必要なため明示的に比較）
+            PoseController pose = _session.Current != null
+                ? _session.Current.Instance.GetComponent<PoseController>()
+                : null;
+            if (pose != null)
+            {
+                pose.Reapply();
             }
         }
 
@@ -199,6 +249,15 @@ namespace VRCast.UI
             GUILayout.Label("VRCast", _theme.Title);
             GUILayout.FlexibleSpace();
             GUILayout.Label(Loc.T("Tab: hide", "Tab: 隠す"), _theme.Hint);
+
+            // ヘルプページ（同梱されていなければ押せない）
+            GUI.enabled = HelpPage.Exists;
+            if (GUILayout.Button("?", GUILayout.Width(HelpButtonWidth)))
+            {
+                HelpPage.Open();
+            }
+
+            GUI.enabled = true;
             GUILayout.EndHorizontal();
             GUILayout.Space(4f);
         }
@@ -226,6 +285,9 @@ namespace VRCast.UI
             // 選択中のタブのセクションだけを描画
             switch (_tab)
             {
+                case Tab.Start:
+                    _startSection.Draw();
+                    break;
                 case Tab.Avatar:
                     _avatarSection.Draw();
                     break;
@@ -255,6 +317,8 @@ namespace VRCast.UI
             // タブ名（表示言語に合わせる）
             switch (tab)
             {
+                case Tab.Start:
+                    return Loc.T("Start", "はじめに");
                 case Tab.Avatar:
                     return Loc.T("Avatar", "アバター");
                 case Tab.Pose:

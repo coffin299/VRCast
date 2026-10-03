@@ -112,7 +112,15 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
-        private void Browse()
+        /// <summary>
+        /// 直前の読み込みが失敗している（読み込む前の確認エラーを含む）なら true。
+        /// </summary>
+        public bool HasError => !_session.IsLoading && (_inputError != InputError.None || _session.LastError != null);
+
+        /// <summary>
+        /// ファイル選択ダイアログで .vrcaster を選ばせて読み込む（キャンセル時は何もしない）。
+        /// </summary>
+        public void Browse()
         {
             // 選ばれたら入力欄に反映して読み込む（キャンセル時は何もしない）
             string path = FileDialog.OpenFile(

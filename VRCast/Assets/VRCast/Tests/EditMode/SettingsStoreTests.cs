@@ -165,6 +165,30 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void ResetToDefaults_RestoresDefaultsButKeepsWindowAndAvatar()
+        {
+            var settings = new AppSettings
+            {
+                windowWidth = 1920,
+                windowHeight = 1080,
+                lastAvatarPath = "C:/Avatars/Test.vrcaster",
+                transparentBackground = true,
+                lightIntensity = 3f,
+                uiLanguage = UiLanguage.English,
+            };
+
+            // 同じインスタンスのまま既定値へ戻り、ウィンドウサイズと最後のアバターは残ること
+            settings.ResetToDefaults();
+            var defaults = new AppSettings();
+            Assert.That(settings.transparentBackground, Is.EqualTo(defaults.transparentBackground));
+            Assert.That(settings.lightIntensity, Is.EqualTo(defaults.lightIntensity));
+            Assert.That(settings.uiLanguage, Is.EqualTo(defaults.uiLanguage));
+            Assert.That(settings.windowWidth, Is.EqualTo(1920));
+            Assert.That(settings.windowHeight, Is.EqualTo(1080));
+            Assert.That(settings.lastAvatarPath, Is.EqualTo("C:/Avatars/Test.vrcaster"));
+        }
+
+        [Test]
         public void Load_OutOfRangeLighting_IsClamped()
         {
             _store.Save(new AppSettings { lightTemperature = 100f, ambientIntensity = 9f });

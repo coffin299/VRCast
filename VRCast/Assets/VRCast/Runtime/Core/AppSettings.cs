@@ -20,7 +20,7 @@ namespace VRCast.Core
         public const float MaxLightIntensity = 8f;
 
         // 環境光（全方向から当たる明るさ）の上限と、太陽光の色温度（K）の範囲
-        public const float MaxAmbientIntensity = 2f;
+        public const float MaxAmbientIntensity = 3f;
         public const float MinLightTemperature = 2500f;
         public const float MaxLightTemperature = 10000f;
 
@@ -57,24 +57,22 @@ namespace VRCast.Core
         public UiLanguage uiLanguage = UiLanguage.Auto;
         public float uiScale = 1f;
 
-        // 背景（透過時は alpha 0 で塗りつぶし、非透過時はこの色を不透明で使う）
+        // 背景色（既定は目に優しいベージュ）。非透過時は不透明で使い、透過時は alpha 0 のまま色だけ塗る
+        // （ウィンドウ上では色が見え、OBS のゲームキャプチャでは抜ける）
         public bool transparentBackground;
-        public Color backgroundColor = new Color(0.25f, 0.25f, 0.25f, 1f);
-
-        // 透過時にウィンドウ上だけに見える背景色（alpha 0 のまま色だけ塗るため OBS のゲームキャプチャには映らない）
-        public Color previewColor = new Color(0.40f, 0.44f, 0.48f, 1f);
+        public Color backgroundColor = new Color(0.90f, 0.86f, 0.78f, 1f);
 
         // 仮想カメラ（VRCast Camera）への出力
         public bool virtualCameraEnabled;
 
-        // ディレクショナルライト
-        public float lightIntensity = 1f;
+        // 太陽光（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
+        public float lightIntensity = 1.2f;
         public float lightYaw = -30f;
-        public float lightPitch = 50f;
+        public float lightPitch = 40f;
 
         // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ
-        public float lightTemperature = 6500f;
-        public float ambientIntensity = 1f;
+        public float lightTemperature = 6000f;
+        public float ambientIntensity = 1.2f;
 
         // 待機ポーズ（0 = T ポーズのまま、1 = 腕を下ろし切る / 肘を曲げ切る）。既定は気を付け
         public float poseArmDown = 1f;
@@ -114,6 +112,26 @@ namespace VRCast.Core
         // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
         public string trackerCamera = string.Empty;
+
+        /// <summary>
+        /// 全ての設定を既定値に戻す（ウィンドウサイズと最後に開いたアバターは保持）。
+        /// 各機能が同じインスタンスを参照しているため、置き換えずに中身を上書きする。
+        /// </summary>
+        public void ResetToDefaults()
+        {
+            // 保持する値を退避
+            int width = windowWidth;
+            int height = windowHeight;
+            string avatarPath = lastAvatarPath;
+
+            // 既定値で上書き
+            JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(new AppSettings()), this);
+
+            // 退避した値を戻す
+            windowWidth = width;
+            windowHeight = height;
+            lastAvatarPath = avatarPath;
+        }
 
         /// <summary>
         /// 読み込んだ値を安全な範囲に補正する。

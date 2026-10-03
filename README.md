@@ -93,11 +93,16 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | Tab | 操作パネルの表示切替 |
 | 1〜9 / 0 | 表情プリセット切替 / ニュートラル |
 
-操作パネルは左のタブ（Avatar / Pose / Face / Tracking / Display / Output / Settings）で項目を切り替え、内容は縦にスクロールする。
+操作パネルは左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings）で項目を切り替え、内容は縦にスクロールする。
 パネルは見出し部分をドラッグして移動でき、高さは画面に収まるよう自動で調整される。
 
+- **Start**（はじめに、起動時に開く）: アバターの読み込み → 背景の透過 → OBS への取り込み → パネルを隠す、までを手順で案内する。
+  読み込み・透過は完了 / 未完了を表示し、その場のボタン（ファイルを選ぶ / 透過にする）で操作できる。仮想カメラ・トラッキング・口パクのタブへも移動できる。
+- **ヘルプ**: 見出しの **?**、Start / Settings の **Open help** でヘルプページ（`StreamingAssets/Help/index.html`、日本語 / 英語）をブラウザで開く。
 - **表示言語**: **Settings** の Display language で「自動（OS に合わせる）」/ English / 日本語 を選べる（既定は自動。OS が日本語なら日本語、それ以外は英語）。
 - **UI の大きさ**: **Settings** の UI size で 75% / 100% / 125% / 150% / 200% を選べる（高解像度ディスプレイ向け）。
+- **全設定のリセット**: **Settings** の赤いボタン **Reset all settings** → 確認の **Yes, reset** で全ての設定を初期状態に戻す
+  （ウィンドウサイズと最後に開いたアバターは保持。元に戻せない）。
 - 以下の説明は英語表示の項目名で記載する（日本語表示では対応する日本語名になる）。
 
 **Pose** タブで、アバターの向き（Body yaw）と、T ポーズから腕を下ろす度合い（Arms down）・肘の曲げ（Elbow bend、Humanoid のみ）を調整できる（設定は保存される）。
@@ -157,14 +162,16 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 **Display** タブで、カメラの画角（Field of view）・リセット、背景（透過 / 単色）、ウィンドウ解像度（1280x720 / 1920x1080 / 縦長 720x1280 / 1080x1920）、ライトを変更できる。
 
 - **Light**: **Ambient**（環境光、アバター全体を均一に明るくする）、**Sunlight**（太陽光の強さ）、**Sun color (K)**（色温度。低いほど夕日のような暖色、6500K でほぼ白）、
-  **Direction** / **Height**（太陽の向き・高さ）。アバターが暗いときは Ambient を上げる。プリセット **Sunny**（晴れ）/ **Soft**（やわらか、影が薄い）/ **Default** でまとめて切り替えられる。
-- **Window color**: 透過 ON の間、ウィンドウ上に表示する背景色（既定は落ち着いた青灰色）。色だけを塗り透過度は 0 のままなので、OBS のゲームキャプチャ（透過を許可）には映らない。
+  **Direction** / **Height**（太陽の向き・高さ。向きはカメラ正面からの角度で 0 = 正面から当たる）。アバターが暗いときは Ambient を上げる。
+  プリセット **Sunny**（晴れ）/ **Soft**（やわらか、影が薄い）/ **Default** でまとめて切り替えられる。
+- **Background color**: 背景色（既定はベージュ、**Beige (default)** で戻せる）。非透過時はそのまま映り、透過 ON の間はウィンドウ上だけに表示される
+  （色だけを塗り透過度は 0 のままなので、OBS のゲームキャプチャ（透過を許可）には映らない）。
 
 設定は終了時に保存され、次回起動時に復元される。ウィンドウは枠をドラッグしてサイズ変更できる。
 
 ### 3. OBS に取り込む
 
-1. **Display** タブで **Transparent (OBS Game Capture)** を ON にする（VRCast の画面上では背景が Window color で表示されるが、OBS では透過される）。
+1. **Display** タブで **Transparent (OBS Game Capture)** を ON にする（VRCast の画面上では背景色のまま表示されるが、OBS では透過される）。Start タブの **Make transparent** でもよい。
 2. OBS で **ゲームキャプチャ** ソースを追加し、モード「特定のウィンドウをキャプチャ」で `[VRCast.exe]: VRCast` を選ぶ。
 3. **透過を許可** にチェックを入れる。
 4. Tab で操作パネルを隠す。
@@ -180,7 +187,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 3. 受け取る側のアプリのカメラ選択で **VRCast Camera** を選ぶ（一覧に出なければそのアプリを再起動）。
 
 - 映るのはカメラの描画結果のみで、操作パネルは映らない。解像度は受け取る側に合わせて拡大縮小される。
-- Discord / Zoom などは透過を扱えないため、透過 ON のままだと背景は Window color で映る（任意の色にしたい場合は Transparent OFF で単色背景）。
+- Discord / Zoom などは透過を扱えないため、背景は背景色（Background color）で映る。
   OBS の映像キャプチャデバイスで受ける場合は、映像フォーマットを ARGB にすると透過のまま取り込める。
 - DirectShow 方式の仮想カメラ（[UnityCapture](https://github.com/schellingb/UnityCapture)）のため、DirectShow のカメラを
   一覧に出すアプリで使える。他のアプリが同じ UnityCapture を登録している場合は、後から登録した方の名前・場所になる。

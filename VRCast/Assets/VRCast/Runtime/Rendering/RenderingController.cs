@@ -23,6 +23,9 @@ namespace VRCast.Rendering
         // 環境光の明るさ 1 のときの色（全方向から均一に当たる灰色）
         private const float AmbientBase = 0.5f;
 
+        // カメラ正面（アバターの正面）から当てるときのワールドの向き。カメラは +Z 側から -Z を向く
+        private const float FrontYaw = 180f;
+
         private UnityEngine.Camera _camera;
         private Light _light;
         private AppSettings _settings;
@@ -45,21 +48,6 @@ namespace VRCast.Rendering
                 // 単色背景は常に不透明で扱う
                 value.a = 1f;
                 _settings.backgroundColor = value;
-                ApplyBackground();
-            }
-        }
-
-        /// <summary>
-        /// 透過時にウィンドウ上だけに見える背景色。
-        /// </summary>
-        public Color PreviewColor
-        {
-            get => _settings.previewColor;
-            set
-            {
-                // 保存値は不透明で持ち、適用時に alpha 0 にする
-                value.a = 1f;
-                _settings.previewColor = value;
                 ApplyBackground();
             }
         }
@@ -134,6 +122,14 @@ namespace VRCast.Rendering
                 _light.type = LightType.Directional;
             }
 
+            ApplyAll();
+        }
+
+        /// <summary>
+        /// 設定値を直接書き換えた後（全設定のリセット等）に、背景・太陽光・環境光を反映し直す。
+        /// </summary>
+        public void ApplyAll()
+        {
             ApplyBackground();
             ApplyLight();
             ApplyAmbient();
@@ -150,11 +146,11 @@ namespace VRCast.Rendering
             {
                 case LightingPreset.Sunny:
                     // 晴れ: 強めの暖かい日差し + 明るめの環境光
-                    SetLighting(1.4f, 5600f, defaults.lightYaw, 45f, 1.2f);
+                    SetLighting(1.8f, 5600f, defaults.lightYaw, 35f, 1.4f);
                     break;
                 case LightingPreset.Soft:
-                    // やわらか: 弱い日差し + 強い環境光（影が薄く顔が明るい）
-                    SetLighting(0.7f, 7000f, defaults.lightYaw, 60f, 1.6f);
+                    // やわらか: 控えめな日差し + 強い環境光（影が薄く顔が明るい）
+                    SetLighting(0.9f, 6800f, 0f, 30f, 2f);
                     break;
                 default:
                     SetLighting(defaults.lightIntensity, defaults.lightTemperature, defaults.lightYaw,
@@ -198,7 +194,7 @@ namespace VRCast.Rendering
             _camera.clearFlags = CameraClearFlags.SolidColor;
 
             // 透過時は色だけ塗って alpha 0（ウィンドウは alpha を無視して色を表示、ゲームキャプチャは alpha で抜く）
-            Color color = _settings.transparentBackground ? _settings.previewColor : _settings.backgroundColor;
+            Color color = _settings.backgroundColor;
             color.a = _settings.transparentBackground ? 0f : 1f;
             _camera.backgroundColor = color;
         }
@@ -208,7 +204,7 @@ namespace VRCast.Rendering
             // 強度・色温度・向きを反映
             _light.intensity = _settings.lightIntensity;
             _light.color = Mathf.CorrelatedColorTemperatureToRGB(_settings.lightTemperature);
-            _light.transform.rotation = Quaternion.Euler(_settings.lightPitch, _settings.lightYaw, 0f);
+            _light.transform.rotation = Quaternion.Euler(_settings.lightPitch, FrontYaw + _settings.lightYaw, 0f);
         }
 
         private void ApplyAmbient()
