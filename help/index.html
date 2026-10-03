@@ -70,11 +70,10 @@
   <p class="en">Work in the Unity project that contains your avatar (a VCC project is fine, Unity 2022.3.22f1).</p>
   <ol class="steps">
     <li>
-      <span class="ja">メニュー <span class="ui">Window &gt; Package Manager</span> を開き、左上の <span class="ui">+</span> から
-        <span class="ui">Add package from git URL...</span> を選んで次の URL を入力します。</span>
-      <span class="en">Open <span class="ui">Window &gt; Package Manager</span>, click <span class="ui">+</span> at the top left,
-        choose <span class="ui">Add package from git URL...</span> and enter:</span><br>
-      <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+      <span class="ja">配布 zip の中の <code>VRCast-Converter.unitypackage</code> をダブルクリック（または Unity にドラッグ＆ドロップ）して
+        <span class="ui">Import</span> を押します（<code>Assets/VRCast/Converter</code> に入ります）。</span>
+      <span class="en">Double-click <code>VRCast-Converter.unitypackage</code> from the zip (or drag it into Unity) and press
+        <span class="ui">Import</span> (it goes into <code>Assets/VRCast/Converter</code>).</span>
     </li>
     <li><span class="ja">メニュー <span class="ui">VRCast &gt; Avatar Exporter</span> を開きます。</span>
         <span class="en">Open <span class="ui">VRCast &gt; Avatar Exporter</span>.</span></li>
@@ -83,6 +82,12 @@
   </ol>
   <p class="note ja">元のアバターは変更されません。表情・口パク・まばたき・揺れもの・Constraint の設定も一緒に書き出されます。</p>
   <p class="note en">Your original avatar is not modified. Expressions, lip sync, blink, PhysBones and constraints are exported too.</p>
+  <p class="note ja">Package Manager で入れる場合は、<span class="ui">Window &gt; Package Manager</span> の <span class="ui">+</span> &gt;
+    <span class="ui">Add package from git URL...</span> に <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+    を入力します（Git が必要）。unitypackage と両方入れるとエラーになるので、どちらか一方にしてください。</p>
+  <p class="note en">To use the Package Manager instead, open <span class="ui">Window &gt; Package Manager</span>, click <span class="ui">+</span> &gt;
+    <span class="ui">Add package from git URL...</span> and enter <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+    (Git required). Do not install both the unitypackage and the package; it causes errors.</p>
 </section>
 
 <section id="load">
