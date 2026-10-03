@@ -16,7 +16,7 @@ namespace VRCast.UI
     /// <summary>
     /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンを常に表示する。
-    /// 画面に収まる高さに制限し、Tab キーで表示切替。
+    /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間はウィンドウごと透過）。
     /// 表示言語（日本語 / 英語）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
     /// </summary>
     public class MainPanel : MonoBehaviour
@@ -113,7 +113,7 @@ namespace VRCast.UI
             // 非対応ファイルのときは隠していても表示し、エラーが見える Avatar タブへ
             if (!_avatarSection.LoadDropped(paths))
             {
-                _visible = true;
+                SetVisible(true);
                 _tab = Tab.Avatar;
             }
         }
@@ -160,16 +160,16 @@ namespace VRCast.UI
 
         private void Update()
         {
-            // 表示切替
-            if (Input.GetKeyDown(ToggleKey))
-            {
-                _visible = !_visible;
-            }
-
             // 未初期化なら何もしない
             if (_orbit == null || _settings == null)
             {
                 return;
+            }
+
+            // 表示切替（隠すとウィンドウごと透過）
+            if (Input.GetKeyDown(ToggleKey))
+            {
+                SetVisible(!_visible);
             }
 
             // パネル上にマウスがある間はカメラ操作を止める（Input は左下原点なので上下を反転し、UI の倍率で割る）
@@ -177,6 +177,13 @@ namespace VRCast.UI
             Vector3 mouse = Input.mousePosition;
             var position = new Vector2(mouse.x / scale, (Screen.height - mouse.y) / scale);
             _orbit.InputBlocked = _visible && _windowRect.Contains(position);
+        }
+
+        private void SetVisible(bool visible)
+        {
+            // 隠している間は背景も含めてウィンドウを透過させ、表示に戻したら元の背景に戻す
+            _visible = visible;
+            _rendering.WindowTransparent = !visible;
         }
 
         private void OnGUI()
@@ -259,7 +266,7 @@ namespace VRCast.UI
             GUILayout.BeginHorizontal(GUILayout.Height(HeaderHeight - 12f));
             GUILayout.Label("VRCast", _theme.Title);
             GUILayout.FlexibleSpace();
-            GUILayout.Label(Loc.T("Tab: hide", "Tab: 隠す"), _theme.Hint);
+            GUILayout.Label(Loc.T("[Tab] Hide all & transparent", "[Tab] 全部隠して透過"), _theme.KeyHint);
 
             // ヘルプページ（Web）
             if (GUILayout.Button("?", GUILayout.Width(HelpButtonWidth)))

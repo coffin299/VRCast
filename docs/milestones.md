@@ -406,6 +406,8 @@ OBS 側で縁に色が付いて見える場合は背景色を暗くする。
 - ヘルプと概要ページは同梱をやめ、`webpage` ブランチ（GitHub Pages: <https://coffin299.github.io/VRCast/>）へ移動
 - 配布用 zip を作るバッチ（`Tools/Package/package.bat`）。ビルド一式に LICENSE / NOTICE / 利用者向け README.txt を加え、
   `dist/VRCast-<バージョン>-win64.zip` に出力。同梱トラッカー・仮想カメラが無いビルドは警告
+- アバターの明るさの上限を 2.5 から 10 に引き上げ
+- Tab でパネルを隠している間はウィンドウ自体を透過（背景も消えてデスクトップが見える）。見出しの案内を大きく「[Tab] 全部隠して透過」に変更
 
 確認項目:
 
