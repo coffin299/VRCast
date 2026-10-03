@@ -80,7 +80,7 @@ namespace VRCast.UI
             _pose.ArmDown = GuiControls.Slider("Arms down", _pose.ArmDown, 0f, 1f);
             _pose.ElbowBend = GuiControls.Slider("Elbow bend", _pose.ElbowBend, 0f, 1f);
 
-            // よく使う 2 状態へのショートカット
+            // よく使う 3 状態へのショートカット
             GUILayout.BeginHorizontal();
             if (GUILayout.Button("T-Pose"))
             {
@@ -88,9 +88,17 @@ namespace VRCast.UI
                 _pose.ElbowBend = 0f;
             }
 
-            if (GUILayout.Button("Relaxed"))
+            // 気を付け（既定）: 腕を下ろし切り、肘はまっすぐ
+            if (GUILayout.Button("Attention"))
             {
                 _pose.ArmDown = 1f;
+                _pose.ElbowBend = 0f;
+            }
+
+            // 腕を少し開き、肘を軽く曲げる
+            if (GUILayout.Button("Relaxed"))
+            {
+                _pose.ArmDown = 0.85f;
                 _pose.ElbowBend = 0.3f;
             }
 
