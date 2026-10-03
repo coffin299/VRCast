@@ -35,10 +35,18 @@ namespace VRCast.Core
         // 視線の強さの上限（0 = 目を動かさない）
         public const float MaxTrackingGaze = 2f;
 
+        // 操作パネルの拡大率の範囲
+        public const float MinUiScale = 0.75f;
+        public const float MaxUiScale = 2f;
+
         public int version = CurrentVersion;
         public int windowWidth = 1280;
         public int windowHeight = 720;
         public string lastAvatarPath = string.Empty;
+
+        // 操作パネルの表示言語と拡大率
+        public UiLanguage uiLanguage = UiLanguage.Auto;
+        public float uiScale = 1f;
 
         // 背景（透過時は alpha 0 で塗りつぶし、非透過時はこの色を不透明で使う）
         public bool transparentBackground;
@@ -98,6 +106,14 @@ namespace VRCast.Core
             windowHeight = Mathf.Max(MinWindowSize, windowHeight);
             // JSON に null が入っていた場合に備えて空文字へ正規化
             lastAvatarPath ??= string.Empty;
+            // 未知の表示言語は OS 準拠へ
+            if (!Enum.IsDefined(typeof(UiLanguage), uiLanguage))
+            {
+                uiLanguage = UiLanguage.Auto;
+            }
+
+            // パネルの拡大率は範囲内に制限
+            uiScale = Mathf.Clamp(uiScale, MinUiScale, MaxUiScale);
             // ライト強度は 0〜上限に制限
             lightIntensity = Mathf.Clamp(lightIntensity, 0f, MaxLightIntensity);
             // 仰角は真上〜真下の範囲に制限

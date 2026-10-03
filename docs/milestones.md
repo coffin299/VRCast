@@ -332,6 +332,30 @@ Descriptor（Milestone 3）・PhysBone（Milestone 4）は対応済みのため�
 - OBS で映像フォーマットを ARGB にすると透過背景のまま取り込めること
 - OFF・アプリ終了で受け取る側の映像が停止表示になること、Uninstall driver で一覧から消えること
 
+## 操作パネルの刷新
+
+項目が増えて縦に画面外へはみ出し、下部の設定（体の動かし方、Output）が操作できなかったため、配置と見た目を作り直す。
+
+- 配置: 左のタブ（Avatar / Pose / Face / Tracking / Display / Output / Settings）で切り替え、選んだタブだけを縦スクロールで表示。
+  高さは画面に収まる範囲に制限し、位置も画面内に保つ。見出しでドラッグ移動
+- 見た目: `UiTheme` がダークテーマ（角丸のカード・ボタン、スイッチ型トグル、細いスライダー・スクロールバー）を実行時に生成。
+  フォントは OS の日本語フォント（Yu Gothic UI / Meiryo UI）。各セクションは見出し付きカード（`GuiControls.BeginCard`）で区切る
+- 言語: `Loc.T(英語, 日本語)` で表示時に選ぶ。設定 `uiLanguage`（Auto = OS に合わせる / English / Japanese）。
+  ランタイム部品が返す状態文（受信状態・トラッカー出力など）は英語のまま
+- UI の大きさ: 設定 `uiScale`（0.75〜2）を `GUI.matrix` で適用。Settings タブのプリセットで選ぶ
+- Camera と Rendering は Display タブへ統合（`RenderingSection` は `DisplaySection` に置き換え）
+- アバターの読み込み: ウィンドウへの `.vrcaster` のドロップ（`Platform/FileDropReceiver`、スタンドアロン実行時のみ）と
+  Browse ボタン（`Platform/FileDialog`）を追加。非対応・存在しないファイルは読み込む前に日英でエラー表示
+
+確認項目:
+
+- エクスプローラーから `.vrcaster` をドロップすると読み込まれ、他の形式やフォルダでは日英のエラーが出ること（パネル非表示中は表示される）
+- Browse で `.vrcaster` だけが一覧に出て、選ぶと読み込まれること（キャンセルでは何も起きないこと）
+
+- 720p 程度の小さいウィンドウでもパネルが画面内に収まり、全タブの項目がスクロールで操作できること
+- OS が日本語の環境で Auto のとき日本語、English / 日本語 を選ぶと即座に切り替わり、再起動後も保持されること
+- UI の大きさを変えてもパネル上のマウス操作でカメラが動かないこと（パネル外では動くこと）
+
 ## 技術的リスク
 
 - AssetBundle の Unity バージョン非互換 → manifest に `unityVersion` を記録し照合。

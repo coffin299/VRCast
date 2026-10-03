@@ -8,6 +8,7 @@ using VRCast.Cameras;
 using VRCast.Core;
 using VRCast.Dynamics;
 using VRCast.Output;
+using VRCast.Platform;
 using VRCast.Rendering;
 using VRCast.Tracking;
 using VRCast.UI;
@@ -91,11 +92,14 @@ namespace VRCast.App
             var trackerProcess = gameObject.AddComponent<TrackerProcess>();
             trackerProcess.Initialize(_settings);
 
+            // ウィンドウへのファイルのドロップ（読み込みは操作パネルが行う）
+            var fileDrop = gameObject.AddComponent<FileDropReceiver>();
+
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
-                _session, _orbit, rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, _settings,
-                _initialAvatarPath);
+                _session, _orbit, rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, fileDrop,
+                _settings, _initialAvatarPath);
         }
 
         private void Start()

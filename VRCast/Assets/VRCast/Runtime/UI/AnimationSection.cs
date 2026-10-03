@@ -6,13 +6,12 @@ using VRCast.Avatars;
 namespace VRCast.UI
 {
     /// <summary>
-    /// MainPanel 内の Pose / Expressions セクション。表示中アバターのコントローラーを操作する。
+    /// Pose タブ（待機ポーズ・表情）。表示中アバターのコントローラーを操作する。
     /// </summary>
     public class AnimationSection
     {
-        // 表情ボタンの列数と一覧の最大高さ
+        // 表情ボタンの列数
         private const int ExpressionColumns = 3;
-        private const float ExpressionListHeight = 150f;
 
         // ボタンに表示する名前の最大文字数
         private const int MaxButtonLabelLength = 14;
@@ -24,7 +23,6 @@ namespace VRCast.UI
         private readonly List<string> _labels = new List<string>();
         private PoseController _pose;
         private ExpressionController _expressions;
-        private Vector2 _expressionScroll;
 
         public AnimationSection(AvatarSession session)
         {
@@ -33,14 +31,16 @@ namespace VRCast.UI
 
         public void Draw()
         {
-            // アバター未表示なら何も出さない
+            // アバター未表示なら案内だけ
             if (!RefreshControllers())
             {
+                GuiControls.BeginCard(Loc.T("Pose", "ポーズ"));
+                GuiControls.Hint(Loc.T("Load an avatar first.", "先にアバターを読み込んでください。"));
+                GuiControls.EndCard();
                 return;
             }
 
             DrawPose();
-            GUILayout.Space(8f);
             DrawExpressions();
         }
 
@@ -51,7 +51,6 @@ namespace VRCast.UI
             {
                 _pose = _avatar.Get<PoseController>();
                 _expressions = _avatar.Get<ExpressionController>();
-                _expressionScroll = Vector2.zero;
                 BuildLabels();
             }
 
@@ -60,66 +59,71 @@ namespace VRCast.UI
 
         private void DrawPose()
         {
-            GUILayout.Label("Pose");
+            GuiControls.BeginCard(Loc.T("Pose", "ポーズ"));
             if (_pose == null)
             {
+                GuiControls.EndCard();
                 return;
             }
 
             // アバターの向き（全アバター共通）
-            _pose.BodyYaw = GuiControls.Slider("Body yaw", _pose.BodyYaw, -180f, 180f);
+            _pose.BodyYaw = GuiControls.Slider(Loc.T("Body yaw", "体の向き"), _pose.BodyYaw, -180f, 180f);
 
             // 非 Humanoid は腕の操作不可
             if (!_pose.IsAvailable)
             {
-                GUILayout.Label("Arm pose requires a Humanoid avatar.");
+                GuiControls.Hint(Loc.T("Arm pose requires a Humanoid avatar.", "腕のポーズは Humanoid アバターのみ対応です。"));
+                GuiControls.EndCard();
                 return;
             }
-
-            // 腕と肘の度合い
-            _pose.ArmDown = GuiControls.Slider("Arms down", _pose.ArmDown, 0f, 1f);
-            _pose.ElbowBend = GuiControls.Slider("Elbow bend", _pose.ElbowBend, 0f, 1f);
 
             // よく使う 3 状態へのショートカット
             GUILayout.BeginHorizontal();
 
             // 気を付け（既定）: 腕を下ろし切り、肘はまっすぐ
-            if (GUILayout.Button("Attention"))
+            if (GUILayout.Button(Loc.T("Attention", "気を付け")))
             {
                 _pose.ArmDown = 1f;
                 _pose.ElbowBend = 0f;
             }
 
             // 腕を少し開き、肘を軽く曲げる
-            if (GUILayout.Button("Relaxed"))
+            if (GUILayout.Button(Loc.T("Relaxed", "リラックス")))
             {
                 _pose.ArmDown = 0.85f;
                 _pose.ElbowBend = 0.3f;
             }
 
             // 読込時の姿勢（通常 T ポーズ）
-            if (GUILayout.Button("T-Pose"))
+            if (GUILayout.Button(Loc.T("T-Pose", "T ポーズ")))
             {
                 _pose.ArmDown = 0f;
                 _pose.ElbowBend = 0f;
             }
 
             GUILayout.EndHorizontal();
+
+            // 腕と肘の度合い
+            _pose.ArmDown = GuiControls.Slider(Loc.T("Arms down", "腕を下ろす"), _pose.ArmDown, 0f, 1f);
+            _pose.ElbowBend = GuiControls.Slider(Loc.T("Elbow bend", "肘の曲げ"), _pose.ElbowBend, 0f, 1f);
+            GuiControls.EndCard();
         }
 
         private void DrawExpressions()
         {
-            GUILayout.Label("Expressions (keys 1-9, 0: neutral)");
+            GuiControls.BeginCard(Loc.T("Expressions", "表情"));
+            GuiControls.Hint(Loc.T("Keys 1-9 to switch, 0 for neutral", "キー 1〜9 で切り替え、0 でニュートラル"));
 
             // 表情データが無いアバター
             if (_expressions == null || _expressions.Names.Count == 0)
             {
-                GUILayout.Label("No expressions in this package.");
+                GuiControls.Hint(Loc.T("No expressions in this package.", "このアバターには表情データがありません。"));
+                GuiControls.EndCard();
                 return;
             }
 
             // ニュートラルは常に先頭
-            if (GUILayout.Toggle(_expressions.Current < 0, "Neutral", GUI.skin.button))
+            if (GUILayout.Toggle(_expressions.Current < 0, Loc.T("Neutral", "ニュートラル"), GUI.skin.button))
             {
                 if (_expressions.Current >= 0)
                 {
@@ -127,9 +131,7 @@ namespace VRCast.UI
                 }
             }
 
-            // 件数が多いアバター向けにスクロール
-            _expressionScroll = GUILayout.BeginScrollView(
-                _expressionScroll, GUILayout.Height(ExpressionListHeight));
+            // 表情ボタンを列ごとに並べる（パネル全体がスクロールする）
             for (int i = 0; i < _expressions.Names.Count; i++)
             {
                 // 行の開始
@@ -152,7 +154,7 @@ namespace VRCast.UI
                 }
             }
 
-            GUILayout.EndScrollView();
+            GuiControls.EndCard();
         }
 
         private string Label(int index)

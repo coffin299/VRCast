@@ -5,7 +5,7 @@ using VRCast.Output;
 namespace VRCast.UI
 {
     /// <summary>
-    /// MainPanel 内の Output セクション（仮想カメラの ON/OFF、ドライバーの登録・解除と状態）。
+    /// Output タブ（仮想カメラの ON/OFF、ドライバーの登録・解除と状態）。
     /// </summary>
     public class OutputSection
     {
@@ -14,9 +14,10 @@ namespace VRCast.UI
         // 現在の登録状態（表示時に毎回レジストリを読まないよう、開始時と登録・解除の後に更新）
         private VirtualCameraRegistration _registration;
 
-        // 実行中の登録・解除と、最後の結果の表示
+        // 実行中の登録・解除と、最後の結果（エラー文言、成功時は null）
         private Task<string> _pending;
-        private string _message = string.Empty;
+        private bool _hasResult;
+        private string _error;
 
         public OutputSection(VirtualCameraOutput output)
         {
@@ -26,19 +27,22 @@ namespace VRCast.UI
 
         public void Draw()
         {
-            GUILayout.Label("Output");
             PollPending();
+            GuiControls.BeginCard(Loc.T("Virtual camera", "仮想カメラ"));
+            GuiControls.Hint(Loc.T(
+                "Use the avatar as a webcam in OBS, Discord, Zoom, etc. (this panel is not shown)",
+                "OBS・Discord・Zoom などで Web カメラとして使えます（このパネルは映りません）"));
             _output.Enabled = GUILayout.Toggle(
-                _output.Enabled, $" Virtual camera ({VirtualCameraInstaller.DeviceName})");
+                _output.Enabled, Loc.T("Output", "出力する") + $" ({VirtualCameraInstaller.DeviceName})");
 
-            // 無効時は詳細を出さない
-            if (!_output.Enabled)
+            // 有効時のみ詳細を出す
+            if (_output.Enabled)
             {
-                return;
+                DrawDriver();
+                GuiControls.Hint(_output.Status);
             }
 
-            DrawDriver();
-            GUILayout.Label(_output.Status);
+            GuiControls.EndCard();
         }
 
         private void DrawDriver()
@@ -47,7 +51,8 @@ namespace VRCast.UI
             string folder = _output.BundledFolder;
             if (folder == null)
             {
-                GUILayout.Label("Driver not bundled (StreamingAssets/UnityCapture)");
+                GuiControls.Hint(Loc.T("Driver not bundled (StreamingAssets/UnityCapture)",
+                    "ドライバーが同梱されていません（StreamingAssets/UnityCapture）"));
                 return;
             }
 
@@ -57,8 +62,8 @@ namespace VRCast.UI
             // 登録（初回のみ必要。フォルダを移動したら登録し直す）
             GUI.enabled = _pending == null;
             string installLabel = _registration == VirtualCameraRegistration.NotInstalled
-                ? "Install driver"
-                : "Reinstall driver";
+                ? Loc.T("Install driver", "ドライバーを登録")
+                : Loc.T("Reinstall driver", "ドライバーを再登録");
             if (GUILayout.Button(installLabel))
             {
                 Run(folder, true);
@@ -66,7 +71,7 @@ namespace VRCast.UI
 
             // 解除（登録されているときのみ）
             GUI.enabled = _pending == null && _registration != VirtualCameraRegistration.NotInstalled;
-            if (GUILayout.Button("Uninstall driver"))
+            if (GUILayout.Button(Loc.T("Uninstall driver", "ドライバーを解除")))
             {
                 Run(folder, false);
             }
@@ -74,21 +79,24 @@ namespace VRCast.UI
             GUI.enabled = true;
             GUILayout.EndHorizontal();
 
-            // 実行中・直前の結果
+            // 実行中・直前の結果（言語切替に追従するよう表示時に文言を決める）
             if (_pending != null)
             {
-                GUILayout.Label("Waiting for administrator approval...");
+                GuiControls.Hint(Loc.T("Waiting for administrator approval...", "管理者の承認を待っています..."));
             }
-            else if (_message.Length > 0)
+            else if (_hasResult)
             {
-                GUILayout.Label(_message);
+                GuiControls.Hint(_error ?? Loc.T(
+                    "Done (restart the receiving app if the camera is not listed)",
+                    "完了（カメラが一覧に出ない場合は受け側アプリを再起動してください）"));
             }
         }
 
         private void Run(string folder, bool install)
         {
             // 管理者権限で regsvr32 を実行（UAC の確認が出る）
-            _message = string.Empty;
+            _hasResult = false;
+            _error = null;
             _pending = VirtualCameraInstaller.RunElevatedAsync(folder, install);
         }
 
@@ -100,9 +108,9 @@ namespace VRCast.UI
                 return;
             }
 
-            // 結果を表示して登録状態を読み直す
-            string error = _pending.Result;
-            _message = error == null ? "Done (restart the receiving app if the camera is not listed)" : error;
+            // 結果を保持して登録状態を読み直す
+            _error = _pending.Result;
+            _hasResult = true;
             _registration = _output.GetRegistration();
             _pending = null;
         }
@@ -113,11 +121,13 @@ namespace VRCast.UI
             switch (registration)
             {
                 case VirtualCameraRegistration.Installed:
-                    return "Driver: installed";
+                    return Loc.T("Driver: installed", "ドライバー: 登録済み");
                 case VirtualCameraRegistration.InstalledElsewhere:
-                    return "Driver: installed from another folder (reinstall if the camera shows an error)";
+                    return Loc.T("Driver: installed from another folder (reinstall if the camera shows an error)",
+                        "ドライバー: 別フォルダで登録済み（カメラがエラーになる場合は再登録）");
                 default:
-                    return "Driver: not installed (install once, needs administrator)";
+                    return Loc.T("Driver: not installed (install once, needs administrator)",
+                        "ドライバー: 未登録（初回のみ登録が必要、管理者権限）");
             }
         }
     }
