@@ -111,7 +111,7 @@ namespace VRCast.Converter.Editor
                     ? VrcDescriptorReader.GetDescriptorData(descriptor, source.transform)
                     : new AvatarDescriptorData();
                 report.LipSyncMode = descriptorData.lipSync.mode;
-                report.HasBlink = descriptorData.eyelids.blinkBlendShape.Length > 0;
+                report.HasBlink = descriptorData.eyelids.blinkBlendShapes.Length > 0;
 
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);

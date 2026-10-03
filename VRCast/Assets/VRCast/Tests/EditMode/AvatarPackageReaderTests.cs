@@ -175,7 +175,7 @@ namespace VRCast.Tests
                     meshPath = "Body",
                     mouthOpenBlendShape = "mouth_open",
                 },
-                eyelids = new EyelidData { meshPath = "Body", blinkBlendShape = "blink" },
+                eyelids = new EyelidData { meshPath = "Body", blinkBlendShapes = new[] { "blinkL", "blinkR" } },
             };
             string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
                 AvatarPackageLayout.DescriptorEntry, JsonUtility.ToJson(descriptor));
@@ -185,7 +185,7 @@ namespace VRCast.Tests
             // 内容がそのまま読めること
             Assert.That(package.Descriptor.lipSync.mode, Is.EqualTo(LipSyncData.ModeJawFlapBlendShape));
             Assert.That(package.Descriptor.lipSync.mouthOpenBlendShape, Is.EqualTo("mouth_open"));
-            Assert.That(package.Descriptor.eyelids.blinkBlendShape, Is.EqualTo("blink"));
+            Assert.That(package.Descriptor.eyelids.blinkBlendShapes, Is.EqualTo(new[] { "blinkL", "blinkR" }));
         }
 
         [Test]
