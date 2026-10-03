@@ -30,7 +30,16 @@ namespace VRCast.Audio
         // 開始失敗・切断時の再試行間隔（秒）
         private const float RetryInterval = 3f;
 
+        // 母音判定に使う間引き後のサンプル数（約 11kHz で約 46ms）と、母音の重みの追従の速さ（1 秒あたり）
+        private const int VowelWindowSamples = 512;
+        private const float VowelResponse = 18f;
+
         private readonly float[] _samples = new float[WindowSamples];
+        private readonly VowelAnalyzer _analyzer = new VowelAnalyzer();
+        private readonly float[] _vowelTarget = new float[VowelAnalyzer.VowelCount];
+        private readonly float[] _vowels = new float[VowelAnalyzer.VowelCount];
+        private float[] _vowelSamples = new float[0];
+        private int _frequency;
         private AppSettings _settings;
         private AudioClip _clip;
 
@@ -47,6 +56,36 @@ namespace VRCast.Audio
         public bool IsRecording => _clip != null;
 
         /// <summary>
+        /// 平滑化済みの母音の重み（VowelAnalyzer.A / I / U / E / O、合計 1）。母音判定が無効なら A だけ 1。
+        /// </summary>
+        public float GetVowel(int vowel)
+        {
+            return _vowels[vowel];
+        }
+
+        /// <summary>
+        /// 最も重みの大きい母音（UI 表示用）。
+        /// </summary>
+        public int DominantVowel
+        {
+            get
+            {
+                int best = 0;
+                for (int v = 1; v < _vowels.Length; v++)
+                {
+                    best = _vowels[v] > _vowels[best] ? v : best;
+                }
+
+                return best;
+            }
+        }
+
+        /// <summary>
+        /// 直近に推定した第 1・第 2 フォルマント（Hz、UI 表示用）。
+        /// </summary>
+        public Vector2 Formants => new Vector2(_analyzer.F1, _analyzer.F2);
+
+        /// <summary>
         /// 直近の状態（UI 表示用）。
         /// </summary>
         public string Status { get; private set; } = "Stopped";
@@ -54,6 +93,7 @@ namespace VRCast.Audio
         public void Initialize(AppSettings settings)
         {
             _settings = settings;
+            ResetVowels();
         }
 
         private void Update()
@@ -89,6 +129,43 @@ namespace VRCast.Audio
             float target = IsRecording ? MeasureLevel() : 0f;
             float speed = target > Level ? AttackSpeed : ReleaseSpeed;
             Level = Mathf.MoveTowards(Level, target, speed * Time.deltaTime);
+
+            // 声が出ている間だけ母音を推定する（無音の間は直前の口の形のまま閉じる）
+            UpdateVowels(target > 0f);
+        }
+
+        private void UpdateVowels(bool voiced)
+        {
+            // 無効時は音量だけの口パク（あ）に戻す
+            if (!_settings.lipSyncVowels)
+            {
+                ResetVowels();
+                return;
+            }
+
+            // 推定できたときだけ目標を更新
+            if (voiced && IsRecording && ReadLatest(_vowelSamples))
+            {
+                _analyzer.Analyze(_vowelSamples, _frequency, _settings.lipSyncVoiceScale, _vowelTarget);
+            }
+
+            // 目標の重みへなめらかに追従（フレームレートに依らない指数平滑）
+            float t = 1f - Mathf.Exp(-VowelResponse * Time.deltaTime);
+            for (int v = 0; v < _vowels.Length; v++)
+            {
+                _vowels[v] = Mathf.Lerp(_vowels[v], _vowelTarget[v], t);
+            }
+        }
+
+        private void ResetVowels()
+        {
+            // 目標・現在値とも「あ」だけ
+            for (int v = 0; v < _vowels.Length; v++)
+            {
+                float weight = v == VowelAnalyzer.A ? 1f : 0f;
+                _vowels[v] = weight;
+                _vowelTarget[v] = weight;
+            }
         }
 
         private void StartRecording(string device)
@@ -115,6 +192,10 @@ namespace VRCast.Audio
                 ? PreferredFrequency
                 : Mathf.Clamp(PreferredFrequency, minFrequency, maxFrequency);
 
+            // 母音判定用のバッファ（間引き前の長さ）をレートに合わせて確保
+            _frequency = frequency;
+            _vowelSamples = new float[VowelWindowSamples * VowelAnalyzer.DecimationOf(frequency)];
+
             // ループ録音で開始
             _clip = Microphone.Start(_startedDevice, true, ClipSeconds, frequency);
             Status = _clip != null ? $"Recording: {_startedDevice ?? "Default"}" : "Failed to start";
@@ -135,16 +216,31 @@ namespace VRCast.Audio
             Status = status;
         }
 
-        private float MeasureLevel()
+        private bool ReadLatest(float[] buffer)
         {
-            // 録音位置の直前 WindowSamples 分を読む（GetData は末尾で先頭へ折り返す）
-            int offset = Microphone.GetPosition(_startedDevice) - WindowSamples;
+            // バッファがクリップより長ければ読めない
+            if (buffer.Length == 0 || buffer.Length > _clip.samples)
+            {
+                return false;
+            }
+
+            // 録音位置の直前 buffer.Length 分を読む（GetData は末尾で先頭へ折り返す）
+            int offset = Microphone.GetPosition(_startedDevice) - buffer.Length;
             if (offset < 0)
             {
                 offset += _clip.samples;
             }
 
-            _clip.GetData(_samples, offset);
+            return _clip.GetData(buffer, offset);
+        }
+
+        private float MeasureLevel()
+        {
+            // 直近の区間を読む
+            if (!ReadLatest(_samples))
+            {
+                return 0f;
+            }
 
             // RMS を計算
             float sum = 0f;

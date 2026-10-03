@@ -11,8 +11,12 @@ namespace VRCast.AvatarFormat
         // VRChat の Viseme 数（sil, PP, FF, TH, DD, kk, CH, SS, nn, RR, aa, E, I, O, U）
         public const int VisemeCount = 15;
 
-        // 口を開く代表 Viseme（aa）のインデックス
+        // 母音の Viseme（aa = あ、E = え、I = い、O = お、U = う）のインデックス。aa は口を開く代表としても使う
         public const int VisemeAa = 10;
+        public const int VisemeE = 11;
+        public const int VisemeI = 12;
+        public const int VisemeO = 13;
+        public const int VisemeU = 14;
 
         public LipSyncData lipSync = new LipSyncData();
         public EyelidData eyelids = new EyelidData();

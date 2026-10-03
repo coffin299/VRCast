@@ -165,6 +165,16 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Load_OutOfRangeVoiceScale_IsClamped()
+        {
+            _store.Save(new AppSettings { lipSyncVoiceScale = 0f });
+
+            // 範囲外の声の高さ補正は下限へ丸められること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.lipSyncVoiceScale, Is.EqualTo(AppSettings.MinVoiceScale));
+        }
+
+        [Test]
         public void Load_OutOfRangeUiScale_IsClamped()
         {
             _store.Save(new AppSettings { uiScale = 10f });

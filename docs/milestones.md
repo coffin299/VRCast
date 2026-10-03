@@ -356,6 +356,23 @@ Descriptor（Milestone 3）・PhysBone（Milestone 4）は対応済みのため�
 - OS が日本語の環境で Auto のとき日本語、English / 日本語 を選ぶと即座に切り替わり、再起動後も保持されること
 - UI の大きさを変えてもパネル上のマウス操作でカメラが動かないこと（パネル外では動くこと）
 
+## 母音リップシンク
+
+VRChat と同じく、マイクの声の母音（あいうえお）に合わせて Viseme（aa / ih / ou / E / oh）を切り替える。
+
+- 方式: VRChat の Oculus Lipsync は配布条件のある SDK のため使わず、`Audio/VowelAnalyzer` でフォルマント（F1 / F2）を LPC で推定して
+  母音の代表値と比べる軽量な近似（追加パッケージなし、1 フレーム数千回の積和）
+- `MicrophoneInput` が声の出ている間だけ推定して重みを平滑化、`LipSyncController` が音量 × 重みを各 Viseme へ上乗せ
+- 設定: `lipSyncVowels`（既定 ON）、`lipSyncVoiceScale`（声の高さ補正 0.8〜1.3）
+- テスト: パルス列を 3 つの共振器に通した合成母音（声の高さ 100〜230Hz で確認）を正しく判定すること
+
+確認項目:
+
+- 「あいうえお」と発声すると口の形が切り替わり、判定中の母音がパネルに出ること
+- ずれる場合に Voice pitch で改善すること、OFF では従来どおり aa だけで開閉すること
+
+既知の制限: 子音（PP / FF / TH 等）の口の形は使わない。雑音・BGM・複数人の声が混ざると判定が不安定になる。
+
 ## 技術的リスク
 
 - AssetBundle の Unity バージョン非互換 → manifest に `unityVersion` を記録し照合。
