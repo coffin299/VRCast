@@ -215,6 +215,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 │       └── Editor/               Exporter (VRCast.Converter.Editor)
 ├── Tools/
 │   ├── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
+│   ├── Package/                  配布用 zip の作成 (package.bat / package.ps1、同梱 README.txt)
 │   └── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
@@ -286,6 +287,23 @@ powershell -ExecutionPolicy Bypass -File .\Tools\UnityCapture\fetch.ps1
 - 実行ファイルは `OpenSeeFace/` 以下を再帰的に探す（展開時のフォルダ階層は問わない）。
 - 見つからない場合もビルドは続行し、警告ログを出す（トラッキングはパス指定が必要になる）。
 - 配布時は OpenSeeFace と同梱ライブラリのライセンス表記を含めること（一覧は [NOTICE](NOTICE)）。
+
+### 配布用 zip の作成
+
+Windows ビルドの後、`Tools\Package\package.bat` をダブルクリック（またはリポジトリ直下から実行）:
+
+```powershell
+.\Tools\Package\package.bat
+# バージョン・ビルドフォルダを指定する場合
+powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.0.1 -BuildPath .\VRCast\Builds\Windows
+```
+
+- 出力: `dist\VRCast-<バージョン>-win64.zip`（`.gitignore` 済み）。バージョンの既定は Player Settings の Version（`bundleVersion`）。
+- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
+  Unity が出力する配布不要のフォルダ（`*_BurstDebugInformation_DoNotShip` 等）は除く。
+- `VRCast.exe` が無ければ中止。同梱トラッカーや仮想カメラのドライバーが無い場合は警告を出して続行する
+  （仮想カメラ入りで配布するなら `Tools\UnityCapture\fetch.ps1` の後にビルドし直す）。
+- 作業フォルダは `%LOCALAPPDATA%\VRCast\package-build` に作り、完了後に削除する。
 
 ## 設定・キャッシュ
 

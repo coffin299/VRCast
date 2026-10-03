@@ -21,6 +21,9 @@
 /VRCast/Assets/Plugins/UnityCapture/
 /VRCast/Assets/Plugins/UnityCapture.meta
 
+# Distribution zips (Tools/Package/package.bat)
+/dist/
+
 # Python (MediaPipe tracker tool)
 __pycache__/
 *.pyc
