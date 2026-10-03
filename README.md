@@ -17,15 +17,15 @@ OBS (Window Capture / Game Capture)
 
 ## 現在の状態
 
-**Milestone 1（Basic Avatar Runtime）** 実装済み・動作確認待ち。
+**Milestone 1（Basic Avatar Runtime）** 完了。VRChat アバターを書き出して `VRCast.exe` で表示できる（T ポーズ表示、FX トグルの既定状態は未反映）。
 
 | 項目 | 状態 |
 | :--- | :--- |
 | Runtime / Editor の Assembly 分離 | 済 |
 | ログ (`VRCastLog`) / 設定の保存・読込 (`SettingsStore`) | 済 |
 | Windows ビルドスクリプト (`VRCastBuild`) | 済 |
-| アバター書き出し (`VRCast > Avatar Exporter`) | 済（要動作確認） |
-| `.vrcaster` 読み込み・表示・オービットカメラ・最小 UI | 済（要動作確認） |
+| アバター書き出し (`VRCast > Avatar Exporter`) | 済 |
+| `.vrcaster` 読み込み・表示・オービットカメラ・最小 UI | 済 |
 | 背景透過 / OBS 向け設定 | Milestone 2 で実装予定 |
 | 表情・揺れもの・トラッキング | 未実装 |
 
