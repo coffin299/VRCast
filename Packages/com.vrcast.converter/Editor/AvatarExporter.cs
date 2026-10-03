@@ -34,6 +34,7 @@ namespace VRCast.Converter.Editor
             public int ExpressionCount;
             public string LipSyncMode;
             public bool HasBlink;
+            public bool HasWink;
             public int PhysBoneCount;
             public ComponentStripper.Result Strip;
         }
@@ -113,6 +114,7 @@ namespace VRCast.Converter.Editor
                     : new AvatarDescriptorData();
                 report.LipSyncMode = descriptorData.lipSync.mode;
                 report.HasBlink = descriptorData.eyelids.blinkBlendShapes.Length > 0;
+                report.HasWink = !string.IsNullOrEmpty(descriptorData.eyelids.winkLeftBlendShape);
 
                 // 揺れもの（除去前に元アバターから読む）
                 PhysBoneSet physBones = PhysBoneExtractor.Extract(source);

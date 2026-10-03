@@ -17,9 +17,17 @@ namespace VRCast.Tracking
         // 各値の先頭位置
         private const int RightEyeOffset = 20;
         private const int LeftEyeOffset = 24;
+        private const int Got3DOffset = 28;
         private const int QuaternionOffset = 33;
         private const int TranslationOffset = 61;
+        private const int Points3DOffset = 889;
         private const int FeaturesOffset = 1729;
+
+        // 3D 点のうち右・左の瞳と、右・左の眼球中心の番号
+        private const int RightPupilPoint = 66;
+        private const int LeftPupilPoint = 67;
+        private const int RightEyeCenterPoint = 68;
+        private const int LeftEyeCenterPoint = 69;
 
         // 特徴量配列内の MouthOpen の位置
         private const int MouthOpenFeature = 12;
@@ -76,7 +84,47 @@ namespace VRCast.Tracking
             frame.EyeOpenRight = Mathf.Clamp01(rightEye);
             frame.EyeOpenLeft = Mathf.Clamp01(leftEye);
             frame.MouthOpen = Mathf.InverseLerp(MouthClosedFeature, MouthOpenedFeature, mouth);
+
+            // 3D 点が推定できたフレームだけ視線を使う
+            frame.HasGaze = buffer[offset + Got3DOffset] != 0 && TryReadGaze(buffer, offset, out frame.Gaze);
             return true;
+        }
+
+        private static bool TryReadGaze(byte[] buffer, int offset, out Vector2 gaze)
+        {
+            gaze = default;
+
+            // 左右の目の向き（眼球中心 → 瞳）の平均。どちらかが壊れていれば使わない
+            if (!TryReadEyeDirection(buffer, offset, RightPupilPoint, RightEyeCenterPoint, out Vector3 right)
+                || !TryReadEyeDirection(buffer, offset, LeftPupilPoint, LeftEyeCenterPoint, out Vector3 left))
+            {
+                return false;
+            }
+
+            // 左右・上下の角度へ（DeltaAngle で差分を取るため ±180° の折り返しは Driver 側で吸収）
+            Vector3 direction = (right + left).normalized;
+            float horizontal = Mathf.Sqrt(direction.x * direction.x + direction.z * direction.z);
+            gaze = new Vector2(
+                Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg,
+                Mathf.Atan2(direction.y, horizontal) * Mathf.Rad2Deg);
+            return true;
+        }
+
+        private static bool TryReadEyeDirection(byte[] buffer, int offset, int pupil, int center, out Vector3 direction)
+        {
+            // 瞳と眼球中心の差（OpenSeeFace 座標系）
+            Vector3 difference = ReadPoint3D(buffer, offset, pupil) - ReadPoint3D(buffer, offset, center);
+
+            // Unity サンプルと同じ軸変換で視線方向にする（読込時の y 反転・X 反転・180° 回転をまとめたもの）
+            direction = new Vector3(difference.x, difference.y, -difference.z);
+            return AllFinite(direction.x, direction.y, direction.z) && direction.sqrMagnitude > 1e-10f;
+        }
+
+        private static Vector3 ReadPoint3D(byte[] buffer, int offset, int point)
+        {
+            // 1 点は 3 つの float
+            int index = offset + Points3DOffset + point * 12;
+            return new Vector3(ReadFloat(buffer, index), ReadFloat(buffer, index + 4), ReadFloat(buffer, index + 8));
         }
 
         private static float ReadFloat(byte[] buffer, int index)

@@ -6,7 +6,7 @@ namespace VRCast.Tracking
 {
     /// <summary>
     /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、頭の位置（前後・左右）は背骨・胸の傾き、
-    /// まばたき・口は既存コントローラーへ外部入力として渡す。
+    /// 視線は目ボーン、まばたき（左右別）・口は既存コントローラーへ外部入力として渡す。
     /// 揺れもの（PhysBoneSimulator）が回転後の頭を基準に計算できるよう、他の LateUpdate より先に実行する。
     /// </summary>
     [DefaultExecutionOrder(-100)]
@@ -32,6 +32,17 @@ namespace VRCast.Tracking
         private const float LeanDegreesPerUnit = 10f;
         private const float MaxLeanAngle = 20f;
 
+        // 左右の閉じ具合の差がこれ未満なら平均する（検出のぶれで片目だけ閉じないように）
+        private const float WinkThreshold = 0.3f;
+
+        // 目ボーンの回転の上限（度、左右・上下）と追従速度（1 秒あたり）
+        private const float MaxEyeYaw = 20f;
+        private const float MaxEyePitch = 15f;
+        private const float EyeSmoothing = 15f;
+
+        // 両目の閉じ具合がこれ以上の間は視線を更新しない（瞳の検出が不安定なため）
+        private const float GazeFreezeClosed = 0.5f;
+
         private IFaceTrackingProvider _provider;
         private BlinkController _blink;
         private LipSyncController _lipSync;
@@ -47,12 +58,27 @@ namespace VRCast.Tracking
         private Quaternion _neckRest;
         private Quaternion _headRest;
 
+        // 目ボーンと読込時の回転
+        private Transform _leftEye;
+        private Transform _rightEye;
+        private Quaternion _leftEyeRest;
+        private Quaternion _rightEyeRest;
+
         // キャリブレーション時の頭の回転・位置（正面）と、平滑化済みの相対回転・位置
         private Quaternion _neutral = Quaternion.identity;
         private Vector3 _neutralPosition;
         private bool _calibrated;
         private Quaternion _current = Quaternion.identity;
         private Vector3 _currentOffset;
+
+        // 視線の正面（キャリブレーション時）と、目標・平滑化済みの目の角度（x = 左右、y = 上下）
+        private Vector2 _neutralGaze;
+        private bool _gazeCalibrated;
+        private Vector2 _gazeTarget;
+        private Vector2 _currentGaze;
+
+        // 直近の両目の閉じ具合の平均（視線の更新可否に使う）
+        private float _eyesClosed;
         private float _lastFrameTime = float.NegativeInfinity;
         private FaceTrackingFrame _lastFrame;
 
@@ -90,10 +116,16 @@ namespace VRCast.Tracking
             _chestRest = RestOf(_chest);
             _neckRest = RestOf(_neck);
             _headRest = RestOf(_head);
+
+            // 目ボーンが無いアバターは視線なし
+            _leftEye = animator.GetBoneTransform(HumanBodyBones.LeftEye);
+            _rightEye = animator.GetBoneTransform(HumanBodyBones.RightEye);
+            _leftEyeRest = RestOf(_leftEye);
+            _rightEyeRest = RestOf(_rightEye);
         }
 
         /// <summary>
-        /// 現在の頭の向き・位置を正面とする。
+        /// 現在の頭の向き・位置・視線を正面とする。
         /// </summary>
         public void Calibrate()
         {
@@ -101,6 +133,9 @@ namespace VRCast.Tracking
             _calibrated = IsTracking;
             _neutral = _lastFrame.HeadRotation;
             _neutralPosition = _lastFrame.HeadPosition;
+
+            // 視線は有効なフレームが来たときに取り直す
+            _gazeCalibrated = false;
         }
 
         private static Quaternion RestOf(Transform bone)
@@ -140,6 +175,7 @@ namespace VRCast.Tracking
 
             ApplyFace(received);
             ApplyBody(received);
+            ApplyEyes(received);
         }
 
         private void ApplyFace(bool received)
@@ -147,23 +183,44 @@ namespace VRCast.Tracking
             // 途絶時は外部入力を解除（自動まばたき・マイク口パクへ戻る）
             if (!received)
             {
-                SetBlink(null);
+                ClearBlink();
                 SetMouth(0f);
                 return;
             }
 
-            // 左右の目の開きの平均をまばたき量（閉じ具合）へ
-            float open = (_lastFrame.EyeOpenLeft + _lastFrame.EyeOpenRight) * 0.5f;
-            SetBlink(1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, open));
+            // 本人の左右の目の開きを閉じ具合へ
+            float personLeft = 1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenLeft);
+            float personRight = 1f - Mathf.InverseLerp(EyeClosedValue, EyeOpenedValue, _lastFrame.EyeOpenRight);
+            _eyesClosed = (personLeft + personRight) * 0.5f;
+
+            // 差が小さければ平均（ウインクは差が大きいときだけ）
+            if (Mathf.Abs(personLeft - personRight) < WinkThreshold)
+            {
+                personLeft = _eyesClosed;
+                personRight = _eyesClosed;
+            }
+
+            // 鏡像モードでは本人の右目がアバターの左目
+            bool mirror = _settings.trackingMirror;
+            SetBlink(mirror ? personRight : personLeft, mirror ? personLeft : personRight);
             SetMouth(_lastFrame.MouthOpen);
         }
 
-        private void SetBlink(float? closed)
+        private void SetBlink(float left, float right)
         {
             // まぶたが無いアバターでは何もしない
             if (_blink != null)
             {
-                _blink.ExternalClosed = closed;
+                _blink.SetExternal(left, right);
+            }
+        }
+
+        private void ClearBlink()
+        {
+            // まぶたが無い（または破棄済みの）アバターでは何もしない
+            if (_blink != null)
+            {
+                _blink.ClearExternal();
             }
         }
 
@@ -265,7 +322,74 @@ namespace VRCast.Tracking
             return Quaternion.RotateTowards(Quaternion.identity, delta, MaxHeadAngle);
         }
 
+        private void ApplyEyes(bool received)
+        {
+            // 目ボーンが無ければ何もしない
+            if (_leftEye == null && _rightEye == null)
+            {
+                return;
+            }
+
+            // 目標の視線（途絶時は正面、目を閉じている間・視線なしのフレームは直前の値を保持）
+            if (!received)
+            {
+                _gazeTarget = Vector2.zero;
+            }
+            else if (_lastFrame.HasGaze && _eyesClosed < GazeFreezeClosed)
+            {
+                _gazeTarget = CalculateGaze();
+            }
+
+            float blend = 1f - Mathf.Exp(-EyeSmoothing * Time.deltaTime);
+            _currentGaze = Vector2.Lerp(_currentGaze, _gazeTarget, blend);
+
+            // 無効化後に正面へ戻り切ったらボーンを触らない
+            if (!_settings.trackingEnabled && _currentGaze.sqrMagnitude < 1e-4f)
+            {
+                _currentGaze = Vector2.zero;
+                return;
+            }
+
+            // 読込時の回転へ戻し、頭の向き（アバター基準の頭の回転）を基準に左右・上下へ回す
+            RestoreRest(_leftEye, _leftEyeRest);
+            RestoreRest(_rightEye, _rightEyeRest);
+            Quaternion headFrame = transform.rotation * _current;
+            Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
+            RotateInFrame(_leftEye, headFrame, look);
+            RotateInFrame(_rightEye, headFrame, look);
+        }
+
+        private Vector2 CalculateGaze()
+        {
+            // 初回（キャリブレーション直後）の有効な視線を正面とする
+            if (!_gazeCalibrated)
+            {
+                _neutralGaze = _lastFrame.Gaze;
+                _gazeCalibrated = true;
+            }
+
+            // 正面からの角度差（±180° の折り返しを考慮）。鏡像モードは左右反転
+            float yaw = Mathf.DeltaAngle(_neutralGaze.x, _lastFrame.Gaze.x);
+            float pitch = Mathf.DeltaAngle(_neutralGaze.y, _lastFrame.Gaze.y);
+            if (_settings.trackingMirror)
+            {
+                yaw = -yaw;
+            }
+
+            // 強さを掛けて目が白目をむかない範囲に制限
+            float strength = _settings.trackingGaze;
+            return new Vector2(
+                Mathf.Clamp(yaw * strength, -MaxEyeYaw, MaxEyeYaw),
+                Mathf.Clamp(pitch * strength, -MaxEyePitch, MaxEyePitch));
+        }
+
         private void RotateInAvatarSpace(Transform bone, Quaternion rotation)
+        {
+            // アバタールート基準の回転をワールドへ変換して適用（Body yaw に追従）
+            RotateInFrame(bone, transform.rotation, rotation);
+        }
+
+        private static void RotateInFrame(Transform bone, Quaternion frame, Quaternion rotation)
         {
             // 未割り当てのボーンは無視
             if (bone == null)
@@ -273,15 +397,14 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // アバタールート基準の回転をワールドへ変換して適用（Body yaw に追従）
-            Quaternion root = transform.rotation;
-            bone.rotation = root * rotation * Quaternion.Inverse(root) * bone.rotation;
+            // frame 基準の回転をワールドへ変換して適用
+            bone.rotation = frame * rotation * Quaternion.Inverse(frame) * bone.rotation;
         }
 
         private void OnDestroy()
         {
             // アバター破棄時に外部入力を残さない
-            SetBlink(null);
+            ClearBlink();
             SetMouth(0f);
         }
     }

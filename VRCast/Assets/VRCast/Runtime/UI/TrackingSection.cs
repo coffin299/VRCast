@@ -48,6 +48,8 @@ namespace VRCast.UI
             _settings.trackingMirror = GUILayout.Toggle(_settings.trackingMirror, " Mirror");
             _settings.trackingBodyLean = GuiControls.Slider(
                 "Body lean", _settings.trackingBodyLean, 0f, AppSettings.MaxTrackingBodyLean);
+            _settings.trackingGaze = GuiControls.Slider("Eye gaze", _settings.trackingGaze, 0f, AppSettings.MaxTrackingGaze);
+            DrawWinkNote();
             DrawCalibrate();
             GUILayout.Label(_tracker.Status);
         }
@@ -117,6 +119,16 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
+        }
+
+        private void DrawWinkNote()
+        {
+            // ウインク用 BlendShape が無いアバターは両目同時のみ（再エクスポートで推定される場合がある）
+            var blink = _avatar.Get<BlinkController>();
+            if (blink != null && blink.IsAvailable && !blink.HasWink)
+            {
+                GUILayout.Label("Wink: not available (both eyes only)");
+            }
         }
 
         private void DrawCalibrate()

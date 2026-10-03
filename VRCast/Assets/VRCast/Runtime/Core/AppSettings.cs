@@ -32,6 +32,9 @@ namespace VRCast.Core
         // 頭の位置に合わせた上半身の傾きの強さの上限（0 = 傾けない）
         public const float MaxTrackingBodyLean = 3f;
 
+        // 視線の強さの上限（0 = 目を動かさない）
+        public const float MaxTrackingGaze = 2f;
+
         public int version = CurrentVersion;
         public int windowWidth = 1280;
         public int windowHeight = 720;
@@ -70,6 +73,7 @@ namespace VRCast.Core
         public int trackingPort = DefaultTrackingPort;
         public bool trackingMirror = true;
         public float trackingBodyLean = 1f;
+        public float trackingGaze = 1f;
 
         // VRCast から起動する OpenSeeFace（facetracker.exe のパスと、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
@@ -108,6 +112,8 @@ namespace VRCast.Core
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
+            // 視線の強さも同様
+            trackingGaze = Mathf.Clamp(trackingGaze, 0f, MaxTrackingGaze);
             // null のパス・カメラ名は未設定扱いの空文字へ
             trackerPath ??= string.Empty;
             // カメラ名も同様

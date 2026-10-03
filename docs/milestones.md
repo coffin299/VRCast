@@ -9,7 +9,7 @@
 | 2 | Transparent Rendering | 完了 |
 | 3 | Expressions | 完了 |
 | 4 | Runtime Physics | 完了（既知の課題あり） |
-| 5 | Tracking | 進行中（要確認） |
+| 5 | Tracking | 完了（視線・ウインクは要確認） |
 | 6 | OSC | 未着手 |
 | 7 | Avatar Conversion Pipeline | 未着手 |
 | 8 | Advanced Output | 未着手 |
@@ -195,7 +195,13 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
   - 頭の位置（パケットの位置を `(-y, x, -z)` で Unity 座標系へ）の正面位置からの差分で上半身を傾ける:
     前後 → 前後の傾き、左右 → 横の傾き（1 単位 10° × Body lean、上限 20°）を Spine / Chest で分担し、
     頭の向きがトラッキング値どおりになるよう首（無ければ頭）で傾きを打ち消す。Mirror は左右を反転
-  - まばたき・口は同じ BlendShape へ二重に上乗せしないよう `BlinkController.ExternalClosed`（自動まばたきより優先）/
+  - 視線: パケットの 3D 点（66・67 = 右・左の瞳、68・69 = 眼球中心）から目の向きを求め、左右平均の角度を
+    キャリブレーション時からの差分で Humanoid の目ボーンへ（強さ Eye gaze、上限 左右 20° / 上下 15°、頭の向き基準）。
+    3D 推定失敗のフレーム・両目を閉じている間は直前の視線を保持
+  - ウインク: 左右の閉じ具合の差が 0.3 以上のときだけ左右別に渡す（Mirror では本人の右目 → アバターの左目）。
+    `BlinkController` は両目用 BlendShape に左右の小さい方、ウインク用に差分を上乗せ（両目用が無ければ片目用だけで閉じる）。
+    Converter は `ウィンク` / `ウィンク右`、`wink_L` / `wink_R`、`eyeBlinkLeft` / `eyeBlinkRight` 等をまばたきメッシュから推定（要再エクスポート）
+  - まばたき・口は同じ BlendShape へ二重に上乗せしないよう `BlinkController.SetExternal`（左右別、自動まばたきより優先）/
     `LipSyncController.ExternalLevel`（マイクと大きい方）へ渡す
   - `FaceTrackerProcess`: `StreamingAssets/OpenSeeFace/` 以下（再帰検索、最も浅いもの）に同梱した `facetracker.exe`（パス指定があればそちら）を、
     Face tracking ON の間は自動起動。異常終了・起動失敗は 5 秒間隔で再試行。
@@ -206,7 +212,7 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
   頭の移動量の表示、状態と fps。
   同梱版が無いときだけ facetracker.exe パス入力）。設定は保存。
   `<` `>` の巡回選択はマイク選択と共通の `GuiControls.Selector`
-- 視線・眉・左右別ウインクは未対応（次段階）
+- 眉・口角（特徴量）は未対応
 
 確認項目:
 
@@ -214,8 +220,10 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 - まばたき・口の開閉の追従としきい値（`EyeClosedValue` / `EyeOpenedValue` / MouthOpen 範囲は要調整）
 - 途絶時に自動まばたき・マイク口パク・正面の頭へ戻ること
 - 前後・左右に体を動かしたとき上半身が正しい向きに傾くこと（`LeanDegreesPerUnit` は Head offset の値を見て要調整）
+- 目を左右・上下に動かしたとき目ボーンが正しい向きに動くこと、片目を閉じたとき正しい側の目が閉じること
 
 確認結果: 同梱 OpenSeeFace（v1.20.5、`StreamingAssets/OpenSeeFace/` へ zip を展開）の自動起動・カメラ選択・受信・アバターへの反映を確認。
+頭の位置による上半身の傾き（前後・左右の向き、既定の強さ）も確認。
 
 ## Milestone 6 — OSC
 

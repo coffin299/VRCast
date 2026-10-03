@@ -6,8 +6,8 @@ using VRCast.Core;
 namespace VRCast.Animations
 {
     /// <summary>
-    /// ランダム間隔の自動まばたき。Descriptor の eyelids（BlendShape 方式）の blink を上乗せする。
-    /// AppSettings.autoBlink で ON/OFF。
+    /// まばたき。ランダム間隔の自動まばたき（AppSettings.autoBlink で ON/OFF）と、外部（トラッキング）からの左右別の閉じ具合。
+    /// 両目用の BlendShape には左右の小さい方（両目とも閉じている分）、片目用（ウインク）には左右の差分を上乗せし、二重に閉じないようにする。
     /// </summary>
     public class BlinkController : MonoBehaviour
     {
@@ -21,36 +21,98 @@ namespace VRCast.Animations
         private const float OpenDuration = 0.12f;
         private const float TotalDuration = CloseDuration + HoldDuration + OpenDuration;
 
-        // 左右別の BlendShape は同時に閉じる
-        private readonly List<BlendShapeOverlay> _eyelids = new List<BlendShapeOverlay>();
+        // BlendShape が受け持つ目（アバターから見た左右）
+        private enum EyeSide
+        {
+            Both,
+            Left,
+            Right,
+        }
+
+        private readonly List<BlendShapeOverlay> _overlays = new List<BlendShapeOverlay>();
+        private readonly List<EyeSide> _sides = new List<EyeSide>();
         private AppSettings _settings;
         private float _nextBlinkTime;
+        private bool _hasBoth;
+
+        // 外部入力（左右の閉じ具合 0〜1）と、その有無
+        private bool _hasExternal;
+        private float _externalLeft;
+        private float _externalRight;
 
         // まばたき開始時刻（負なら非まばたき中）
         private float _blinkStart = -1f;
 
-        public bool IsAvailable => _eyelids.Count > 0;
+        public bool IsAvailable => _overlays.Count > 0;
 
         /// <summary>
-        /// 外部（フェイストラッキング）からの閉じ具合（0〜1）。値がある間は自動まばたきより優先する。
+        /// 片目だけ閉じられる（ウインク用 BlendShape がある）か。
         /// </summary>
-        public float? ExternalClosed { get; set; }
+        public bool HasWink { get; private set; }
 
         public void Initialize(Transform root, EyelidData data, AppSettings settings)
         {
             _settings = settings;
 
-            // 見つかったまぶた BlendShape だけを対象にする（0 件ならまばたき無し）
+            // まばたき用 BlendShape（ウインクと同名なら片目用として扱う）
             foreach (string shape in data.blinkBlendShapes)
             {
-                BlendShapeOverlay eyelid = BlendShapeOverlay.Create(root, data.meshPath, shape);
-                if (eyelid != null)
-                {
-                    _eyelids.Add(eyelid);
-                }
+                EyeSide side = shape == data.winkLeftBlendShape ? EyeSide.Left
+                    : shape == data.winkRightBlendShape ? EyeSide.Right
+                    : EyeSide.Both;
+                Add(root, data.meshPath, shape, side);
             }
 
+            // ウインク用 BlendShape（まばたき用と別名のときだけ追加。左右揃った場合のみ）
+            bool winkPair = !string.IsNullOrEmpty(data.winkLeftBlendShape) && !string.IsNullOrEmpty(data.winkRightBlendShape);
+            if (winkPair)
+            {
+                AddIfNew(root, data.meshPath, data.winkLeftBlendShape, data.blinkBlendShapes, EyeSide.Left);
+                AddIfNew(root, data.meshPath, data.winkRightBlendShape, data.blinkBlendShapes, EyeSide.Right);
+            }
+
+            // 左右とも片目用があればウインク可能
+            _hasBoth = _sides.Contains(EyeSide.Both);
+            HasWink = _sides.Contains(EyeSide.Left) && _sides.Contains(EyeSide.Right);
             ScheduleNext();
+        }
+
+        /// <summary>
+        /// 外部入力（アバターから見た左右の閉じ具合 0〜1）を設定する。設定中は自動まばたきより優先する。
+        /// </summary>
+        public void SetExternal(float left, float right)
+        {
+            _hasExternal = true;
+            _externalLeft = Mathf.Clamp01(left);
+            _externalRight = Mathf.Clamp01(right);
+        }
+
+        /// <summary>
+        /// 外部入力を解除し、自動まばたきへ戻す。
+        /// </summary>
+        public void ClearExternal()
+        {
+            _hasExternal = false;
+        }
+
+        private void Add(Transform root, string meshPath, string shape, EyeSide side)
+        {
+            // 見つかった BlendShape だけを対象にする
+            BlendShapeOverlay overlay = BlendShapeOverlay.Create(root, meshPath, shape);
+            if (overlay != null)
+            {
+                _overlays.Add(overlay);
+                _sides.Add(side);
+            }
+        }
+
+        private void AddIfNew(Transform root, string meshPath, string shape, string[] existing, EyeSide side)
+        {
+            // 同じ BlendShape に 2 つの上乗せを作らない（互いの書き込みを元の値と誤認して閉じたままになる）
+            if (System.Array.IndexOf(existing, shape) < 0)
+            {
+                Add(root, meshPath, shape, side);
+            }
         }
 
         private void LateUpdate()
@@ -62,10 +124,10 @@ namespace VRCast.Animations
             }
 
             // 外部入力がある間はその値を使い、自動まばたきは止める
-            if (ExternalClosed.HasValue)
+            if (_hasExternal)
             {
                 _blinkStart = -1f;
-                Write(Mathf.Clamp01(ExternalClosed.Value) * 100f);
+                Write(_externalLeft, _externalRight);
                 return;
             }
 
@@ -73,7 +135,7 @@ namespace VRCast.Animations
             if (!_settings.autoBlink)
             {
                 _blinkStart = -1f;
-                Write(0f);
+                Write(0f, 0f);
                 return;
             }
 
@@ -99,15 +161,21 @@ namespace VRCast.Animations
                 }
             }
 
-            Write(closed * 100f);
+            Write(closed, closed);
         }
 
-        private void Write(float weight)
+        private void Write(float left, float right)
         {
-            // 全まぶた BlendShape に同じ値を上乗せ
-            foreach (BlendShapeOverlay eyelid in _eyelids)
+            // 両目とも閉じている分は両目用、残りは片目用（両目用が無ければ片目用だけで閉じる）
+            float both = Mathf.Min(left, right);
+            float leftOnly = _hasBoth ? left - both : left;
+            float rightOnly = _hasBoth ? right - both : right;
+
+            for (int i = 0; i < _overlays.Count; i++)
             {
-                eyelid.Write(weight);
+                // 受け持つ目に応じた値を 0〜100 で上乗せ
+                float value = _sides[i] == EyeSide.Both ? both : _sides[i] == EyeSide.Left ? leftOnly : rightOnly;
+                _overlays[i].Write(value * 100f);
             }
         }
 

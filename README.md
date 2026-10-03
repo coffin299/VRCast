@@ -17,7 +17,7 @@ OBS (Window Capture / Game Capture)
 
 ## 現在の状態
 
-**Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）** 完了、**Milestone 5（Tracking）** 進行中。
+**Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
 
 | 項目 | 状態 |
@@ -34,7 +34,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 表情プリセット（FX の BlendShape クリップから抽出、数字キー切替） | 済 |
 | 自動まばたき（ON/OFF）・マイク音量リップシンク | 済 |
 | 揺れもの（PhysBone 近似・コライダー） | 済 |
-| カメラトラッキング（OpenSeeFace 同梱: 頭の向き・上半身の傾き・まばたき・口） | 済（要確認） |
+| カメラトラッキング（OpenSeeFace 同梱: 頭の向き・上半身の傾き・まばたき・口） | 済 |
+| 視線（目ボーン）・左右別ウインク | 済（要確認） |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
 
@@ -63,6 +64,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 - FX 内の BlendShape だけを動かすクリップ（表情クリップ）を表情プリセットとして `metadata/expressions.json` に書き出す。
 - Avatar Descriptor の Lip Sync（Viseme / JawFlap BlendShape）と Eyelids（BlendShape）設定を `metadata/descriptor.json` に書き出す。
   Eyelids 未設定の場合は顔メッシュの `まばたき` / `blink` / `eyeBlinkLeft`+`eyeBlinkRight` 等をまばたき用として推定する。
+  ウインク用 BlendShape（`ウィンク`+`ウィンク右`、`wink_L`+`wink_R` 等）も推定して書き出す。
 - PhysBone / PhysBone Collider の主要パラメーターを `metadata/physbones.json` に書き出す（Runtime で近似的に揺らす）。
 - 書き出し先は Windows スタンドアロン用 AssetBundle。Android (Quest) ビルドターゲットのプロジェクトでは切替に時間がかかる。
 
@@ -106,6 +108,8 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 - 受信は `127.0.0.1` のみ（外部からの入力は受け付けない）。ポートはパネルで変更可（既定 11573）。
 - 受信開始時の顔の向き・位置を正面とする。ずれたらカメラを見て **Calibrate** を押す。**Mirror** で左右の反映を切り替える。
 - 体を前後・左右に動かすと上半身が傾く。強さは **Body lean**（0 で無効）で調整し、Head offset に正面からの移動量が表示される。
+- 目の動きは目ボーン（Humanoid の LeftEye / RightEye）に反映される。強さは **Eye gaze**（0 で無効）。
+- 片目を閉じるとウインクする（ウインク用 BlendShape を書き出し時に推定できたアバターのみ。無い場合は両目同時のまばたき）。
 - トラッキング中は自動まばたきより優先し、口はマイク口パクと大きい方を使う。途絶すると 0.5 秒で元の動作に戻る。
 
 パネルの **Rendering** で、背景（透過 / 単色）、ウィンドウ解像度（1280x720 / 1920x1080 / 縦長 720x1280 / 1080x1920）、ライトの強さと向きを変更できる。

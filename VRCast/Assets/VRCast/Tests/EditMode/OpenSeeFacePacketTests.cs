@@ -15,6 +15,8 @@ namespace VRCast.Tests
         private const int LeftEyeOffset = 24;
         private const int QuaternionOffset = 33;
         private const int TranslationOffset = 61;
+        private const int Got3DOffset = 28;
+        private const int Points3DOffset = 889;
         private const int MouthOpenOffset = 1729 + 12 * 4;
 
         [Test]
@@ -59,6 +61,34 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void TryParse_Gaze_FromPupilAndEyeCenter()
+        {
+            // 両目とも瞳が眼球中心から (+x, 0, -z) 方向にある（3D 推定成功）
+            byte[] packet = CreatePacket(Quaternion.identity, 1f, 1f, 0f);
+            packet[Got3DOffset] = 1;
+            WritePoint(packet, 66, new Vector3(1f, 0f, -1f));
+            WritePoint(packet, 67, new Vector3(1f, 0f, -1f));
+
+            // 視線方向 (x, y, -z) = (1, 0, 1) で左右 45°・上下 0° になること
+            Assert.That(OpenSeeFacePacket.TryParse(packet, 0, packet.Length, out FaceTrackingFrame frame), Is.True);
+            Assert.That(frame.HasGaze, Is.True);
+            Assert.That(frame.Gaze.x, Is.EqualTo(45f).Within(0.01f));
+            Assert.That(frame.Gaze.y, Is.EqualTo(0f).Within(0.01f));
+        }
+
+        [Test]
+        public void TryParse_No3DPoints_HasNoGaze()
+        {
+            // 3D 推定失敗のフレームは視線なし（他の値は使える）
+            byte[] packet = CreatePacket(Quaternion.identity, 1f, 1f, 0f);
+            WritePoint(packet, 66, new Vector3(1f, 0f, -1f));
+            WritePoint(packet, 67, new Vector3(1f, 0f, -1f));
+
+            Assert.That(OpenSeeFacePacket.TryParse(packet, 0, packet.Length, out FaceTrackingFrame frame), Is.True);
+            Assert.That(frame.HasGaze, Is.False);
+        }
+
+        [Test]
         public void TryParse_ShortPacket_ReturnsFalse()
         {
             // 1 顔分に満たない長さは拒否すること
@@ -94,6 +124,15 @@ namespace VRCast.Tests
             WriteFloat(packet, QuaternionOffset + 12, rotation.w);
             WriteFloat(packet, MouthOpenOffset, mouth);
             return packet;
+        }
+
+        private static void WritePoint(byte[] packet, int point, Vector3 value)
+        {
+            // 3D 点 1 つ（眼球中心 68・69 は 0 のまま）
+            int offset = Points3DOffset + point * 12;
+            WriteFloat(packet, offset, value.x);
+            WriteFloat(packet, offset + 4, value.y);
+            WriteFloat(packet, offset + 8, value.z);
         }
 
         private static void WriteFloat(byte[] packet, int offset, float value)
