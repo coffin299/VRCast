@@ -26,7 +26,7 @@
 
 ## Milestone 1 — Basic Avatar Runtime
 
-1. `.vavatar` manifest v0 を確定（[avatar-package.md](avatar-package.md)）
+1. `.vrcaster` manifest v0 を確定（[avatar-package.md](avatar-package.md)）
 2. `com.vrcast.converter` パッケージ
    - `VRCast.AvatarFormat`: manifest / ファイル配置 / 許可コンポーネント / ハッシュ（Runtime と共有）
    - `VRCast.Converter.Editor`: 複製 → 非標準コンポーネント除去 → AssetBundle → ZIP（VRChat SDK 非依存）
@@ -35,7 +35,7 @@
 5. `App/AppRoot`: 結線、起動引数 `--avatar`、前回アバターの自動読込
 6. `AvatarPackageReaderTests`
 
-成功条件: VCC プロジェクトで書き出した `.vavatar` を `VRCast.exe` で読み込み、Humanoid が正常表示される。
+成功条件: VCC プロジェクトで書き出した `.vrcaster` を `VRCast.exe` で読み込み、Humanoid が正常表示される。
 
 確認項目:
 

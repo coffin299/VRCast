@@ -7,7 +7,7 @@ using VRCast.AvatarFormat;
 namespace VRCast.Converter.Editor
 {
     /// <summary>
-    /// アバターを選んで .vavatar を書き出す Editor ウィンドウ。
+    /// アバターを選んで .vrcaster を書き出す Editor ウィンドウ。
     /// </summary>
     public class AvatarExporterWindow : EditorWindow
     {
@@ -26,7 +26,7 @@ namespace VRCast.Converter.Editor
 
         private void OnGUI()
         {
-            EditorGUILayout.LabelField("Export avatar to .vavatar", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Export avatar to .vrcaster", EditorStyles.boldLabel);
 
             // シーン上のオブジェクトと Prefab の両方を受け付ける
             _avatar = (GameObject)EditorGUILayout.ObjectField("Avatar Root", _avatar, typeof(GameObject), true);

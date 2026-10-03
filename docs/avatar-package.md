@@ -1,4 +1,4 @@
-# Avatar Package (.vavatar) — v0
+# Avatar Package (.vrcaster) — v0
 
 > ステータス: **v0（formatVersion 0）**。開発中のため、Milestone 7 までに互換性のない変更が入る可能性がある。
 > 変更時は `formatVersion` を上げる。
@@ -9,10 +9,10 @@ VRChat アバターを、Unity プロジェクトなしで VRCast Runtime が読
 
 ## コンテナ
 
-ZIP アーカイブ。拡張子 `.vavatar`。全エントリは **無圧縮（Stored）** で格納する（bundle は LZ4 圧縮済み）。
+ZIP アーカイブ。拡張子 `.vrcaster`。全エントリは **無圧縮（Stored）** で格納する（bundle は LZ4 圧縮済み）。
 
 ```text
-MyAvatar.vavatar
+MyAvatar.vrcaster
 ├── manifest.json        必須。パッケージ情報
 ├── avatar.bundle        必須。Unity AssetBundle（StandaloneWindows64, LZ4）
 └── metadata/            任意。VRChat 固有設定を変換した JSON（v0 では未使用）
