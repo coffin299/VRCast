@@ -58,6 +58,8 @@ flowchart LR
 - VRChat SDK への依存は `VRCast.Converter.Editor` に限定する。現状はアセンブリ参照を持たず、リフレクションで型名・フィールド名から読む（SDK 無しでもコンパイル可能）。Runtime プロジェクトには VRChat SDK を導入しない。
 - Runtime プロジェクトは `com.vrcast.converter` をローカルパス（`file:../../Packages/com.vrcast.converter`）で参照する。
 - 新しい Package を追加する場合は、理由と Runtime への影響をこのドキュメントに追記する。
+- 外部バイナリ: フェイストラッキングは OpenSeeFace（BSD-2-Clause）を `StreamingAssets/OpenSeeFace/` に同梱し、別プロセスで起動する
+  （推論で描画を止めない・トラッカーの異常終了が Runtime に波及しない）。リポジトリには含めずビルド前に配置する。
 
 ### 名前空間
 
@@ -116,12 +118,12 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `IFaceTrackingProvider` / `FaceTrackingFrame` | フェイストラッキング入力元の共通インターフェースと 1 フレーム分の値 |
 | `OpenSeeFacePacket` | OpenSeeFace UDP パケット（1 顔 1785 バイト）の解析と座標変換 |
 | `OpenSeeFaceReceiver` | `127.0.0.1` のみで UDP を受信する Provider。途絶検出・再 bind・受信 fps |
-| `FaceTrackerProcess` | 指定された `facetracker.exe` の起動・停止、カメラ一覧（`-l 1`）の取得・解析、デバイス名 → 番号の解決 |
+| `FaceTrackerProcess` | 同梱（`StreamingAssets/OpenSeeFace/`）または指定された `facetracker.exe` の自動起動・再試行・停止、カメラ一覧（`-l 1`）の取得・解析、デバイス名 → 番号の解決 |
 | `FaceTrackingDriver` | 頭の向きを首・頭ボーンへ、まばたき・口を `BlinkController` / `LipSyncController` へ適用。キャリブレーション・鏡像 |
 | `MainPanel` | IMGUI パネル（Avatar / Pose / Expressions / Face / Tracking / Camera / Rendering）。Tab で表示切替 |
 | `AnimationSection` | MainPanel 内の Pose / Expressions セクション UI |
 | `FaceSection` | MainPanel 内の Face / Physics セクション UI（PhysBone、Auto blink、Lip sync、マイク選択・感度・メーター） |
-| `TrackingSection` | MainPanel 内の Tracking セクション UI（ON/OFF、facetracker パス・カメラ選択・Start / Stop、ポート、Mirror、Calibrate、受信状態） |
+| `TrackingSection` | MainPanel 内の Tracking セクション UI（ON/OFF、カメラ選択・一覧更新・再起動、同梱版が無いときの facetracker パス、ポート、Mirror、Calibrate、受信状態） |
 | `AvatarComponentCache` | 表示中アバターのコンポーネントをアバター切替までキャッシュ |
 | `RenderingSection` | MainPanel 内の Rendering セクション UI |
 | `GuiControls` | セクション共通の IMGUI 部品（ラベル付きスライダー、`<` `>` の巡回選択） |
@@ -152,7 +154,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 
 | クラス | 責務 |
 | :--- | :--- |
-| `VRCastBuild` | Windows x64 ビルド。`Main.unity` がなければ生成してビルド対象に登録 |
+| `VRCastBuild` | Windows x64 ビルド。`Main.unity` がなければ生成してビルド対象に登録。同梱 OpenSeeFace が未配置なら警告 |
 
 ## Tests (EditMode)
 
