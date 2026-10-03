@@ -114,8 +114,8 @@
         <span class="en">Set Mode to <span class="ui">Capture specific window</span> and Window to <code>[VRCast.exe]: VRCast</code>.</span></li>
     <li><span class="ja"><span class="ui">透過を許可</span> にチェックを入れます。</span>
         <span class="en">Check <span class="ui">Allow Transparency</span>.</span></li>
-    <li><span class="ja">VRCast で <kbd>Tab</kbd> キーを押して操作パネルを隠します（パネルも OBS に映るため）。</span>
-        <span class="en">Press <kbd>Tab</kbd> in VRCast to hide the control panel (it also appears in OBS).</span></li>
+    <li><span class="ja">VRCast で <kbd>Tab</kbd> キーを押して操作パネルを隠します（パネルも OBS に映るため）。隠している間は背景も消え、ウィンドウ全体が透過します。</span>
+        <span class="en">Press <kbd>Tab</kbd> in VRCast to hide the control panel (it also appears in OBS). While hidden, the background disappears too and the whole window turns transparent.</span></li>
   </ol>
   <p class="note warn ja"><span class="ui">ウィンドウキャプチャ</span> は透過に対応していません。透過したいときは必ず <span class="ui">ゲームキャプチャ</span> を使ってください。</p>
   <p class="note warn en"><span class="ui">Window Capture</span> does not support transparency. Always use <span class="ui">Game Capture</span> for a transparent background.</p>
@@ -213,7 +213,7 @@
 <section id="keys">
   <h2><span class="ja">操作一覧</span><span class="en">Controls</span></h2>
   <table>
-    <tr><td><kbd>Tab</kbd></td><td><span class="ja">操作パネルの表示 / 非表示</span><span class="en">Show / hide the control panel</span></td></tr>
+    <tr><td><kbd>Tab</kbd></td><td><span class="ja">操作パネルの表示 / 非表示（隠している間はウィンドウごと透過）</span><span class="en">Show / hide the control panel (the window turns transparent while hidden)</span></td></tr>
     <tr><td><span class="ja">パネル下部のリセット</span><span class="en">Reset bar (panel bottom)</span></td>
         <td><span class="ja">顔の向き / 視線 / 表情（ニュートラル）/ カメラ。どのタブを開いていても押せます</span>
             <span class="en">Head / Gaze / Expression (neutral) / Camera, available from every tab</span></td></tr>
@@ -230,11 +230,11 @@
   <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
     <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
     lilToon 等は明るさがテクスチャの色までに制限されるため、太陽光を上げても一定以上は明るくなりません。
-    その場合は <span class="ui">アバターの明るさ</span> を上げてください（1 = マテリアルのまま）。</p>
+    その場合は <span class="ui">アバターの明るさ</span> を上げてください（0.5〜10、1 = マテリアルのまま）。</p>
   <p class="en">Press the <span class="ui">Sunny</span> preset in the <span class="ui">Display</span> tab or raise <span class="ui">Ambient</span>.
     Set <span class="ui">Direction</span> near 0 to light the avatar from the front.
     Shaders such as lilToon cap brightness at the texture color, so raising Sunlight stops helping past a point.
-    In that case, raise <span class="ui">Avatar brightness</span> (1 = material as is).</p>
+    In that case, raise <span class="ui">Avatar brightness</span> (0.5 to 10, 1 = material as is).</p>
   <h3><span class="ja">OBS で背景が抜けない</span><span class="en">The background is not transparent in OBS</span></h3>
   <p class="ja">VRCast の背景を <span class="ui">透過</span> にし、OBS は <span class="ui">ゲームキャプチャ</span>（ウィンドウキャプチャではなく）で
     <span class="ui">透過を許可</span> にチェックが入っているか確認してください。</p>
