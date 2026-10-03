@@ -5,7 +5,7 @@
 | # | 名称 | 状態 |
 | :--- | :--- | :--- |
 | 0 | プロジェクト基盤 | 完了 |
-| 1 | Basic Avatar Runtime | 実装済み（要動作確認） |
+| 1 | Basic Avatar Runtime | 完了（既知の課題あり） |
 | 2 | Transparent Rendering | 未着手 |
 | 3 | Expressions | 未着手 |
 | 4 | Runtime Physics | 未着手 |
@@ -42,6 +42,15 @@
 - lilToon 等のシェーダーがマゼンタにならないこと
 - Reload / Unload を繰り返してもエラー・メモリリークが無いこと（bundle 二重読込エラーが出ないこと）
 - 改ざん・破損パッケージがエラー表示で拒否されること
+
+確認結果: lilToon 系 VRChat アバター（Renderer 34、Humanoid）を VCC プロジェクトから書き出し、`VRCast.exe` で正常表示（マゼンタなし、Sanitize 警告なし）。
+
+既知の課題:
+
+- FX レイヤーのトグルで既定 OFF にしている小物（ギミック・ワールド固定オブジェクト等）が表示される。
+  Animator Controller を書き出さないため、既定状態が適用されない。→ Exporter で FX の既定状態を焼き込む（Milestone 3 前倒し候補）
+- 待機アニメーションが無いため T ポーズで表示される。→ Milestone 3
+- カメラのフレーミングが小物を含めた境界で計算される。→ Humanoid ボーン基準のフレーミングに変更予定
 
 ## Milestone 2 — Transparent Rendering
 
