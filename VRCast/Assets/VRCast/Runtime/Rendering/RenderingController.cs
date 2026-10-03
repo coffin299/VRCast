@@ -1,16 +1,27 @@
 using UnityEngine;
+using UnityEngine.Rendering;
 using VRCast.Core;
 
 namespace VRCast.Rendering
 {
     /// <summary>
-    /// 背景（透過 / 単色）、解像度、ディレクショナルライトを設定値に従って適用する。
+    /// ライティングのプリセット（太陽光の強さ・色温度・向きと環境光の組）。
+    /// </summary>
+    public enum LightingPreset
+    {
+        Default,
+        Sunny,
+        Soft,
+    }
+
+    /// <summary>
+    /// 背景（透過 / 単色）、解像度、太陽光（ディレクショナルライト）と環境光を設定値に従って適用する。
     /// 値の保持は AppSettings に委ね、変更は即座に反映する。
     /// </summary>
     public class RenderingController : MonoBehaviour
     {
-        // 透過時の背景色（OBS ゲームキャプチャの「透過を許可」で alpha 0 が抜ける）
-        private static readonly Color TransparentColor = new Color(0f, 0f, 0f, 0f);
+        // 環境光の明るさ 1 のときの色（全方向から均一に当たる灰色）
+        private const float AmbientBase = 0.5f;
 
         private UnityEngine.Camera _camera;
         private Light _light;
@@ -34,6 +45,21 @@ namespace VRCast.Rendering
                 // 単色背景は常に不透明で扱う
                 value.a = 1f;
                 _settings.backgroundColor = value;
+                ApplyBackground();
+            }
+        }
+
+        /// <summary>
+        /// 透過時にウィンドウ上だけに見える背景色。
+        /// </summary>
+        public Color PreviewColor
+        {
+            get => _settings.previewColor;
+            set
+            {
+                // 保存値は不透明で持ち、適用時に alpha 0 にする
+                value.a = 1f;
+                _settings.previewColor = value;
                 ApplyBackground();
             }
         }
@@ -68,6 +94,27 @@ namespace VRCast.Rendering
             }
         }
 
+        public float LightTemperature
+        {
+            get => _settings.lightTemperature;
+            set
+            {
+                _settings.lightTemperature = Mathf.Clamp(
+                    value, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
+                ApplyLight();
+            }
+        }
+
+        public float AmbientIntensity
+        {
+            get => _settings.ambientIntensity;
+            set
+            {
+                _settings.ambientIntensity = Mathf.Clamp(value, 0f, AppSettings.MaxAmbientIntensity);
+                ApplyAmbient();
+            }
+        }
+
         public int Width => Screen.width;
         public int Height => Screen.height;
 
@@ -89,6 +136,31 @@ namespace VRCast.Rendering
 
             ApplyBackground();
             ApplyLight();
+            ApplyAmbient();
+        }
+
+        /// <summary>
+        /// ライティングのプリセットを適用する（太陽光の強さ・色温度・向きと環境光）。
+        /// </summary>
+        public void ApplyPreset(LightingPreset preset)
+        {
+            // 既定値は AppSettings の初期値と同じ
+            var defaults = new AppSettings();
+            switch (preset)
+            {
+                case LightingPreset.Sunny:
+                    // 晴れ: 強めの暖かい日差し + 明るめの環境光
+                    SetLighting(1.4f, 5600f, defaults.lightYaw, 45f, 1.2f);
+                    break;
+                case LightingPreset.Soft:
+                    // やわらか: 弱い日差し + 強い環境光（影が薄く顔が明るい）
+                    SetLighting(0.7f, 7000f, defaults.lightYaw, 60f, 1.6f);
+                    break;
+                default:
+                    SetLighting(defaults.lightIntensity, defaults.lightTemperature, defaults.lightYaw,
+                        defaults.lightPitch, defaults.ambientIntensity);
+                    break;
+            }
         }
 
         /// <summary>
@@ -107,20 +179,47 @@ namespace VRCast.Rendering
             }
         }
 
+        private void SetLighting(float intensity, float temperature, float yaw, float pitch, float ambient)
+        {
+            // 値を範囲内で記録してまとめて反映
+            _settings.lightIntensity = Mathf.Clamp(intensity, 0f, AppSettings.MaxLightIntensity);
+            _settings.lightTemperature = Mathf.Clamp(
+                temperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature);
+            _settings.lightYaw = yaw;
+            _settings.lightPitch = Mathf.Clamp(pitch, -90f, 90f);
+            _settings.ambientIntensity = Mathf.Clamp(ambient, 0f, AppSettings.MaxAmbientIntensity);
+            ApplyLight();
+            ApplyAmbient();
+        }
+
         private void ApplyBackground()
         {
-            // スカイボックスは使わず常に単色クリア（透過時は alpha 0）
+            // スカイボックスは使わず常に単色クリア
             _camera.clearFlags = CameraClearFlags.SolidColor;
-            Color opaque = _settings.backgroundColor;
-            opaque.a = 1f;
-            _camera.backgroundColor = _settings.transparentBackground ? TransparentColor : opaque;
+
+            // 透過時は色だけ塗って alpha 0（ウィンドウは alpha を無視して色を表示、ゲームキャプチャは alpha で抜く）
+            Color color = _settings.transparentBackground ? _settings.previewColor : _settings.backgroundColor;
+            color.a = _settings.transparentBackground ? 0f : 1f;
+            _camera.backgroundColor = color;
         }
 
         private void ApplyLight()
         {
-            // 強度と向きを反映
+            // 強度・色温度・向きを反映
             _light.intensity = _settings.lightIntensity;
+            _light.color = Mathf.CorrelatedColorTemperatureToRGB(_settings.lightTemperature);
             _light.transform.rotation = Quaternion.Euler(_settings.lightPitch, _settings.lightYaw, 0f);
+        }
+
+        private void ApplyAmbient()
+        {
+            // ライティングデータを焼かないため、環境光は単色で直接与える（シェーダーが参照する SH も同じ色にする）
+            Color ambient = new Color(AmbientBase, AmbientBase, AmbientBase) * _settings.ambientIntensity;
+            RenderSettings.ambientMode = AmbientMode.Flat;
+            RenderSettings.ambientLight = ambient;
+            var probe = new SphericalHarmonicsL2();
+            probe.AddAmbientLight(ambient);
+            RenderSettings.ambientProbe = probe;
         }
 
         private static Light FindDirectionalLight()

@@ -19,6 +19,11 @@ namespace VRCast.Core
         // ライト強度の上限
         public const float MaxLightIntensity = 8f;
 
+        // 環境光（全方向から当たる明るさ）の上限と、太陽光の色温度（K）の範囲
+        public const float MaxAmbientIntensity = 2f;
+        public const float MinLightTemperature = 2500f;
+        public const float MaxLightTemperature = 10000f;
+
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
         public const float MaxMicGain = 10f;
@@ -56,6 +61,9 @@ namespace VRCast.Core
         public bool transparentBackground;
         public Color backgroundColor = new Color(0.25f, 0.25f, 0.25f, 1f);
 
+        // 透過時にウィンドウ上だけに見える背景色（alpha 0 のまま色だけ塗るため OBS のゲームキャプチャには映らない）
+        public Color previewColor = new Color(0.40f, 0.44f, 0.48f, 1f);
+
         // 仮想カメラ（VRCast Camera）への出力
         public bool virtualCameraEnabled;
 
@@ -63,6 +71,10 @@ namespace VRCast.Core
         public float lightIntensity = 1f;
         public float lightYaw = -30f;
         public float lightPitch = 50f;
+
+        // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ
+        public float lightTemperature = 6500f;
+        public float ambientIntensity = 1f;
 
         // 待機ポーズ（0 = T ポーズのまま、1 = 腕を下ろし切る / 肘を曲げ切る）。既定は気を付け
         public float poseArmDown = 1f;
@@ -128,6 +140,10 @@ namespace VRCast.Core
             lightPitch = Mathf.Clamp(lightPitch, -90f, 90f);
             // 方位角は -180〜180 に正規化
             lightYaw = Mathf.Repeat(lightYaw + 180f, 360f) - 180f;
+            // 色温度は範囲内に制限
+            lightTemperature = Mathf.Clamp(lightTemperature, MinLightTemperature, MaxLightTemperature);
+            // 環境光は 0〜上限に制限
+            ambientIntensity = Mathf.Clamp(ambientIntensity, 0f, MaxAmbientIntensity);
             // ポーズの度合いは 0〜1 に制限
             poseArmDown = Mathf.Clamp01(poseArmDown);
             // 肘の曲げも同様
