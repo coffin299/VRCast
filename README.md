@@ -5,7 +5,7 @@ VSeeFace のように簡単にアバターを表示・トラッキングし、OB
 
 ```text
 VRChat アバター (Unity / VCC プロジェクト)
-        ↓  com.vrcast.converter (Editor 専用, 予定)
+        ↓  com.vrcast.converter (Editor 専用パッケージ)
 MyAvatar.vavatar
         ↓
 VRCast.exe (Runtime)
@@ -17,15 +17,17 @@ OBS (Window Capture / Game Capture)
 
 ## 現在の状態
 
-**Milestone 0（プロジェクト基盤）** 完了（EditMode テスト・Windows ビルド・設定の保存/読込を確認済み）。アバター表示はまだできない。
+**Milestone 1（Basic Avatar Runtime）** 実装済み・動作確認待ち。
 
 | 項目 | 状態 |
 | :--- | :--- |
 | Runtime / Editor の Assembly 分離 | 済 |
-| ログ (`VRCastLog`) | 済 |
-| 設定の保存・読込 (`SettingsStore`) | 済 |
+| ログ (`VRCastLog`) / 設定の保存・読込 (`SettingsStore`) | 済 |
 | Windows ビルドスクリプト (`VRCastBuild`) | 済 |
-| アバター読み込み | Milestone 1 で実装予定 |
+| アバター書き出し (`VRCast > Avatar Exporter`) | 済（要動作確認） |
+| `.vavatar` 読み込み・表示・オービットカメラ・最小 UI | 済（要動作確認） |
+| 背景透過 / OBS 向け設定 | Milestone 2 で実装予定 |
+| 表情・揺れもの・トラッキング | 未実装 |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
 
@@ -35,24 +37,57 @@ OBS (Window Capture / Game Capture)
 - 開発時: Unity **2022.3.22f1**（VRChat SDK と同一バージョン。AssetBundle 互換性のため固定）
 - Render Pipeline: Built-in
 
+## 使い方
+
+### 1. アバターを .vavatar に書き出す
+
+アバターがある Unity プロジェクト（VCC プロジェクト可、Unity 2022.3.22f1）に Converter パッケージを導入する。
+
+- Package Manager > `+` > **Add package from git URL...**
+  `https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter`
+- またはローカルのクローンから **Add package from disk...** で `Packages/com.vrcast.converter/package.json` を選択
+
+メニュー `VRCast > Avatar Exporter` を開き、シーン上のアバタールート（Animator 付き）を指定して **Export...**。
+
+- 書き出されるのは Unity 標準コンポーネント（Transform / Animator / Renderer / MeshFilter）とそのメッシュ・マテリアル・シェーダー・テクスチャのみ。
+- VRChat コンポーネント・スクリプト・Animator Controller は書き出し用の複製から除去される（元のアバターは変更されない）。
+- 書き出し先は Windows スタンドアロン用 AssetBundle。Android (Quest) ビルドターゲットのプロジェクトでは切替に時間がかかる。
+
+### 2. VRCast.exe で表示する
+
+- パネルの入力欄に `.vavatar` のパスを入力して **Load**（前後の `"` は自動で除去）。
+- 起動引数でも指定可能: `VRCast.exe --avatar "C:\path\MyAvatar.vavatar"`
+- 最後に読み込んだアバターは次回起動時に自動で読み込まれる。
+
+| 操作 | 内容 |
+| :--- | :--- |
+| 右ドラッグ | カメラ回転 |
+| 中ドラッグ | パン |
+| ホイール | ズーム |
+| Tab | 操作パネルの表示切替 |
+
 ## リポジトリ構成
 
 ```text
 .
-├── docs/                 設計ドキュメント
-│   ├── architecture.md   Runtime / Editor 分離と依存ルール
-│   ├── avatar-package.md .vavatar フォーマット（ドラフト）
-│   └── milestones.md     開発マイルストーン
-└── VRCast/               Unity Runtime プロジェクト
+├── docs/                         設計ドキュメント
+│   ├── architecture.md           Runtime / Editor 分離と依存ルール
+│   ├── avatar-package.md         .vavatar フォーマット (v0)
+│   └── milestones.md             開発マイルストーン
+├── Packages/
+│   └── com.vrcast.converter/     アバター変換パッケージ
+│       ├── Runtime/              共有フォーマット定義 (VRCast.AvatarFormat)
+│       └── Editor/               Exporter (VRCast.Converter.Editor)
+└── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
-        ├── Runtime/      スタンドアロンで動くコード (VRCast.Runtime)
-        ├── Editor/       Editor 専用コード (VRCast.Editor)
-        └── Tests/        EditMode テスト
+        ├── Runtime/              スタンドアロンで動くコード (VRCast.Runtime)
+        ├── Editor/               Editor 専用コード (VRCast.Editor)
+        └── Tests/                EditMode テスト
 ```
 
 ## ビルド・テスト
 
-Unity Hub で `VRCast/` フォルダを開くか、以下をコマンドラインで実行する。
+Unity Hub で `VRCast/` フォルダを開くか、以下をコマンドラインで実行する（リポジトリ直下で実行し、Editor は閉じておく）。
 
 ```powershell
 # EditMode テスト
@@ -64,17 +99,19 @@ Unity Hub で `VRCast/` フォルダを開くか、以下をコマンドライ�
 
 Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルドできる。
 
-## 設定ファイル
+## 設定・キャッシュ
 
-Runtime の設定は `%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\settings.json` に保存される。
-初回起動時に既定値で作成され、終了時に現在の設定で上書き保存される。
-ファイルが壊れている場合は既定値で起動する。読込・保存の結果は `Player.log` に `[VRCast][Settings]` として出力される。
+- 設定: `%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\settings.json`
+  初回起動時に既定値で作成され、終了時に現在の設定で上書き保存される。壊れている場合は既定値で起動する。
+- 展開済みアバターのキャッシュ: `%USERPROFILE%\AppData\Local\Temp\VRCast\VRCast\avatars\`（削除しても次回読込時に再展開される）
+- ログ: `%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\Player.log`（`[VRCast]` で始まる行）
 
 ## アバターの扱いについて
 
 - `.vavatar` は利用者本人がローカルで使うための変換データであり、アバターの再配布を目的としない。
   各アバターの利用規約に従うこと。
 - Runtime はアバターを **データとしてのみ** 扱い、アバター内の任意コードは実行しない。
+  読込時にパッケージ構造・サイズ・ハッシュを検証し、許可リスト外のコンポーネントを除去する。
 
 ## License
 

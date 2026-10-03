@@ -5,7 +5,7 @@
 | # | 名称 | 状態 |
 | :--- | :--- | :--- |
 | 0 | プロジェクト基盤 | 完了 |
-| 1 | Basic Avatar Runtime | 未着手 |
+| 1 | Basic Avatar Runtime | 実装済み（要動作確認） |
 | 2 | Transparent Rendering | 未着手 |
 | 3 | Expressions | 未着手 |
 | 4 | Runtime Physics | 未着手 |
@@ -24,16 +24,24 @@
 
 成功条件: プロジェクトが開く / EditMode テストが通る / `VRCast.exe` が起動し設定読込ログが出る。
 
-## Milestone 1 — Basic Avatar Runtime（予定）
+## Milestone 1 — Basic Avatar Runtime
 
 1. `.vavatar` manifest v0 を確定（[avatar-package.md](avatar-package.md)）
-2. 最小 Exporter（Editor 専用 UPM パッケージ `com.vrcast.converter`）
-   - Humanoid Prefab → 非標準コンポーネント除去 → AssetBundle → ZIP
-   - この段階では VRChat SDK に依存しない
-3. Runtime `Avatar/`: `AvatarPackageReader`（ZIP 検証）、`AvatarLoader`（`AssetBundle.LoadFromFileAsync`）
-4. Runtime `Camera/`: オービットカメラ、最小 UI（Load / Reload / Info）
+2. `com.vrcast.converter` パッケージ
+   - `VRCast.AvatarFormat`: manifest / ファイル配置 / 許可コンポーネント / ハッシュ（Runtime と共有）
+   - `VRCast.Converter.Editor`: 複製 → 非標準コンポーネント除去 → AssetBundle → ZIP（VRChat SDK 非依存）
+3. Runtime `Avatars/`: `AvatarPackageReader`（ZIP 検証・展開）、`AvatarLoader`（`AssetBundle.LoadFromFileAsync`）、`AvatarSession`
+4. Runtime `Cameras/`: `OrbitCameraController`、`UI/`: `MainPanel`（Load / Reload / Unload / Info / FOV / Reset）
+5. `App/AppRoot`: 結線、起動引数 `--avatar`、前回アバターの自動読込
+6. `AvatarPackageReaderTests`
 
-成功条件: `VRCast.exe` で `.vavatar` を読み込み Humanoid が正常表示される。
+成功条件: VCC プロジェクトで書き出した `.vavatar` を `VRCast.exe` で読み込み、Humanoid が正常表示される。
+
+確認項目:
+
+- lilToon 等のシェーダーがマゼンタにならないこと
+- Reload / Unload を繰り返してもエラー・メモリリークが無いこと（bundle 二重読込エラーが出ないこと）
+- 改ざん・破損パッケージがエラー表示で拒否されること
 
 ## Milestone 2 — Transparent Rendering
 
