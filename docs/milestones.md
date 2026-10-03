@@ -160,6 +160,8 @@ PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider
     コライダー芯の最近接点で判定し、めり込み量をてこ比（1/接触位置）で子粒子へ伝える（ボーン数の少ないスカートのすり抜け対策）。
     起動時にワールド寸法をログ出力
   - Humanoid ボーンは揺らさない（待機ポーズ・トラッキングと競合させない）
+  - multiChildType = ignore で複数の子を持つ Transform は回転させず、その子を位置固定のチェーン起点とする
+    （スカート Root 等。起点の回転は子の方向へ向ける）
 - UI: Face / Physics セクションに PhysBone ON/OFF（チェーン数表示、設定は保存）
 - 確認用に Pose へ Body yaw（アバタールートの向き、`AppSettings.avatarYaw`）を追加。トラッキング導入前は体を回したときの揺れで確認する
 
