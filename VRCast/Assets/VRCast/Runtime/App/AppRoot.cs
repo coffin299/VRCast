@@ -2,6 +2,7 @@ using System;
 using System.IO;
 using UnityEngine;
 using VRCast.Animations;
+using VRCast.Audio;
 using VRCast.Avatars;
 using VRCast.Cameras;
 using VRCast.Core;
@@ -21,6 +22,7 @@ namespace VRCast.App
         private AvatarSession _session;
         private OrbitCameraController _orbit;
         private AppSettings _settings;
+        private MicrophoneInput _microphone;
         private string _initialAvatarPath;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -64,9 +66,14 @@ namespace VRCast.App
             var rendering = gameObject.AddComponent<RenderingController>();
             rendering.Initialize(mainCamera, _settings);
 
+            // リップシンク用のマイク入力（アプリ全体で 1 つ）
+            _microphone = gameObject.AddComponent<MicrophoneInput>();
+            _microphone.Initialize(_settings);
+
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
-            gameObject.AddComponent<MainPanel>().Initialize(_session, _orbit, rendering, _initialAvatarPath);
+            gameObject.AddComponent<MainPanel>().Initialize(
+                _session, _orbit, rendering, _microphone, _settings, _initialAvatarPath);
         }
 
         private void Start()
@@ -89,9 +96,13 @@ namespace VRCast.App
 
         private void OnAvatarLoaded(LoadedAvatar avatar)
         {
-            // 待機ポーズと表情（アバターと一緒に破棄されるよう本体に付ける）
+            // 待機ポーズ・表情・まばたき・リップシンク（アバターと一緒に破棄されるよう本体に付ける）
+            Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
-            avatar.Instance.AddComponent<ExpressionController>().Initialize(avatar.Instance.transform, avatar.Expressions);
+            avatar.Instance.AddComponent<ExpressionController>().Initialize(root, avatar.Expressions);
+            avatar.Instance.AddComponent<BlinkController>().Initialize(root, avatar.Descriptor.eyelids, _settings);
+            avatar.Instance.AddComponent<LipSyncController>().Initialize(
+                root, avatar.Descriptor.lipSync, _microphone, _settings);
 
             // アバター本体（Humanoid は骨格基準）が映るようにカメラを合わせる
             _orbit.Frame(avatar.CalculateFramingBounds());

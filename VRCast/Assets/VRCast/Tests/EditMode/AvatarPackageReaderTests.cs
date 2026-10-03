@@ -164,6 +164,44 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Extract_WithDescriptor_ParsesLipSyncAndEyelids()
+        {
+            // JawFlap 方式とまぶた設定を同梱
+            var descriptor = new AvatarDescriptorData
+            {
+                lipSync = new LipSyncData
+                {
+                    mode = LipSyncData.ModeJawFlapBlendShape,
+                    meshPath = "Body",
+                    mouthOpenBlendShape = "mouth_open",
+                },
+                eyelids = new EyelidData { meshPath = "Body", blinkBlendShape = "blink" },
+            };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.DescriptorEntry, JsonUtility.ToJson(descriptor));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            // 内容がそのまま読めること
+            Assert.That(package.Descriptor.lipSync.mode, Is.EqualTo(LipSyncData.ModeJawFlapBlendShape));
+            Assert.That(package.Descriptor.lipSync.mouthOpenBlendShape, Is.EqualTo("mouth_open"));
+            Assert.That(package.Descriptor.eyelids.blinkBlendShape, Is.EqualTo("blink"));
+        }
+
+        [Test]
+        public void Extract_UnknownLipSyncMode_IgnoredAsEmpty()
+        {
+            // 未知のモードは検証で弾かれ、既定（none）になること
+            const string json = "{\"lipSync\":{\"mode\":\"jawFlapBone\",\"visemes\":[]},\"eyelids\":{}}";
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.DescriptorEntry, json);
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Descriptor.lipSync.mode, Is.EqualTo(LipSyncData.ModeNone));
+        }
+
+        [Test]
         public void Extract_WithoutExpressions_ReturnsEmpty()
         {
             string path = WritePackage(CreateManifest(DummyBundle), DummyBundle);

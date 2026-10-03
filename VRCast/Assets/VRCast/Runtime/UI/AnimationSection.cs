@@ -20,16 +20,15 @@ namespace VRCast.UI
         // 共通接頭辞を切る位置の区切り文字
         private static readonly char[] PrefixSeparators = { '_', '-', ' ' };
 
-        private readonly AvatarSession _session;
+        private readonly AvatarComponentCache _avatar;
         private readonly List<string> _labels = new List<string>();
-        private GameObject _cachedInstance;
         private PoseController _pose;
         private ExpressionController _expressions;
         private Vector2 _expressionScroll;
 
         public AnimationSection(AvatarSession session)
         {
-            _session = session;
+            _avatar = new AvatarComponentCache(session);
         }
 
         public void Draw()
@@ -47,19 +46,16 @@ namespace VRCast.UI
 
         private bool RefreshControllers()
         {
-            GameObject instance = _session.Current?.Instance;
-
             // アバターが替わったときだけ取り直す
-            if (instance != _cachedInstance)
+            if (_avatar.Refresh())
             {
-                _cachedInstance = instance;
-                _pose = instance != null ? instance.GetComponent<PoseController>() : null;
-                _expressions = instance != null ? instance.GetComponent<ExpressionController>() : null;
+                _pose = _avatar.Get<PoseController>();
+                _expressions = _avatar.Get<ExpressionController>();
                 _expressionScroll = Vector2.zero;
                 BuildLabels();
             }
 
-            return instance != null;
+            return _avatar.HasAvatar;
         }
 
         private void DrawPose()

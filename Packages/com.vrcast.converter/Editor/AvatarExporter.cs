@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.IO.Compression;
@@ -31,6 +32,8 @@ namespace VRCast.Converter.Editor
             public bool IsHumanoid;
             public int BakedFxClips;
             public int ExpressionCount;
+            public string LipSyncMode;
+            public bool HasBlink;
             public ComponentStripper.Result Strip;
         }
 
@@ -103,6 +106,13 @@ namespace VRCast.Converter.Editor
                 ExpressionSet expressions = fx != null ? ExpressionExtractor.Extract(fx) : new ExpressionSet();
                 report.ExpressionCount = expressions.presets.Length;
 
+                // リップシンク・まぶた設定（パスは元アバター基準＝複製と同じ階層）
+                AvatarDescriptorData descriptorData = descriptor != null
+                    ? VrcDescriptorReader.GetDescriptorData(descriptor, source.transform)
+                    : new AvatarDescriptorData();
+                report.LipSyncMode = descriptorData.lipSync.mode;
+                report.HasBlink = descriptorData.eyelids.blinkBlendShape.Length > 0;
+
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
@@ -133,15 +143,29 @@ namespace VRCast.Converter.Editor
                     throw new InvalidOperationException(manifestError);
                 }
 
-                // 表情データも Runtime と同じ規則で検証
-                string expressionError = expressions.Validate();
-                if (expressionError != null)
+                // 中身のある metadata だけを Runtime と同じ規則で検証して同梱
+                var metadata = new Dictionary<string, IMetadata>();
+                if (expressions.presets.Length > 0)
                 {
-                    throw new InvalidOperationException("Invalid expressions: " + expressionError);
+                    metadata[AvatarPackageLayout.ExpressionsEntry] = expressions;
+                }
+
+                if (report.LipSyncMode != LipSyncData.ModeNone || report.HasBlink)
+                {
+                    metadata[AvatarPackageLayout.DescriptorEntry] = descriptorData;
+                }
+
+                foreach (KeyValuePair<string, IMetadata> entry in metadata)
+                {
+                    string metadataError = entry.Value.Validate();
+                    if (metadataError != null)
+                    {
+                        throw new InvalidOperationException($"Invalid {entry.Key}: {metadataError}");
+                    }
                 }
 
                 // ZIP にまとめて出力
-                WritePackage(outputPath, report.Manifest, bundlePath, expressions);
+                WritePackage(outputPath, report.Manifest, bundlePath, metadata);
                 return report;
             }
             finally
@@ -192,7 +216,7 @@ namespace VRCast.Converter.Editor
         }
 
         private static void WritePackage(
-            string outputPath, AvatarManifest manifest, string bundlePath, ExpressionSet expressions)
+            string outputPath, AvatarManifest manifest, string bundlePath, IReadOnlyDictionary<string, IMetadata> metadata)
         {
             // 書き込み途中の破損ファイルを残さないよう一時ファイルへ書いてから置き換える
             string tempPath = outputPath + ".tmp";
@@ -207,10 +231,10 @@ namespace VRCast.Converter.Editor
                 // bundle は LZ4 圧縮済みで、Runtime 側の Deflate 依存も避けるため無圧縮で格納
                 WriteTextEntry(zip, AvatarPackageLayout.ManifestEntry, JsonUtility.ToJson(manifest, true));
 
-                // 表情がある場合のみ metadata を追加
-                if (expressions.presets.Length > 0)
+                // 任意の metadata（JsonUtility.ToJson はインターフェース経由でも実行時の型でシリアライズする）
+                foreach (KeyValuePair<string, IMetadata> entry in metadata)
                 {
-                    WriteTextEntry(zip, AvatarPackageLayout.ExpressionsEntry, JsonUtility.ToJson(expressions, true));
+                    WriteTextEntry(zip, entry.Key, JsonUtility.ToJson(entry.Value, true));
                 }
 
                 // bundle 本体をコピー

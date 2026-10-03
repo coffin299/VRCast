@@ -1,0 +1,88 @@
+using System;
+
+namespace VRCast.AvatarFormat
+{
+    /// <summary>
+    /// metadata/descriptor.json の内容。VRCAvatarDescriptor のうち Runtime で使う設定（リップシンク・まぶた）。
+    /// </summary>
+    [Serializable]
+    public class AvatarDescriptorData : IMetadata
+    {
+        // VRChat の Viseme 数（sil, PP, FF, TH, DD, kk, CH, SS, nn, RR, aa, E, I, O, U）
+        public const int VisemeCount = 15;
+
+        // 口を開く代表 Viseme（aa）のインデックス
+        public const int VisemeAa = 10;
+
+        public LipSyncData lipSync = new LipSyncData();
+        public EyelidData eyelids = new EyelidData();
+
+        public string Validate()
+        {
+            // 各ブロックの欠落
+            if (lipSync == null || eyelids == null)
+            {
+                return "lipSync and eyelids are required.";
+            }
+
+            // モードは既知の値のみ
+            if (lipSync.mode != LipSyncData.ModeNone && lipSync.mode != LipSyncData.ModeVisemeBlendShape
+                && lipSync.mode != LipSyncData.ModeJawFlapBlendShape)
+            {
+                return $"Unknown lipSync.mode '{lipSync.mode}'.";
+            }
+
+            // パスと BlendShape 名は空可・長さ上限あり
+            if (!ExpressionSet.IsValidString(lipSync.meshPath, true)
+                || !ExpressionSet.IsValidString(lipSync.mouthOpenBlendShape, true)
+                || !ExpressionSet.IsValidString(eyelids.meshPath, true)
+                || !ExpressionSet.IsValidString(eyelids.blinkBlendShape, true))
+            {
+                return "Descriptor contains an invalid string.";
+            }
+
+            // Viseme 名は 0 件または 15 件
+            if (lipSync.visemes == null || (lipSync.visemes.Length != 0 && lipSync.visemes.Length != VisemeCount))
+            {
+                return $"lipSync.visemes must have 0 or {VisemeCount} items.";
+            }
+
+            foreach (string viseme in lipSync.visemes)
+            {
+                if (!ExpressionSet.IsValidString(viseme, true))
+                {
+                    return "lipSync.visemes contains an invalid name.";
+                }
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>
+    /// リップシンク設定。mode に応じて visemes または mouthOpenBlendShape を使う。
+    /// </summary>
+    [Serializable]
+    public class LipSyncData
+    {
+        // 対応するモード（ジョーボーン等は未対応のため none として書き出す）
+        public const string ModeNone = "none";
+        public const string ModeVisemeBlendShape = "visemeBlendShape";
+        public const string ModeJawFlapBlendShape = "jawFlapBlendShape";
+
+        public string mode = ModeNone;
+        public string meshPath = string.Empty;
+        public string[] visemes = Array.Empty<string>();
+        public string mouthOpenBlendShape = string.Empty;
+    }
+
+    /// <summary>
+    /// まぶた設定。blinkBlendShape が空ならまばたき不可。
+    /// </summary>
+    [Serializable]
+    public class EyelidData
+    {
+        public string meshPath = string.Empty;
+        public string blinkBlendShape = string.Empty;
+    }
+}

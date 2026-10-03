@@ -77,17 +77,9 @@ namespace VRCast.Animations
         {
             target = default;
 
-            // 空パスはルート自身
-            Transform node = string.IsNullOrEmpty(value.path) ? root : root.Find(value.path);
-            SkinnedMeshRenderer renderer = node != null ? node.GetComponent<SkinnedMeshRenderer>() : null;
-            if (renderer == null || renderer.sharedMesh == null)
-            {
-                return false;
-            }
-
-            // BlendShape 名からインデックスを取得
-            int index = renderer.sharedMesh.GetBlendShapeIndex(value.blendShape);
-            if (index < 0)
+            // パスと BlendShape 名から実体を探す
+            if (!BlendShapeOverlay.TryFind(root, value.path, value.blendShape,
+                    out SkinnedMeshRenderer renderer, out int index))
             {
                 return false;
             }

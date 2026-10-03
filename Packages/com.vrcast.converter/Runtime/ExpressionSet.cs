@@ -6,7 +6,7 @@ namespace VRCast.AvatarFormat
     /// metadata/expressions.json の内容。表情プリセット（BlendShape の組み合わせ）の一覧。
     /// </summary>
     [Serializable]
-    public class ExpressionSet
+    public class ExpressionSet : IMetadata
     {
         // 信頼できない入力に対する上限
         public const int MaxPresets = 256;
@@ -53,7 +53,10 @@ namespace VRCast.AvatarFormat
             return null;
         }
 
-        private static bool IsValidString(string value, bool allowEmpty)
+        /// <summary>
+        /// metadata 内の文字列共通の検証（null 不可、空は指定時のみ可、長さ上限あり）。
+        /// </summary>
+        public static bool IsValidString(string value, bool allowEmpty)
         {
             // null 不可、空は指定時のみ可、長さ上限あり
             return value != null && (allowEmpty || value.Length > 0) && value.Length <= MaxStringLength;

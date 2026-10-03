@@ -15,12 +15,18 @@ namespace VRCast.Avatars
         // 表情プリセット（無い・不正な場合は空）
         public ExpressionSet Expressions { get; }
 
-        public AvatarPackage(AvatarManifest manifest, string sourcePath, string bundlePath, ExpressionSet expressions)
+        // リップシンク・まぶた設定（無い・不正な場合は空）
+        public AvatarDescriptorData Descriptor { get; }
+
+        public AvatarPackage(
+            AvatarManifest manifest, string sourcePath, string bundlePath,
+            ExpressionSet expressions, AvatarDescriptorData descriptor)
         {
             Manifest = manifest;
             SourcePath = sourcePath;
             BundlePath = bundlePath;
             Expressions = expressions ?? new ExpressionSet();
+            Descriptor = descriptor ?? new AvatarDescriptorData();
         }
     }
 
