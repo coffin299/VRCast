@@ -150,7 +150,8 @@ PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider
 
 - Converter `PhysBoneExtractor`: `VRCPhysBone` / `VRCPhysBoneCollider` をリフレクションで読み `metadata/physbones.json` に書き出す
   （root / ignore / endpoint / multiChildType / pull / spring / stiffness / gravity / gravityFalloff / immobile / radius / 角度制限 / コライダー）。
-  カーブ、Grab / Pose、Parameter 連動、Stretch / Squish は対象外。Hinge / Polar 制限は maxAngleX の円錐で近似
+  各パラメーターのカーブ（チェーン沿いの倍率）は 9 点サンプリングして書き出し、Runtime は粒子の段数 / 最大段数の位置で評価する。
+  Grab / Pose、Parameter 連動、Stretch / Squish は対象外。Hinge / Polar 制限は maxAngleX の円錐で近似
 - Runtime `Dynamics/`（`UnityEngine.Physics` と衝突しないよう `VRCast.Dynamics`）
   - `PhysBoneSimulator`: 60Hz 固定ステップ（1 フレーム最大 3 ステップ）、アバター 1 体 4096 粒子まで
   - `PhysBoneChain`: 毎フレーム静止回転へ戻して静止位置を求め、Verlet（慣性 = spring、引き戻し = pull、形状維持 = stiffness、

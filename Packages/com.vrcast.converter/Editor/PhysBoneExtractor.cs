@@ -16,6 +16,9 @@ namespace VRCast.Converter.Editor
         private const string PhysBoneTypeName = "VRCPhysBone";
         private const string ColliderTypeName = "VRCPhysBoneCollider";
 
+        // カーブのサンプル数（チェーンの骨数より細かければ十分）
+        private const int CurveSamples = 9;
+
         public static PhysBoneSet Extract(GameObject root)
         {
             Transform rootTransform = root.transform;
@@ -74,6 +77,15 @@ namespace VRCast.Converter.Editor
                 immobile = Mathf.Clamp01(ReflectionUtility.GetFloat(bone, "immobile", 0f)),
                 radius = Mathf.Clamp(ReflectionUtility.GetFloat(bone, "radius", 0f), 0f, PhysBoneSet.MaxRadius),
                 maxAngle = Mathf.Clamp(ReflectionUtility.GetFloat(bone, "maxAngleX", 0f), 0f, 180f),
+
+                // チェーン沿いの倍率カーブ
+                pullCurve = SampleCurve(bone, "pullCurve"),
+                springCurve = SampleCurve(bone, "springCurve"),
+                stiffnessCurve = SampleCurve(bone, "stiffnessCurve"),
+                gravityCurve = SampleCurve(bone, "gravityCurve"),
+                immobileCurve = SampleCurve(bone, "immobileCurve"),
+                radiusCurve = SampleCurve(bone, "radiusCurve"),
+                maxAngleCurve = SampleCurve(bone, "maxAngleXCurve"),
             };
 
             // 角度制限は種類を問わず円錐で近似
@@ -143,6 +155,29 @@ namespace VRCast.Converter.Editor
             }
 
             return paths.ToArray();
+        }
+
+        private static float[] SampleCurve(Component bone, string fieldName)
+        {
+            // 未設定・キー無しのカーブは「倍率 1」として空配列
+            if (!(ReflectionUtility.GetField(bone, fieldName) is AnimationCurve curve) || curve.length == 0)
+            {
+                return System.Array.Empty<float>();
+            }
+
+            // 0〜1 を等間隔にサンプリングし、範囲内に丸める
+            var samples = new float[CurveSamples];
+            for (int i = 0; i < CurveSamples; i++)
+            {
+                float value = curve.Evaluate(i / (float)(CurveSamples - 1));
+
+                // NaN / 無限大は倍率 1 とみなす（Clamp では除去できない）
+                samples[i] = float.IsNaN(value) || float.IsInfinity(value)
+                    ? 1f
+                    : Mathf.Clamp(value, -PhysBoneData.MaxCurveValue, PhysBoneData.MaxCurveValue);
+            }
+
+            return samples;
         }
 
         private static string ConvertMultiChild(string value)

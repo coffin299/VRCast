@@ -117,7 +117,10 @@ Eyelids が Descriptor で未設定（FX アニメーションでまばたきす
             "gravity": 0.1, "gravityFalloff": 0.5, "immobile": 0.0,
             "radius": 0.02,
             "colliders": [0],
-            "limitType": "angle", "maxAngle": 60.0
+            "limitType": "angle", "maxAngle": 60.0,
+            "radiusCurve": [0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0],
+            "pullCurve": [], "springCurve": [], "stiffnessCurve": [],
+            "gravityCurve": [], "immobileCurve": [], "maxAngleCurve": []
         }
     ],
     "colliders": [
@@ -142,6 +145,7 @@ Eyelids が Descriptor で未設定（FX アニメーションでまばたきす
 | `bones[].radius` | 粒子半径（0〜10、root のスケールで拡縮） |
 | `bones[].colliders` | `colliders` 配列のインデックス（最大 64） |
 | `bones[].limitType` / `maxAngle` | `none` / `angle`（Hinge / Polar も円錐近似）、0〜180 度 |
+| `bones[].*Curve` | チェーン沿い（root = 0 → 最も深い粒子 = 1）の倍率を等間隔にサンプリングした値（0〜16 個、各 ±10）。空なら倍率 1 |
 | `colliders[].shape` | `sphere` / `capsule`（高さは両端の半球込み、ローカル Y 軸方向）/ `plane`（法線はローカル Y 軸） |
 | `colliders[].position` / `rotation` | コライダー Transform のローカル空間 |
 
