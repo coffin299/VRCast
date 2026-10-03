@@ -182,7 +182,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 
 | クラス | 責務 |
 | :--- | :--- |
-| `VRCastBuild` | Windows x64 ビルド。`Main.unity` がなければ生成してビルド対象に登録。同梱トラッカー（MediaPipe / OpenSeeFace）・仮想カメラ（UnityCapture）が未配置なら警告 |
+| `VRCastBuild` | Windows x64 ビルド。`Main.unity` がなければ生成してビルド対象に登録。同梱トラッカー（MediaPipe / OpenSeeFace）・仮想カメラ（UnityCapture）が未配置なら警告。`Branding/AppIcon.png` を無圧縮で取り込み既定アイコンに設定 |
 
 ## Tests (EditMode)
 

@@ -1,6 +1,7 @@
 using System.IO;
 using System.Linq;
 using UnityEditor;
+using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -20,6 +21,9 @@ namespace VRCast.Editor.Build
 
         // 仮想カメラの送信プラグインのパス（Tools/UnityCapture/fetch.ps1 で配置）
         private const string VirtualCameraPluginPath = "Assets/Plugins/UnityCapture/x86_64/UnityCapturePlugin.dll";
+
+        // アプリアイコン（exe・タスクバー・タイトルバー）。透過付きの正方形 PNG
+        private const string AppIconPath = "Assets/VRCast/Branding/AppIcon.png";
 
         // プロジェクトルートからの出力先
         private const string WindowsOutputPath = "Builds/Windows/VRCast.exe";
@@ -62,6 +66,9 @@ namespace VRCast.Editor.Build
             PlayerSettings.resizableWindow = true;
             PlayerSettings.runInBackground = true;
             PlayerSettings.visibleInBackground = true;
+
+            // アプリアイコンを設定
+            ApplyAppIcon();
 
             // ビルド設定を組み立てる
             var options = new BuildPlayerOptions
@@ -115,6 +122,31 @@ namespace VRCast.Editor.Build
                 Debug.LogWarning("[VRCast][Build] UnityCapture files not found. Run Tools/UnityCapture/fetch.ps1 "
                     + "to enable the virtual camera output.");
             }
+        }
+
+        private static void ApplyAppIcon()
+        {
+            // アイコン画像が無ければ既定の Unity アイコンのままビルドする
+            var importer = AssetImporter.GetAtPath(AppIconPath) as TextureImporter;
+            if (importer == null)
+            {
+                Debug.LogWarning($"[VRCast][Build] App icon not found: {AppIconPath}");
+                return;
+            }
+
+            // 縮小時に劣化・縁の黒ずみが出ないよう、無圧縮・ミップマップなし・透過を考慮した取り込みにする
+            if (importer.textureCompression != TextureImporterCompression.Uncompressed
+                || importer.mipmapEnabled || !importer.alphaIsTransparency)
+            {
+                importer.textureCompression = TextureImporterCompression.Uncompressed;
+                importer.mipmapEnabled = false;
+                importer.alphaIsTransparency = true;
+                importer.SaveAndReimport();
+            }
+
+            // 既定アイコン（全プラットフォーム共通。Windows は各サイズをここから生成する）に設定
+            var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(AppIconPath);
+            PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
         }
 
         private static void EnsureMainScene()
