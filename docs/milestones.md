@@ -6,7 +6,7 @@
 | :--- | :--- | :--- |
 | 0 | プロジェクト基盤 | 完了 |
 | 1 | Basic Avatar Runtime | 完了（既知の課題あり） |
-| 2 | Transparent Rendering | 未着手 |
+| 2 | Transparent Rendering | 実装済み（要動作確認） |
 | 3 | Expressions | 未着手 |
 | 4 | Runtime Physics | 未着手 |
 | 5 | Tracking | 未着手 |
@@ -47,14 +47,39 @@
 
 既知の課題:
 
-- FX レイヤーのトグルで既定 OFF にしている小物（ギミック・ワールド固定オブジェクト等）が表示される。
-  Animator Controller を書き出さないため、既定状態が適用されない。→ Exporter で FX の既定状態を焼き込む（Milestone 3 前倒し候補）
+- FX レイヤーのトグルで既定 OFF にしている小物が表示される。
+  → 対応済み（要確認）: `FxDefaultStateBaker` が FX の初期ステートを書き出し時に焼き込む。
 - 待機アニメーションが無いため T ポーズで表示される。→ Milestone 3
-- カメラのフレーミングが小物を含めた境界で計算される。→ Humanoid ボーン基準のフレーミングに変更予定
+- カメラのフレーミングが小物を含めた境界で計算される。
+  → 対応済み（要確認）: Humanoid は頭・腰・足のボーンから本体の範囲を計算し、縦横とも収まる距離に配置。
+
+### FX 既定状態の焼き込み（近似）
+
+VRChat SDK を参照せず、リフレクションで `VRCAvatarDescriptor` の FX コントローラーと Expression Parameters の既定値を読む。
+各レイヤー（重み 0 と Synced を除く）で既定ステートから、既定値で条件が成立する遷移（Any State 優先、最大 16 回）を辿り、
+到達ステートのモーションを 0 秒時点で複製に `SampleAnimation` する。
+
+- BlendTree: Direct は重みパラメーター ≥ 0.5 の子をすべて、1D は最も近い閾値の子、2D は先頭の子を採用
+- VRChat 組み込みパラメーター（`IsLocal` 等）は 0 とみなす
+- Write Defaults の差や、時間経過で変化するステートは再現しない
 
 ## Milestone 2 — Transparent Rendering
 
-背景透過、カメラ設定、解像度、基本ライティング。OBS でキャプチャできること。
+- Runtime `Rendering/RenderingController`: 背景（透過 = alpha 0 単色 / 不透明単色）、解像度、ディレクショナルライト
+- `UI/RenderingSection`: Transparent 切替、背景色 RGB、解像度プリセット、ライト強度・方位・仰角
+- `AppSettings` に背景・ライト設定を追加（後方互換）。終了時にウィンドウサイズも保存
+- `VRCastBuild`: ウィンドウモード、リサイズ可、Run In Background / Visible In Background を設定
+- OBS: ゲームキャプチャ +「透過を許可」で取り込む（ウィンドウキャプチャは透過非対応）
+
+成功条件: 透過背景のアバターを OBS でキャプチャできる。
+
+確認項目:
+
+- OBS ゲームキャプチャ（透過を許可）で背景が抜けること
+- 半透明マテリアル部分の見え方（alpha ブレンドがフレームバッファ alpha にも書かれるため、縁が薄くなる可能性）
+- VRCast が非アクティブでも描画が止まらないこと
+
+デスクトップ上でウィンドウ自体を透過させる（デスクトップマスコット表示）は対象外。必要になれば DWM / Win32 API で別途対応する。
 
 ## Milestone 3 — Expressions
 
@@ -85,6 +110,7 @@ VRChat SDK コンポーネント（Descriptor, PhysBone, Constraint 等）を `m
 - AssetBundle の Unity バージョン非互換 → manifest に `unityVersion` を記録し照合。
 - シェーダーバリアント欠落によるマゼンタ表示 → lilToon アバター 1 体で早期検証。
 - 巨大テクスチャ・シェーダーによる DoS → サイズ上限とコンポーネント許可リスト。
-- Built-in RP でのウィンドウ透過 → DWM + `preserveFramebufferAlpha` / Win32 API の検証が必要。
+- 背景透過 → OBS ゲームキャプチャはバックバッファの alpha を使うため、カメラを alpha 0 でクリアする方式を採用。
+  シェーダーが alpha を正しく書かない場合は抜けが崩れる（要検証）。
 - PhysBone は非公開仕様 → 近似実装、パラメータは JSON で保持。
 - FX Animator は VRChat 固有パラメータ依存 → Milestone 3 で Expression データへ変換。

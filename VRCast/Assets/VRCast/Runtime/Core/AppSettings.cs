@@ -5,6 +5,7 @@ namespace VRCast.Core
 {
     /// <summary>
     /// settings.json に永続化するアプリ設定。JsonUtility でシリアライズする。
+    /// フィールド追加は後方互換（欠けている項目は既定値）なので version は上げない。
     /// </summary>
     [Serializable]
     public class AppSettings
@@ -15,11 +16,22 @@ namespace VRCast.Core
         // ウィンドウサイズの下限（px）
         public const int MinWindowSize = 64;
 
+        // ライト強度の上限
+        public const float MaxLightIntensity = 8f;
+
         public int version = CurrentVersion;
         public int windowWidth = 1280;
         public int windowHeight = 720;
-        public Color backgroundColor = new Color(0f, 0f, 0f, 0f);
         public string lastAvatarPath = string.Empty;
+
+        // 背景（透過時は alpha 0 で塗りつぶし、非透過時はこの色を不透明で使う）
+        public bool transparentBackground;
+        public Color backgroundColor = new Color(0.25f, 0.25f, 0.25f, 1f);
+
+        // ディレクショナルライト
+        public float lightIntensity = 1f;
+        public float lightYaw = -30f;
+        public float lightPitch = 50f;
 
         /// <summary>
         /// 読み込んだ値を安全な範囲に補正する。
@@ -32,6 +44,12 @@ namespace VRCast.Core
             windowHeight = Mathf.Max(MinWindowSize, windowHeight);
             // JSON に null が入っていた場合に備えて空文字へ正規化
             lastAvatarPath ??= string.Empty;
+            // ライト強度は 0〜上限に制限
+            lightIntensity = Mathf.Clamp(lightIntensity, 0f, MaxLightIntensity);
+            // 仰角は真上〜真下の範囲に制限
+            lightPitch = Mathf.Clamp(lightPitch, -90f, 90f);
+            // 方位角は -180〜180 に正規化
+            lightYaw = Mathf.Repeat(lightYaw + 180f, 360f) - 180f;
         }
     }
 }

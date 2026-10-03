@@ -53,6 +53,13 @@ namespace VRCast.Core
                 return;
             }
 
+            // ユーザーがドラッグで変更したウィンドウサイズを記録（Editor の Game View は対象外）
+            if (!Application.isEditor && Screen.fullScreenMode == FullScreenMode.Windowed)
+            {
+                Settings.windowWidth = Screen.width;
+                Settings.windowHeight = Screen.height;
+            }
+
             // 現在の設定を保存
             _store.Save(Settings);
         }

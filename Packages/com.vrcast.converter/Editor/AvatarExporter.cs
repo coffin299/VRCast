@@ -3,6 +3,7 @@ using System.Globalization;
 using System.IO;
 using System.IO.Compression;
 using UnityEditor;
+using UnityEditor.Animations;
 using UnityEngine;
 using VRCast.AvatarFormat;
 using CompressionLevel = System.IO.Compression.CompressionLevel;
@@ -28,6 +29,7 @@ namespace VRCast.Converter.Editor
             public string OutputPath;
             public AvatarManifest Manifest;
             public bool IsHumanoid;
+            public int BakedFxClips;
             public ComponentStripper.Result Strip;
         }
 
@@ -85,6 +87,9 @@ namespace VRCast.Converter.Editor
                 clone.name = source.name;
                 clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
+                // VRChat 上の初期状態に近づけるため、除去前に FX の既定状態を焼き込む
+                report.BakedFxClips = BakeFxDefaults(source, clone);
+
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
@@ -130,6 +135,26 @@ namespace VRCast.Converter.Editor
                 AssetDatabase.DeleteAsset(tempFolder);
                 FileUtil.DeleteFileOrDirectory(bundleDir);
             }
+        }
+
+        private static int BakeFxDefaults(GameObject source, GameObject clone)
+        {
+            // VRChat アバターでなければ何もしない
+            Component descriptor = VrcDescriptorReader.FindDescriptor(source);
+            if (descriptor == null)
+            {
+                return 0;
+            }
+
+            // FX 未設定なら何もしない
+            AnimatorController fx = VrcDescriptorReader.GetFxController(descriptor);
+            if (fx == null)
+            {
+                return 0;
+            }
+
+            // Expression Parameters の既定値を使って初期状態を再現
+            return FxDefaultStateBaker.Bake(clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor));
         }
 
         private static string BuildBundle(string bundleDir)
