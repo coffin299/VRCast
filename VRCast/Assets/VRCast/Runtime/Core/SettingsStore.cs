@@ -104,6 +104,8 @@ namespace VRCast.Core
                     File.Move(tempPath, FilePath);
                 }
 
+                // 保存成功を記録して Player.log から追えるようにする
+                VRCastLog.Info(LogCategory, $"Saved settings: {FilePath}");
                 return true;
             }
             catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
