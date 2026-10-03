@@ -4,7 +4,7 @@ using UnityEngine;
 namespace VRCast.UI
 {
     /// <summary>
-    /// 操作パネルのダークテーマ。角丸・スイッチ・スライダーのテクスチャを実行時に生成し、
+    /// 操作パネルのベージュテーマ（アバター背景の既定ベージュに合わせる）。角丸・スイッチ・スライダーのテクスチャを実行時に生成し、
     /// IMGUI の既定スキンを複製して差し替える（GUILayout の既存の呼び出しがそのまま新しい見た目になる）。
     /// IMGUI のスキンは OnGUI 内でしか作れないため、最初の OnGUI で Create する。
     /// </summary>
@@ -14,23 +14,26 @@ namespace VRCast.UI
         private static readonly string[] FontNames = { "Yu Gothic UI", "Meiryo UI", "Segoe UI", "Arial" };
         private const int FontSize = 14;
 
-        // 配色
-        private static readonly Color Background = new Color32(22, 23, 28, 245);
-        private static readonly Color Surface = new Color32(30, 32, 39, 255);
-        private static readonly Color CardColor = new Color32(38, 40, 49, 255);
-        private static readonly Color Control = new Color32(52, 55, 66, 255);
-        private static readonly Color ControlHover = new Color32(64, 68, 82, 255);
-        private static readonly Color ControlActive = new Color32(44, 46, 56, 255);
-        private static readonly Color Accent = new Color32(92, 140, 255, 255);
-        private static readonly Color AccentHover = new Color32(118, 160, 255, 255);
-        private static readonly Color TrackColor = new Color32(66, 70, 84, 255);
-        private static readonly Color Knob = new Color32(240, 242, 247, 255);
-        private static readonly Color TextColor = new Color32(232, 234, 240, 255);
-        private static readonly Color TextDim = new Color32(150, 156, 172, 255);
-        private static readonly Color DangerColor = new Color32(214, 64, 69, 255);
-        private static readonly Color DangerHover = new Color32(232, 88, 92, 255);
-        private static readonly Color DangerActive = new Color32(176, 48, 52, 255);
-        private static readonly Color SuccessColor = new Color32(96, 206, 140, 255);
+        // 配色（背景のベージュより濃いベージュの地、焦げ茶の文字、キャラメル色のアクセント）
+        private static readonly Color Background = new Color32(204, 189, 162, 245);
+        private static readonly Color Surface = new Color32(191, 174, 145, 255);
+        private static readonly Color CardColor = new Color32(218, 205, 182, 255);
+        private static readonly Color Control = new Color32(196, 179, 149, 255);
+        private static readonly Color ControlHover = new Color32(182, 164, 133, 255);
+        private static readonly Color ControlActive = new Color32(168, 150, 119, 255);
+        private static readonly Color FieldColor = new Color32(240, 233, 220, 255);
+        private static readonly Color FieldFocus = new Color32(250, 246, 238, 255);
+        private static readonly Color Accent = new Color32(166, 98, 52, 255);
+        private static readonly Color AccentHover = new Color32(186, 117, 68, 255);
+        private static readonly Color OnAccent = new Color32(255, 250, 242, 255);
+        private static readonly Color TrackColor = new Color32(172, 154, 124, 255);
+        private static readonly Color Knob = new Color32(252, 248, 240, 255);
+        private static readonly Color TextColor = new Color32(58, 46, 34, 255);
+        private static readonly Color TextDim = new Color32(112, 96, 76, 255);
+        private static readonly Color DangerColor = new Color32(192, 56, 50, 255);
+        private static readonly Color DangerHover = new Color32(212, 74, 66, 255);
+        private static readonly Color DangerActive = new Color32(158, 42, 38, 255);
+        private static readonly Color SuccessColor = new Color32(52, 130, 76, 255);
 
         // 角丸の半径（px）
         private const int WindowRadius = 10;
@@ -175,12 +178,12 @@ namespace VRCast.UI
             };
             SetStates(Skin.button, Rounded(Control, ControlRadius), Rounded(ControlHover, ControlRadius),
                 Rounded(ControlActive, ControlRadius), TextColor);
-            SetOnStates(Skin.button, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius), Color.white);
+            SetOnStates(Skin.button, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius), OnAccent);
 
             // 赤いボタン（全設定のリセット等）
             Danger = new GUIStyle(Skin.button) { fontStyle = FontStyle.Bold };
             SetStates(Danger, Rounded(DangerColor, ControlRadius), Rounded(DangerHover, ControlRadius),
-                Rounded(DangerActive, ControlRadius), Color.white);
+                Rounded(DangerActive, ControlRadius), OnAccent);
         }
 
         private void BuildToggle()
@@ -203,7 +206,7 @@ namespace VRCast.UI
 
         private void BuildTextField()
         {
-            // 角丸の入力欄（フォーカス時は明るく）
+            // 角丸の明るい入力欄（フォーカス時はさらに明るく）
             Skin.textField = new GUIStyle
             {
                 fontSize = 13,
@@ -213,9 +216,10 @@ namespace VRCast.UI
                 padding = new RectOffset(8, 8, 5, 5),
                 margin = new RectOffset(4, 4, 3, 3),
             };
-            Texture2D normal = Rounded(ControlActive, ControlRadius);
-            SetStates(Skin.textField, normal, Rounded(Control, ControlRadius), normal, TextColor);
-            Skin.textField.focused.background = Rounded(Control, ControlRadius);
+            Texture2D normal = Rounded(FieldColor, ControlRadius);
+            Texture2D focused = Rounded(FieldFocus, ControlRadius);
+            SetStates(Skin.textField, normal, focused, normal, TextColor);
+            Skin.textField.focused.background = focused;
             Skin.textField.focused.textColor = TextColor;
             Skin.settings.cursorColor = TextColor;
             Skin.settings.selectionColor = new Color(Accent.r, Accent.g, Accent.b, 0.5f);
