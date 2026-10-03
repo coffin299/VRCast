@@ -206,29 +206,12 @@ namespace VRCast.UI
         private void DrawCalibrate()
         {
             GuiControls.BeginCard(Loc.T("Calibration", "キャリブレーション"));
-            GuiControls.Hint(Loc.T("Look at the camera and press", "カメラを見て押してください"));
-
-            // 受信中のアバターがあるときだけ押せる
-            var driver = _avatar.Get<FaceTrackingDriver>();
-            GUI.enabled = driver != null && driver.IsTracking;
-            GUILayout.BeginHorizontal();
-
-            // 頭・上半身・視線をまとめて正面に
-            if (GUILayout.Button(Loc.T("Reset pose", "姿勢をリセット")))
-            {
-                driver.Calibrate();
-            }
-
-            // 視線だけを正面に
-            if (GUILayout.Button(Loc.T("Reset gaze", "視線をリセット")))
-            {
-                driver.CalibrateGaze();
-            }
-
-            GUILayout.EndHorizontal();
-            GUI.enabled = true;
+            GuiControls.Hint(Loc.T(
+                "Look at the camera and press Reset > Head (head, body and gaze) or Gaze at the bottom of the panel",
+                "カメラを見て、パネル下部のリセットの「顔の向き」（顔・上半身・視線）か「視線」を押してください"));
 
             // 正面位置からの頭の移動量（体の動きの強さ調整の目安）
+            var driver = _avatar.Get<FaceTrackingDriver>();
             if (driver != null && driver.IsTracking)
             {
                 Vector3 offset = driver.HeadOffset;
