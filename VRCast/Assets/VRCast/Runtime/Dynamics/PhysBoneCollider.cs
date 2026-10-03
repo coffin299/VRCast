@@ -102,11 +102,18 @@ namespace VRCast.Dynamics
                 return;
             }
 
+            // 親粒子が既にめり込んでいる場合は線分で押し出せない（根元側で詰まって跳ね上がる）ため、子の点だけで判定
+            float required = _radius + particleRadius;
+            if ((parent - ClosestPointOnSegment(_start, _end, parent)).sqrMagnitude < required * required)
+            {
+                PushOutPoint(ref position, required);
+                return;
+            }
+
             // ボーン線分とコライダー芯（球は点）の最近接点
             ClosestPointsBetweenSegments(parent, position, _start, _end, out Vector3 onBone, out Vector3 onCore, out float t);
             Vector3 separation = onBone - onCore;
             float length = separation.magnitude;
-            float required = _radius + particleRadius;
             if (length >= required)
             {
                 return;
@@ -122,6 +129,22 @@ namespace VRCast.Dynamics
             // 接触点のめり込みを解消するよう、てこ比（1/t）で子粒子を動かす
             float leverage = 1f / Mathf.Max(t, MinLeverageT);
             position += normal * ((required - length) * leverage);
+        }
+
+        private void PushOutPoint(ref Vector3 position, float required)
+        {
+            // 芯から粒子へのベクトル
+            Vector3 offset = position - ClosestPointOnSegment(_start, _end, position);
+            float length = offset.magnitude;
+
+            // 十分離れている、または芯上で方向が定まらなければ何もしない
+            if (length >= required || length < Epsilon)
+            {
+                return;
+            }
+
+            // 表面まで押し出す
+            position += offset / length * (required - length);
         }
 
         private static Vector3 ClosestPointOnSegment(Vector3 a, Vector3 b, Vector3 point)
