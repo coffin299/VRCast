@@ -43,7 +43,7 @@ namespace VRCast.Avatars
                 return;
             }
 
-            StartCoroutine(LoadRoutine(packagePath.Trim().Trim('"')));
+            StartCoroutine(LoadRoutine(PathUtility.NormalizeInput(packagePath)));
         }
 
         public void Reload()

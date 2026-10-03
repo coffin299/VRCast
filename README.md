@@ -86,14 +86,20 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
 
 **Tracking** で Web カメラによるフェイストラッキング（頭の向き・まばたき・口の開閉）を ON にできる。
-トラッカー本体は同梱せず、[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace) の `facetracker.exe` を別途起動して UDP で受信する
+トラッカー本体は同梱せず、[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace) の `facetracker.exe` を UDP で受信する
 （VSeeFace に同梱の `VSeeFace_Data\StreamingAssets\Binary\facetracker.exe` も使用可）。
 
+1. **facetracker.exe path** に `facetracker.exe` のフルパスを入力し、**Refresh cameras** でカメラ一覧を取得する。
+2. `<` `>` でカメラをデバイス名で選び、**Start tracker**（パス・カメラ名は保存され、終了時にトラッカーも終了する）。
+3. 起動に失敗した場合はトラッカーの最後の出力が表示される（カメラを他のアプリが使用中など）。
+
+手動で起動してもよい:
+
 ```powershell
-# カメラ番号の確認
+# カメラ番号とデバイス名の確認
 .\facetracker.exe -l 1
-# カメラ 0 を 127.0.0.1:11573 へ送信
-.\facetracker.exe -c 0 -W 640 -H 480 -F 30 -i 127.0.0.1 -p 11573
+# カメラ 0 を 127.0.0.1:11573 へ送信（-v 3 -P 1 でプレビュー表示）
+.\facetracker.exe -c 0 -i 127.0.0.1 -p 11573
 ```
 
 - 受信は `127.0.0.1` のみ（外部からの入力は受け付けない）。ポートはパネルで変更可（既定 11573）。
