@@ -365,13 +365,13 @@ namespace VRCast.Tracking
             }
 
             // 現在の手の向き（手首 → 中指の付け根、小指 → 人差し指の付け根）と目標の手の向き。潰れた向きは使わない
-            bool valid = TryHandFrame(middle.position - hand.position, index.position - little.position,
-                    out Quaternion current)
-                && TryHandFrame(
-                    transform.rotation * (rig.HandPoints[MiddleBasePoint] - rig.HandPoints[WristPoint]),
-                    transform.rotation * (rig.HandPoints[IndexBasePoint] - rig.HandPoints[LittleBasePoint]),
-                    out Quaternion target);
-            if (!valid)
+            bool currentValid = TryHandFrame(
+                middle.position - hand.position, index.position - little.position, out Quaternion current);
+            bool targetValid = TryHandFrame(
+                transform.rotation * (rig.HandPoints[MiddleBasePoint] - rig.HandPoints[WristPoint]),
+                transform.rotation * (rig.HandPoints[IndexBasePoint] - rig.HandPoints[LittleBasePoint]),
+                out Quaternion target);
+            if (!currentValid || !targetValid)
             {
                 return;
             }
