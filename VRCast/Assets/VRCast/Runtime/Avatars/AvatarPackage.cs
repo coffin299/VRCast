@@ -12,11 +12,15 @@ namespace VRCast.Avatars
         public string SourcePath { get; }
         public string BundlePath { get; }
 
-        public AvatarPackage(AvatarManifest manifest, string sourcePath, string bundlePath)
+        // 表情プリセット（無い・不正な場合は空）
+        public ExpressionSet Expressions { get; }
+
+        public AvatarPackage(AvatarManifest manifest, string sourcePath, string bundlePath, ExpressionSet expressions)
         {
             Manifest = manifest;
             SourcePath = sourcePath;
             BundlePath = bundlePath;
+            Expressions = expressions ?? new ExpressionSet();
         }
     }
 

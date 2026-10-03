@@ -20,6 +20,12 @@ namespace VRCast.AvatarFormat
         // 任意エントリ: VRChat 固有設定を変換した JSON の格納先
         public const string MetadataPrefix = "metadata/";
 
+        // 任意エントリ: 表情プリセット
+        public const string ExpressionsEntry = MetadataPrefix + "expressions.json";
+
+        // metadata 1 ファイルの上限サイズ（1 MiB）
+        public const long MaxMetadataBytes = 1024 * 1024;
+
         // bundle 内のアバター Prefab のアセットパス（Exporter が一時的にこのパスへ保存する）
         public const string PrefabAssetPath = "Assets/__VRCastExport/avatar.prefab";
     }

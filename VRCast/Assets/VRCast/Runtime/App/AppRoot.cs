@@ -1,6 +1,7 @@
 using System;
 using System.IO;
 using UnityEngine;
+using VRCast.Animations;
 using VRCast.Avatars;
 using VRCast.Cameras;
 using VRCast.Core;
@@ -19,6 +20,7 @@ namespace VRCast.App
 
         private AvatarSession _session;
         private OrbitCameraController _orbit;
+        private AppSettings _settings;
         private string _initialAvatarPath;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -58,9 +60,9 @@ namespace VRCast.App
             }
 
             // 背景・解像度・ライト（Bootstrap 未実行時は既定値で動かす）
-            AppSettings settings = AppBootstrap.Settings ?? new AppSettings();
+            _settings = AppBootstrap.Settings ?? new AppSettings();
             var rendering = gameObject.AddComponent<RenderingController>();
-            rendering.Initialize(mainCamera, settings);
+            rendering.Initialize(mainCamera, _settings);
 
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
@@ -87,14 +89,15 @@ namespace VRCast.App
 
         private void OnAvatarLoaded(LoadedAvatar avatar)
         {
+            // 待機ポーズと表情（アバターと一緒に破棄されるよう本体に付ける）
+            avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
+            avatar.Instance.AddComponent<ExpressionController>().Initialize(avatar.Instance.transform, avatar.Expressions);
+
             // アバター本体（Humanoid は骨格基準）が映るようにカメラを合わせる
             _orbit.Frame(avatar.CalculateFramingBounds());
 
             // 次回起動時に自動で読み込めるよう記録（保存は終了時）
-            if (AppBootstrap.Settings != null)
-            {
-                AppBootstrap.Settings.lastAvatarPath = avatar.SourcePath;
-            }
+            _settings.lastAvatarPath = avatar.SourcePath;
         }
 
         private static string ResolveInitialAvatarPath()

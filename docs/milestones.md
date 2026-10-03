@@ -7,7 +7,7 @@
 | 0 | プロジェクト基盤 | 完了 |
 | 1 | Basic Avatar Runtime | 完了（既知の課題あり） |
 | 2 | Transparent Rendering | 完了 |
-| 3 | Expressions | 未着手 |
+| 3 | Expressions | 進行中（待機ポーズ・表情プリセット） |
 | 4 | Runtime Physics | 未着手 |
 | 5 | Tracking | 未着手 |
 | 6 | OSC | 未着手 |
@@ -50,7 +50,8 @@
 - FX レイヤーのトグルで既定 OFF にしている小物が表示される。
   → 対応済み: `FxDefaultStateBaker` が FX の初期ステートを書き出し時に焼き込む。
   FX 以外（Constraint 制御・ワールド固定ギミック等）で隠している小物は残る。
-- 待機アニメーションが無いため T ポーズで表示される。→ Milestone 3
+- 待機アニメーションが無いため T ポーズで表示される。
+  → 対応済み（要確認）: Milestone 3 の `PoseController` で腕を下ろした待機ポーズにする。
 - カメラのフレーミングが小物を含めた境界で計算される。
   → 対応済み（要確認）: Humanoid は頭・腰・足のボーンから本体の範囲を計算し、縦横とも収まる距離に配置。
 
@@ -93,6 +94,31 @@ FX 焼き込み（表示 ON/OFF・BlendShape・マテリアルのみ）適用後
 
 BlendShape、表情プリセット、Animator Parameter、基本 Viseme。
 
+### 3a. 待機ポーズ
+
+- Runtime `Animations/PoseController`: `HumanPoseHandler` で読込時の姿勢（T ポーズ）の筋肉値を基準に、
+  `Arm Down-Up` と `Forearm Stretch` だけを補間（他の筋肉・体の位置は基準のまま）
+- 度合い 0 / 0 では記録しておいたボーンの位置・回転を復元し、リターゲット誤差を出さない
+- `AppSettings.poseArmDown` / `poseElbowBend`（0〜1）で永続化、UI に Arms down / Elbow bend / T-Pose / Relaxed
+- 非 Humanoid は対象外
+
+### 3b. 表情プリセット
+
+- Converter `ExpressionExtractor`: FX コントローラー内のクリップのうち、**BlendShape カーブのみ**で構成され
+  0 秒時点で重み > 0 を含むものを表情とみなし `metadata/expressions.json` に書き出す（名前順、全 0 のリセット用は除外）
+- Runtime: `AvatarPackageReader` が上限付きで読み込み検証。不正・読込不能なら警告して空扱い（アバター表示は継続）
+- Runtime `Animations/ExpressionController`: パスと BlendShape 名を解決し、切り替え時は触った BlendShape を
+  読込時（FX 焼き込み後）の値へ戻してから適用。数字キー 1〜9 / 0 = Neutral（テキスト入力中は無効）
+- UI: Expressions 一覧（3 列、スクロール）
+
+確認項目:
+
+- Relaxed で腕が体に刺さらず自然に下りること（筋肉値 `ArmDownMuscle` / `ElbowBentMuscle` は要調整の可能性）
+- 表情ボタン・数字キーで顔が切り替わり、Neutral で元に戻ること
+- 表情以外のクリップ（小物トグル等）が一覧に混ざりすぎないこと
+
+残り: Animator Parameter、基本 Viseme（マイク音量 → 口形状）、まばたき。
+
 ## Milestone 4 — Runtime Physics
 
 PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider）。完全互換は目標にしない。
@@ -121,4 +147,4 @@ VRChat SDK コンポーネント（Descriptor, PhysBone, Constraint 等）を `m
 - 背景透過 → OBS ゲームキャプチャはバックバッファの alpha を使うため、カメラを alpha 0 でクリアする方式を採用。
   シェーダーが alpha を正しく書かない場合は抜けが崩れる（要検証）。
 - PhysBone は非公開仕様 → 近似実装、パラメータは JSON で保持。
-- FX Animator は VRChat 固有パラメータ依存 → Milestone 3 で Expression データへ変換。
+- FX Animator は VRChat 固有パラメータ依存 → Milestone 3 で BlendShape のみのクリップを表情データへ変換（ジェスチャー条件は未対応）。

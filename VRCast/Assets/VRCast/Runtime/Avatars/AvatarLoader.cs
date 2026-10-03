@@ -56,7 +56,7 @@ namespace VRCast.Avatars
                 animator.applyRootMotion = false;
             }
 
-            var loaded = new LoadedAvatar(instance, bundle, package.Manifest, package.SourcePath);
+            var loaded = new LoadedAvatar(instance, bundle, package);
 
             // Humanoid でない場合はトラッキング等が使えないため警告
             if (!loaded.IsHumanoid)

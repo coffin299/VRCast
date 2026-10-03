@@ -79,6 +79,7 @@ namespace VRCast.Converter.Editor
                     $"Size: {report.Manifest.bundleSize / (1024f * 1024f):F1} MB\n" +
                     $"Humanoid: {report.IsHumanoid}\n" +
                     $"Baked FX default clips: {report.BakedFxClips}\n" +
+                    $"Expressions: {report.ExpressionCount}\n" +
                     $"Removed components: {report.Strip.RemovedComponents}, " +
                     $"missing scripts: {report.Strip.RemovedMissingScripts}, " +
                     $"EditorOnly objects: {report.Strip.RemovedEditorOnlyObjects}";

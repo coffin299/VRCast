@@ -6,7 +6,7 @@ using VRCast.Rendering;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI による最小操作パネル（Avatar / Camera / Rendering）。Tab キーで表示切替。
+    /// IMGUI による最小操作パネル（Avatar / Pose / Expressions / Camera / Rendering）。Tab キーで表示切替。
     /// </summary>
     public class MainPanel : MonoBehaviour
     {
@@ -24,6 +24,7 @@ namespace VRCast.UI
         private AvatarSession _session;
         private OrbitCameraController _orbit;
         private RenderingSection _renderingSection;
+        private AnimationSection _animationSection;
         private string _pathInput = string.Empty;
         private bool _visible = true;
         private Rect _windowRect = new Rect(10f, 10f, WindowWidth, 0f);
@@ -35,6 +36,7 @@ namespace VRCast.UI
             _session = session;
             _orbit = orbit;
             _renderingSection = new RenderingSection(rendering);
+            _animationSection = new AnimationSection(session);
             _pathInput = initialPath ?? string.Empty;
         }
 
@@ -73,6 +75,8 @@ namespace VRCast.UI
         private void DrawWindow(int id)
         {
             DrawAvatarSection();
+            GUILayout.Space(8f);
+            _animationSection.Draw();
             GUILayout.Space(8f);
             DrawCameraSection();
             GUILayout.Space(8f);

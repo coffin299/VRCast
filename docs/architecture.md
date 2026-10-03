@@ -62,7 +62,8 @@ flowchart LR
 ### 名前空間
 
 Unity の型名との衝突を避けるため、フォルダ・名前空間は複数形または別名にする
-（`VRCast.Avatars`、`VRCast.Cameras`）。`VRCast.Avatar` / `VRCast.Camera` は `UnityEngine.Avatar` / `UnityEngine.Camera` を隠すため使用しない。
+（`VRCast.Avatars`、`VRCast.Cameras`、`VRCast.Animations`）。`VRCast.Avatar` / `VRCast.Camera` / `VRCast.Animation` は
+`UnityEngine.Avatar` / `UnityEngine.Camera` / `UnityEngine.Animation` を隠すため使用しない。
 
 ## Runtime フォルダ構成
 
@@ -76,7 +77,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `Cameras/` | カメラ操作 | Milestone 1 (済) |
 | `UI/` | IMGUI 操作パネル | Milestone 1 (済) |
 | `Rendering/` | 背景透過、解像度、ライティング | Milestone 2 (済) |
-| `Animation/` | BlendShape、表情、Viseme | Milestone 3 |
+| `Animations/` | 待機ポーズ、表情（BlendShape）、Viseme | Milestone 3 (進行中) |
 | `Physics/` | PhysBone 相当 | Milestone 4 |
 | `Tracking/` | Tracking Provider と Driver | Milestone 5 |
 | `OSC/` | OSC 入出力 | Milestone 6 |
@@ -87,23 +88,27 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | クラス | 責務 |
 | :--- | :--- |
 | `VRCastLog` | `Debug.Log` をカテゴリ付きで薄くラップ |
-| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、ライト強度・向き） |
+| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、ライト強度・向き、待機ポーズの度合い） |
 | `SettingsStore` | `settings.json` の読込・保存。破損時は既定値にフォールバック |
 | `AppBootstrap` | `RuntimeInitializeOnLoadMethod` で起動時に設定を読み込み（初回は既定値で作成）、終了時にウィンドウサイズを含めて保存する |
 
-## App / Avatars / Cameras / Rendering / UI
+## App / Avatars / Animations / Cameras / Rendering / UI
 
 | クラス | 責務 |
 | :--- | :--- |
-| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `MainPanel` を生成して結線。起動引数 `--avatar` または前回のアバターを自動読込 |
-| `AvatarPackageReader` | `.vrcaster` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開 |
+| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `ExpressionController` を付与。起動引数 `--avatar` または前回のアバターを自動読込 |
+| `AvatarPackageReader` | `.vrcaster` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開。`expressions.json` を読み込み（不正なら空） |
 | `AvatarLoader` | bundle を非同期読込してアバターを生成し、許可リスト外コンポーネントを除去 |
 | `LoadedAvatar` | 生成済みアバターと bundle の組。`Dispose` で両方解放。フレーミング用境界（Humanoid は骨格基準、それ以外は Renderer 基準） |
 | `AvatarSession` | 表示中アバター 1 体の Load / Reload / Unload と状態（読込中・エラー） |
 | `OrbitCameraController` | 注視点中心の回転・パン・ズーム、境界の高さ・幅が収まる距離へのフレーミング、FOV |
 | `RenderingController` | 背景（透過 = alpha 0 / 単色）、ウィンドウ解像度、ディレクショナルライトを設定値に従って適用 |
-| `MainPanel` | IMGUI パネル（Avatar / Camera / Rendering）。Tab で表示切替 |
+| `PoseController` | Humanoid の待機ポーズ。読込時姿勢の筋肉値から腕の上下・肘の曲げだけを補間（0 / 0 で元の姿勢を復元） |
+| `ExpressionController` | 表情プリセットを BlendShape に適用。切替時は読込時の値へ戻してから適用。数字キー 1〜9 / 0 |
+| `MainPanel` | IMGUI パネル（Avatar / Pose / Expressions / Camera / Rendering）。Tab で表示切替 |
+| `AnimationSection` | MainPanel 内の Pose / Expressions セクション UI |
 | `RenderingSection` | MainPanel 内の Rendering セクション UI |
+| `GuiControls` | セクション共通の IMGUI 部品（ラベル付きスライダー） |
 
 ## Converter (`com.vrcast.converter`)
 
@@ -113,7 +118,9 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `AvatarManifest` | manifest.json のモデルと検証 |
 | `AllowedComponents` | bundle に含めてよいコンポーネントの許可リスト |
 | `HashUtility` | SHA-256 計算 |
-| `AvatarExporter` | 複製 → FX 既定状態の焼き込み → 除去 → 一時 Prefab → AssetBundle → ZIP の書き出し |
+| `ExpressionSet` | `metadata/expressions.json` のモデルと検証（Runtime と共有） |
+| `AvatarExporter` | 複製 → FX 既定状態の焼き込み・表情抽出 → 除去 → 一時 Prefab → AssetBundle → ZIP の書き出し |
+| `ExpressionExtractor` | FX コントローラーから BlendShape のみのクリップを表情プリセットとして抽出 |
 | `VrcDescriptorReader` | VRChat SDK 非依存（リフレクション）で `VRCAvatarDescriptor` の FX コントローラーと Expression Parameters 既定値を取得 |
 | `FxDefaultStateBaker` | FX の各レイヤーで既定値により到達するステートのモーションから、表示 ON/OFF・BlendShape・マテリアル差し替えの 0 秒時点の値を複製へ適用 |
 | `ComponentStripper` | 許可リスト外コンポーネント・Missing Script・EditorOnly オブジェクト・Animator Controller の除去 |
@@ -131,4 +138,4 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | :--- | :--- |
 | `AssemblyIsolationTests` | `VRCast.Runtime` / `VRCast.AvatarFormat` が `UnityEditor` / Editor アセンブリ / VRChat SDK を参照していない（`#if UNITY_EDITOR` 内の参照も違反として検出する） |
 | `SettingsStoreTests` | 設定の保存・再読込、ファイル欠落・破損時のフォールバック、値の補正 |
-| `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定 |
+| `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情データの読込・不正時の空扱い |
