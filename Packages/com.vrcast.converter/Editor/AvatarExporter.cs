@@ -30,6 +30,7 @@ namespace VRCast.Converter.Editor
             public AvatarManifest Manifest;
             public bool IsHumanoid;
             public int BakedFxClips;
+            public int ExpressionCount;
             public ComponentStripper.Result Strip;
         }
 
@@ -87,8 +88,20 @@ namespace VRCast.Converter.Editor
                 clone.name = source.name;
                 clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
+                // VRChat アバターなら FX コントローラーを取得（無ければ null）
+                Component descriptor = VrcDescriptorReader.FindDescriptor(source);
+                AnimatorController fx = descriptor != null ? VrcDescriptorReader.GetFxController(descriptor) : null;
+
                 // VRChat 上の初期状態に近づけるため、除去前に FX の既定状態を焼き込む
-                report.BakedFxClips = BakeFxDefaults(source, clone);
+                if (fx != null)
+                {
+                    report.BakedFxClips = FxDefaultStateBaker.Bake(
+                        clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor));
+                }
+
+                // FX から表情プリセットを抽出
+                ExpressionSet expressions = fx != null ? ExpressionExtractor.Extract(fx) : new ExpressionSet();
+                report.ExpressionCount = expressions.presets.Length;
 
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
@@ -120,8 +133,15 @@ namespace VRCast.Converter.Editor
                     throw new InvalidOperationException(manifestError);
                 }
 
+                // 表情データも Runtime と同じ規則で検証
+                string expressionError = expressions.Validate();
+                if (expressionError != null)
+                {
+                    throw new InvalidOperationException("Invalid expressions: " + expressionError);
+                }
+
                 // ZIP にまとめて出力
-                WritePackage(outputPath, report.Manifest, bundlePath);
+                WritePackage(outputPath, report.Manifest, bundlePath, expressions);
                 return report;
             }
             finally
@@ -135,26 +155,6 @@ namespace VRCast.Converter.Editor
                 AssetDatabase.DeleteAsset(tempFolder);
                 FileUtil.DeleteFileOrDirectory(bundleDir);
             }
-        }
-
-        private static int BakeFxDefaults(GameObject source, GameObject clone)
-        {
-            // VRChat アバターでなければ何もしない
-            Component descriptor = VrcDescriptorReader.FindDescriptor(source);
-            if (descriptor == null)
-            {
-                return 0;
-            }
-
-            // FX 未設定なら何もしない
-            AnimatorController fx = VrcDescriptorReader.GetFxController(descriptor);
-            if (fx == null)
-            {
-                return 0;
-            }
-
-            // Expression Parameters の既定値を使って初期状態を再現
-            return FxDefaultStateBaker.Bake(clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor));
         }
 
         private static string BuildBundle(string bundleDir)
@@ -191,7 +191,8 @@ namespace VRCast.Converter.Editor
             return bundlePath;
         }
 
-        private static void WritePackage(string outputPath, AvatarManifest manifest, string bundlePath)
+        private static void WritePackage(
+            string outputPath, AvatarManifest manifest, string bundlePath, ExpressionSet expressions)
         {
             // 書き込み途中の破損ファイルを残さないよう一時ファイルへ書いてから置き換える
             string tempPath = outputPath + ".tmp";
@@ -204,10 +205,12 @@ namespace VRCast.Converter.Editor
             using (var zip = new ZipArchive(stream, ZipArchiveMode.Create))
             {
                 // bundle は LZ4 圧縮済みで、Runtime 側の Deflate 依存も避けるため無圧縮で格納
-                ZipArchiveEntry manifestEntry = zip.CreateEntry(AvatarPackageLayout.ManifestEntry, CompressionLevel.NoCompression);
-                using (var writer = new StreamWriter(manifestEntry.Open()))
+                WriteTextEntry(zip, AvatarPackageLayout.ManifestEntry, JsonUtility.ToJson(manifest, true));
+
+                // 表情がある場合のみ metadata を追加
+                if (expressions.presets.Length > 0)
                 {
-                    writer.Write(JsonUtility.ToJson(manifest, true));
+                    WriteTextEntry(zip, AvatarPackageLayout.ExpressionsEntry, JsonUtility.ToJson(expressions, true));
                 }
 
                 // bundle 本体をコピー
@@ -226,6 +229,16 @@ namespace VRCast.Converter.Editor
             }
 
             File.Move(tempPath, outputPath);
+        }
+
+        private static void WriteTextEntry(ZipArchive zip, string entryName, string text)
+        {
+            // テキストエントリも bundle と同じく無圧縮で格納
+            ZipArchiveEntry entry = zip.CreateEntry(entryName, CompressionLevel.NoCompression);
+            using (var writer = new StreamWriter(entry.Open()))
+            {
+                writer.Write(text);
+            }
         }
     }
 }

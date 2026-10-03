@@ -98,5 +98,16 @@ namespace VRCast.Tests
             Assert.That(settings.lightPitch, Is.EqualTo(90f));
             Assert.That(settings.lightYaw, Is.EqualTo(-90f).Within(0.001f));
         }
+
+        [Test]
+        public void Load_OutOfRangePose_IsClamped()
+        {
+            _store.Save(new AppSettings { poseArmDown = 5f, poseElbowBend = -1f });
+
+            // ポーズの度合いは 0〜1 に補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.poseArmDown, Is.EqualTo(1f));
+            Assert.That(settings.poseElbowBend, Is.EqualTo(0f));
+        }
     }
 }

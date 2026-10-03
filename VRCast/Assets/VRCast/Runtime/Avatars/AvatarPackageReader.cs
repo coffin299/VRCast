@@ -55,6 +55,9 @@ namespace VRCast.Avatars
                     // manifest を読み込んで検証
                     AvatarManifest manifest = ReadManifest(zip);
 
+                    // 任意の表情データを読み込み（不正なら空扱い）
+                    ExpressionSet expressions = ReadExpressions(zip);
+
                     // bundle をキャッシュへ展開（ハッシュ検証込み）
                     string bundlePath = ExtractBundle(zip, manifest, cacheRoot);
 
@@ -65,7 +68,7 @@ namespace VRCast.Avatars
                             $"Unity version mismatch: package {manifest.unityVersion}, runtime {Application.unityVersion}.");
                     }
 
-                    return new AvatarPackage(manifest, info.FullName, bundlePath);
+                    return new AvatarPackage(manifest, info.FullName, bundlePath, expressions);
                 }
             }
             catch (InvalidDataException e)
@@ -135,18 +138,8 @@ namespace VRCast.Avatars
                 throw new AvatarPackageException("manifest.json is missing.");
             }
 
-            // 巨大 manifest による負荷を防ぐ
-            if (entry.Length > MaxManifestBytes)
-            {
-                throw new AvatarPackageException("manifest.json is too large.");
-            }
-
-            // JSON として読み込み
-            string json;
-            using (var reader = new StreamReader(entry.Open()))
-            {
-                json = reader.ReadToEnd();
-            }
+            // 上限付きで JSON テキストを読み込み
+            string json = ReadTextEntry(entry, MaxManifestBytes);
 
             AvatarManifest manifest;
             try
@@ -173,6 +166,56 @@ namespace VRCast.Avatars
             }
 
             return manifest;
+        }
+
+        private static ExpressionSet ReadExpressions(ZipArchive zip)
+        {
+            // 任意エントリのため、無ければ空
+            ZipArchiveEntry entry = zip.GetEntry(AvatarPackageLayout.ExpressionsEntry);
+            if (entry == null)
+            {
+                return new ExpressionSet();
+            }
+
+            try
+            {
+                // 上限付きで読み込み、JSON として解釈
+                string json = ReadTextEntry(entry, AvatarPackageLayout.MaxMetadataBytes);
+                ExpressionSet expressions = JsonUtility.FromJson<ExpressionSet>(json);
+
+                // 空 JSON や内容不正はアバター表示を妨げないよう警告のみ
+                string error = expressions == null ? "empty" : expressions.Validate();
+                if (error != null)
+                {
+                    VRCastLog.Warning(LogCategory, $"Ignored invalid expressions.json: {error}");
+                    return new ExpressionSet();
+                }
+
+                return expressions;
+            }
+            catch (Exception e) when (e is AvatarPackageException || e is ArgumentException)
+            {
+                // サイズ超過や JSON 構文エラーも警告のみ
+                VRCastLog.Warning(LogCategory, $"Ignored unreadable expressions.json: {e.Message}");
+                return new ExpressionSet();
+            }
+        }
+
+        private static string ReadTextEntry(ZipArchiveEntry entry, long maxBytes)
+        {
+            // 申告サイズで先に弾く
+            if (entry.Length > maxBytes)
+            {
+                throw new AvatarPackageException($"{entry.FullName} is too large.");
+            }
+
+            // 申告サイズ以上は読まない（ヘッダ偽装対策）
+            using (Stream source = entry.Open())
+            using (var buffer = new MemoryStream())
+            {
+                CopyWithLimit(source, buffer, entry.Length, entry.FullName);
+                return System.Text.Encoding.UTF8.GetString(buffer.GetBuffer(), 0, (int)buffer.Length);
+            }
         }
 
         private static string ExtractBundle(ZipArchive zip, AvatarManifest manifest, string cacheRoot)
@@ -208,7 +251,7 @@ namespace VRCast.Avatars
                 using (Stream source = entry.Open())
                 using (FileStream target = File.Create(tempPath))
                 {
-                    CopyWithLimit(source, target, manifest.bundleSize);
+                    CopyWithLimit(source, target, manifest.bundleSize, AvatarPackageLayout.BundleEntry);
                 }
             }
             catch
@@ -235,7 +278,7 @@ namespace VRCast.Avatars
             return bundlePath;
         }
 
-        private static void CopyWithLimit(Stream source, Stream target, long expectedBytes)
+        private static void CopyWithLimit(Stream source, Stream target, long expectedBytes, string entryName)
         {
             var buffer = new byte[CopyBufferSize];
             long total = 0;
@@ -246,7 +289,7 @@ namespace VRCast.Avatars
                 total += read;
                 if (total > expectedBytes)
                 {
-                    throw new AvatarPackageException("avatar.bundle is larger than declared.");
+                    throw new AvatarPackageException($"{entryName} is larger than declared.");
                 }
 
                 target.Write(buffer, 0, read);
@@ -255,7 +298,7 @@ namespace VRCast.Avatars
             // 申告サイズに満たない場合も不正
             if (total != expectedBytes)
             {
-                throw new AvatarPackageException("avatar.bundle is truncated.");
+                throw new AvatarPackageException($"{entryName} is truncated.");
             }
         }
     }

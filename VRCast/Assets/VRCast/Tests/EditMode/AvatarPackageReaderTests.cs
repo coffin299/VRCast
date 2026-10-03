@@ -111,6 +111,68 @@ namespace VRCast.Tests
             Assert.Throws<AvatarPackageException>(() => AvatarPackageReader.Extract(path, _cacheRoot));
         }
 
+        [Test]
+        public void Extract_WithExpressions_ParsesPresets()
+        {
+            // 1 プリセット・1 値の表情データを同梱
+            var expressions = new ExpressionSet
+            {
+                presets = new[]
+                {
+                    new ExpressionPreset
+                    {
+                        name = "Smile",
+                        values = new[] { new BlendShapeValue { path = "Body", blendShape = "smile", weight = 100f } },
+                    },
+                },
+            };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ExpressionsEntry, JsonUtility.ToJson(expressions));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            // 内容がそのまま読めること
+            Assert.That(package.Expressions.presets, Has.Length.EqualTo(1));
+            Assert.That(package.Expressions.presets[0].name, Is.EqualTo("Smile"));
+            Assert.That(package.Expressions.presets[0].values[0].weight, Is.EqualTo(100f));
+        }
+
+        [Test]
+        public void Extract_InvalidExpressionsJson_IgnoredAsEmpty()
+        {
+            // 壊れた表情データでもアバター自体は読めること
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ExpressionsEntry, "{ broken");
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Expressions.presets, Is.Empty);
+        }
+
+        [Test]
+        public void Extract_OutOfRangeExpressionWeight_IgnoredAsEmpty()
+        {
+            // 重みが範囲外のプリセットは検証で弾かれること
+            const string json =
+                "{\"presets\":[{\"name\":\"Bad\",\"values\":[{\"path\":\"\",\"blendShape\":\"a\",\"weight\":500}]}]}";
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ExpressionsEntry, json);
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Expressions.presets, Is.Empty);
+        }
+
+        [Test]
+        public void Extract_WithoutExpressions_ReturnsEmpty()
+        {
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle);
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Expressions.presets, Is.Empty);
+        }
+
         [TestCase("manifest.json", true)]
         [TestCase("avatar.bundle", true)]
         [TestCase("metadata/", true)]
@@ -141,7 +203,8 @@ namespace VRCast.Tests
             }
         }
 
-        private string WritePackage(AvatarManifest manifest, byte[] bundle, string extraEntry = null)
+        private string WritePackage(
+            AvatarManifest manifest, byte[] bundle, string extraEntry = null, string extraContent = "\0")
         {
             string path = Path.Combine(_directory, "test" + AvatarPackageLayout.Extension);
             using (FileStream stream = File.Create(path))
@@ -156,10 +219,10 @@ namespace VRCast.Tests
                 // bundle 本体
                 WriteEntry(zip, AvatarPackageLayout.BundleEntry, bundle);
 
-                // 追加の不正エントリ
+                // 追加エントリ（不正名や metadata の検証用）
                 if (extraEntry != null)
                 {
-                    WriteEntry(zip, extraEntry, new byte[] { 0 });
+                    WriteEntry(zip, extraEntry, System.Text.Encoding.UTF8.GetBytes(extraContent));
                 }
             }
 

@@ -15,10 +15,10 @@ ZIP アーカイブ。拡張子 `.vrcaster`。全エントリは **無圧縮（S
 MyAvatar.vrcaster
 ├── manifest.json        必須。パッケージ情報
 ├── avatar.bundle        必須。Unity AssetBundle（StandaloneWindows64, LZ4）
-└── metadata/            任意。VRChat 固有設定を変換した JSON（v0 では未使用）
+└── metadata/            任意。VRChat 固有設定を変換した JSON
+    ├── expressions.json 表情プリセット（FX から抽出、表情が無ければ省略）
     ├── descriptor.json  (予定) 視点位置・Viseme 設定など
-    ├── physbones.json   (予定) PhysBone 相当パラメータ
-    └── expressions.json (予定) 表情・パラメータ
+    └── physbones.json   (予定) PhysBone 相当パラメータ
 ```
 
 上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
@@ -45,6 +45,32 @@ MyAvatar.vrcaster
 | `bundleSize` | ○ | `avatar.bundle` のバイト数 |
 | `createdAt` | - | 書き出し日時（UTC, ISO 8601） |
 
+## metadata/expressions.json
+
+FX コントローラー内の「BlendShape カーブのみ」のクリップを、0 秒時点の値で表情プリセットにしたもの。
+
+```json
+{
+    "presets": [
+        {
+            "name": "Smile",
+            "values": [
+                { "path": "Body", "blendShape": "eye_smile", "weight": 100.0 }
+            ]
+        }
+    ]
+}
+```
+
+| フィールド | 内容 |
+| :--- | :--- |
+| `presets[].name` | 表示名（クリップ名、1〜512 文字）。最大 256 件 |
+| `presets[].values[].path` | アバタールートからの相対パス（空 = ルート）。SkinnedMeshRenderer を持つこと |
+| `presets[].values[].blendShape` | BlendShape 名 |
+| `presets[].values[].weight` | 重み 0〜100。1 プリセット最大 512 件 |
+
+任意データのため、Runtime は不正・読込不能でも警告のみでアバター表示を続ける（表情は空扱い）。
+
 ## avatar.bundle
 
 - アバター Prefab を 1 つだけ含む。アセットパスは固定で `Assets/__VRCastExport/avatar.prefab`。
@@ -64,6 +90,7 @@ MyAvatar.vrcaster
 | エントリ名 | 上記の許可リストのみ |
 | manifest.json | 64 KiB 以下、JSON として有効、全必須フィールドが妥当 |
 | avatar.bundle | ZIP 上のサイズ = `bundleSize`、展開量を `bundleSize` で打ち切り、SHA-256 = `bundleSha256` |
+| metadata/*.json | 1 MiB 以下、展開量を申告サイズで打ち切り。内容は `ExpressionSet.Validate` 等で検証（失敗は警告のみ） |
 | 生成後 | 許可リスト外のコンポーネントを破棄（Missing Script は件数を警告） |
 
 展開先: `Application.temporaryCachePath/avatars/<bundleSha256>/avatar.bundle`。同じハッシュのファイルがあれば再利用する。

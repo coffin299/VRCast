@@ -17,9 +17,6 @@ namespace VRCast.UI
             new Vector2Int(1080, 1920),
         };
 
-        // ラベル列の幅
-        private const float LabelWidth = 70f;
-
         private readonly RenderingController _rendering;
 
         public RenderingSection(RenderingController rendering)
@@ -49,9 +46,9 @@ namespace VRCast.UI
 
             // RGB スライダーで単色背景を設定
             Color color = _rendering.BackgroundColor;
-            color.r = Slider("BG R", color.r, 0f, 1f);
-            color.g = Slider("BG G", color.g, 0f, 1f);
-            color.b = Slider("BG B", color.b, 0f, 1f);
+            color.r = GuiControls.Slider("BG R", color.r, 0f, 1f);
+            color.g = GuiControls.Slider("BG G", color.g, 0f, 1f);
+            color.b = GuiControls.Slider("BG B", color.b, 0f, 1f);
             if (color != _rendering.BackgroundColor)
             {
                 _rendering.BackgroundColor = color;
@@ -79,33 +76,23 @@ namespace VRCast.UI
         private void DrawLight()
         {
             // 値が変わったときだけ反映
-            float intensity = Slider("Light", _rendering.LightIntensity, 0f, 3f);
+            float intensity = GuiControls.Slider("Light", _rendering.LightIntensity, 0f, 3f);
             if (!Mathf.Approximately(intensity, _rendering.LightIntensity))
             {
                 _rendering.LightIntensity = intensity;
             }
 
-            float yaw = Slider("Light Yaw", _rendering.LightYaw, -180f, 180f);
+            float yaw = GuiControls.Slider("Light Yaw", _rendering.LightYaw, -180f, 180f);
             if (!Mathf.Approximately(yaw, _rendering.LightYaw))
             {
                 _rendering.LightYaw = yaw;
             }
 
-            float pitch = Slider("Light Pitch", _rendering.LightPitch, -90f, 90f);
+            float pitch = GuiControls.Slider("Light Pitch", _rendering.LightPitch, -90f, 90f);
             if (!Mathf.Approximately(pitch, _rendering.LightPitch))
             {
                 _rendering.LightPitch = pitch;
             }
-        }
-
-        private static float Slider(string label, float value, float min, float max)
-        {
-            // ラベル + 数値 + スライダーの 1 行
-            GUILayout.BeginHorizontal();
-            GUILayout.Label($"{label} {value:F2}", GUILayout.Width(LabelWidth + 30f));
-            float result = GUILayout.HorizontalSlider(value, min, max);
-            GUILayout.EndHorizontal();
-            return result;
         }
     }
 }

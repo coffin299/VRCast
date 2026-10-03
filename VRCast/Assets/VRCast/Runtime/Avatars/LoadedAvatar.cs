@@ -23,15 +23,17 @@ namespace VRCast.Avatars
         public AvatarManifest Manifest { get; }
         public string SourcePath { get; }
         public int RendererCount { get; }
+        public ExpressionSet Expressions { get; }
 
         public bool IsHumanoid => Animator != null && Animator.isHuman;
 
-        public LoadedAvatar(GameObject instance, AssetBundle bundle, AvatarManifest manifest, string sourcePath)
+        public LoadedAvatar(GameObject instance, AssetBundle bundle, AvatarPackage package)
         {
             Instance = instance;
             _bundle = bundle;
-            Manifest = manifest;
-            SourcePath = sourcePath;
+            Manifest = package.Manifest;
+            SourcePath = package.SourcePath;
+            Expressions = package.Expressions;
 
             // ルートの Animator と描画対象数を記録
             Animator = instance.GetComponent<Animator>();
