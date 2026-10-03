@@ -58,14 +58,12 @@ namespace VRCast.UI
                 "Follow these steps to show your avatar in OBS. Use the tabs on the left for detailed settings.",
                 "次の手順でアバターを OBS に映せます。細かい設定は左のタブで変更できます。"));
 
-            // ヘルプ（同梱されていなければ押せない）
-            GUI.enabled = HelpPage.Exists;
+            // ヘルプ（Web ページ）
             if (GUILayout.Button(Loc.T("Open help (browser)", "ヘルプを開く（ブラウザ）")))
             {
                 HelpPage.Open();
             }
 
-            GUI.enabled = true;
             GuiControls.EndCard();
         }
 
