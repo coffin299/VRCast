@@ -1,4 +1,5 @@
 using UnityEngine;
+using VRCast.Animations;
 using VRCast.Avatars;
 using VRCast.Core;
 using VRCast.Tracking;
