@@ -18,7 +18,7 @@ MyAvatar.vrcaster
 └── metadata/            任意。VRChat 固有設定を変換した JSON
     ├── expressions.json 表情プリセット（FX から抽出、表情が無ければ省略）
     ├── descriptor.json  リップシンク・まぶた設定（どちらも無ければ省略）
-    └── physbones.json   (予定) PhysBone 相当パラメータ
+    └── physbones.json   揺れもの（PhysBone・コライダー、無ければ省略）
 ```
 
 上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
@@ -101,6 +101,52 @@ Eyelids が Descriptor で未設定（FX アニメーションでまばたきす
 
 不正な場合は expressions.json と同様に警告のみで既定値（none / まばたき無し）として扱う。
 
+## metadata/physbones.json
+
+`VRCPhysBone` / `VRCPhysBoneCollider` を Runtime の近似シミュレーション用に変換したもの。
+
+```json
+{
+    "bones": [
+        {
+            "rootPath": "Armature/Hips/Spine/Chest/Neck/Head/Hair_Back",
+            "ignorePaths": [],
+            "endpointPosition": { "x": 0.0, "y": 0.05, "z": 0.0 },
+            "multiChildType": "ignore",
+            "pull": 0.2, "spring": 0.2, "stiffness": 0.2,
+            "gravity": 0.1, "gravityFalloff": 0.5, "immobile": 0.0,
+            "radius": 0.02,
+            "colliders": [0],
+            "limitType": "angle", "maxAngle": 60.0
+        }
+    ],
+    "colliders": [
+        {
+            "path": "Armature/Hips/Spine/Chest/Neck/Head",
+            "shape": "sphere", "radius": 0.08, "height": 0.0,
+            "position": { "x": 0.0, "y": 0.1, "z": 0.0 },
+            "rotation": { "x": 0.0, "y": 0.0, "z": 0.0, "w": 1.0 },
+            "insideBounds": false
+        }
+    ]
+}
+```
+
+| フィールド | 内容 |
+| :--- | :--- |
+| `bones[].rootPath` / `ignorePaths` | チェーンの root と除外 Transform（アバタールートからの相対パス、除外は最大 64） |
+| `bones[].endpointPosition` | 末端 Transform のローカル空間に置く仮想末端（0 なら無し） |
+| `bones[].multiChildType` | `ignore` / `first` / `average` |
+| `bones[].pull` / `spring` / `stiffness` / `gravityFalloff` / `immobile` | 0〜1 |
+| `bones[].gravity` | -1〜1 |
+| `bones[].radius` | 粒子半径（0〜10、root のスケールで拡縮） |
+| `bones[].colliders` | `colliders` 配列のインデックス（最大 64） |
+| `bones[].limitType` / `maxAngle` | `none` / `angle`（Hinge / Polar も円錐近似）、0〜180 度 |
+| `colliders[].shape` | `sphere` / `capsule`（高さは両端の半球込み、ローカル Y 軸方向）/ `plane`（法線はローカル Y 軸） |
+| `colliders[].position` / `rotation` | コライダー Transform のローカル空間 |
+
+上限: bones 256、colliders 256。不正な場合は警告のみで揺れもの無しとして扱う。
+
 ## avatar.bundle
 
 - アバター Prefab を 1 つだけ含む。アセットパスは固定で `Assets/__VRCastExport/avatar.prefab`。
@@ -109,7 +155,7 @@ Eyelids が Descriptor で未設定（FX アニメーションでまばたきす
 - Animator Controller は含めない（VRChat 固有の StateMachineBehaviour を含むため）。表情等は Milestone 3 で metadata 化する。
   代わりに FX レイヤーの初期状態（小物トグル・初期表情等）を書き出し時に GameObject / Renderer の有効状態、BlendShape、マテリアル差し替えへ焼き込む（Transform・ポーズは変更しない）。
 - VRChat コンポーネント（Avatar Descriptor, PhysBone, Constraint 等）・自作 MonoBehaviour は含めない。
-  Milestone 7 で Converter が `metadata/*.json` に変換する。
+  Runtime で使う設定は Converter が `metadata/*.json` に変換する（Descriptor・PhysBone は対応済み、Constraint 等は Milestone 7）。
 
 ## Runtime 側の検証
 

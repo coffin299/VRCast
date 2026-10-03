@@ -44,9 +44,31 @@ namespace VRCast.Animations
             set => SetValue(ref _settings.poseElbowBend, value);
         }
 
+        /// <summary>
+        /// アバター全体の向き（度）。Humanoid 以外でも有効。
+        /// </summary>
+        public float BodyYaw
+        {
+            get => _settings.avatarYaw;
+            set
+            {
+                // 変化があった場合のみルートを回転
+                if (Mathf.Approximately(_settings.avatarYaw, value))
+                {
+                    return;
+                }
+
+                _settings.avatarYaw = value;
+                ApplyYaw();
+            }
+        }
+
         public void Initialize(Animator animator, AppSettings settings)
         {
             _settings = settings;
+
+            // 保存済みの向きを反映
+            ApplyYaw();
 
             // Humanoid 以外はポーズ操作不可（設定値だけ保持）
             if (animator == null || !animator.isHuman || animator.avatar == null)
@@ -67,6 +89,12 @@ namespace VRCast.Animations
 
             // 保存済みの度合いを反映
             Apply();
+        }
+
+        private void ApplyYaw()
+        {
+            // 本コンポーネントはアバタールートに付く
+            transform.localRotation = Quaternion.Euler(0f, _settings.avatarYaw, 0f);
         }
 
         private void RecordBones(Animator animator)

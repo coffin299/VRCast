@@ -42,8 +42,14 @@ namespace VRCast.Core
         public float poseArmDown = 1f;
         public float poseElbowBend = 0.3f;
 
+        // アバターの向き（度、0 = カメラ正面）
+        public float avatarYaw;
+
         // 自動まばたき
         public bool autoBlink = true;
+
+        // 揺れもの（PhysBone 近似）
+        public bool physicsEnabled = true;
 
         // マイク音量によるリップシンク（デバイス名が空なら既定デバイス）
         public bool lipSyncEnabled = true;
@@ -72,6 +78,8 @@ namespace VRCast.Core
             poseArmDown = Mathf.Clamp01(poseArmDown);
             // 肘の曲げも同様
             poseElbowBend = Mathf.Clamp01(poseElbowBend);
+            // アバターの向きは -180〜180 に正規化
+            avatarYaw = Mathf.Repeat(avatarYaw + 180f, 360f) - 180f;
             // null のデバイス名は既定デバイス扱いの空文字へ
             microphoneDevice ??= string.Empty;
             // マイク感度は下限〜上限に制限

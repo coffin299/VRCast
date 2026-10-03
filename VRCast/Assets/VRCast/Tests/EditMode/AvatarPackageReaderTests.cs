@@ -202,6 +202,42 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Extract_WithPhysBones_ParsesChainsAndColliders()
+        {
+            // コライダー 1 つを参照する PhysBone を同梱
+            var physBones = new PhysBoneSet
+            {
+                bones = new[] { new PhysBoneData { rootPath = "Hips/Hair", pull = 0.3f, colliders = new[] { 0 } } },
+                colliders = new[]
+                {
+                    new PhysBoneColliderData { path = "Hips/Head", shape = PhysBoneColliderData.ShapeCapsule, radius = 0.1f, height = 0.3f },
+                },
+            };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.PhysBonesEntry, JsonUtility.ToJson(physBones));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            // 内容がそのまま読めること
+            Assert.That(package.PhysBones.bones, Has.Length.EqualTo(1));
+            Assert.That(package.PhysBones.bones[0].pull, Is.EqualTo(0.3f));
+            Assert.That(package.PhysBones.colliders[0].shape, Is.EqualTo(PhysBoneColliderData.ShapeCapsule));
+        }
+
+        [Test]
+        public void Extract_PhysBoneWithUnknownCollider_IgnoredAsEmpty()
+        {
+            // 存在しないコライダー番号を参照する PhysBone は検証で弾かれること
+            var physBones = new PhysBoneSet { bones = new[] { new PhysBoneData { colliders = new[] { 5 } } } };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.PhysBonesEntry, JsonUtility.ToJson(physBones));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.PhysBones.bones, Is.Empty);
+        }
+
+        [Test]
         public void Extract_WithoutExpressions_ReturnsEmpty()
         {
             string path = WritePackage(CreateManifest(DummyBundle), DummyBundle);

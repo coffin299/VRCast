@@ -7,8 +7,8 @@
 | 0 | プロジェクト基盤 | 完了 |
 | 1 | Basic Avatar Runtime | 完了（既知の課題あり） |
 | 2 | Transparent Rendering | 完了 |
-| 3 | Expressions | 進行中（待機ポーズ・表情・まばたき・リップシンク） |
-| 4 | Runtime Physics | 未着手 |
+| 3 | Expressions | 完了 |
+| 4 | Runtime Physics | 進行中（要確認） |
 | 5 | Tracking | 未着手 |
 | 6 | OSC | 未着手 |
 | 7 | Avatar Conversion Pipeline | 未着手 |
@@ -138,13 +138,33 @@ BlendShape、表情プリセット、Animator Parameter、基本 Viseme。
 - 話すと口が動き、無音時に閉じること（環境ノイズで開く場合は Mic gate を上げる）
 - 表情切替中もまばたき・口が動き、表情が崩れないこと
 
-残り: Animator Parameter（OSC と合わせて Milestone 6 で扱う可能性あり）。
+確認結果: Marycia（Eyelids 未設定、顔メッシュの `まばたき` を推定）で自動まばたき、Viseme `aa` による口パクを確認。
+
+Animator Parameter は OSC と合わせて Milestone 6 で扱う。
 
 カメラによる表情・まばたき・口の制御（VSeeFace 相当）は Milestone 5 で扱う。
 
 ## Milestone 4 — Runtime Physics
 
 PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider）。完全互換は目標にしない。
+
+- Converter `PhysBoneExtractor`: `VRCPhysBone` / `VRCPhysBoneCollider` をリフレクションで読み `metadata/physbones.json` に書き出す
+  （root / ignore / endpoint / multiChildType / pull / spring / stiffness / gravity / gravityFalloff / immobile / radius / 角度制限 / コライダー）。
+  カーブ、Grab / Pose、Parameter 連動、Stretch / Squish は対象外。Hinge / Polar 制限は maxAngleX の円錐で近似
+- Runtime `Dynamics/`（`UnityEngine.Physics` と衝突しないよう `VRCast.Dynamics`）
+  - `PhysBoneSimulator`: 60Hz 固定ステップ（1 フレーム最大 3 ステップ）、アバター 1 体 4096 粒子まで
+  - `PhysBoneChain`: 毎フレーム静止回転へ戻して静止位置を求め、Verlet（慣性 = spring、引き戻し = pull、形状維持 = stiffness、
+    重力 = gravity × falloff）→ コライダー → 角度制限 → 長さ拘束、最後に親から順に子粒子方向へ回転
+  - `PhysBoneCollider`: 球・カプセル・平面（insideBounds 対応）
+  - Humanoid ボーンは揺らさない（待機ポーズ・トラッキングと競合させない）
+- UI: Face / Physics セクションに PhysBone ON/OFF（チェーン数表示、設定は保存）
+- 確認用に Pose へ Body yaw（アバタールートの向き、`AppSettings.avatarYaw`）を追加。トラッキング導入前は体を回したときの揺れで確認する
+
+確認項目:
+
+- 髪・スカート等が揺れ、静止時に元の形へ戻ること
+- 体・脚へのめり込みがコライダーで抑えられること
+- 揺れ方の強さ（係数 `PullStrength` / `StiffnessStrength` / momentum は見た目で要調整）
 
 ## Milestone 5 — Tracking
 
@@ -156,7 +176,7 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 
 ## Milestone 6 — OSC
 
-OSC 受信・送信、Parameter Mapping。OSC 無効でも基本表示は動作すること。
+OSC 受信・送信、Parameter Mapping（Milestone 3 から移した Animator Parameter を含む）。OSC 無効でも基本表示は動作すること。
 
 ## Milestone 7 — Avatar Conversion Pipeline
 
