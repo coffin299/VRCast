@@ -15,7 +15,8 @@ namespace VRCast.UI
 {
     /// <summary>
     /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings）で
-    /// 表示するセクションを切り替え、内容は縦スクロールする。画面に収まる高さに制限し、Tab キーで表示切替。
+    /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンを常に表示する。
+    /// 画面に収まる高さに制限し、Tab キーで表示切替。
     /// 表示言語（日本語 / 英語）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
     /// </summary>
     public class MainPanel : MonoBehaviour
@@ -36,6 +37,9 @@ namespace VRCast.UI
 
         // 見出しのヘルプボタンの幅
         private const float HelpButtonWidth = 32f;
+
+        // タブの内容と下部のリセットボタンの間隔
+        private const float FooterSpacing = 8f;
 
         // タブの並び
         private enum Tab
@@ -66,6 +70,7 @@ namespace VRCast.UI
         private DisplaySection _displaySection;
         private OutputSection _outputSection;
         private SettingsSection _settingsSection;
+        private ResetBar _resetBar;
 
         // テーマ（最初の OnGUI で作成）
         private UiTheme _theme;
@@ -97,6 +102,7 @@ namespace VRCast.UI
             _displaySection = new DisplaySection(orbit, rendering);
             _outputSection = new OutputSection(virtualCamera);
             _settingsSection = new SettingsSection(settings, ResetAllSettings);
+            _resetBar = new ResetBar(session, orbit);
 
             // ウィンドウへのドロップで読み込む
             _fileDrop.FilesDropped += OnFilesDropped;
@@ -239,6 +245,10 @@ namespace VRCast.UI
             DrawContent();
             GUILayout.EndScrollView();
             GUILayout.EndHorizontal();
+
+            // どのタブでも押せるリセットボタン
+            GUILayout.Space(FooterSpacing);
+            _resetBar.Draw(_theme.Sidebar);
 
             // 見出し行でドラッグ移動
             GUI.DragWindow(new Rect(0f, 0f, 10000f, HeaderHeight));
