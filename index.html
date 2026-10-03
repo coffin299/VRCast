@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en" class="lang-en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VRCast</title>
+<meta name="description" content="VRCast - VRChat avatars for OBS and streaming, without opening Unity.">
+<link rel="icon" href="assets/icon.png">
+<link rel="stylesheet" href="assets/style.css">
+<script src="assets/site.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="./"><img src="assets/icon.png" alt="">VRCast</a>
+  <div class="links">
+    <a class="current" href="./"><span class="ja">概要</span><span class="en">Overview</span></a>
+    <a href="help/"><span class="ja">ヘルプ</span><span class="en">Help</span></a>
+    <a href="https://github.com/coffin299/VRCast">GitHub</a>
+  </div>
+  <div class="spacer"></div>
+  <div class="group">
+    <button data-theme-choice="light"><span class="ja">ライト</span><span class="en">Light</span></button>
+    <button data-theme-choice="dark"><span class="ja">ダーク</span><span class="en">Dark</span></button>
+  </div>
+  <div class="group">
+    <button data-lang="ja">日本語</button>
+    <button data-lang="en">English</button>
+  </div>
+</header>
+
+<div class="page">
+
+<div class="hero">
+  <img src="assets/icon.png" alt="VRCast">
+  <h1>VRCast</h1>
+  <p class="lead ja">VRChat のアバターを、Unity を開かずにそのまま配信へ。</p>
+  <p class="lead en">Your VRChat avatar on stream, without opening Unity.</p>
+  <div class="buttons">
+    <a class="button primary" href="https://github.com/coffin299/VRCast/releases">
+      <span class="ja">ダウンロード</span><span class="en">Download</span></a>
+    <a class="button" href="help/"><span class="ja">使い方を見る</span><span class="en">How to use</span></a>
+    <a class="button" href="https://github.com/coffin299/VRCast">GitHub</a>
+  </div>
+</div>
+
+<section>
+  <h2><span class="ja">VRCast とは</span><span class="en">What is VRCast?</span></h2>
+  <p class="ja">VRCast は、VRChat 向けの 3D アバターを単体で表示し、OBS などの配信ソフトや Discord / Zoom に映す Windows 用アプリです。
+    アバターを一度 <code>.vrcaster</code> ファイルに書き出せば、あとは Unity や VCC を起動せずに使えます。</p>
+  <p class="en">VRCast is a Windows app that shows a VRChat 3D avatar on its own and sends it to streaming software such as OBS,
+    or to Discord / Zoom. Export your avatar once to a <code>.vrcaster</code> file, and you no longer need Unity or VCC running.</p>
+  <div class="flow">
+    <span class="box"><span class="ja">VRChat アバター（Unity）</span><span class="en">VRChat avatar (Unity)</span></span>
+    <span class="arrow">→</span>
+    <span class="box"><code>.vrcaster</code></span>
+    <span class="arrow">→</span>
+    <span class="box">VRCast.exe</span>
+    <span class="arrow">→</span>
+    <span class="box"><span class="ja">OBS / 仮想カメラ</span><span class="en">OBS / virtual camera</span></span>
+  </div>
+</section>
+
+<div class="grid">
+  <section>
+    <h3><span class="ja">OBS に背景透過で映せる</span><span class="en">Transparent in OBS</span></h3>
+    <p class="ja">ゲームキャプチャで背景を抜いて配信画面に重ねられます。VRCast の画面上は目に優しいベージュ背景のまま。</p>
+    <p class="en">OBS Game Capture removes the background so the avatar sits on your scene, while the VRCast window keeps a soft beige background.</p>
+  </section>
+  <section>
+    <h3><span class="ja">VRChat の設定をそのまま</span><span class="en">Keeps your VRChat setup</span></h3>
+    <p class="ja">表情・小物の初期状態・揺れもの（PhysBone 近似）・Constraint を書き出して再現します。元のアバターは変更しません。</p>
+    <p class="en">Expressions, default toggles, PhysBones (approximated) and constraints are exported and reproduced. Your original avatar is untouched.</p>
+  </section>
+  <section>
+    <h3><span class="ja">あいうえおの口パク</span><span class="en">A-I-U-E-O lip sync</span></h3>
+    <p class="ja">マイクの声から母音を判定し、VRChat と同じように口の形が変わります。自動まばたき付き。</p>
+    <p class="en">Detects vowels from your microphone and changes mouth shapes like VRChat. Auto blink included.</p>
+  </section>
+  <section>
+    <h3><span class="ja">Web カメラでトラッキング</span><span class="en">Webcam tracking</span></h3>
+    <p class="ja">同梱の MediaPipe トラッカーで頭・まばたき・口・視線に加えて腕・手・指まで動きます（OpenSeeFace にも対応）。</p>
+    <p class="en">The bundled MediaPipe tracker drives head, blink, mouth, gaze, arms, hands and fingers (OpenSeeFace is also supported).</p>
+  </section>
+  <section>
+    <h3><span class="ja">仮想カメラ出力</span><span class="en">Virtual camera</span></h3>
+    <p class="ja"><span class="ui">VRCast Camera</span> として Discord や Zoom のカメラに選べます。</p>
+    <p class="en">Pick <span class="ui">VRCast Camera</span> as your camera in Discord, Zoom and more.</p>
+  </section>
+  <section>
+    <h3><span class="ja">はじめてでも迷わない</span><span class="en">Beginner friendly</span></h3>
+    <p class="ja">起動すると「はじめに」タブが読み込みから OBS までを案内。ドラッグ＆ドロップで読み込め、日本語 / 英語に対応。</p>
+    <p class="en">The Start tab guides you from loading to OBS. Load by drag and drop. Japanese and English UI.</p>
+  </section>
+</div>
+
+<section>
+  <h2><span class="ja">かんたん 3 ステップ</span><span class="en">Three easy steps</span></h2>
+  <ol class="steps">
+    <li><span class="ja">Unity でアバターを <code>.vrcaster</code> に書き出す（<a href="help/#export">手順</a>）</span>
+        <span class="en">Export your avatar to <code>.vrcaster</code> in Unity (<a href="help/#export">how</a>)</span></li>
+    <li><span class="ja">VRCast のウィンドウにドラッグ＆ドロップして、背景を透過にする</span>
+        <span class="en">Drag and drop it onto VRCast and make the background transparent</span></li>
+    <li><span class="ja">OBS でゲームキャプチャを追加して <span class="ui">透過を許可</span>（<a href="help/#obs">手順</a>）</span>
+        <span class="en">Add a Game Capture in OBS and check <span class="ui">Allow Transparency</span> (<a href="help/#obs">how</a>)</span></li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="ja">動作環境</span><span class="en">Requirements</span></h2>
+  <ul>
+    <li>Windows 10 / 11 (x64)</li>
+    <li><span class="ja">書き出し: アバターの入った Unity 2022.3.22f1 プロジェクト（VCC プロジェクト可）</span>
+        <span class="en">Export: a Unity 2022.3.22f1 project with your avatar (VCC projects are fine)</span></li>
+    <li><span class="ja">トラッキング: Web カメラ（任意）</span><span class="en">Tracking: a webcam (optional)</span></li>
+  </ul>
+</section>
+
+</div>
+
+<footer>
+  <span class="ja">VRCast は VRChat Inc. の公式ツールではありません。</span>
+  <span class="en">VRCast is not an official VRChat Inc. tool.</span>
+  &middot; Apache License 2.0 &middot; <a href="https://github.com/coffin299/VRCast">github.com/coffin299/VRCast</a>
+</footer>
+
+</body>
+</html>

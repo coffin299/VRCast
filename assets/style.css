@@ -1,0 +1,96 @@
+/* VRCast サイト共通スタイル（概要ページ・ヘルプ） */
+/* ダーク（既定） */
+:root {
+  color-scheme: dark;
+  --bg: #16171c; --surface: #1e2027; --card: #262831; --line: #343742; --border: #000; --text: #e8eaf0; --dim: #969cac;
+  --accent: #5c8cff; --on-accent: #fff; --link: #8fb0ff; --ui: #b9cbff;
+  --ok: #60ce8c; --warn: #f0b45a; --danger: #d64045;
+}
+/* ライト: アプリの背景色と同じベージュ */
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #e6dbc7; --surface: #efe6d6; --card: #f8f3ea; --line: #ddd0b9; --border: #c9b99d; --text: #2b2620; --dim: #6e6555;
+  --accent: #3f6fe0; --on-accent: #fff; --link: #2f5fd0; --ui: #2a4fae;
+  --ok: #2f9a5c; --warn: #c07a12; --danger: #c0353a;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 72px; }
+body {
+  margin: 0; background: var(--bg); color: var(--text); line-height: 1.75;
+  font-family: "Yu Gothic UI", "Meiryo UI", "Segoe UI", "Hiragino Sans", sans-serif;
+}
+html.lang-ja .en, html.lang-en .ja { display: none; }
+a { color: var(--link); }
+
+/* ヘッダー（サイト内リンクと言語切替） */
+header {
+  position: sticky; top: 0; z-index: 1; display: flex; align-items: center; gap: 16px;
+  padding: 10px 24px; background: var(--surface); border-bottom: 1px solid var(--border);
+}
+header .brand { display: flex; align-items: center; gap: 10px; color: var(--text); text-decoration: none; font-weight: bold; font-size: 18px; }
+header .brand img { width: 32px; height: 32px; }
+header .links a { color: var(--dim); text-decoration: none; margin-right: 14px; }
+header .links a:hover, header .links a.current { color: var(--text); }
+header .spacer { flex: 1; }
+header button {
+  border: 0; border-radius: 6px; padding: 6px 12px; cursor: pointer;
+  background: var(--line); color: var(--text); font: inherit;
+}
+header button.active { background: var(--accent); color: var(--on-accent); }
+header .group { display: flex; gap: 4px; }
+
+/* 本文 */
+section { background: var(--card); border-radius: 10px; padding: 20px 24px; margin-bottom: 20px; }
+h2 { margin-top: 0; font-size: 20px; }
+h3 { font-size: 16px; margin-bottom: 4px; }
+ol, ul { padding-left: 1.4em; }
+li { margin: 4px 0; }
+code, kbd {
+  background: var(--line); border-radius: 4px; padding: 1px 6px; font-family: Consolas, monospace; font-size: 0.92em;
+  overflow-wrap: anywhere;
+}
+.ui { color: var(--ui); font-weight: bold; }
+.note { border-left: 4px solid var(--accent); padding: 8px 14px; background: var(--surface); border-radius: 6px; }
+.warn { border-left-color: var(--warn); }
+.danger { border-left-color: var(--danger); }
+.steps { counter-reset: step; list-style: none; padding: 0; }
+.steps > li { counter-increment: step; position: relative; padding-left: 44px; margin: 14px 0; }
+.steps > li::before {
+  content: counter(step); position: absolute; left: 0; top: 0; width: 30px; height: 30px; border-radius: 50%;
+  background: var(--accent); color: var(--on-accent); text-align: center; line-height: 30px; font-weight: bold;
+}
+table { border-collapse: collapse; width: 100%; }
+th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--dim); font-weight: normal; }
+footer { color: var(--dim); text-align: center; padding: 24px; font-size: 14px; }
+
+/* ヘルプ: 左の目次 + 本文 */
+.layout { display: flex; max-width: 1100px; margin: 0 auto; }
+nav.toc { position: sticky; top: 60px; align-self: flex-start; width: 230px; padding: 24px 12px; }
+nav.toc a { display: block; padding: 6px 12px; border-radius: 6px; color: var(--dim); text-decoration: none; }
+nav.toc a:hover { background: var(--card); color: var(--text); }
+main { flex: 1; padding: 24px; min-width: 0; }
+
+/* 概要ページ */
+.page { max-width: 1000px; margin: 0 auto; padding: 24px; }
+.hero { text-align: center; padding: 48px 16px 32px; }
+.hero img { width: 140px; height: 140px; }
+.hero h1 { font-size: 40px; margin: 12px 0 4px; }
+.hero .lead { color: var(--dim); font-size: 18px; margin: 0 0 24px; }
+.buttons { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.button {
+  display: inline-block; padding: 10px 22px; border-radius: 8px; text-decoration: none; font-weight: bold;
+  background: var(--line); color: var(--text);
+}
+.button.primary { background: var(--accent); color: var(--on-accent); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 20px; }
+.grid section { margin-bottom: 0; }
+.grid h3 { margin-top: 0; }
+.flow { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.flow span.box { background: var(--surface); border-radius: 8px; padding: 8px 14px; }
+.flow span.arrow { color: var(--dim); }
+
+@media (max-width: 800px) {
+  nav.toc, header .links { display: none; }
+  .hero h1 { font-size: 32px; }
+}

@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="en" class="lang-en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VRCast Help</title>
+<link rel="icon" href="../assets/icon.png">
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/site.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="../"><img src="../assets/icon.png" alt="">VRCast</a>
+  <div class="links">
+    <a href="../"><span class="ja">概要</span><span class="en">Overview</span></a>
+    <a class="current" href="./"><span class="ja">ヘルプ</span><span class="en">Help</span></a>
+    <a href="https://github.com/coffin299/VRCast">GitHub</a>
+  </div>
+  <div class="spacer"></div>
+  <div class="group">
+    <button data-theme-choice="light"><span class="ja">ライト</span><span class="en">Light</span></button>
+    <button data-theme-choice="dark"><span class="ja">ダーク</span><span class="en">Dark</span></button>
+  </div>
+  <div class="group">
+    <button data-lang="ja">日本語</button>
+    <button data-lang="en">English</button>
+  </div>
+</header>
+
+<div class="layout">
+<nav class="toc">
+  <a href="#quick"><span class="ja">かんたんスタート</span><span class="en">Quick start</span></a>
+  <a href="#export"><span class="ja">1. アバターの書き出し</span><span class="en">1. Export your avatar</span></a>
+  <a href="#load"><span class="ja">2. 読み込み</span><span class="en">2. Load</span></a>
+  <a href="#obs"><span class="ja">3. OBS に映す</span><span class="en">3. Show in OBS</span></a>
+  <a href="#vcam"><span class="ja">仮想カメラ</span><span class="en">Virtual camera</span></a>
+  <a href="#look"><span class="ja">見た目・ライト</span><span class="en">Look &amp; lighting</span></a>
+  <a href="#face"><span class="ja">口パク・まばたき</span><span class="en">Lip sync &amp; blink</span></a>
+  <a href="#tracking"><span class="ja">トラッキング</span><span class="en">Tracking</span></a>
+  <a href="#settings"><span class="ja">設定・リセット</span><span class="en">Settings &amp; reset</span></a>
+  <a href="#keys"><span class="ja">操作一覧</span><span class="en">Controls</span></a>
+  <a href="#trouble"><span class="ja">困ったとき</span><span class="en">Troubleshooting</span></a>
+</nav>
+
+<main>
+
+<section id="quick">
+  <h2><span class="ja">かんたんスタート</span><span class="en">Quick start</span></h2>
+  <p class="ja">VRCast は VRChat 用のアバターを単体で表示し、OBS などの配信ソフトに映すアプリです。
+    VRCast を起動すると左のパネルに <span class="ui">はじめに</span> タブが開き、同じ手順を画面上で案内します。</p>
+  <p class="en">VRCast shows a VRChat avatar on its own and sends it to streaming software such as OBS.
+    When VRCast starts, the <span class="ui">Start</span> tab in the left panel guides you through the same steps.</p>
+  <ol class="steps">
+    <li><span class="ja">Unity でアバターを <code>.vrcaster</code> ファイルに書き出す</span>
+        <span class="en">Export your avatar to a <code>.vrcaster</code> file in Unity</span></li>
+    <li><span class="ja"><code>.vrcaster</code> を VRCast のウィンドウにドラッグ＆ドロップ</span>
+        <span class="en">Drag and drop the <code>.vrcaster</code> file onto the VRCast window</span></li>
+    <li><span class="ja"><span class="ui">はじめに</span> タブの <span class="ui">透過にする</span> を押す</span>
+        <span class="en">Press <span class="ui">Make transparent</span> in the <span class="ui">Start</span> tab</span></li>
+    <li><span class="ja">OBS で <span class="ui">ゲームキャプチャ</span> を追加して <span class="ui">透過を許可</span></span>
+        <span class="en">Add a <span class="ui">Game Capture</span> source in OBS and check <span class="ui">Allow Transparency</span></span></li>
+    <li><span class="ja"><kbd>Tab</kbd> キーで操作パネルを隠す</span>
+        <span class="en">Press <kbd>Tab</kbd> to hide the control panel</span></li>
+  </ol>
+</section>
+
+<section id="export">
+  <h2><span class="ja">1. アバターを書き出す（Unity）</span><span class="en">1. Export your avatar (Unity)</span></h2>
+  <p class="ja">アバターの入った Unity プロジェクト（VCC で作ったプロジェクトで OK、Unity 2022.3.22f1）で作業します。</p>
+  <p class="en">Work in the Unity project that contains your avatar (a VCC project is fine, Unity 2022.3.22f1).</p>
+  <ol class="steps">
+    <li>
+      <span class="ja">メニュー <span class="ui">Window &gt; Package Manager</span> を開き、左上の <span class="ui">+</span> から
+        <span class="ui">Add package from git URL...</span> を選んで次の URL を入力します。</span>
+      <span class="en">Open <span class="ui">Window &gt; Package Manager</span>, click <span class="ui">+</span> at the top left,
+        choose <span class="ui">Add package from git URL...</span> and enter:</span><br>
+      <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+    </li>
+    <li><span class="ja">メニュー <span class="ui">VRCast &gt; Avatar Exporter</span> を開きます。</span>
+        <span class="en">Open <span class="ui">VRCast &gt; Avatar Exporter</span>.</span></li>
+    <li><span class="ja">シーン上のアバター（一番上の親オブジェクト）を指定して <span class="ui">Export...</span> を押し、保存先を選びます。</span>
+        <span class="en">Select your avatar root in the scene, press <span class="ui">Export...</span> and choose where to save.</span></li>
+  </ol>
+  <p class="note ja">元のアバターは変更されません。表情・口パク・まばたき・揺れもの・Constraint の設定も一緒に書き出されます。</p>
+  <p class="note en">Your original avatar is not modified. Expressions, lip sync, blink, PhysBones and constraints are exported too.</p>
+</section>
+
+<section id="load">
+  <h2><span class="ja">2. VRCast で読み込む</span><span class="en">2. Load it in VRCast</span></h2>
+  <ul>
+    <li><span class="ja"><code>.vrcaster</code> ファイルを VRCast のウィンドウにドラッグ＆ドロップすると読み込まれます。</span>
+        <span class="en">Drag and drop a <code>.vrcaster</code> file onto the VRCast window.</span></li>
+    <li><span class="ja">または <span class="ui">はじめに</span> タブの <span class="ui">ファイルを選ぶ...</span>、
+        <span class="ui">アバター</span> タブの <span class="ui">参照...</span> で選べます。</span>
+        <span class="en">Or use <span class="ui">Choose file...</span> in the <span class="ui">Start</span> tab, or
+        <span class="ui">Browse...</span> in the <span class="ui">Avatar</span> tab.</span></li>
+    <li><span class="ja">最後に読み込んだアバターは次回起動時に自動で読み込まれます。</span>
+        <span class="en">The last avatar is loaded automatically the next time you start VRCast.</span></li>
+  </ul>
+  <p class="note warn ja"><code>.vrcaster</code> 以外のファイル（画像や unitypackage など）は読み込めません。エラーが表示された場合は書き出し直してください。</p>
+  <p class="note warn en">Only <code>.vrcaster</code> files can be loaded (not images, unitypackages, etc.). If you see an error, export the avatar again.</p>
+</section>
+
+<section id="obs">
+  <h2><span class="ja">3. OBS に映す</span><span class="en">3. Show it in OBS</span></h2>
+  <ol class="steps">
+    <li><span class="ja">VRCast の <span class="ui">はじめに</span> タブ（または <span class="ui">表示</span> タブ）で背景を <span class="ui">透過</span> にします。
+        VRCast の画面では背景色のまま見えますが、OBS では背景が抜けます。</span>
+        <span class="en">In VRCast, turn on <span class="ui">transparency</span> in the <span class="ui">Start</span> tab (or the <span class="ui">Display</span> tab).
+        The VRCast window keeps showing the background color, but OBS removes it.</span></li>
+    <li><span class="ja">OBS の <span class="ui">ソース</span> の <span class="ui">+</span> から <span class="ui">ゲームキャプチャ</span> を追加します。</span>
+        <span class="en">In OBS, click <span class="ui">+</span> under <span class="ui">Sources</span> and add <span class="ui">Game Capture</span>.</span></li>
+    <li><span class="ja">モードを <span class="ui">特定のウィンドウをキャプチャ</span>、ウィンドウを <code>[VRCast.exe]: VRCast</code> にします。</span>
+        <span class="en">Set Mode to <span class="ui">Capture specific window</span> and Window to <code>[VRCast.exe]: VRCast</code>.</span></li>
+    <li><span class="ja"><span class="ui">透過を許可</span> にチェックを入れます。</span>
+        <span class="en">Check <span class="ui">Allow Transparency</span>.</span></li>
+    <li><span class="ja">VRCast で <kbd>Tab</kbd> キーを押して操作パネルを隠します（パネルも OBS に映るため）。</span>
+        <span class="en">Press <kbd>Tab</kbd> in VRCast to hide the control panel (it also appears in OBS).</span></li>
+  </ol>
+  <p class="note warn ja"><span class="ui">ウィンドウキャプチャ</span> は透過に対応していません。透過したいときは必ず <span class="ui">ゲームキャプチャ</span> を使ってください。</p>
+  <p class="note warn en"><span class="ui">Window Capture</span> does not support transparency. Always use <span class="ui">Game Capture</span> for a transparent background.</p>
+</section>
+
+<section id="vcam">
+  <h2><span class="ja">仮想カメラ（Discord / Zoom など）</span><span class="en">Virtual camera (Discord / Zoom, etc.)</span></h2>
+  <ol class="steps">
+    <li><span class="ja"><span class="ui">出力</span> タブで仮想カメラの出力を ON にします。</span>
+        <span class="en">Turn on the virtual camera output in the <span class="ui">Output</span> tab.</span></li>
+    <li><span class="ja">初回だけ <span class="ui">ドライバーを登録</span> を押します（管理者の確認が出ます）。</span>
+        <span class="en">The first time only, press <span class="ui">Install driver</span> (an administrator prompt appears).</span></li>
+    <li><span class="ja">使いたいアプリのカメラ選択で <span class="ui">VRCast Camera</span> を選びます（出ない場合はそのアプリを再起動）。</span>
+        <span class="en">Choose <span class="ui">VRCast Camera</span> as the camera in the other app (restart that app if it is not listed).</span></li>
+  </ol>
+  <p class="note ja">操作パネルは仮想カメラには映りません。Discord などは透過できないため、背景は背景色で映ります。
+    VRCast のフォルダを移動・削除する前に <span class="ui">ドライバーを解除</span> を押してください。</p>
+  <p class="note en">The control panel is not sent to the virtual camera. Apps like Discord cannot show transparency, so the background color is shown.
+    Press <span class="ui">Uninstall driver</span> before moving or deleting the VRCast folder.</p>
+</section>
+
+<section id="look">
+  <h2><span class="ja">見た目・ライト（表示タブ）</span><span class="en">Look &amp; lighting (Display tab)</span></h2>
+  <table>
+    <tr><th><span class="ja">項目</span><span class="en">Item</span></th><th><span class="ja">内容</span><span class="en">What it does</span></th></tr>
+    <tr><td><span class="ja">カメラ</span><span class="en">Camera</span></td>
+        <td><span class="ja">画角の変更とリセット。右ドラッグで回転、中ドラッグで移動、ホイールでズーム。</span>
+            <span class="en">Field of view and reset. Right-drag to rotate, middle-drag to pan, wheel to zoom.</span></td></tr>
+    <tr><td><span class="ja">背景</span><span class="en">Background</span></td>
+        <td><span class="ja">背景色（既定はベージュ）と透過の切り替え。透過中も VRCast の画面では背景色が見えますが、OBS のゲームキャプチャでは抜けます。</span>
+            <span class="en">Background color (beige by default) and transparency. While transparent, the VRCast window still shows the color but OBS Game Capture removes it.</span></td></tr>
+    <tr><td><span class="ja">解像度</span><span class="en">Resolution</span></td>
+        <td><span class="ja">ウィンドウの大きさ（横長・縦長のプリセット）。</span>
+            <span class="en">Window size presets (landscape / portrait).</span></td></tr>
+    <tr><td><span class="ja">ライト</span><span class="en">Light</span></td>
+        <td><span class="ja"><span class="ui">環境光</span> はアバター全体を均一に明るく、<span class="ui">太陽光</span> は一方向から照らします。
+            暗いときは <span class="ui">晴れ</span> プリセットを押すか環境光を上げてください。<span class="ui">太陽光の色</span> は低いほど暖色。
+            <span class="ui">向き</span> 0 で正面から当たります。</span>
+            <span class="en"><span class="ui">Ambient</span> lights the whole avatar evenly; <span class="ui">Sunlight</span> shines from one direction.
+            If the avatar looks dark, press the <span class="ui">Sunny</span> preset or raise Ambient. Lower <span class="ui">Sun color</span> is warmer.
+            <span class="ui">Direction</span> 0 lights the avatar from the front.</span></td></tr>
+  </table>
+  <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情（数字キー 1〜9、0 でニュートラル）を変更できます。</p>
+  <p class="en">In the <span class="ui">Pose</span> tab you can change the avatar's direction, arm pose and expressions (number keys 1-9, 0 for neutral).</p>
+</section>
+
+<section id="face">
+  <h2><span class="ja">口パク・まばたき（顔タブ）</span><span class="en">Lip sync &amp; blink (Face tab)</span></h2>
+  <ul>
+    <li><span class="ja"><span class="ui">マイクで口パク</span> を ON にしてマイクを選び、<span class="ui">音量</span> メーターを見ながら
+        <span class="ui">マイク感度</span> と <span class="ui">ノイズゲート</span>（この音量以下は無音）を調整します。</span>
+        <span class="en">Turn on <span class="ui">Lip sync (microphone)</span>, choose your mic, and adjust <span class="ui">Mic gain</span> and
+        <span class="ui">Mic gate</span> (sound below this is ignored) while watching the <span class="ui">Level</span> meter.</span></li>
+    <li><span class="ja"><span class="ui">母音で口の形を変える</span> が ON なら、VRChat と同じように「あいうえお」で口の形が変わります。
+        判定がずれるときは <span class="ui">声の高さ補正</span> を動かします（声が高い人は右）。</span>
+        <span class="en">With <span class="ui">Vowel mouth shapes</span> on, the mouth changes shape with the vowels (A I U E O), like VRChat.
+        If vowels are misdetected, move <span class="ui">Voice pitch</span> (right for higher voices).</span></li>
+    <li><span class="ja">揺れもの（PhysBone の近似）と自動まばたきも ON/OFF できます。</span>
+        <span class="en">PhysBone physics (approximation) and auto blink can be turned on or off.</span></li>
+  </ul>
+</section>
+
+<section id="tracking">
+  <h2><span class="ja">Web カメラトラッキング（トラッキングタブ）</span><span class="en">Webcam tracking (Tracking tab)</span></h2>
+  <ul>
+    <li><span class="ja"><span class="ui">トラッキングを有効にする</span> を ON にすると、同梱のトラッカーが自動で起動し、頭の向き・まばたき・口・視線（MediaPipe では腕・手も）が動きます。</span>
+        <span class="en">Turn on <span class="ui">Enable tracking</span>. The bundled tracker starts automatically and drives head, blink, mouth and gaze (and arms/hands with MediaPipe).</span></li>
+    <li><span class="ja">カメラは <span class="ui">&lt;</span> <span class="ui">&gt;</span> で選びます。動かないときは <span class="ui">トラッカーを再起動</span>。</span>
+        <span class="en">Choose the camera with <span class="ui">&lt;</span> <span class="ui">&gt;</span>. If nothing moves, press <span class="ui">Restart tracker</span>.</span></li>
+    <li><span class="ja">正面がずれたらカメラを見て <span class="ui">姿勢をリセット</span>。</span>
+        <span class="en">If the front direction is off, look at the camera and press <span class="ui">Reset pose</span>.</span></li>
+    <li><span class="ja"><span class="ui">体の動き</span> で、頭の動きに合わせて上半身を傾けるか体ごと動かすかを選べます。</span>
+        <span class="en"><span class="ui">Body</span> chooses whether the upper body leans or the whole body moves with your head.</span></li>
+  </ul>
+  <p class="note warn ja">他のアプリ（Discord・Zoom・VSeeFace など）が Web カメラを使っていると起動できません。</p>
+  <p class="note warn en">The tracker cannot start while another app (Discord, Zoom, VSeeFace, etc.) is using the webcam.</p>
+</section>
+
+<section id="settings">
+  <h2><span class="ja">設定・リセット（設定タブ）</span><span class="en">Settings &amp; reset (Settings tab)</span></h2>
+  <ul>
+    <li><span class="ja"><span class="ui">表示言語</span>: 自動（OS に合わせる）/ English / 日本語。</span>
+        <span class="en"><span class="ui">Display language</span>: Auto (OS) / English / 日本語.</span></li>
+    <li><span class="ja"><span class="ui">UI の大きさ</span>: 75%〜200%。</span>
+        <span class="en"><span class="ui">UI size</span>: 75% to 200%.</span></li>
+    <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
+        <span class="en">Settings are saved when VRCast closes and restored next time.</span></li>
+  </ul>
+  <p class="note danger ja"><span class="ui">全ての設定をリセット</span>（赤いボタン）を押し、確認で <span class="ui">リセットする</span> を押すと、全ての設定が初期状態に戻ります
+    （ウィンドウサイズと最後に開いたアバターは残ります）。元に戻せません。</p>
+  <p class="note danger en">Press <span class="ui">Reset all settings</span> (red button), then <span class="ui">Yes, reset</span> to restore every setting to its default
+    (window size and the last avatar are kept). This cannot be undone.</p>
+</section>
+
+<section id="keys">
+  <h2><span class="ja">操作一覧</span><span class="en">Controls</span></h2>
+  <table>
+    <tr><td><kbd>Tab</kbd></td><td><span class="ja">操作パネルの表示 / 非表示</span><span class="en">Show / hide the control panel</span></td></tr>
+    <tr><td><span class="ja">右ドラッグ</span><span class="en">Right-drag</span></td><td><span class="ja">カメラを回転</span><span class="en">Rotate the camera</span></td></tr>
+    <tr><td><span class="ja">中ドラッグ</span><span class="en">Middle-drag</span></td><td><span class="ja">カメラを移動</span><span class="en">Pan the camera</span></td></tr>
+    <tr><td><span class="ja">ホイール</span><span class="en">Wheel</span></td><td><span class="ja">ズーム</span><span class="en">Zoom</span></td></tr>
+    <tr><td><kbd>1</kbd>〜<kbd>9</kbd> / <kbd>0</kbd></td><td><span class="ja">表情の切り替え / ニュートラル</span><span class="en">Switch expression / neutral</span></td></tr>
+  </table>
+</section>
+
+<section id="trouble">
+  <h2><span class="ja">困ったとき</span><span class="en">Troubleshooting</span></h2>
+  <h3><span class="ja">アバターが暗い</span><span class="en">The avatar looks dark</span></h3>
+  <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
+    <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
+    lilToon 等は明るさの上限（マテリアルの設定）があるため、太陽光を上げても一定以上は明るくなりません。</p>
+  <p class="en">Press the <span class="ui">Sunny</span> preset in the <span class="ui">Display</span> tab or raise <span class="ui">Ambient</span>.
+    Set <span class="ui">Direction</span> near 0 to light the avatar from the front.
+    Shaders such as lilToon cap brightness (a material setting), so raising Sunlight stops helping past a point.</p>
+  <h3><span class="ja">OBS で背景が抜けない</span><span class="en">The background is not transparent in OBS</span></h3>
+  <p class="ja">VRCast の背景を <span class="ui">透過</span> にし、OBS は <span class="ui">ゲームキャプチャ</span>（ウィンドウキャプチャではなく）で
+    <span class="ui">透過を許可</span> にチェックが入っているか確認してください。</p>
+  <p class="en">Make sure VRCast's background is set to <span class="ui">transparent</span>, and that OBS uses <span class="ui">Game Capture</span>
+    (not Window Capture) with <span class="ui">Allow Transparency</span> checked.</p>
+  <h3><span class="ja">OBS に何も映らない</span><span class="en">Nothing appears in OBS</span></h3>
+  <p class="ja">ゲームキャプチャのウィンドウに <code>[VRCast.exe]: VRCast</code> を選び直してください。VRCast を最小化すると映らないことがあります。</p>
+  <p class="en">Select <code>[VRCast.exe]: VRCast</code> again as the Game Capture window. Minimizing VRCast may stop the capture.</p>
+  <h3><span class="ja">ドラッグ＆ドロップできない</span><span class="en">Drag and drop does not work</span></h3>
+  <p class="ja">VRCast を管理者として実行していると Windows の制限でドロップできません。通常どおり起動するか、<span class="ui">ファイルを選ぶ...</span> を使ってください。</p>
+  <p class="en">Windows blocks drops into apps running as administrator. Start VRCast normally, or use <span class="ui">Choose file...</span>.</p>
+  <h3><span class="ja">口パクしない</span><span class="en">Lip sync does not move</span></h3>
+  <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
+    動かなければ <span class="ui">マイク感度</span> を上げるか <span class="ui">ノイズゲート</span> を下げてください。</p>
+  <p class="en">In the <span class="ui">Face</span> tab, check the selected microphone and that the <span class="ui">Level</span> meter moves.
+    If not, raise <span class="ui">Mic gain</span> or lower <span class="ui">Mic gate</span>.</p>
+  <h3><span class="ja">設定ファイル・ログの場所</span><span class="en">Settings and log files</span></h3>
+  <p><code>%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\</code>
+    <span class="ja">（<code>settings.json</code> と <code>Player.log</code>）。不具合の報告時は <code>Player.log</code> を添えてください。</span>
+    <span class="en">(<code>settings.json</code> and <code>Player.log</code>). Please attach <code>Player.log</code> when reporting a problem.</span></p>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <span class="ja">VRCast は VRChat Inc. の公式ツールではありません。</span>
+  <span class="en">VRCast is not an official VRChat Inc. tool.</span>
+  &middot; <a href="https://github.com/coffin299/VRCast/issues"><span class="ja">不具合の報告</span><span class="en">Report a problem</span></a>
+</footer>
+
+</body>
+</html>
