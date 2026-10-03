@@ -35,7 +35,9 @@ namespace VRCast.AvatarFormat
             // パスと BlendShape 名は空可・長さ上限あり
             if (!ExpressionSet.IsValidString(lipSync.meshPath, true)
                 || !ExpressionSet.IsValidString(lipSync.mouthOpenBlendShape, true)
-                || !ExpressionSet.IsValidString(eyelids.meshPath, true))
+                || !ExpressionSet.IsValidString(eyelids.meshPath, true)
+                || !ExpressionSet.IsValidString(eyelids.winkLeftBlendShape, true)
+                || !ExpressionSet.IsValidString(eyelids.winkRightBlendShape, true))
             {
                 return "Descriptor contains an invalid string.";
             }
@@ -91,6 +93,8 @@ namespace VRCast.AvatarFormat
 
     /// <summary>
     /// まぶた設定。blinkBlendShapes（左右別の場合は複数）が空ならまばたき不可。
+    /// winkLeft / winkRightBlendShape は片目だけ閉じる BlendShape（アバターから見た左右、両方揃った場合のみ。空ならウインク不可）。
+    /// blinkBlendShapes と同名でもよい（左右別のまばたき BlendShape をウインクにも使う場合）。
     /// </summary>
     [Serializable]
     public class EyelidData
@@ -100,5 +104,7 @@ namespace VRCast.AvatarFormat
 
         public string meshPath = string.Empty;
         public string[] blinkBlendShapes = Array.Empty<string>();
+        public string winkLeftBlendShape = string.Empty;
+        public string winkRightBlendShape = string.Empty;
     }
 }

@@ -154,7 +154,37 @@ namespace VRCast.Converter.Editor
         private static EyelidData GetEyelids(Component descriptor, Transform root)
         {
             // Descriptor の Eyelids 設定を優先し、無ければ顔メッシュの BlendShape 名から推定
-            return GetConfiguredEyelids(descriptor, root) ?? GuessEyelids(descriptor, root) ?? new EyelidData();
+            EyelidData data = GetConfiguredEyelids(descriptor, root) ?? GuessEyelids(descriptor, root) ?? new EyelidData();
+            GuessWinks(data, root);
+            return data;
+        }
+
+        private static void GuessWinks(EyelidData data, Transform root)
+        {
+            // まばたき用メッシュが無ければウインクも無し
+            if (data.blinkBlendShapes.Length == 0)
+            {
+                return;
+            }
+
+            // 同じメッシュ上で左右の組が揃った最初の候補を採用
+            Transform node = string.IsNullOrEmpty(data.meshPath) ? root : root.Find(data.meshPath);
+            var mesh = node != null ? node.GetComponent<SkinnedMeshRenderer>() : null;
+            if (mesh == null || mesh.sharedMesh == null)
+            {
+                return;
+            }
+
+            foreach (string[] candidate in WinkCandidates)
+            {
+                string[] names = FindBlendShapes(mesh.sharedMesh, candidate);
+                if (names != null)
+                {
+                    data.winkLeftBlendShape = names[0];
+                    data.winkRightBlendShape = names[1];
+                    return;
+                }
+            }
         }
 
         private static EyelidData GetConfiguredEyelids(Component descriptor, Transform root)
@@ -253,6 +283,20 @@ namespace VRCast.Converter.Editor
             new[] { "eyeBlinkLeft", "eyeBlinkRight" },
             new[] { "blink_L", "blink_R" },
             new[] { "Blink_Left", "Blink_Right" },
+        };
+
+        // ウインク BlendShape 名の候補（[アバターの左目, 右目]、優先順。MMD 系の「ウィンク」は左目）
+        private static readonly string[][] WinkCandidates =
+        {
+            new[] { "ウィンク", "ウィンク右" },
+            new[] { "wink_L", "wink_R" },
+            new[] { "Wink_Left", "Wink_Right" },
+            new[] { "winkL", "winkR" },
+            new[] { "eyeBlinkLeft", "eyeBlinkRight" },
+            new[] { "blink_L", "blink_R" },
+            new[] { "Blink_Left", "Blink_Right" },
+            new[] { "eye_close_L", "eye_close_R" },
+            new[] { "Fcl_EYE_Close_L", "Fcl_EYE_Close_R" },
         };
 
         private static object GetField(object target, string fieldName)
