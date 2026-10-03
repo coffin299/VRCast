@@ -59,6 +59,7 @@ try {
     # ライセンス・サードパーティ表記・はじめにお読みください
     Copy-Item (Join-Path $repository "LICENSE") (Join-Path $staging "LICENSE.txt")
     Copy-Item (Join-Path $repository "NOTICE") (Join-Path $staging "NOTICE.txt")
+    Copy-Item (Join-Path $repository "CHANGELOG.txt") (Join-Path $staging "CHANGELOG.txt")
     Copy-Item (Join-Path $PSScriptRoot "README.txt") (Join-Path $staging "README.txt")
 
     # 既存の同名 zip を消してから作成

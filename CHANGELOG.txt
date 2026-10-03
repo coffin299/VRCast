@@ -1,0 +1,36 @@
+VRCast 更新履歴 / Changelog
+===========================
+
+新しいものが上です。各バージョンは日本語、英語の順に書いています。
+Newest first. Each version is written in Japanese, then English.
+
+
+■ 1.0.0 (2026-10-03)
+
+[日本語]
+初の製品版です。
+- VRChat アバターを .vrcaster に書き出す Unity 用ツール（元のアバターは変更しない）
+- .vrcaster をドラッグ＆ドロップで読み込み、表情・小物の初期状態・揺れもの（PhysBone の近似）・Constraint を再現
+- OBS のゲームキャプチャで背景を透過。Tab でパネルを隠すと、透過設定が OFF でも背景が抜ける
+- 仮想カメラ「VRCast Camera」（Discord / Zoom など）
+- マイクの声で「あいうえお」の口パク、自動まばたき
+- Web カメラのトラッキング（頭・まばたき・口・視線・腕・手・指。MediaPipe 同梱、OpenSeeFace にも対応）
+- 待機ポーズ、表情の切り替え（数字キー）
+- ライト（太陽光・環境光・プリセット）、アバターの明るさ（0.5〜10）、背景色、解像度プリセット
+- 「はじめに」タブの手順案内、パネル下部のリセットボタン（顔の向き / 視線 / 表情 / カメラ）
+- 日本語 / 英語の表示、UI の大きさの変更、全設定のリセット
+- ヘルプページ: https://coffin299.github.io/VRCast/help/
+
+[English]
+First release.
+- Unity exporter that converts a VRChat avatar to .vrcaster (the original avatar is never modified)
+- Load .vrcaster by drag and drop; expressions, default toggles, PhysBones (approximated) and constraints are reproduced
+- Transparent background with OBS Game Capture. Hiding the panel with Tab makes the background transparent even when transparency is off
+- Virtual camera "VRCast Camera" (Discord, Zoom, etc.)
+- A-I-U-E-O lip sync from your microphone, auto blink
+- Webcam tracking (head, blink, mouth, gaze, arms, hands and fingers; MediaPipe bundled, OpenSeeFace supported)
+- Idle pose, expression switching (number keys)
+- Lighting (sunlight, ambient, presets), avatar brightness (0.5 to 10), background color, resolution presets
+- Step-by-step Start tab, reset buttons at the bottom of the panel (head / gaze / expression / camera)
+- Japanese / English UI, UI scale, reset all settings
+- Help page: https://coffin299.github.io/VRCast/help/

@@ -13,6 +13,9 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 ■ ヘルプ
 https://coffin299.github.io/VRCast/help/
 
+■ 更新履歴
+CHANGELOG.txt をご覧ください。
+
 ■ ご注意
 - 非公式ツールです。VRChat Inc. とは関係ありません。
 - アバター・衣装の利用規約を守ってお使いください。
@@ -37,6 +40,9 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
 
 - Help
 https://coffin299.github.io/VRCast/help/
+
+- Changelog
+See CHANGELOG.txt.
 
 - Notes
 - This is an unofficial tool and is not affiliated with VRChat Inc.
