@@ -5,6 +5,7 @@ using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using VRCast.Core;
+using VRCast.Output;
 using VRCast.Tracking;
 
 namespace VRCast.Editor.Build
@@ -16,6 +17,9 @@ namespace VRCast.Editor.Build
     {
         // 起動シーンのパス（無ければ生成する）
         private const string MainScenePath = "Assets/VRCast/Scenes/Main.unity";
+
+        // 仮想カメラの送信プラグインのパス（Tools/UnityCapture/fetch.ps1 で配置）
+        private const string VirtualCameraPluginPath = "Assets/Plugins/UnityCapture/x86_64/UnityCapturePlugin.dll";
 
         // プロジェクトルートからの出力先
         private const string WindowsOutputPath = "Builds/Windows/VRCast.exe";
@@ -43,6 +47,9 @@ namespace VRCast.Editor.Build
 
             // 同梱トラッカーの有無を確認（無くてもビルドは続行し、トラッキングはパス指定が必要になる）
             WarnIfTrackerMissing();
+
+            // 仮想カメラの同梱ファイルの有無を確認（無くてもビルドは続行し、仮想カメラは使えない）
+            WarnIfVirtualCameraMissing();
 
             // 設定ファイルの保存先 (LocalLow/VRCast/VRCast) を固定する
             PlayerSettings.companyName = CompanyName;
@@ -95,6 +102,18 @@ namespace VRCast.Editor.Build
                     Debug.LogWarning($"[VRCast][Build] {executable} not found in Assets/StreamingAssets/"
                         + $"{TrackerProcess.FolderOf(source)}. {source} tracking will require an {executable} path.");
                 }
+            }
+        }
+
+        private static void WarnIfVirtualCameraMissing()
+        {
+            // ドライバー（StreamingAssets）と送信プラグイン（Plugins）の両方が必要
+            bool hasDriver = VirtualCameraInstaller.FindBundled(Application.streamingAssetsPath) != null;
+            bool hasPlugin = File.Exists(VirtualCameraPluginPath);
+            if (!hasDriver || !hasPlugin)
+            {
+                Debug.LogWarning("[VRCast][Build] UnityCapture files not found. Run Tools/UnityCapture/fetch.ps1 "
+                    + "to enable the virtual camera output.");
             }
         }
 
