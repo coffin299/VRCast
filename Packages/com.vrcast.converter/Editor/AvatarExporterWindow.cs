@@ -40,7 +40,8 @@ namespace VRCast.Converter.Editor
 
             EditorGUILayout.HelpBox(
                 "Only Unity built-in components (Transform, Animator, Renderers, MeshFilter) are exported. " +
-                "VRChat components, scripts and the Animator Controller are removed from the exported copy.",
+                "VRChat components, scripts and the Animator Controller are removed from the exported copy. " +
+                "The FX layer's default state (toggles etc.) is baked into the copy before removal.",
                 MessageType.Info);
 
             using (new EditorGUI.DisabledScope(error != null))
@@ -77,6 +78,7 @@ namespace VRCast.Converter.Editor
                     $"Exported: {report.OutputPath}\n" +
                     $"Size: {report.Manifest.bundleSize / (1024f * 1024f):F1} MB\n" +
                     $"Humanoid: {report.IsHumanoid}\n" +
+                    $"Baked FX default clips: {report.BakedFxClips}\n" +
                     $"Removed components: {report.Strip.RemovedComponents}, " +
                     $"missing scripts: {report.Strip.RemovedMissingScripts}, " +
                     $"EditorOnly objects: {report.Strip.RemovedEditorOnlyObjects}";

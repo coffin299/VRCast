@@ -85,5 +85,18 @@ namespace VRCast.Tests
             Assert.That(settings.windowWidth, Is.EqualTo(AppSettings.MinWindowSize));
             Assert.That(settings.windowHeight, Is.EqualTo(AppSettings.MinWindowSize));
         }
+
+        [Test]
+        public void Load_OutOfRangeLight_IsClamped()
+        {
+            // 範囲外のライト設定を保存
+            _store.Save(new AppSettings { lightIntensity = 100f, lightPitch = 200f, lightYaw = 270f });
+
+            // 読込時に強度・仰角は上限へ、方位角は -180〜180 へ補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.lightIntensity, Is.EqualTo(AppSettings.MaxLightIntensity));
+            Assert.That(settings.lightPitch, Is.EqualTo(90f));
+            Assert.That(settings.lightYaw, Is.EqualTo(-90f).Within(0.001f));
+        }
     }
 }

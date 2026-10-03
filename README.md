@@ -17,7 +17,8 @@ OBS (Window Capture / Game Capture)
 
 ## 現在の状態
 
-**Milestone 1（Basic Avatar Runtime）** 完了。VRChat アバターを書き出して `VRCast.exe` で表示できる（T ポーズ表示、FX トグルの既定状態は未反映）。
+**Milestone 1（Basic Avatar Runtime）** 完了。**Milestone 2（Transparent Rendering）** 実装済み・動作確認待ち。
+VRChat アバターを書き出して `VRCast.exe` で表示し、背景透過で OBS に取り込める（T ポーズ表示）。
 
 | 項目 | 状態 |
 | :--- | :--- |
@@ -25,8 +26,10 @@ OBS (Window Capture / Game Capture)
 | ログ (`VRCastLog`) / 設定の保存・読込 (`SettingsStore`) | 済 |
 | Windows ビルドスクリプト (`VRCastBuild`) | 済 |
 | アバター書き出し (`VRCast > Avatar Exporter`) | 済 |
+| FX レイヤー既定状態の焼き込み（小物トグルの初期 ON/OFF） | 済（要動作確認） |
 | `.vrcaster` 読み込み・表示・オービットカメラ・最小 UI | 済 |
-| 背景透過 / OBS 向け設定 | Milestone 2 で実装予定 |
+| Humanoid 骨格基準のカメラフレーミング | 済（要動作確認） |
+| 背景透過・解像度プリセット・ライト調整 | 済（要動作確認） |
 | 表情・揺れもの・トラッキング | 未実装 |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
@@ -51,6 +54,8 @@ OBS (Window Capture / Game Capture)
 
 - 書き出されるのは Unity 標準コンポーネント（Transform / Animator / Renderer / MeshFilter）とそのメッシュ・マテリアル・シェーダー・テクスチャのみ。
 - VRChat コンポーネント・スクリプト・Animator Controller は書き出し用の複製から除去される（元のアバターは変更されない）。
+- 除去前に、FX レイヤーの初期状態（Expression Parameters の既定値で到達するステート）のアニメーションを 0 秒時点で焼き込む。
+  小物トグルの既定 ON/OFF や初期表情などが VRChat 上の初期状態に近づく（近似処理のため完全一致ではない）。
 - 書き出し先は Windows スタンドアロン用 AssetBundle。Android (Quest) ビルドターゲットのプロジェクトでは切替に時間がかかる。
 
 ### 2. VRCast.exe で表示する
@@ -65,6 +70,19 @@ OBS (Window Capture / Game Capture)
 | 中ドラッグ | パン |
 | ホイール | ズーム |
 | Tab | 操作パネルの表示切替 |
+
+パネルの **Rendering** で、背景（透過 / 単色）、ウィンドウ解像度（1280x720 / 1920x1080 / 縦長 720x1280 / 1080x1920）、ライトの強さと向きを変更できる。
+設定は終了時に保存され、次回起動時に復元される。ウィンドウは枠をドラッグしてサイズ変更できる。
+
+### 3. OBS に取り込む
+
+1. パネルで **Transparent background** を ON にする（VRCast の画面上では背景が黒く見える）。
+2. OBS で **ゲームキャプチャ** ソースを追加し、モード「特定のウィンドウをキャプチャ」で `[VRCast.exe]: VRCast` を選ぶ。
+3. **透過を許可** にチェックを入れる。
+4. Tab で操作パネルを隠す。
+
+ウィンドウキャプチャは透過に対応していないため、背景を抜く場合はゲームキャプチャを使う。
+透過不要なら単色背景にしてウィンドウキャプチャ + クロマキーでもよい。
 
 ## リポジトリ構成
 

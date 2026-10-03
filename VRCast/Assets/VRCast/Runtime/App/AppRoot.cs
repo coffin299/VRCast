@@ -4,6 +4,7 @@ using UnityEngine;
 using VRCast.Avatars;
 using VRCast.Cameras;
 using VRCast.Core;
+using VRCast.Rendering;
 using VRCast.UI;
 
 namespace VRCast.App
@@ -56,9 +57,14 @@ namespace VRCast.App
                 _orbit = mainCamera.gameObject.AddComponent<OrbitCameraController>();
             }
 
+            // 背景・解像度・ライト（Bootstrap 未実行時は既定値で動かす）
+            AppSettings settings = AppBootstrap.Settings ?? new AppSettings();
+            var rendering = gameObject.AddComponent<RenderingController>();
+            rendering.Initialize(mainCamera, settings);
+
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
-            gameObject.AddComponent<MainPanel>().Initialize(_session, _orbit, _initialAvatarPath);
+            gameObject.AddComponent<MainPanel>().Initialize(_session, _orbit, rendering, _initialAvatarPath);
         }
 
         private void Start()
@@ -81,8 +87,8 @@ namespace VRCast.App
 
         private void OnAvatarLoaded(LoadedAvatar avatar)
         {
-            // アバター全体が映るようにカメラを合わせる
-            _orbit.Frame(avatar.CalculateBounds());
+            // アバター本体（Humanoid は骨格基準）が映るようにカメラを合わせる
+            _orbit.Frame(avatar.CalculateFramingBounds());
 
             // 次回起動時に自動で読み込めるよう記録（保存は終了時）
             if (AppBootstrap.Settings != null)

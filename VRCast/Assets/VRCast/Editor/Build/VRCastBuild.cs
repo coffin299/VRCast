@@ -22,6 +22,10 @@ namespace VRCast.Editor.Build
         private const string CompanyName = "VRCast";
         private const string ProductName = "VRCast";
 
+        // 初回起動時のウィンドウサイズ（以降は settings.json の値を使う）
+        private const int DefaultWidth = 1280;
+        private const int DefaultHeight = 720;
+
         [MenuItem("VRCast/Build/Windows x64")]
         public static void BuildWindows()
         {
@@ -38,6 +42,14 @@ namespace VRCast.Editor.Build
             // 設定ファイルの保存先 (LocalLow/VRCast/VRCast) を固定する
             PlayerSettings.companyName = CompanyName;
             PlayerSettings.productName = ProductName;
+
+            // OBS キャプチャ向け: ウィンドウ表示・サイズ変更可・非アクティブ時も描画継続
+            PlayerSettings.fullScreenMode = FullScreenMode.Windowed;
+            PlayerSettings.defaultScreenWidth = DefaultWidth;
+            PlayerSettings.defaultScreenHeight = DefaultHeight;
+            PlayerSettings.resizableWindow = true;
+            PlayerSettings.runInBackground = true;
+            PlayerSettings.visibleInBackground = true;
 
             // ビルド設定を組み立てる
             var options = new BuildPlayerOptions

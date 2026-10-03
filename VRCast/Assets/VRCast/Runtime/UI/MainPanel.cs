@@ -1,11 +1,12 @@
 using UnityEngine;
 using VRCast.Avatars;
 using VRCast.Cameras;
+using VRCast.Rendering;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI による最小操作パネル（Avatar / Camera）。Tab キーで表示切替。
+    /// IMGUI による最小操作パネル（Avatar / Camera / Rendering）。Tab キーで表示切替。
     /// </summary>
     public class MainPanel : MonoBehaviour
     {
@@ -22,15 +23,18 @@ namespace VRCast.UI
 
         private AvatarSession _session;
         private OrbitCameraController _orbit;
+        private RenderingSection _renderingSection;
         private string _pathInput = string.Empty;
         private bool _visible = true;
         private Rect _windowRect = new Rect(10f, 10f, WindowWidth, 0f);
 
-        public void Initialize(AvatarSession session, OrbitCameraController orbit, string initialPath)
+        public void Initialize(
+            AvatarSession session, OrbitCameraController orbit, RenderingController rendering, string initialPath)
         {
             // 依存の受け取りと入力欄の初期値設定
             _session = session;
             _orbit = orbit;
+            _renderingSection = new RenderingSection(rendering);
             _pathInput = initialPath ?? string.Empty;
         }
 
@@ -71,6 +75,8 @@ namespace VRCast.UI
             DrawAvatarSection();
             GUILayout.Space(8f);
             DrawCameraSection();
+            GUILayout.Space(8f);
+            _renderingSection.Draw();
 
             // タイトルバーでドラッグ移動
             GUI.DragWindow(new Rect(0f, 0f, 10000f, 20f));

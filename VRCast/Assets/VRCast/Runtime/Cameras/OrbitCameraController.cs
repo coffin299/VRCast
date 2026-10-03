@@ -63,15 +63,20 @@ namespace VRCast.Cameras
         }
 
         /// <summary>
-        /// 境界全体が収まる距離で正面から映す。Reset の戻り先にもなる。
+        /// 境界の高さと幅が画面に収まる距離で正面から映す。Reset の戻り先にもなる。
         /// </summary>
         public void Frame(Bounds bounds)
         {
-            // 外接球の半径と画角から必要距離を計算
-            float radius = Mathf.Max(bounds.extents.magnitude, MinDistance);
-            float halfFov = _camera.fieldOfView * 0.5f * Mathf.Deg2Rad;
+            // 縦・横それぞれの半画角（横はアスペクト比から算出）
+            float tanHalfV = Mathf.Tan(_camera.fieldOfView * 0.5f * Mathf.Deg2Rad);
+            float tanHalfH = tanHalfV * _camera.aspect;
+
+            // 高さ・幅の両方が収まる距離に、手前側の奥行き分を加える
+            Vector3 extents = bounds.extents;
+            float fitDistance = Mathf.Max(extents.y / tanHalfV, extents.x / tanHalfH) * FramePadding + extents.z;
+
             _homeTarget = bounds.center;
-            _homeDistance = Mathf.Clamp(radius / Mathf.Sin(halfFov) * FramePadding, MinDistance, MaxDistance);
+            _homeDistance = Mathf.Clamp(fitDistance, MinDistance, MaxDistance);
             ResetView();
         }
 
