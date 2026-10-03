@@ -49,9 +49,9 @@ namespace VRCast.Core
         public float lightYaw = -30f;
         public float lightPitch = 50f;
 
-        // 待機ポーズ（0 = T ポーズのまま、1 = 腕を下ろし切る / 肘を曲げ切る）
+        // 待機ポーズ（0 = T ポーズのまま、1 = 腕を下ろし切る / 肘を曲げ切る）。既定は気を付け
         public float poseArmDown = 1f;
-        public float poseElbowBend = 0.3f;
+        public float poseElbowBend = 0f;
 
         // アバターの向き（度、0 = カメラ正面）
         public float avatarYaw;

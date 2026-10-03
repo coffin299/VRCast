@@ -1,0 +1,59 @@
+VRCast
+Copyright 2026 coffin299
+
+This product is licensed under the Apache License, Version 2.0 (see LICENSE).
+
+VRCast is not affiliated with, endorsed by, or sponsored by VRChat Inc.
+"VRChat" is a trademark of VRChat Inc.
+
+-------------------------------------------------------------------------------
+Third-party components
+-------------------------------------------------------------------------------
+
+The source repository does not contain third-party binaries. Release builds
+may bundle the following components under VRCast_Data/StreamingAssets/.
+Each component remains under its own license; license files shipped with the
+components are kept alongside them.
+
+MediaPipe Tracker (StreamingAssets/MediaPipeTracker/)
+  Built from Tools/MediaPipeTracker with PyInstaller.
+
+  - MediaPipe and MediaPipe Tasks models
+    (face_landmarker, pose_landmarker_lite, hand_landmarker)
+    Copyright Google LLC
+    Apache License 2.0
+    https://github.com/google-ai-edge/mediapipe
+
+  - OpenCV
+    Copyright OpenCV team and contributors
+    Apache License 2.0
+    https://github.com/opencv/opencv
+
+  - NumPy
+    Copyright NumPy Developers
+    BSD 3-Clause License
+    https://github.com/numpy/numpy
+
+  - pygrabber
+    Copyright Andrea Schiavinato
+    MIT License
+    https://github.com/andreaschiavinato/python_grabber
+
+  - Python runtime
+    Copyright Python Software Foundation
+    Python Software Foundation License
+    https://www.python.org/
+
+  - PyInstaller bootloader
+    Copyright PyInstaller Development Team
+    GPL 2.0 with the PyInstaller bootloader exception
+    https://github.com/pyinstaller/pyinstaller
+
+  Other transitive dependencies (for example protobuf, absl-py, flatbuffers)
+  are distributed under their own licenses, which are included in the
+  tracker folder by PyInstaller.
+
+OpenSeeFace (StreamingAssets/OpenSeeFace/, optional)
+  Copyright Emiliana (emilianavt)
+  BSD 2-Clause License
+  https://github.com/emilianavt/OpenSeeFace

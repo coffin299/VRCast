@@ -112,7 +112,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `AvatarSession` | 表示中アバター 1 体の Load / Reload / Unload と状態（読込中・エラー） |
 | `OrbitCameraController` | 注視点中心の回転・パン・ズーム、境界の高さ・幅が収まる距離へのフレーミング、FOV |
 | `RenderingController` | 背景（透過 = alpha 0 / 単色）、ウィンドウ解像度、ディレクショナルライトを設定値に従って適用 |
-| `PoseController` | アバターの向き（Body yaw）と、Humanoid の待機ポーズ。読込時姿勢の筋肉値から腕の上下・肘の曲げだけを補間（0 / 0 で元の姿勢を復元） |
+| `PoseController` | アバターの向き（Body yaw）と、Humanoid の待機ポーズ。読込時姿勢の筋肉値から肘の曲げだけを補間し、腕は上腕ボーンを真下（外側へ 6°）へ向けて回す。既定は気を付け（0 / 0 で元の姿勢を復元） |
 | `ExpressionController` | 表情プリセットを BlendShape に適用。切替時は読込時の値へ戻してから適用。数字キー 1〜9 / 0 |
 | `BlendShapeOverlay` | BlendShape の検索と、元の値（表情等）を保ったままの上乗せ書き込み |
 | `BlinkController` | ランダム間隔の自動まばたき（ON/OFF 可）。外部入力（トラッキング、左右別）があればそちらを優先。両目用とウインク用 BlendShape の振り分け |

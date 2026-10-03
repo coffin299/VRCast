@@ -30,7 +30,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | `.vrcaster` 読み込み・表示・オービットカメラ・最小 UI | 済 |
 | Humanoid 骨格基準のカメラフレーミング | 済 |
 | 背景透過・解像度プリセット・ライト調整 | 済 |
-| 待機ポーズ（腕を下ろす・肘の曲げ） | 済 |
+| 待機ポーズ（既定は気を付け。腕を下ろす・肘の曲げ） | 済 |
 | 表情プリセット（FX の BlendShape クリップから抽出、数字キー切替） | 済 |
 | 自動まばたき（ON/OFF）・マイク音量リップシンク | 済 |
 | 揺れもの（PhysBone 近似・コライダー） | 済 |
@@ -87,6 +87,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 1〜9 / 0 | 表情プリセット切替 / ニュートラル |
 
 パネルの **Pose** で、アバターの向き（Body yaw）と、T ポーズから腕を下ろす度合い（Arms down）・肘の曲げ（Elbow bend、Humanoid のみ）を調整できる（設定は保存される）。
+既定は気を付けの姿勢（Arms down 1 / Elbow bend 0）。ボタンで T-Pose / Attention（気を付け）/ Relaxed（腕を少し開き肘を軽く曲げる）に切り替えられる。
 **Expressions** には書き出し時に抽出した表情が並び、クリックまたは数字キーで切り替えられる。
 **Face / Physics** で揺れもの（PhysBone 近似）、自動まばたき、マイクによる口パク（リップシンク）を ON/OFF できる。マイクは `<` `>` で選択し、
 Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
@@ -194,7 +195,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 - VRCast が異常終了してもトラッカーが自分で終了する（`--parent-pid`）。カメラを掴んだまま残らない。
 - 出力（`vrcast_tracker.exe` 一式とモデル 3 種）は `VRCast/Assets/StreamingAssets/MediaPipeTracker/` に置かれ、Unity が StreamingAssets ごとビルドへ同梱する。
 - 実行ファイルは `MediaPipeTracker/` 以下を再帰的に探す。見つからない場合もビルドは続行し、警告ログを出す。
-- 配布時は MediaPipe（Apache-2.0）と同梱ライブラリのライセンス表記を含めること。
+- 配布時は MediaPipe（Apache-2.0）と同梱ライブラリのライセンス表記を含めること（一覧は [NOTICE](NOTICE)）。
 
 ### OpenSeeFace の同梱（任意）
 
@@ -204,7 +205,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 
 - 実行ファイルは `OpenSeeFace/` 以下を再帰的に探す（展開時のフォルダ階層は問わない）。
 - 見つからない場合もビルドは続行し、警告ログを出す（トラッキングはパス指定が必要になる）。
-- 配布時は OpenSeeFace と同梱ライブラリのライセンス表記を含めること。
+- 配布時は OpenSeeFace と同梱ライブラリのライセンス表記を含めること（一覧は [NOTICE](NOTICE)）。
 
 ## 設定・キャッシュ
 
@@ -223,3 +224,6 @@ powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 ## License
 
 [Apache License 2.0](LICENSE)
+
+著作権表示と、配布ビルドに同梱するサードパーティ（MediaPipe・OpenCV・OpenSeeFace 等）の一覧は [NOTICE](NOTICE) を参照。
+配布する場合は `LICENSE` と `NOTICE` を同梱すること。
