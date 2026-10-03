@@ -18,6 +18,7 @@
 # Python (MediaPipe tracker tool)
 __pycache__/
 *.pyc
+/Tools/MediaPipeTracker/.venv/
 /Tools/MediaPipeTracker/build/
 /Tools/MediaPipeTracker/dist/
 /Tools/MediaPipeTracker/*.spec

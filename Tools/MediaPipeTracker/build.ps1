@@ -18,17 +18,28 @@ $source = $PSScriptRoot
 $repository = (Resolve-Path (Join-Path $source "..\..")).Path
 $output = Join-Path $repository "VRCast\Assets\StreamingAssets\MediaPipeTracker"
 
-# 仮想環境と PyInstaller の中間ファイルはリポジトリの外に置く
-$work = Join-Path $env:LOCALAPPDATA "VRCast\tracker-build"
-$venv = Join-Path $work "venv"
+# 仮想環境はこのフォルダの .venv、PyInstaller の中間ファイルはリポジトリの外に置く
+$venv = Join-Path $source ".venv"
 $python = Join-Path $venv "Scripts\python.exe"
+$work = Join-Path $env:LOCALAPPDATA "VRCast\tracker-build"
+New-Item -ItemType Directory -Force $work | Out-Null
 
-# 仮想環境が無ければ作る
-if (-not (Test-Path $python)) {
-    New-Item -ItemType Directory -Force $work | Out-Null
-    py "-$PythonVersion" -m venv $venv
-    if ($LASTEXITCODE -ne 0) { throw "Failed to create venv with Python $PythonVersion" }
+# 既存の .venv が指定バージョン以外で作られていれば作り直す
+if (Test-Path $python) {
+    $existing = & $python -c "import sys; print('%d.%d' % sys.version_info[:2])"
+    if ($existing -ne $PythonVersion) {
+        Write-Host "Recreating .venv (found Python $existing, need $PythonVersion)"
+        Remove-Item $venv -Recurse -Force
+    }
 }
+
+# 仮想環境が無ければ指定バージョンで作る
+if (-not (Test-Path $python)) {
+    Write-Host "Creating .venv with Python $PythonVersion"
+    py "-$PythonVersion" -m venv $venv
+    if ($LASTEXITCODE -ne 0) { throw "Failed to create .venv with Python $PythonVersion" }
+}
+& $python --version
 
 # 依存パッケージを入れる（.pyc を作らない）
 & $python -m pip install --disable-pip-version-check --no-compile -r (Join-Path $source "requirements.txt")
