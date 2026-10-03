@@ -121,7 +121,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `PhysBoneSimulator` | アバターの全 PhysBone を 60Hz 固定ステップで更新。ON/OFF、粒子数上限 |
 | `PhysBoneChain` | 1 PhysBone の Verlet 近似（pull / spring / stiffness / gravity / immobile / 角度制限 / 長さ拘束）と Transform への回転反映 |
 | `PhysBoneCollider` | 球・カプセル・平面コライダーによるボーン線分（半径付き）の押し出し |
-| `ConstraintSolver` | アバターの全 Constraint をトラッキング適用後・揺れもの計算前（実行順 -50）に毎フレーム評価。参照関係で評価順を並べ替え |
+| `ConstraintSolver` | アバターの全 Constraint をトラッキング適用後・揺れもの計算前（実行順 -50）に毎フレーム評価。参照関係で評価順を並べ替え。Humanoid ボーンと腰の親（Armature 等）を動かすものは対象外 |
 | `ConstraintEvaluator` | 1 Constraint（Position / Rotation / Scale / Parent / Aim / LookAt）の評価。重み付き平均・オフセット・静止値・軸マスク・ローカル空間 |
 | `IFaceTrackingProvider` / `FaceTrackingFrame` | フェイストラッキング入力元の共通インターフェースと 1 フレーム分の値 |
 | `IBodyTrackingProvider` / `BodyTrackingFrame` / `ArmTrackingData` | 腕・手のトラッキング入力元の共通インターフェースと 1 フレーム分の値（本人の左右、肩・肘・手首と手の 21 点、カメラ基準の Unity 座標） |
@@ -135,7 +135,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `MainPanel` | IMGUI パネル（Avatar / Pose / Expressions / Face / Tracking / Camera / Rendering）。Tab で表示切替 |
 | `AnimationSection` | MainPanel 内の Pose / Expressions セクション UI |
 | `FaceSection` | MainPanel 内の Face / Physics セクション UI（PhysBone、Auto blink、Lip sync、マイク選択・感度・メーター） |
-| `TrackingSection` | MainPanel 内の Tracking セクション UI（ON/OFF、入力元の切替、腕と手の ON/OFF と状態、カメラ選択・一覧更新・再起動、同梱版が無いときのトラッカーのパス、ポート、Mirror、Calibrate、受信状態） |
+| `TrackingSection` | MainPanel 内の Tracking セクション UI（ON/OFF、入力元の切替、腕と手の ON/OFF と状態、カメラ選択・一覧更新・再起動、同梱版が無いときのトラッカーのパス、ポート、Mirror、Reset pose（頭・上半身・目線）/ Reset gaze（目線のみ）、受信状態） |
 | `AvatarComponentCache` | 表示中アバターのコンポーネントをアバター切替までキャッシュ |
 | `RenderingSection` | MainPanel 内の Rendering セクション UI |
 | `GuiControls` | セクション共通の IMGUI 部品（ラベル付きスライダー、`<` `>` の巡回選択） |

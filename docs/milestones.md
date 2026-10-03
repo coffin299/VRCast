@@ -103,6 +103,8 @@ BlendShape、表情プリセット、Animator Parameter、基本 Viseme。
 - 追加: 既定を気を付け（Arms down 1 / Elbow bend 0）に変更。筋肉値はアバターの可動域（通常 -60°）までしか下がらないため、
   腕は `Arm Down-Up` ではなく上腕ボーンを直接回し、Arms down 1 で真下から外側へ 12°（`ArmSideAngle`）の向きにする。
   手のひらは体側を向く。Relaxed は Arms down 0.85 / Elbow bend 0.3
+- 修正: `SetHumanPose` の体の向きが Body yaw とずれ、Body yaw を回していると Attention / Relaxed で体が反転していたため、
+  適用後に腰（Hips）の位置・回転を記録値へ戻す
 - 非 Humanoid は対象外
 
 ### 3b. 表情プリセット
@@ -211,7 +213,8 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
     カメラ一覧は `-l 1` の出力をバックグラウンドで解析し、カメラはデバイス名で保存して起動時に番号へ解決（未選択なら先頭）。
     出力は読み捨てて最後の 1 行を失敗時に表示。受信 OFF・カメラ / ポート変更・アプリ終了に追従（停止・再起動）
   - OpenSeeFace バイナリはリポジトリに含めず（`.gitignore`）、ビルド前に配置する。`VRCastBuild` は未配置なら警告
-- UI: Tracking セクション（ON/OFF、カメラ選択、Refresh cameras、Restart tracker、UDP port、Mirror、Body lean、Calibrate、
+- UI: Tracking セクション（ON/OFF、カメラ選択、Refresh cameras、Restart tracker、UDP port、Mirror、Body lean、
+  Calibrate（後に Reset pose へ改名し、目線だけ取り直す Reset gaze を追加）、
   頭の移動量の表示、状態と fps。
   同梱版が無いときだけ facetracker.exe パス入力）。設定は保存。
   `<` `>` の巡回選択はマイク選択と共通の `GuiControls.Selector`
@@ -286,7 +289,8 @@ Descriptor（Milestone 3）・PhysBone（Milestone 4）は対応済みのため�
     オフセット → 静止値から weight ぶん寄せる → 影響しない軸は現在値を保つ。Parent はソースのローカル空間のオフセット、
     Aim は「aimAxis → ソース方向、upAxis → 上方向」の回転、LookAt は Z 軸をソースへ向けて roll
   - `ConstraintSolver`: トラッキング適用後・揺れもの計算前（実行順 -50）に毎フレーム評価。他の Constraint のターゲット
-    （またはその子孫）を参照するものを後に並べる（循環は打ち切り）。アバタールート自身は動かさない
+    （またはその子孫）を参照するものを後に並べる（循環は打ち切り）。アバタールート自身・Humanoid ボーン・
+    腰の親（Armature 等）は動かさない（待機ポーズ・トラッキングと取り合うと腕の待機ポーズの記録し直しが毎フレーム起きて揺れるため）
 - 書き出し画面の結果表示に Constraint 数を追加
 
 確認項目:
