@@ -17,10 +17,14 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 
 左右と world 座標の x は MediaPipe の出力どおり（本人の左右とは逆の鏡像基準）。
 本人基準への変換は VRCast 側で行う。
+
+頭の行列・腕・手・可視度は One Euro フィルターで平滑化してから送る
+（止まっているときの細かい揺れを消し、速い動きでは遅れを抑える。CPU 負荷はほぼ無い）。
 """
 
 import argparse
 import json
+import math
 import os
 import socket
 import sys
@@ -82,6 +86,17 @@ MAX_READ_FAILURES = 30
 # 送信する値の小数点以下の桁数（パケットを小さくする）
 DIGITS = 5
 
+# One Euro フィルターの設定（最小カットオフ Hz、速度への追従係数、速度のカットオフ Hz）。
+# 最小カットオフが低いほど静止時の揺れが消え、追従係数が大きいほど速い動きで遅れにくい
+HEAD_ROTATION_FILTER = (1.5, 0.5, 1.0)  # 行列の回転成分（単位なし）
+HEAD_POSITION_FILTER = (1.0, 0.05, 1.0)  # 行列の平行移動（cm）
+ARM_FILTER = (0.8, 2.0, 1.0)  # 肩・肘・手首（m）
+HAND_FILTER = (1.5, 5.0, 1.0)  # 手の 21 点（手の中心基準の m）
+VISIBILITY_FILTER = (1.0, 0.0, 1.0)  # 可視度（0.5 付近のちらつきを抑える）
+
+# 4x4 行列（行優先）の平行移動成分の位置
+MATRIX_TRANSLATION = (3, 7, 11)
+
 
 def parse_arguments():
     """コマンドライン引数を解析する（facetracker と同じ短縮名を使う）。"""
@@ -136,6 +151,116 @@ class ParentWatch:
         if self._handle:
             self._kernel32.CloseHandle(self._handle)
             self._handle = None
+
+
+class OneEuroFilter:
+    """値の列をまとめて平滑化する One Euro フィルター。
+
+    動きが遅いときはカットオフを下げて揺れを消し、速いときは上げて遅れを抑える。
+    """
+
+    def __init__(self, settings):
+        """settings は (最小カットオフ Hz, 追従係数, 速度のカットオフ Hz)。"""
+        self._min_cutoff, self._beta, self._derivative_cutoff = settings
+        self._values = None
+        self._derivatives = None
+        self._time = 0.0
+
+    def reset(self):
+        """見失ったときに呼び、次の値をそのまま採用させる。"""
+        self._values = None
+
+    def apply(self, values, now):
+        """values（float の列）を平滑化して返す。now は秒。"""
+        # 初回・要素数が変わったときはそのまま採用する
+        if self._values is None or len(values) != len(self._values):
+            self._values = list(values)
+            self._derivatives = [0.0] * len(values)
+            self._time = now
+            return list(self._values)
+
+        # 経過時間（同時刻・逆行は最小値で扱う）
+        elapsed = max(now - self._time, 1e-3)
+        self._time = now
+        # 速度の平滑化係数
+        derivative_alpha = self._alpha(self._derivative_cutoff, elapsed)
+        for index, value in enumerate(values):
+            # 速度を求めて平滑化する
+            derivative = (value - self._values[index]) / elapsed
+            derivative = (self._derivatives[index]
+                          + derivative_alpha
+                          * (derivative - self._derivatives[index]))
+            self._derivatives[index] = derivative
+            # 速いほどカットオフを上げて追従させる
+            cutoff = self._min_cutoff + self._beta * abs(derivative)
+            alpha = self._alpha(cutoff, elapsed)
+            self._values[index] += alpha * (value - self._values[index])
+        return list(self._values)
+
+    @staticmethod
+    def _alpha(cutoff, elapsed):
+        """カットオフ周波数と経過時間から平滑化係数を求める。"""
+        time_constant = 1.0 / (2.0 * math.pi * cutoff)
+        return 1.0 / (1.0 + time_constant / elapsed)
+
+
+class Smoother:
+    """送信フィールドごとの One Euro フィルターをまとめて持つ。"""
+
+    def __init__(self):
+        """頭（回転・平行移動）・腕・可視度・左右の手のフィルターを作る。"""
+        self._head_rotation = OneEuroFilter(HEAD_ROTATION_FILTER)
+        self._head_position = OneEuroFilter(HEAD_POSITION_FILTER)
+        self._arms = OneEuroFilter(ARM_FILTER)
+        self._visibility = OneEuroFilter(VISIBILITY_FILTER)
+        self._hands = {
+            "leftHand": OneEuroFilter(HAND_FILTER),
+            "rightHand": OneEuroFilter(HAND_FILTER),
+        }
+
+    def apply(self, packet, now):
+        """送信フィールド（dict）を平滑化して書き換える。"""
+        self._smooth_head(packet, now)
+        self._smooth_arms(packet, now)
+        for key, smoother in self._hands.items():
+            # 映っていない手はフィルターを初期化する
+            if not packet[key]:
+                smoother.reset()
+                continue
+            packet[key] = rounded(smoother.apply(packet[key], now))
+
+    def _smooth_head(self, packet, now):
+        """頭の行列を回転成分と平行移動成分に分けて平滑化する。"""
+        # 顔を見失ったら初期化する
+        if not packet["face"]:
+            self._head_rotation.reset()
+            self._head_position.reset()
+            return
+        matrix = packet["matrix"]
+        # 平行移動（cm）と、それ以外（回転・スケール）を分ける
+        rotation_indices = [i for i in range(len(matrix))
+                            if i not in MATRIX_TRANSLATION]
+        position = self._head_position.apply(
+            [matrix[i] for i in MATRIX_TRANSLATION], now)
+        rotation = self._head_rotation.apply(
+            [matrix[i] for i in rotation_indices], now)
+        # 元の位置へ書き戻す
+        for value, index in zip(position, MATRIX_TRANSLATION):
+            matrix[index] = value
+        for value, index in zip(rotation, rotation_indices):
+            matrix[index] = value
+        packet["matrix"] = rounded(matrix)
+
+    def _smooth_arms(self, packet, now):
+        """腕の座標と可視度を平滑化する。"""
+        # 体を見失ったら初期化する
+        if not packet["pose"]:
+            self._arms.reset()
+            self._visibility.reset()
+            return
+        packet["arms"] = rounded(self._arms.apply(packet["arms"], now))
+        packet["visibility"] = rounded(
+            self._visibility.apply(packet["visibility"], now))
 
 
 def configure_output():
@@ -329,12 +454,14 @@ def assign_hands(hand_result, pose_result):
     return assigned
 
 
-def build_packet(face_result, pose_result, hand_result):
-    """推定結果から送信する JSON のバイト列を作る。"""
+def build_packet(face_result, pose_result, hand_result, smoother, now):
+    """推定結果を平滑化して、送信する JSON のバイト列を作る。"""
     packet = {"v": PROTOCOL_VERSION}
     packet.update(face_fields(face_result))
     packet.update(pose_fields(pose_result))
     packet.update(assign_hands(hand_result, pose_result))
+    # 頭・腕・手・可視度の揺れを抑える
+    smoother.apply(packet, now)
     # 区切りの空白を省いて小さくする
     return json.dumps(packet, separators=(",", ":")).encode("utf-8")
 
@@ -364,6 +491,7 @@ def run(arguments):
 
     failures = 0
     last_timestamp = -1
+    smoother = Smoother()
     try:
         while True:
             # 親プロセスが終了していればカメラを解放して終了
@@ -399,7 +527,8 @@ def run(arguments):
 
             try:
                 sender.sendto(
-                    build_packet(face_result, pose_result, hand_result),
+                    build_packet(face_result, pose_result, hand_result,
+                                 smoother, timestamp / 1000.0),
                     target)
             except OSError:
                 # 受信側が未起動などの送信エラーは無視して続ける
