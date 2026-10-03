@@ -86,14 +86,15 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
 
 **Tracking** で Web カメラによるフェイストラッキング（頭の向き・まばたき・口の開閉）を ON にできる。
-トラッカー本体は同梱せず、[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace) の `facetracker.exe` を UDP で受信する
-（VSeeFace に同梱の `VSeeFace_Data\StreamingAssets\Binary\facetracker.exe` も使用可）。
+トラッカーには [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)（`facetracker.exe`）を同梱し、VRCast が裏で起動して UDP で受信する。
 
-1. **facetracker.exe path** に `facetracker.exe` のフルパスを入力し、**Refresh cameras** でカメラ一覧を取得する。
-2. `<` `>` でカメラをデバイス名で選び、**Start tracker**（パス・カメラ名は保存され、終了時にトラッカーも終了する）。
-3. 起動に失敗した場合はトラッカーの最後の出力が表示される（カメラを他のアプリが使用中など）。
+1. **Face tracking** を ON にすると、カメラ一覧を取得して先頭のカメラで自動起動する。
+2. `<` `>` でカメラをデバイス名で選ぶと起動し直す（カメラ名は保存され、次回起動時も同じカメラを使う）。
+3. 起動に失敗した場合はトラッカーの最後の出力が表示され、5 秒ごとに再試行する（カメラを他のアプリが使用中など）。
+   カメラを解放したら **Restart tracker** ですぐ再試行できる。OFF にするか VRCast を終了するとトラッカーも終了する。
 
-手動で起動してもよい:
+同梱版が無いビルドでは **facetracker.exe path** に `facetracker.exe` のフルパスを入力する
+（VSeeFace に同梱の `VSeeFace_Data\StreamingAssets\Binary\facetracker.exe` も使用可）。手動で起動してもよい:
 
 ```powershell
 # カメラ番号とデバイス名の確認
@@ -151,6 +152,16 @@ Unity Hub で `VRCast/` フォルダを開くか、以下をコマンドライ�
 ```
 
 Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルドできる。
+
+### OpenSeeFace の同梱
+
+フェイストラッキング用の OpenSeeFace はリポジトリに含めない（サイズが大きいため `.gitignore` 済み）。ビルド前に
+[OpenSeeFace Releases](https://github.com/emilianavt/OpenSeeFace/releases) の zip を展開し、中身（`Binary/`・ライセンス類を含む）を
+`VRCast/Assets/StreamingAssets/OpenSeeFace/` に置く。Unity が StreamingAssets ごとビルドへ同梱する。
+
+- 実行ファイルは `OpenSeeFace/facetracker.exe` または `OpenSeeFace/Binary/facetracker.exe` を自動で探す。
+- 見つからない場合もビルドは続行し、警告ログを出す（トラッキングはパス指定が必要になる）。
+- 配布時は OpenSeeFace と同梱ライブラリのライセンス表記を含めること。
 
 ## 設定・キャッシュ
 

@@ -6,7 +6,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// MainPanel 内の Tracking セクション（OpenSeeFace の起動・カメラ選択、受信の ON/OFF・ポート・鏡像・キャリブレーション・状態）。
+    /// MainPanel 内の Tracking セクション（ON で同梱 OpenSeeFace を自動起動。カメラ選択・ポート・鏡像・キャリブレーション・状態）。
     /// </summary>
     public class TrackingSection
     {
@@ -20,9 +20,6 @@ namespace VRCast.UI
 
         // 入力途中のポート文字列（確定するまで設定へ反映しない）
         private string _portInput;
-
-        // 初回表示時にカメラ一覧を自動取得したか
-        private bool _autoRefreshed;
 
         public TrackingSection(
             AvatarSession session, IFaceTrackingProvider tracker, FaceTrackerProcess process, AppSettings settings)
@@ -55,18 +52,14 @@ namespace VRCast.UI
 
         private void DrawLauncher()
         {
-            // facetracker.exe のパス
-            GUILayout.Label("facetracker.exe path");
-            _settings.trackerPath = GUILayout.TextField(_settings.trackerPath);
-
-            // 初回表示時は一覧を自動取得（パス未設定なら状態表示で案内される）
-            if (!_autoRefreshed && _process.Cameras.Count == 0)
+            // 同梱版が無い（開発ビルド等）か、既にパス指定済みのときだけパス入力を出す
+            if (!_process.HasBundled || !string.IsNullOrEmpty(_settings.trackerPath))
             {
-                _autoRefreshed = true;
-                _process.RefreshCameras();
+                GUILayout.Label("facetracker.exe path" + (_process.HasBundled ? " (empty = bundled)" : string.Empty));
+                _settings.trackerPath = GUILayout.TextField(_settings.trackerPath);
             }
 
-            // カメラ選択（デバイス名で保存）
+            // カメラ選択（デバイス名で保存、変更するとトラッカーが起動し直す）
             int current = IndexOfCamera(_settings.trackerCamera);
             int selected = GuiControls.Selector(_process.Cameras, current, null);
             if (selected != current && selected >= 0)
@@ -76,25 +69,17 @@ namespace VRCast.UI
 
             GUILayout.BeginHorizontal();
 
-            // 一覧の再取得（実行中・取得中は不可）
-            GUI.enabled = !_process.IsListing && !_process.IsRunning;
+            // 一覧の再取得（カメラの抜き差し後など）
+            GUI.enabled = !_process.IsListing;
             if (GUILayout.Button(_process.IsListing ? "Listing..." : "Refresh cameras"))
             {
                 _process.RefreshCameras();
             }
 
-            // 起動・停止
-            GUI.enabled = !_process.IsListing;
-            if (GUILayout.Button(_process.IsRunning ? "Stop tracker" : "Start tracker"))
+            // トラッカーの再起動（固まったとき・カメラを他アプリから解放したとき）
+            if (GUILayout.Button("Restart tracker"))
             {
-                if (_process.IsRunning)
-                {
-                    _process.StopTracker();
-                }
-                else
-                {
-                    _process.StartTracker();
-                }
+                _process.Restart();
             }
 
             GUI.enabled = true;

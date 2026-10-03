@@ -194,10 +194,13 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
     Calibrate で取り直し。Mirror で Y・Z 軸まわりを反転。揺れものが回転後の頭を基準にするよう他の LateUpdate より先に実行
   - まばたき・口は同じ BlendShape へ二重に上乗せしないよう `BlinkController.ExternalClosed`（自動まばたきより優先）/
     `LipSyncController.ExternalLevel`（マイクと大きい方）へ渡す
-  - `FaceTrackerProcess`: 利用者が指定した `facetracker.exe` を起動・停止（任意。外部起動も可）。
-    カメラ一覧は `-l 1` の出力をバックグラウンドで解析し、カメラはデバイス名で保存して起動時に番号へ解決。
-    出力は読み捨てて最後の 1 行を失敗時に表示。受信 OFF・ポート変更・アプリ終了に追従（停止・再起動）
-- UI: Tracking セクション（ON/OFF、facetracker.exe パス、カメラ選択、Start / Stop、UDP port、Mirror、Calibrate、状態と fps）。設定は保存。
+  - `FaceTrackerProcess`: `StreamingAssets/OpenSeeFace/` に同梱した `facetracker.exe`（パス指定があればそちら）を、
+    Face tracking ON の間は自動起動。異常終了・起動失敗は 5 秒間隔で再試行。
+    カメラ一覧は `-l 1` の出力をバックグラウンドで解析し、カメラはデバイス名で保存して起動時に番号へ解決（未選択なら先頭）。
+    出力は読み捨てて最後の 1 行を失敗時に表示。受信 OFF・カメラ / ポート変更・アプリ終了に追従（停止・再起動）
+  - OpenSeeFace バイナリはリポジトリに含めず（`.gitignore`）、ビルド前に配置する。`VRCastBuild` は未配置なら警告
+- UI: Tracking セクション（ON/OFF、カメラ選択、Refresh cameras、Restart tracker、UDP port、Mirror、Calibrate、状態と fps。
+  同梱版が無いときだけ facetracker.exe パス入力）。設定は保存。
   `<` `>` の巡回選択はマイク選択と共通の `GuiControls.Selector`
 - 視線・眉・左右別ウインクは未対応（次段階）
 

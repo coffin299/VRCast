@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using VRCast.Tracking;
 
 namespace VRCast.Editor.Build
 {
@@ -38,6 +39,9 @@ namespace VRCast.Editor.Build
 
             // 起動シーンを用意してビルド対象に登録
             EnsureMainScene();
+
+            // 同梱トラッカーの有無を確認（無くてもビルドは続行し、トラッキングはパス指定が必要になる）
+            WarnIfTrackerMissing();
 
             // 設定ファイルの保存先 (LocalLow/VRCast/VRCast) を固定する
             PlayerSettings.companyName = CompanyName;
@@ -76,6 +80,18 @@ namespace VRCast.Editor.Build
             if (Application.isBatchMode)
             {
                 EditorApplication.Exit(1);
+            }
+        }
+
+        private static void WarnIfTrackerMissing()
+        {
+            // StreamingAssets 配下の候補のどれかがあれば同梱される
+            bool found = FaceTrackerProcess.BundledRelativePaths
+                .Any(relative => File.Exists(Path.Combine(Application.streamingAssetsPath, relative)));
+            if (!found)
+            {
+                Debug.LogWarning("[VRCast][Build] OpenSeeFace not found in Assets/StreamingAssets/OpenSeeFace. "
+                    + "Face tracking will require a facetracker.exe path.");
             }
         }
 

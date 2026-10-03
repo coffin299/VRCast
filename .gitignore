@@ -9,6 +9,10 @@
 /VRCast/[Bb]uild/
 /VRCast/[Bb]uilds/
 
+# Bundled third-party binaries (OpenSeeFace; copied in locally, shipped in builds)
+/VRCast/Assets/StreamingAssets/OpenSeeFace/
+/VRCast/Assets/StreamingAssets/OpenSeeFace.meta
+
 # IDE / solution files
 /VRCast/.vs/
 /VRCast/.vscode/
