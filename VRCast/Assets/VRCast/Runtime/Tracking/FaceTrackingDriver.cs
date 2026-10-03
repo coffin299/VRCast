@@ -5,7 +5,8 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、まばたき・口は既存コントローラーへ外部入力として渡す。
+    /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、頭の位置（前後・左右）は背骨・胸の傾き、
+    /// まばたき・口は既存コントローラーへ外部入力として渡す。
     /// 揺れもの（PhysBoneSimulator）が回転後の頭を基準に計算できるよう、他の LateUpdate より先に実行する。
     /// </summary>
     [DefaultExecutionOrder(-100)]
@@ -27,21 +28,31 @@ namespace VRCast.Tracking
         // 途絶後に自動キャリブレーションをやり直すまでの秒数
         private const float RecalibrateAfterSeconds = 1f;
 
+        // 頭の位置の差分 1 単位あたりの上半身の傾き（度、強さ 1 のとき）と上限（度）
+        private const float LeanDegreesPerUnit = 10f;
+        private const float MaxLeanAngle = 20f;
+
         private IFaceTrackingProvider _provider;
         private BlinkController _blink;
         private LipSyncController _lipSync;
         private AppSettings _settings;
 
-        // 首・頭ボーンと、読込時（待機ポーズ適用後）の回転
+        // 背骨・胸・首・頭ボーンと、読込時（待機ポーズ適用後）の回転
+        private Transform _spine;
+        private Transform _chest;
         private Transform _neck;
         private Transform _head;
+        private Quaternion _spineRest;
+        private Quaternion _chestRest;
         private Quaternion _neckRest;
         private Quaternion _headRest;
 
-        // キャリブレーション時の頭の回転（正面）と、平滑化済みの相対回転
+        // キャリブレーション時の頭の回転・位置（正面）と、平滑化済みの相対回転・位置
         private Quaternion _neutral = Quaternion.identity;
+        private Vector3 _neutralPosition;
         private bool _calibrated;
         private Quaternion _current = Quaternion.identity;
+        private Vector3 _currentOffset;
         private float _lastFrameTime = float.NegativeInfinity;
         private FaceTrackingFrame _lastFrame;
 
@@ -49,6 +60,11 @@ namespace VRCast.Tracking
         /// トラッキング値を受信して適用中なら true。
         /// </summary>
         public bool IsTracking { get; private set; }
+
+        /// <summary>
+        /// 正面位置からの頭の位置の差分（平滑化・鏡像適用済み、Provider の単位。UI での強さ調整用）。
+        /// </summary>
+        public Vector3 HeadOffset => _currentOffset;
 
         public void Initialize(
             Animator animator, IFaceTrackingProvider provider, BlinkController blink, LipSyncController lipSync,
@@ -65,21 +81,32 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 首が無いアバターは頭だけで回転させる
+            // 首・胸が無いアバターは残りのボーンで回転させる（任意ボーンは null）
+            _spine = animator.GetBoneTransform(HumanBodyBones.Spine);
+            _chest = animator.GetBoneTransform(HumanBodyBones.Chest);
             _neck = animator.GetBoneTransform(HumanBodyBones.Neck);
             _head = animator.GetBoneTransform(HumanBodyBones.Head);
-            _neckRest = _neck != null ? _neck.localRotation : Quaternion.identity;
-            _headRest = _head != null ? _head.localRotation : Quaternion.identity;
+            _spineRest = RestOf(_spine);
+            _chestRest = RestOf(_chest);
+            _neckRest = RestOf(_neck);
+            _headRest = RestOf(_head);
         }
 
         /// <summary>
-        /// 現在の頭の向きを正面とする。
+        /// 現在の頭の向き・位置を正面とする。
         /// </summary>
         public void Calibrate()
         {
             // 受信済みフレームが無ければ次のフレームで行う
             _calibrated = IsTracking;
             _neutral = _lastFrame.HeadRotation;
+            _neutralPosition = _lastFrame.HeadPosition;
+        }
+
+        private static Quaternion RestOf(Transform bone)
+        {
+            // 未割り当てのボーンは単位回転
+            return bone != null ? bone.localRotation : Quaternion.identity;
         }
 
         private void LateUpdate()
@@ -112,7 +139,7 @@ namespace VRCast.Tracking
             }
 
             ApplyFace(received);
-            ApplyHead(received);
+            ApplyBody(received);
         }
 
         private void ApplyFace(bool received)
@@ -149,7 +176,7 @@ namespace VRCast.Tracking
             }
         }
 
-        private void ApplyHead(bool received)
+        private void ApplyBody(bool received)
         {
             // 頭ボーンが無ければ何もしない
             if (_head == null)
@@ -157,28 +184,70 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 目標の相対回転（途絶時は正面へ戻す）
+            // 目標の相対回転・位置（途絶時は正面へ戻す）を平滑化
             Quaternion target = received ? CalculateHeadDelta() : Quaternion.identity;
+            Vector3 targetOffset = received ? CalculateHeadOffset() : Vector3.zero;
             float blend = 1f - Mathf.Exp(-HeadSmoothing * Time.deltaTime);
             _current = Quaternion.Slerp(_current, target, blend);
+            _currentOffset = Vector3.Lerp(_currentOffset, targetOffset, blend);
 
             // 無効化後に正面へ戻り切ったらボーンを触らない（待機ポーズ等の変更を妨げない）
-            if (!_settings.trackingEnabled && Quaternion.Angle(_current, Quaternion.identity) < 0.01f)
+            bool settled = Quaternion.Angle(_current, Quaternion.identity) < 0.01f && _currentOffset.sqrMagnitude < 1e-6f;
+            if (!_settings.trackingEnabled && settled)
             {
                 _current = Quaternion.identity;
+                _currentOffset = Vector3.zero;
                 return;
             }
 
-            // 読込時の回転へ戻してから、首と頭に分けてアバター基準の回転を加える
-            if (_neck != null)
+            // 読込時の回転へ戻す（親から子へ順に回転を加えるため、先に全部戻す）
+            RestoreRest(_spine, _spineRest);
+            RestoreRest(_chest, _chestRest);
+            RestoreRest(_neck, _neckRest);
+            _head.localRotation = _headRest;
+
+            // 上半身の傾きを背骨・胸で分担
+            Quaternion lean = CalculateLean(_currentOffset);
+            float torsoShare = _spine != null && _chest != null ? 0.5f : 1f;
+            RotateInAvatarSpace(_spine, Quaternion.Slerp(Quaternion.identity, lean, torsoShare));
+            RotateInAvatarSpace(_chest, Quaternion.Slerp(Quaternion.identity, lean, torsoShare));
+
+            // 頭の向きはトラッキング値どおりにするため、首（無ければ頭）で傾きを打ち消してから首と頭に分ける
+            Transform first = _neck != null ? _neck : _head;
+            RotateInAvatarSpace(first, Quaternion.Inverse(lean));
+            float headShare = _neck != null ? 1f - NeckShare : 1f;
+            RotateInAvatarSpace(_neck, Quaternion.Slerp(Quaternion.identity, _current, NeckShare));
+            RotateInAvatarSpace(_head, Quaternion.Slerp(Quaternion.identity, _current, headShare));
+        }
+
+        private static void RestoreRest(Transform bone, Quaternion rest)
+        {
+            // 未割り当てのボーンは無視
+            if (bone != null)
             {
-                _neck.localRotation = _neckRest;
-                RotateInAvatarSpace(_neck, Quaternion.Slerp(Quaternion.identity, _current, NeckShare));
+                bone.localRotation = rest;
+            }
+        }
+
+        private Vector3 CalculateHeadOffset()
+        {
+            // 正面位置からの差分（カメラ基準）。鏡像モードは左右反転
+            Vector3 offset = _lastFrame.HeadPosition - _neutralPosition;
+            if (_settings.trackingMirror)
+            {
+                offset.x = -offset.x;
             }
 
-            _head.localRotation = _headRest;
-            float headShare = _neck != null ? 1f - NeckShare : 1f;
-            RotateInAvatarSpace(_head, Quaternion.Slerp(Quaternion.identity, _current, headShare));
+            return offset;
+        }
+
+        private Quaternion CalculateLean(Vector3 offset)
+        {
+            // 前後の移動は前後の傾き（X 軸まわり）、左右の移動は横の傾き（Z 軸まわり）へ
+            float degreesPerUnit = LeanDegreesPerUnit * _settings.trackingBodyLean;
+            float pitch = Mathf.Clamp(offset.z * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
+            float roll = Mathf.Clamp(-offset.x * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
+            return Quaternion.Euler(pitch, 0f, roll);
         }
 
         private Quaternion CalculateHeadDelta()
@@ -198,6 +267,12 @@ namespace VRCast.Tracking
 
         private void RotateInAvatarSpace(Transform bone, Quaternion rotation)
         {
+            // 未割り当てのボーンは無視
+            if (bone == null)
+            {
+                return;
+            }
+
             // アバタールート基準の回転をワールドへ変換して適用（Body yaw に追従）
             Quaternion root = transform.rotation;
             bone.rotation = root * rotation * Quaternion.Inverse(root) * bone.rotation;

@@ -192,6 +192,9 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
   - `OpenSeeFaceReceiver`: `127.0.0.1:<port>` のみ bind、スレッド無しで Update ポーリング。0.5 秒途絶で無効、bind 失敗は 3 秒ごと再試行
   - `FaceTrackingDriver`: 首 40% / 頭 60% にアバタールート基準で回転（上限 70°、平滑化）。受信開始時（1 秒以上の途絶後も）の向きを正面とし、
     Calibrate で取り直し。Mirror で Y・Z 軸まわりを反転。揺れものが回転後の頭を基準にするよう他の LateUpdate より先に実行
+  - 頭の位置（パケットの位置を `(-y, x, -z)` で Unity 座標系へ）の正面位置からの差分で上半身を傾ける:
+    前後 → 前後の傾き、左右 → 横の傾き（1 単位 10° × Body lean、上限 20°）を Spine / Chest で分担し、
+    頭の向きがトラッキング値どおりになるよう首（無ければ頭）で傾きを打ち消す。Mirror は左右を反転
   - まばたき・口は同じ BlendShape へ二重に上乗せしないよう `BlinkController.ExternalClosed`（自動まばたきより優先）/
     `LipSyncController.ExternalLevel`（マイクと大きい方）へ渡す
   - `FaceTrackerProcess`: `StreamingAssets/OpenSeeFace/` 以下（再帰検索、最も浅いもの）に同梱した `facetracker.exe`（パス指定があればそちら）を、
@@ -199,7 +202,8 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
     カメラ一覧は `-l 1` の出力をバックグラウンドで解析し、カメラはデバイス名で保存して起動時に番号へ解決（未選択なら先頭）。
     出力は読み捨てて最後の 1 行を失敗時に表示。受信 OFF・カメラ / ポート変更・アプリ終了に追従（停止・再起動）
   - OpenSeeFace バイナリはリポジトリに含めず（`.gitignore`）、ビルド前に配置する。`VRCastBuild` は未配置なら警告
-- UI: Tracking セクション（ON/OFF、カメラ選択、Refresh cameras、Restart tracker、UDP port、Mirror、Calibrate、状態と fps。
+- UI: Tracking セクション（ON/OFF、カメラ選択、Refresh cameras、Restart tracker、UDP port、Mirror、Body lean、Calibrate、
+  頭の移動量の表示、状態と fps。
   同梱版が無いときだけ facetracker.exe パス入力）。設定は保存。
   `<` `>` の巡回選択はマイク選択と共通の `GuiControls.Selector`
 - 視線・眉・左右別ウインクは未対応（次段階）
@@ -209,6 +213,9 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 - 頭の上下・左右・傾きが正しい向きで反映されること（Mirror ON/OFF の両方）
 - まばたき・口の開閉の追従としきい値（`EyeClosedValue` / `EyeOpenedValue` / MouthOpen 範囲は要調整）
 - 途絶時に自動まばたき・マイク口パク・正面の頭へ戻ること
+- 前後・左右に体を動かしたとき上半身が正しい向きに傾くこと（`LeanDegreesPerUnit` は Head offset の値を見て要調整）
+
+確認結果: 同梱 OpenSeeFace（v1.20.5、`StreamingAssets/OpenSeeFace/` へ zip を展開）の自動起動・カメラ選択・受信・アバターへの反映を確認。
 
 ## Milestone 6 — OSC
 

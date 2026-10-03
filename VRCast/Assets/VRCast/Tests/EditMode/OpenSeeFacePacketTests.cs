@@ -14,6 +14,7 @@ namespace VRCast.Tests
         private const int RightEyeOffset = 20;
         private const int LeftEyeOffset = 24;
         private const int QuaternionOffset = 33;
+        private const int TranslationOffset = 61;
         private const int MouthOpenOffset = 1729 + 12 * 4;
 
         [Test]
@@ -42,6 +43,19 @@ namespace VRCast.Tests
             Assert.That(OpenSeeFacePacket.TryParse(packet, 0, packet.Length, out FaceTrackingFrame frame), Is.True);
             Quaternion expected = Quaternion.Normalize(new Quaternion(-0.2f, -0.1f, 0.3f, 0.927f));
             Assert.That(Quaternion.Angle(frame.HeadRotation, expected), Is.LessThan(0.01f));
+        }
+
+        [Test]
+        public void TryParse_ConvertsTranslationAxes()
+        {
+            // OpenSeeFace の位置 (x, y, z) は Unity の (-y, x, -z) になること
+            byte[] packet = CreatePacket(Quaternion.identity, 1f, 1f, 0f);
+            WriteFloat(packet, TranslationOffset, 1f);
+            WriteFloat(packet, TranslationOffset + 4, 2f);
+            WriteFloat(packet, TranslationOffset + 8, 3f);
+
+            Assert.That(OpenSeeFacePacket.TryParse(packet, 0, packet.Length, out FaceTrackingFrame frame), Is.True);
+            Assert.That(frame.HeadPosition, Is.EqualTo(new Vector3(-2f, 1f, -3f)));
         }
 
         [Test]

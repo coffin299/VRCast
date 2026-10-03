@@ -46,6 +46,8 @@ namespace VRCast.UI
             DrawLauncher();
             DrawPort();
             _settings.trackingMirror = GUILayout.Toggle(_settings.trackingMirror, " Mirror");
+            _settings.trackingBodyLean = GuiControls.Slider(
+                "Body lean", _settings.trackingBodyLean, 0f, AppSettings.MaxTrackingBodyLean);
             DrawCalibrate();
             GUILayout.Label(_tracker.Status);
         }
@@ -128,6 +130,13 @@ namespace VRCast.UI
             }
 
             GUI.enabled = true;
+
+            // 正面位置からの頭の移動量（Body lean の強さ調整の目安）
+            if (driver != null && driver.IsTracking)
+            {
+                Vector3 offset = driver.HeadOffset;
+                GUILayout.Label($"Head offset  x {offset.x:F2}  y {offset.y:F2}  z {offset.z:F2}");
+            }
         }
     }
 }
