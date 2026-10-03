@@ -34,6 +34,7 @@ namespace VRCast.Converter.Editor
             public int ExpressionCount;
             public string LipSyncMode;
             public bool HasBlink;
+            public int PhysBoneCount;
             public ComponentStripper.Result Strip;
         }
 
@@ -113,6 +114,10 @@ namespace VRCast.Converter.Editor
                 report.LipSyncMode = descriptorData.lipSync.mode;
                 report.HasBlink = descriptorData.eyelids.blinkBlendShapes.Length > 0;
 
+                // 揺れもの（除去前に元アバターから読む）
+                PhysBoneSet physBones = PhysBoneExtractor.Extract(source);
+                report.PhysBoneCount = physBones.bones.Length;
+
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
@@ -153,6 +158,11 @@ namespace VRCast.Converter.Editor
                 if (report.LipSyncMode != LipSyncData.ModeNone || report.HasBlink)
                 {
                     metadata[AvatarPackageLayout.DescriptorEntry] = descriptorData;
+                }
+
+                if (physBones.bones.Length > 0)
+                {
+                    metadata[AvatarPackageLayout.PhysBonesEntry] = physBones;
                 }
 
                 foreach (KeyValuePair<string, IMetadata> entry in metadata)

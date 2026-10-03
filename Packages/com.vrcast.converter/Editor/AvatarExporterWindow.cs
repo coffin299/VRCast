@@ -81,6 +81,7 @@ namespace VRCast.Converter.Editor
                     $"Baked FX default clips: {report.BakedFxClips}\n" +
                     $"Expressions: {report.ExpressionCount}\n" +
                     $"Lip sync: {report.LipSyncMode}, blink: {report.HasBlink}\n" +
+                    $"PhysBones: {report.PhysBoneCount}\n" +
                     $"Removed components: {report.Strip.RemovedComponents}, " +
                     $"missing scripts: {report.Strip.RemovedMissingScripts}, " +
                     $"EditorOnly objects: {report.Strip.RemovedEditorOnlyObjects}";

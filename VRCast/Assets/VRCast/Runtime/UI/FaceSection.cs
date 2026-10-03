@@ -4,11 +4,12 @@ using VRCast.Animations;
 using VRCast.Audio;
 using VRCast.Avatars;
 using VRCast.Core;
+using VRCast.Dynamics;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// MainPanel 内の Face セクション（自動まばたき・マイクリップシンク）。
+    /// MainPanel 内の Face / Physics セクション（揺れもの・自動まばたき・マイクリップシンク）。
     /// </summary>
     public class FaceSection
     {
@@ -28,10 +29,21 @@ namespace VRCast.UI
 
         public void Draw()
         {
-            GUILayout.Label("Face");
+            GUILayout.Label("Face / Physics");
             _avatar.Refresh();
+            DrawPhysics();
             DrawBlink();
             DrawLipSync();
+        }
+
+        private void DrawPhysics()
+        {
+            // 揺れものが無いアバターでは注記、あればチェーン数を表示
+            var physics = _avatar.Get<PhysBoneSimulator>();
+            string suffix = !_avatar.HasAvatar ? string.Empty
+                : physics != null && physics.IsAvailable ? $" ({physics.ChainCount} chains)"
+                : " (no PhysBones)";
+            _settings.physicsEnabled = GUILayout.Toggle(_settings.physicsEnabled, " PhysBone (approx.)" + suffix);
         }
 
         private void DrawBlink()

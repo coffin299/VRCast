@@ -6,6 +6,7 @@ using VRCast.Audio;
 using VRCast.Avatars;
 using VRCast.Cameras;
 using VRCast.Core;
+using VRCast.Dynamics;
 using VRCast.Rendering;
 using VRCast.UI;
 
@@ -96,13 +97,16 @@ namespace VRCast.App
 
         private void OnAvatarLoaded(LoadedAvatar avatar)
         {
-            // 待機ポーズ・表情・まばたき・リップシンク（アバターと一緒に破棄されるよう本体に付ける）
+            // 待機ポーズ・表情・まばたき・リップシンク・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
             avatar.Instance.AddComponent<ExpressionController>().Initialize(root, avatar.Expressions);
             avatar.Instance.AddComponent<BlinkController>().Initialize(root, avatar.Descriptor.eyelids, _settings);
             avatar.Instance.AddComponent<LipSyncController>().Initialize(
                 root, avatar.Descriptor.lipSync, _microphone, _settings);
+
+            // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化）
+            avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);
 
             // アバター本体（Humanoid は骨格基準）が映るようにカメラを合わせる
             _orbit.Frame(avatar.CalculateFramingBounds());

@@ -18,15 +18,19 @@ namespace VRCast.Avatars
         // リップシンク・まぶた設定（無い・不正な場合は空）
         public AvatarDescriptorData Descriptor { get; }
 
+        // 揺れもの設定（無い・不正な場合は空）
+        public PhysBoneSet PhysBones { get; }
+
         public AvatarPackage(
             AvatarManifest manifest, string sourcePath, string bundlePath,
-            ExpressionSet expressions, AvatarDescriptorData descriptor)
+            ExpressionSet expressions, AvatarDescriptorData descriptor, PhysBoneSet physBones)
         {
             Manifest = manifest;
             SourcePath = sourcePath;
             BundlePath = bundlePath;
             Expressions = expressions ?? new ExpressionSet();
             Descriptor = descriptor ?? new AvatarDescriptorData();
+            PhysBones = physBones ?? new PhysBoneSet();
         }
     }
 

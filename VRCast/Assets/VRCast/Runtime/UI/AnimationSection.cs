@@ -61,11 +61,18 @@ namespace VRCast.UI
         private void DrawPose()
         {
             GUILayout.Label("Pose");
-
-            // 非 Humanoid は操作不可
-            if (_pose == null || !_pose.IsAvailable)
+            if (_pose == null)
             {
-                GUILayout.Label("Pose control requires a Humanoid avatar.");
+                return;
+            }
+
+            // アバターの向き（全アバター共通）
+            _pose.BodyYaw = GuiControls.Slider("Body yaw", _pose.BodyYaw, -180f, 180f);
+
+            // 非 Humanoid は腕の操作不可
+            if (!_pose.IsAvailable)
+            {
+                GUILayout.Label("Arm pose requires a Humanoid avatar.");
                 return;
             }
 

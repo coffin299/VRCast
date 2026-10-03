@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Reflection;
 using UnityEditor;
 using UnityEditor.Animations;
 using UnityEngine;
@@ -20,9 +19,6 @@ namespace VRCast.Converter.Editor
 
         // CustomAnimLayer.type の FX を表す列挙名
         private const string FxLayerTypeName = "FX";
-
-        // リフレクションで参照するフィールド名
-        private const BindingFlags InstanceFields = BindingFlags.Public | BindingFlags.Instance;
 
         public static Component FindDescriptor(GameObject root)
         {
@@ -261,15 +257,8 @@ namespace VRCast.Converter.Editor
 
         private static object GetField(object target, string fieldName)
         {
-            // Unity の偽 null も含めて null として扱う
-            if (target == null || (target is UnityEngine.Object unityObject && unityObject == null))
-            {
-                return null;
-            }
-
-            // public インスタンスフィールドのみ参照
-            FieldInfo field = target.GetType().GetField(fieldName, InstanceFields);
-            return field?.GetValue(target);
+            // 共通のリフレクション補助へ委譲
+            return ReflectionUtility.GetField(target, fieldName);
         }
     }
 }
