@@ -17,7 +17,7 @@ OBS (Window Capture / Game Capture)
 
 ## 現在の状態
 
-**Milestone 0（プロジェクト基盤）** を実装済み。アバター表示はまだできない。
+**Milestone 0（プロジェクト基盤）** 完了（EditMode テスト・Windows ビルド・設定の保存/読込を確認済み）。アバター表示はまだできない。
 
 | 項目 | 状態 |
 | :--- | :--- |
