@@ -7,6 +7,7 @@ namespace VRCast.Tracking
     /// OpenSeeFace（facetracker）の UDP パケット 1 顔分を解析する。リトルエンディアン、1 顔 1785 バイト。
     /// 配置: time(double) id(int) 解像度(2f) 右目・左目の開き(2f) got3D(byte) fitError(f) 四元数(4f) オイラー(3f)
     /// 位置(3f) 信頼度(68f) 2D 点(68×2f) 3D 点(70×3f) 特徴量(14f)。
+    /// 座標変換は OpenSeeFace の Unity サンプルに合わせる（回転 (-y, -x, z, w)、位置 (-y, x, -z)）。
     /// </summary>
     public static class OpenSeeFacePacket
     {
@@ -17,6 +18,7 @@ namespace VRCast.Tracking
         private const int RightEyeOffset = 20;
         private const int LeftEyeOffset = 24;
         private const int QuaternionOffset = 33;
+        private const int TranslationOffset = 61;
         private const int FeaturesOffset = 1729;
 
         // 特徴量配列内の MouthOpen の位置
@@ -45,13 +47,18 @@ namespace VRCast.Tracking
             float qz = ReadFloat(buffer, offset + QuaternionOffset + 8);
             float qw = ReadFloat(buffer, offset + QuaternionOffset + 12);
 
+            // 頭の位置
+            float tx = ReadFloat(buffer, offset + TranslationOffset);
+            float ty = ReadFloat(buffer, offset + TranslationOffset + 4);
+            float tz = ReadFloat(buffer, offset + TranslationOffset + 8);
+
             // 目の開きと口の特徴量
             float rightEye = ReadFloat(buffer, offset + RightEyeOffset);
             float leftEye = ReadFloat(buffer, offset + LeftEyeOffset);
             float mouth = ReadFloat(buffer, offset + FeaturesOffset + MouthOpenFeature * 4);
 
             // 壊れた値（NaN・無限大）を含むフレームは捨てる
-            if (!AllFinite(qx, qy, qz, qw, rightEye, leftEye, mouth))
+            if (!AllFinite(qx, qy, qz, qw, tx, ty, tz, rightEye, leftEye, mouth))
             {
                 return false;
             }
@@ -65,6 +72,7 @@ namespace VRCast.Tracking
             }
 
             frame.HeadRotation = Quaternion.Normalize(rotation);
+            frame.HeadPosition = new Vector3(-ty, tx, -tz);
             frame.EyeOpenRight = Mathf.Clamp01(rightEye);
             frame.EyeOpenLeft = Mathf.Clamp01(leftEye);
             frame.MouthOpen = Mathf.InverseLerp(MouthClosedFeature, MouthOpenedFeature, mouth);

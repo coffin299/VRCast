@@ -91,7 +91,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | クラス | 責務 |
 | :--- | :--- |
 | `VRCastLog` | `Debug.Log` をカテゴリ付きで薄くラップ |
-| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、ライト強度・向き、待機ポーズの度合い、自動まばたき、揺れもの ON/OFF、リップシンク・マイク設定、フェイストラッキングの ON/OFF・ポート・鏡像・facetracker パス・カメラ名） |
+| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、ライト強度・向き、待機ポーズの度合い、自動まばたき、揺れもの ON/OFF、リップシンク・マイク設定、フェイストラッキングの ON/OFF・ポート・鏡像・上半身の傾きの強さ・facetracker パス・カメラ名） |
 | `SettingsStore` | `settings.json` の読込・保存。破損時は既定値にフォールバック |
 | `AppBootstrap` | `RuntimeInitializeOnLoadMethod` で起動時に設定を読み込み（初回は既定値で作成）、終了時にウィンドウサイズを含めて保存する |
 
@@ -119,7 +119,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `OpenSeeFacePacket` | OpenSeeFace UDP パケット（1 顔 1785 バイト）の解析と座標変換 |
 | `OpenSeeFaceReceiver` | `127.0.0.1` のみで UDP を受信する Provider。途絶検出・再 bind・受信 fps |
 | `FaceTrackerProcess` | 同梱（`StreamingAssets/OpenSeeFace/`）または指定された `facetracker.exe` の自動起動・再試行・停止、カメラ一覧（`-l 1`）の取得・解析、デバイス名 → 番号の解決 |
-| `FaceTrackingDriver` | 頭の向きを首・頭ボーンへ、まばたき・口を `BlinkController` / `LipSyncController` へ適用。キャリブレーション・鏡像 |
+| `FaceTrackingDriver` | 頭の向きを首・頭ボーンへ、頭の位置を背骨・胸の傾きへ、まばたき・口を `BlinkController` / `LipSyncController` へ適用。キャリブレーション・鏡像 |
 | `MainPanel` | IMGUI パネル（Avatar / Pose / Expressions / Face / Tracking / Camera / Rendering）。Tab で表示切替 |
 | `AnimationSection` | MainPanel 内の Pose / Expressions セクション UI |
 | `FaceSection` | MainPanel 内の Face / Physics セクション UI（PhysBone、Auto blink、Lip sync、マイク選択・感度・メーター） |

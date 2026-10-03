@@ -10,6 +10,9 @@ namespace VRCast.Tracking
     {
         public Quaternion HeadRotation;
 
+        // 頭の位置（Unity 座標系、カメラ基準。単位は Provider 依存のため Driver は正面位置からの差分だけを使う）
+        public Vector3 HeadPosition;
+
         // 目の開き（0 = 閉じ、1 = 開き）。本人から見た左右
         public float EyeOpenLeft;
         public float EyeOpenRight;
