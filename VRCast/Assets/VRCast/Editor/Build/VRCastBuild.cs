@@ -32,6 +32,9 @@ namespace VRCast.Editor.Build
         private const string CompanyName = "VRCast";
         private const string ProductName = "VRCast";
 
+        // アプリのバージョン（CHANGELOG.txt と converter の package.json の version に合わせる）
+        private const string AppVersion = "1.0.0";
+
         // 初回起動時のウィンドウサイズ（以降は settings.json の値を使う）
         private const int DefaultWidth = 1280;
         private const int DefaultHeight = 720;
@@ -58,6 +61,9 @@ namespace VRCast.Editor.Build
             // 設定ファイルの保存先 (LocalLow/VRCast/VRCast) を固定する
             PlayerSettings.companyName = CompanyName;
             PlayerSettings.productName = ProductName;
+
+            // Application.version・配布 zip 名に使うバージョン
+            PlayerSettings.bundleVersion = AppVersion;
 
             // OBS キャプチャ向け: ウィンドウ表示・サイズ変更可・非アクティブ時も描画継続
             PlayerSettings.fullScreenMode = FullScreenMode.Windowed;

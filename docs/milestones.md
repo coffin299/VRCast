@@ -416,6 +416,14 @@ OBS 側で縁に色が付いて見える場合は背景色を暗くする。
 - リセットの確認でキャンセルすると何も変わらず、リセットすると背景・ライト・ポーズ・言語が初期状態になること
 - Start タブの手順だけで OBS に透過で映せること、ヘルプがブラウザで開くこと
 
+## 1.0.0 リリース
+
+最初の製品版。以降の変更は `CHANGELOG.txt`（日本語 / 英語、配布 zip に同梱）に記録する。
+
+- バージョンを 1.0.0 に設定（アプリ: `VRCastBuild.AppVersion` → `bundleVersion`、書き出しツール: `package.json`）
+- `CHANGELOG.txt` を追加し、配布 zip に同梱
+- Cursor 用ルール `.cursor/rules/changelog.mdc`: 利用者に見える変更をしたら CHANGELOG の「未リリース」へ日英で追記する
+
 ## 技術的リスク
 
 - AssetBundle の Unity バージョン非互換 → manifest に `unityVersion` を記録し照合。

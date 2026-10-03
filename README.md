@@ -22,6 +22,8 @@ OBS (Window Capture / Game Capture) / 仮想カメラ (Discord / Zoom など)
 
 ## 現在の状態
 
+**バージョン 1.0.0（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
+
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
 
@@ -205,6 +207,8 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 
 ```text
 .
+├── .cursor/rules/changelog.mdc   CHANGELOG の追記・バージョン更新の手順 (Cursor 用)
+├── CHANGELOG.txt                 更新履歴 (日本語 / 英語、配布 zip に同梱)
 ├── docs/                         設計ドキュメント
 │   ├── architecture.md           Runtime / Editor 分離と依存ルール
 │   ├── avatar-package.md         .vrcaster フォーマット (v0)
@@ -299,8 +303,15 @@ Windows ビルドの後、`Tools\Package\package.bat` をダブルクリック�
 powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.0.1 -BuildPath .\VRCast\Builds\Windows
 ```
 
-- 出力: `dist\VRCast-<バージョン>-win64.zip`（`.gitignore` 済み）。バージョンの既定は Player Settings の Version（`bundleVersion`）。
-- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
+- 出力: `dist\VRCast-<バージョン>-win64.zip`（`.gitignore` 済み）。バージョンの既定は Player Settings の Version（`bundleVersion`。
+  ビルド時に `VRCastBuild` の `AppVersion` が設定される）。
+- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
+
+### バージョンと更新履歴
+
+- バージョンは `VRCastBuild` の `AppVersion` と `Packages/com.vrcast.converter/package.json` の `version` をそろえる。
+- 利用者に見える変更（バグ修正・機能追加など）は `CHANGELOG.txt` の先頭「未リリース / Unreleased」に日本語・英語で追記し、
+  リリース時にバージョンと日付へ書き換える（手順は `.cursor/rules/changelog.mdc`）。
   Unity が出力する配布不要のフォルダ（`*_BurstDebugInformation_DoNotShip` 等）は除く。
 - `VRCast.exe` が無ければ中止。同梱トラッカーや仮想カメラのドライバーが無い場合は警告を出して続行する
   （仮想カメラ入りで配布するなら `Tools\UnityCapture\fetch.ps1` の後にビルドし直す）。
