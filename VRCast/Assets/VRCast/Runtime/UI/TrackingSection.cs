@@ -170,11 +170,21 @@ namespace VRCast.UI
             // 受信中のアバターがあるときだけ押せる
             var driver = _avatar.Get<FaceTrackingDriver>();
             GUI.enabled = driver != null && driver.IsTracking;
-            if (GUILayout.Button("Calibrate (look at camera)"))
+            GUILayout.BeginHorizontal();
+
+            // 頭・上半身・視線をまとめて正面に（カメラを見て押す）
+            if (GUILayout.Button("Reset pose"))
             {
                 driver.Calibrate();
             }
 
+            // 視線だけを正面に
+            if (GUILayout.Button("Reset gaze"))
+            {
+                driver.CalibrateGaze();
+            }
+
+            GUILayout.EndHorizontal();
             GUI.enabled = true;
 
             // 正面位置からの頭の移動量（Body lean の強さ調整の目安）

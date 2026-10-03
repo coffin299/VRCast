@@ -160,10 +160,13 @@ namespace VRCast.Animations
             var muscles = (float[])_baseMuscles.Clone();
             LerpMuscles(muscles, _elbowIndices, ElbowBentMuscle, _settings.poseElbowBend);
 
-            // 体の位置・向きは基準のまま適用
+            // 筋肉値を適用
             HumanPose pose = _basePose;
             pose.muscles = muscles;
             _handler.SetHumanPose(ref pose);
+
+            // 体の位置・向きは Body yaw の影響を受けないよう記録した腰の値へ戻す
+            RestoreBone(HumanBodyBones.Hips);
 
             // 腕は筋肉の可動域に縛られないよう上腕ボーンを直接下ろす
             LowerArm(HumanBodyBones.LeftUpperArm, HumanBodyBones.LeftLowerArm, _settings.poseArmDown);
@@ -213,11 +216,17 @@ namespace VRCast.Animations
         {
             for (int i = 0; i < _bones.Length; i++)
             {
-                // 割り当てのあるボーンだけ戻す
-                if (_bones[i] != null)
-                {
-                    _bones[i].SetLocalPositionAndRotation(_bonePositions[i], _boneRotations[i]);
-                }
+                RestoreBone((HumanBodyBones)i);
+            }
+        }
+
+        private void RestoreBone(HumanBodyBones id)
+        {
+            // 割り当てのあるボーンだけ記録した位置・回転へ戻す
+            Transform bone = _bones[(int)id];
+            if (bone != null)
+            {
+                bone.SetLocalPositionAndRotation(_bonePositions[(int)id], _boneRotations[(int)id]);
             }
         }
 

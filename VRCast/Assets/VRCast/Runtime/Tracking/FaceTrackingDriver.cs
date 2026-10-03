@@ -125,7 +125,7 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// 現在の頭の向き・位置・視線を正面とする。
+        /// 現在の頭の向き・位置（上半身の傾きの基準）・視線を正面とする（VSeeFace の Calibrate 相当）。
         /// </summary>
         public void Calibrate()
         {
@@ -133,8 +133,15 @@ namespace VRCast.Tracking
             _calibrated = IsTracking;
             _neutral = _lastFrame.HeadRotation;
             _neutralPosition = _lastFrame.HeadPosition;
+            CalibrateGaze();
+        }
 
-            // 視線は有効なフレームが来たときに取り直す
+        /// <summary>
+        /// 視線だけを取り直す（現在見ている方向を正面とする）。
+        /// </summary>
+        public void CalibrateGaze()
+        {
+            // 有効なフレームが来たときに取り直す
             _gazeCalibrated = false;
         }
 
