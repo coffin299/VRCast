@@ -10,6 +10,12 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 2. 左のパネルの「はじめに」タブが、アバターの読み込みから OBS に映すまでを案内します。
 3. アバターは Unity で .vrcaster ファイルに書き出してから、VRCast のウィンドウにドラッグ＆ドロップします。
 
+■ 書き出しツールの導入（アバターの Unity プロジェクト側）
+1. VCC からアバターの入ったプロジェクトを開きます。
+2. このフォルダの VRCast-Converter.unitypackage をダブルクリック（または Unity にドラッグ＆ドロップ）して「Import」を押します。
+3. メニュー「VRCast」→「Avatar Exporter」で、シーン上のアバターを指定して「Export...」で .vrcaster を保存します。
+元のアバターは変更しません。不要になったら Assets/VRCast/Converter フォルダを削除してください。
+
 ■ ヘルプ
 https://coffin299.github.io/VRCast/help/
 
@@ -37,6 +43,12 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
 1. Run VRCast.exe in this folder (you can put the folder anywhere).
 2. The "Start" tab in the left panel guides you from loading your avatar to showing it in OBS.
 3. Export your avatar to a .vrcaster file in Unity, then drag and drop it onto the VRCast window.
+
+- Installing the exporter (in your avatar's Unity project)
+1. Open the project with your avatar from VCC.
+2. Double-click VRCast-Converter.unitypackage in this folder (or drag it into Unity) and click "Import".
+3. Open "VRCast" > "Avatar Exporter", pick your avatar in the scene and click "Export..." to save a .vrcaster file.
+Your original avatar is never modified. To remove it, delete the Assets/VRCast/Converter folder.
 
 - Help
 https://coffin299.github.io/VRCast/help/

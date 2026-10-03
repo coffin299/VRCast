@@ -9,7 +9,7 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 初の製品版です。
-- VRChat アバターを .vrcaster に書き出す Unity 用ツール（元のアバターは変更しない）
+- VRChat アバターを .vrcaster に書き出す Unity 用ツール（元のアバターは変更しない。unitypackage を同梱）
 - .vrcaster をドラッグ＆ドロップで読み込み、表情・小物の初期状態・揺れもの（PhysBone の近似）・Constraint を再現
 - OBS のゲームキャプチャで背景を透過。Tab でパネルを隠すと、透過設定が OFF でも背景が抜ける
 - 仮想カメラ「VRCast Camera」（Discord / Zoom など）
@@ -23,7 +23,7 @@ Newest first. Each version is written in Japanese, then English.
 
 [English]
 First release.
-- Unity exporter that converts a VRChat avatar to .vrcaster (the original avatar is never modified)
+- Unity exporter that converts a VRChat avatar to .vrcaster (the original avatar is never modified; .unitypackage included)
 - Load .vrcaster by drag and drop; expressions, default toggles, PhysBones (approximated) and constraints are reproduced
 - Transparent background with OBS Game Capture. Hiding the panel with Tab makes the background transparent even when transparency is off
 - Virtual camera "VRCast Camera" (Discord, Zoom, etc.)
