@@ -404,6 +404,8 @@ OBS 側で縁に色が付いて見える場合は背景色を暗くする。
 - 初心者向けの導線: Start タブ（読み込み → 透過 → OBS → パネルを隠す の手順と完了表示）、
   ヘルプページ（日本語 / 英語）を見出しの「?」等から開く
 - ヘルプと概要ページは同梱をやめ、`webpage` ブランチ（GitHub Pages: <https://coffin299.github.io/VRCast/>）へ移動
+- 配布用 zip を作るバッチ（`Tools/Package/package.bat`）。ビルド一式に LICENSE / NOTICE / 利用者向け README.txt を加え、
+  `dist/VRCast-<バージョン>-win64.zip` に出力。同梱トラッカー・仮想カメラが無いビルドは警告
 
 確認項目:
 
