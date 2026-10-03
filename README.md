@@ -159,7 +159,7 @@ Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルド�
 [OpenSeeFace Releases](https://github.com/emilianavt/OpenSeeFace/releases) の zip を展開し、中身（`Binary/`・ライセンス類を含む）を
 `VRCast/Assets/StreamingAssets/OpenSeeFace/` に置く。Unity が StreamingAssets ごとビルドへ同梱する。
 
-- 実行ファイルは `OpenSeeFace/facetracker.exe` または `OpenSeeFace/Binary/facetracker.exe` を自動で探す。
+- 実行ファイルは `OpenSeeFace/` 以下を再帰的に探す（展開時のフォルダ階層は問わない）。
 - 見つからない場合もビルドは続行し、警告ログを出す（トラッキングはパス指定が必要になる）。
 - 配布時は OpenSeeFace と同梱ライブラリのライセンス表記を含めること。
 
