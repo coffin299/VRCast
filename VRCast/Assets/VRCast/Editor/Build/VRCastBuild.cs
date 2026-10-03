@@ -66,9 +66,7 @@ namespace VRCast.Editor.Build
             PlayerSettings.resizableWindow = true;
             PlayerSettings.runInBackground = true;
             PlayerSettings.visibleInBackground = true;
-
-            // フリップモデルのスワップチェーンでは DWM が alpha で合成しないため無効にする（Tab で隠したときのウィンドウ透過）
-            PlayerSettings.useFlipModelSwapchain = false;
+            PlayerSettings.useFlipModelSwapchain = true;
 
             // VRChat / VCC プロジェクトと同じ Linear にする（Gamma だとアバターの陰影が VRChat より暗くなる）
             PlayerSettings.colorSpace = ColorSpace.Linear;
