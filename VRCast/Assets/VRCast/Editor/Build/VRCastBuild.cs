@@ -85,10 +85,8 @@ namespace VRCast.Editor.Build
 
         private static void WarnIfTrackerMissing()
         {
-            // StreamingAssets 配下の候補のどれかがあれば同梱される
-            bool found = FaceTrackerProcess.BundledRelativePaths
-                .Any(relative => File.Exists(Path.Combine(Application.streamingAssetsPath, relative)));
-            if (!found)
+            // StreamingAssets/OpenSeeFace 以下に facetracker.exe があれば同梱される
+            if (FaceTrackerProcess.FindBundled(Application.streamingAssetsPath) == null)
             {
                 Debug.LogWarning("[VRCast][Build] OpenSeeFace not found in Assets/StreamingAssets/OpenSeeFace. "
                     + "Face tracking will require a facetracker.exe path.");

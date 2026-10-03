@@ -17,13 +17,10 @@ namespace VRCast.Tracking
     public class FaceTrackerProcess : MonoBehaviour
     {
         /// <summary>
-        /// 同梱版を探す StreamingAssets からの相対パス（リリース zip の展開直下・Binary 配下の両方に対応）。
+        /// 同梱版を置く StreamingAssets 内のフォルダ名と実行ファイル名。
         /// </summary>
-        public static readonly string[] BundledRelativePaths =
-        {
-            "OpenSeeFace/facetracker.exe",
-            "OpenSeeFace/Binary/facetracker.exe",
-        };
+        public const string BundledFolder = "OpenSeeFace";
+        public const string ExecutableName = "facetracker.exe";
 
         // ログのカテゴリ名
         private const string LogCategory = "Tracker";
@@ -73,7 +70,7 @@ namespace VRCast.Tracking
         public void Initialize(AppSettings settings)
         {
             _settings = settings;
-            _bundledPath = FindBundled();
+            _bundledPath = FindBundled(Application.streamingAssetsPath);
             VRCastLog.Info(LogCategory, "Bundled facetracker: " + (_bundledPath ?? "not found"));
         }
 
@@ -330,19 +327,31 @@ namespace VRCast.Tracking
             return valid;
         }
 
-        private static string FindBundled()
+        /// <summary>
+        /// streamingAssetsPath/OpenSeeFace 以下から facetracker.exe を探す（zip の展開階層に依存しない）。
+        /// 複数あれば最も浅いもの。無ければ null。
+        /// </summary>
+        public static string FindBundled(string streamingAssetsPath)
         {
-            foreach (string relative in BundledRelativePaths)
+            // フォルダが無ければ同梱なし
+            string root = Path.Combine(streamingAssetsPath, BundledFolder);
+            if (!Directory.Exists(root))
             {
-                // StreamingAssets（ビルドでは VRCast_Data/StreamingAssets）配下の候補
-                string path = Path.Combine(Application.streamingAssetsPath, relative);
-                if (File.Exists(path))
-                {
-                    return path;
-                }
+                return null;
             }
 
-            return null;
+            try
+            {
+                // 配下を再帰検索し、パスの短い（浅い）ものを優先
+                string[] found = Directory.GetFiles(root, ExecutableName, SearchOption.AllDirectories);
+                Array.Sort(found, (a, b) => a.Length.CompareTo(b.Length));
+                return found.Length > 0 ? found[0] : null;
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                // 読めないフォルダがあれば同梱なし扱い
+                return null;
+            }
         }
 
         private static ProcessStartInfo CreateStartInfo(string path, string arguments)
