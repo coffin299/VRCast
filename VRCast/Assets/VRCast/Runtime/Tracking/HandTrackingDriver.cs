@@ -294,10 +294,8 @@ namespace VRCast.Tracking
 
         private Vector3 ToAvatar(Vector3 cameraVector)
         {
-            // カメラ基準 → アバタールート基準。通常はカメラの方を向いたアバター（180° 回転）、鏡像は左右反転のみ
-            return _settings.trackingMirror
-                ? new Vector3(cameraVector.x, cameraVector.y, -cameraVector.z)
-                : new Vector3(-cameraVector.x, cameraVector.y, -cameraVector.z);
+            // カメラ基準 → アバタールート基準（鏡像設定に従う）
+            return TrackingMath.ToAvatar(cameraVector, _settings.trackingMirror);
         }
 
         private void Apply(ArmRig rig)

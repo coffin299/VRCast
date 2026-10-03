@@ -26,6 +26,7 @@ namespace VRCast.App
         private AppSettings _settings;
         private MicrophoneInput _microphone;
         private TrackingReceiver _tracker;
+        private TrackingSkeletonView _skeleton;
         private string _initialAvatarPath;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -77,6 +78,10 @@ namespace VRCast.App
             _tracker = gameObject.AddComponent<TrackingReceiver>();
             _tracker.Initialize(_settings);
 
+            // 受信値をそのまま描く確認用の表示（アバターの代わりに表示）
+            _skeleton = gameObject.AddComponent<TrackingSkeletonView>();
+            _skeleton.Initialize(mainCamera, _tracker, _tracker, _settings);
+
             // 同梱トラッカー（MediaPipe / OpenSeeFace）の起動・停止（任意。外部で起動したものも受信できる）
             var trackerProcess = gameObject.AddComponent<TrackerProcess>();
             trackerProcess.Initialize(_settings);
@@ -84,7 +89,8 @@ namespace VRCast.App
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
-                _session, _orbit, rendering, _microphone, _tracker, trackerProcess, _settings, _initialAvatarPath);
+                _session, _orbit, rendering, _microphone, _tracker, trackerProcess, _skeleton, _settings,
+                _initialAvatarPath);
         }
 
         private void Start()
@@ -128,6 +134,12 @@ namespace VRCast.App
 
             // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化）
             avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);
+
+            // 確認用の表示はアバターの腰の位置・向きに描く（非 Humanoid は足元基準）
+            Transform hips = avatar.Animator != null && avatar.Animator.isHuman
+                ? avatar.Animator.GetBoneTransform(HumanBodyBones.Hips)
+                : null;
+            _skeleton.SetAnchor(root, hips);
 
             // アバター本体（Humanoid は骨格基準）が映るようにカメラを合わせる
             _orbit.Frame(avatar.CalculateFramingBounds());

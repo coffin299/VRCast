@@ -20,17 +20,20 @@ namespace VRCast.UI
         private readonly AvatarComponentCache _avatar;
         private readonly IFaceTrackingProvider _tracker;
         private readonly TrackerProcess _process;
+        private readonly TrackingSkeletonView _skeleton;
         private readonly AppSettings _settings;
 
         // 入力途中のポート文字列（確定するまで設定へ反映しない）
         private string _portInput;
 
         public TrackingSection(
-            AvatarSession session, IFaceTrackingProvider tracker, TrackerProcess process, AppSettings settings)
+            AvatarSession session, IFaceTrackingProvider tracker, TrackerProcess process,
+            TrackingSkeletonView skeleton, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
             _tracker = tracker;
             _process = process;
+            _skeleton = skeleton;
             _settings = settings;
             _portInput = settings.trackingPort.ToString();
         }
@@ -51,6 +54,7 @@ namespace VRCast.UI
             DrawLauncher();
             DrawPort();
             _settings.trackingMirror = GUILayout.Toggle(_settings.trackingMirror, " Mirror");
+            DrawRawView();
             _settings.trackingBodyLean = GuiControls.Slider(
                 "Body lean", _settings.trackingBodyLean, 0f, AppSettings.MaxTrackingBodyLean);
             _settings.trackingGaze = GuiControls.Slider("Eye gaze", _settings.trackingGaze, 0f, AppSettings.MaxTrackingGaze);
@@ -84,6 +88,19 @@ namespace VRCast.UI
             if (_settings.trackingHands && driver != null)
             {
                 GUILayout.Label(driver.IsTracking ? "Arms / hands: tracking" : "Arms / hands: not visible (idle pose)");
+            }
+        }
+
+        private void DrawRawView()
+        {
+            // アバターの代わりに受信値をそのまま線で表示（保存しない、起動時は常にアバター）
+            _skeleton.Visible = GUILayout.Toggle(_skeleton.Visible, " Raw view (skeleton instead of avatar)");
+
+            // 表示中は顔の値も数値で出す（受信中のみ）
+            if (_skeleton.Visible && _tracker.TryGetFrame(out FaceTrackingFrame face))
+            {
+                GUILayout.Label($"Eye L {face.EyeOpenLeft:F2}  R {face.EyeOpenRight:F2}  Mouth {face.MouthOpen:F2}");
+                GUILayout.Label($"Gaze x {face.Gaze.x:F1}  y {face.Gaze.y:F1}");
             }
         }
 

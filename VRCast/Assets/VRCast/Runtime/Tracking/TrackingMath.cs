@@ -1,7 +1,9 @@
+using UnityEngine;
+
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// パケット解析で共通の数値検査。
+    /// パケット解析・Driver で共通の数値検査と座標変換。
     /// </summary>
     internal static class TrackingMath
     {
@@ -20,6 +22,25 @@ namespace VRCast.Tracking
             }
 
             return true;
+        }
+
+        /// <summary>
+        /// カメラ基準のベクトルをアバタールート基準へ変換する。
+        /// 通常はカメラの方を向いたアバター（180° 回転）、鏡像は左右反転のみ。
+        /// </summary>
+        public static Vector3 ToAvatar(Vector3 cameraVector, bool mirror)
+        {
+            return mirror
+                ? new Vector3(cameraVector.x, cameraVector.y, -cameraVector.z)
+                : new Vector3(-cameraVector.x, cameraVector.y, -cameraVector.z);
+        }
+
+        /// <summary>
+        /// 回転を左右反転する（X 軸まわりはそのまま、Y・Z 軸まわりを逆向き）。
+        /// </summary>
+        public static Quaternion MirrorRotation(Quaternion rotation)
+        {
+            return new Quaternion(rotation.x, -rotation.y, -rotation.z, rotation.w);
         }
     }
 }
