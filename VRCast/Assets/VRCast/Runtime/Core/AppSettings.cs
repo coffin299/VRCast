@@ -29,7 +29,7 @@ namespace VRCast.Core
         public const int MinTrackingPort = 1024;
         public const int MaxTrackingPort = 65535;
 
-        // 頭の位置に合わせた上半身の傾きの強さの上限（0 = 傾けない）
+        // 頭の位置に合わせた体の動き（傾き・移動）の強さの上限（0 = 動かさない）
         public const float MaxTrackingBodyLean = 3f;
 
         // 視線の強さの上限（0 = 目を動かさない）
@@ -77,6 +77,7 @@ namespace VRCast.Core
         public int trackingPort = DefaultTrackingPort;
         public bool trackingMirror = true;
         public float trackingBodyLean = 1f;
+        public BodyMotion trackingBodyMotion = BodyMotion.Lean;
         public float trackingGaze = 1f;
 
         // 腕・手（指）のトラッキング（MediaPipe のみ）
@@ -125,6 +126,13 @@ namespace VRCast.Core
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
+            // 未知の体の動かし方は既定の傾きへ
+            if (!Enum.IsDefined(typeof(BodyMotion), trackingBodyMotion))
+            {
+                trackingBodyMotion = BodyMotion.Lean;
+            }
+
+
             // 視線の強さも同様
             trackingGaze = Mathf.Clamp(trackingGaze, 0f, MaxTrackingGaze);
             // null のパス・カメラ名は未設定扱いの空文字へ

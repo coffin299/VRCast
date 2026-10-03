@@ -5,7 +5,8 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、頭の位置（前後・左右）は背骨・胸の傾き、
+    /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、頭の位置は背骨・胸の傾き（前後・左右）と
+    /// 腰の移動（前後・左右・上下、足も一緒に動く）のどちらかまたは両方、
     /// 視線は目ボーン、まばたき（左右別）・口は既存コントローラーへ外部入力として渡す。
     /// 揺れもの（PhysBoneSimulator）が回転後の頭を基準に計算できるよう、他の LateUpdate より先に実行する。
     /// </summary>
@@ -32,6 +33,10 @@ namespace VRCast.Tracking
         private const float LeanDegreesPerUnit = 10f;
         private const float MaxLeanAngle = 20f;
 
+        // 頭の位置の差分 1 単位あたりの体全体の移動量（m、強さ 1 のとき）と上限（m）
+        private const float MoveMetersPerUnit = 0.1f;
+        private const float MaxMoveDistance = 0.3f;
+
         // 左右の閉じ具合の差がこれ未満なら平均する（検出のぶれで片目だけ閉じないように）
         private const float WinkThreshold = 0.3f;
 
@@ -47,6 +52,11 @@ namespace VRCast.Tracking
         private BlinkController _blink;
         private LipSyncController _lipSync;
         private AppSettings _settings;
+
+        // 腰ボーンと読込時の位置（体全体の移動用）、前フレームに動かしたかどうか
+        private Transform _hips;
+        private Vector3 _hipsRest;
+        private bool _hipsMoved;
 
         // 背骨・胸・首・頭ボーンと、読込時（待機ポーズ適用後）の回転
         private Transform _spine;
@@ -106,6 +116,10 @@ namespace VRCast.Tracking
             {
                 return;
             }
+
+            // 腰は体全体の移動に使う
+            _hips = animator.GetBoneTransform(HumanBodyBones.Hips);
+            _hipsRest = _hips != null ? _hips.localPosition : Vector3.zero;
 
             // 首・胸が無いアバターは残りのボーンで回転させる（任意ボーンは null）
             _spine = animator.GetBoneTransform(HumanBodyBones.Spine);
@@ -261,6 +275,7 @@ namespace VRCast.Tracking
             {
                 _current = Quaternion.identity;
                 _currentOffset = Vector3.zero;
+                MoveHips(false);
                 return;
             }
 
@@ -270,8 +285,12 @@ namespace VRCast.Tracking
             RestoreRest(_neck, _neckRest);
             _head.localRotation = _headRest;
 
-            // 上半身の傾きを背骨・胸で分担
-            Quaternion lean = CalculateLean(_currentOffset);
+            // 体全体の移動（腰を動かす。足も一緒に動く）
+            BodyMotion motion = _settings.trackingBodyMotion;
+            MoveHips(motion != BodyMotion.Lean);
+
+            // 上半身の傾きを背骨・胸で分担（移動のみのモードでは傾けない）
+            Quaternion lean = motion != BodyMotion.Move ? CalculateLean(_currentOffset) : Quaternion.identity;
             float torsoShare = _spine != null && _chest != null ? 0.5f : 1f;
             RotateInAvatarSpace(_spine, Quaternion.Slerp(Quaternion.identity, lean, torsoShare));
             RotateInAvatarSpace(_chest, Quaternion.Slerp(Quaternion.identity, lean, torsoShare));
@@ -291,6 +310,30 @@ namespace VRCast.Tracking
             {
                 bone.localRotation = rest;
             }
+        }
+
+        private void MoveHips(bool move)
+        {
+            // 腰が無い、または動かさないモードで前フレームも動かしていなければ触らない
+            if (_hips == null || (!move && !_hipsMoved))
+            {
+                return;
+            }
+
+            // 読込時の位置へ戻し、移動するモードならアバタールート基準の移動量をワールドで加える（親の拡大率に依存しない）
+            _hips.localPosition = _hipsRest;
+            _hipsMoved = move;
+            if (move)
+            {
+                _hips.position += transform.rotation * CalculateMove(_currentOffset);
+            }
+        }
+
+        private Vector3 CalculateMove(Vector3 offset)
+        {
+            // カメラ基準の差分をアバタールート基準へ（傾きと同じ対応: カメラへ近づく = 前、左右は逆向き）
+            Vector3 move = new Vector3(-offset.x, offset.y, -offset.z) * (MoveMetersPerUnit * _settings.trackingBodyLean);
+            return Vector3.ClampMagnitude(move, MaxMoveDistance);
         }
 
         private Vector3 CalculateHeadOffset()
