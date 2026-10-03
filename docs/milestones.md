@@ -109,7 +109,9 @@ BlendShape、表情プリセット、Animator Parameter、基本 Viseme。
 - Runtime: `AvatarPackageReader` が上限付きで読み込み検証。不正・読込不能なら警告して空扱い（アバター表示は継続）
 - Runtime `Animations/ExpressionController`: パスと BlendShape 名を解決し、切り替え時は触った BlendShape を
   読込時（FX 焼き込み後）の値へ戻してから適用。数字キー 1〜9 / 0 = Neutral（テキスト入力中は無効）
-- UI: Expressions 一覧（3 列、スクロール）
+- UI: Expressions 一覧（3 列、スクロール）。全表情に共通する接頭辞（`_` / `-` / 空白区切り）はボタン表示から省く
+
+確認結果: Marycia で Relaxed ポーズ・表情ボタンの切り替えが動作することを確認。
 
 確認項目:
 

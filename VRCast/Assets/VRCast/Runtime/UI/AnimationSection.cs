@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Animations;
 using VRCast.Avatars;
@@ -16,7 +17,11 @@ namespace VRCast.UI
         // ボタンに表示する名前の最大文字数
         private const int MaxButtonLabelLength = 14;
 
+        // 共通接頭辞を切る位置の区切り文字
+        private static readonly char[] PrefixSeparators = { '_', '-', ' ' };
+
         private readonly AvatarSession _session;
+        private readonly List<string> _labels = new List<string>();
         private GameObject _cachedInstance;
         private PoseController _pose;
         private ExpressionController _expressions;
@@ -51,6 +56,7 @@ namespace VRCast.UI
                 _pose = instance != null ? instance.GetComponent<PoseController>() : null;
                 _expressions = instance != null ? instance.GetComponent<ExpressionController>() : null;
                 _expressionScroll = Vector2.zero;
+                BuildLabels();
             }
 
             return instance != null;
@@ -138,14 +144,74 @@ namespace VRCast.UI
 
         private string Label(int index)
         {
-            // ホットキー番号を前置し、長い名前は省略
-            string name = _expressions.Names[index];
-            if (name.Length > MaxButtonLabelLength)
+            // アバター切替時に作成済みの表示名
+            return _labels[index];
+        }
+
+        private void BuildLabels()
+        {
+            _labels.Clear();
+            if (_expressions == null)
             {
-                name = name.Substring(0, MaxButtonLabelLength - 1) + "…";
+                return;
             }
 
-            return index < 9 ? $"{index + 1}: {name}" : name;
+            // 全表情に共通する接頭辞（区切り文字まで）を表示から省く
+            IReadOnlyList<string> names = _expressions.Names;
+            int prefixLength = CommonPrefixLength(names);
+            for (int i = 0; i < names.Count; i++)
+            {
+                // 接頭辞を除き、長い名前は省略
+                string name = names[i].Substring(prefixLength);
+                if (name.Length > MaxButtonLabelLength)
+                {
+                    name = name.Substring(0, MaxButtonLabelLength - 1) + "…";
+                }
+
+                // ホットキー対象には番号を前置
+                _labels.Add(i < 9 ? $"{i + 1}: {name}" : name);
+            }
+        }
+
+        private static int CommonPrefixLength(IReadOnlyList<string> names)
+        {
+            // 1 件以下なら省略しない
+            if (names.Count < 2)
+            {
+                return 0;
+            }
+
+            // 全名前で一致する先頭文字数を求める
+            int length = names[0].Length;
+            for (int i = 1; i < names.Count; i++)
+            {
+                int max = Mathf.Min(length, names[i].Length);
+                int j = 0;
+                while (j < max && names[i][j] == names[0][j])
+                {
+                    j++;
+                }
+
+                length = j;
+            }
+
+            // 単語の途中で切らないよう、最後の区切り文字の直後まで戻す
+            int cut = names[0].LastIndexOfAny(PrefixSeparators, Mathf.Max(0, length - 1)) + 1;
+            if (length == 0 || cut <= 0)
+            {
+                return 0;
+            }
+
+            // 名前が空になる場合は省略しない
+            for (int i = 0; i < names.Count; i++)
+            {
+                if (names[i].Length <= cut)
+                {
+                    return 0;
+                }
+            }
+
+            return cut;
         }
     }
 }
