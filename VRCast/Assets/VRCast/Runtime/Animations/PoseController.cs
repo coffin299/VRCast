@@ -91,6 +91,15 @@ namespace VRCast.Animations
             Apply();
         }
 
+        /// <summary>
+        /// 設定値を直接書き換えた後（全設定のリセット等）に、向きと待機ポーズを反映し直す。
+        /// </summary>
+        public void Reapply()
+        {
+            ApplyYaw();
+            Apply();
+        }
+
         private void ApplyYaw()
         {
             // 本コンポーネントはアバタールートに付く

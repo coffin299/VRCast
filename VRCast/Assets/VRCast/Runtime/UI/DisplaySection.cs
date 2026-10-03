@@ -14,6 +14,9 @@ namespace VRCast.UI
         private const float MinFov = 10f;
         private const float MaxFov = 90f;
 
+        // 太陽光スライダーの上限
+        private const float MaxSunlight = 4f;
+
         // 解像度プリセット（横長 / 縦長配信）
         private static readonly Vector2Int[] ResolutionPresets =
         {
@@ -64,36 +67,29 @@ namespace VRCast.UI
             _rendering.TransparentBackground = GUILayout.Toggle(
                 _rendering.TransparentBackground, Loc.T("Transparent (OBS Game Capture)", "透過（OBS ゲームキャプチャ）"));
 
-            // 透過時はウィンドウ上だけの色、非透過時は映る背景色（値が変わったときだけ反映）
-            if (_rendering.TransparentBackground)
-            {
-                GuiControls.Hint(Loc.T("Window color (shown only in this window, not captured by OBS)",
-                    "ウィンドウの色（この画面だけの表示で、OBS には映りません）"));
-                Color color = ColorSliders(_rendering.PreviewColor);
-                if (color != _rendering.PreviewColor)
-                {
-                    _rendering.PreviewColor = color;
-                }
-            }
-            else
-            {
-                Color color = ColorSliders(_rendering.BackgroundColor);
-                if (color != _rendering.BackgroundColor)
-                {
-                    _rendering.BackgroundColor = color;
-                }
-            }
+            // 透過時は色がウィンドウ上だけに見えることを案内
+            GuiControls.Hint(_rendering.TransparentBackground
+                ? Loc.T("Background color (shown only in this window, not captured by OBS)",
+                    "背景色（透過中はこの画面だけの表示で、OBS には映りません）")
+                : Loc.T("Background color", "背景色"));
 
-            GuiControls.EndCard();
-        }
-
-        private static Color ColorSliders(Color color)
-        {
-            // RGB スライダー
+            // RGB スライダー（値が変わったときだけ反映）
+            Color color = _rendering.BackgroundColor;
             color.r = GuiControls.Slider(Loc.T("Red", "赤"), color.r, 0f, 1f);
             color.g = GuiControls.Slider(Loc.T("Green", "緑"), color.g, 0f, 1f);
             color.b = GuiControls.Slider(Loc.T("Blue", "青"), color.b, 0f, 1f);
-            return color;
+            if (color != _rendering.BackgroundColor)
+            {
+                _rendering.BackgroundColor = color;
+            }
+
+            // 既定のベージュに戻す
+            if (GUILayout.Button(Loc.T("Beige (default)", "ベージュ（既定）")))
+            {
+                _rendering.BackgroundColor = new AppSettings().backgroundColor;
+            }
+
+            GuiControls.EndCard();
         }
 
         private void DrawResolution()
@@ -159,7 +155,7 @@ namespace VRCast.UI
                 _rendering.AmbientIntensity = ambient;
             }
 
-            float intensity = GuiControls.Slider(Loc.T("Sunlight", "太陽光"), _rendering.LightIntensity, 0f, 3f);
+            float intensity = GuiControls.Slider(Loc.T("Sunlight", "太陽光"), _rendering.LightIntensity, 0f, MaxSunlight);
             if (!Mathf.Approximately(intensity, _rendering.LightIntensity))
             {
                 _rendering.LightIntensity = intensity;
@@ -173,6 +169,7 @@ namespace VRCast.UI
                 _rendering.LightTemperature = Mathf.Round(temperature / 100f) * 100f;
             }
 
+            // 向きは正面（カメラ側）からの角度、0 で正面から当たる
             float yaw = GuiControls.Slider(Loc.T("Direction", "向き"), _rendering.LightYaw, -180f, 180f, "F0");
             if (!Mathf.Approximately(yaw, _rendering.LightYaw))
             {

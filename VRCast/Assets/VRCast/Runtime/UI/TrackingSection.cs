@@ -32,6 +32,14 @@ namespace VRCast.UI
             _portInput = settings.trackingPort.ToString();
         }
 
+        /// <summary>
+        /// 設定値を直接書き換えた後（全設定のリセット等）に、入力途中の値を設定に合わせ直す。
+        /// </summary>
+        public void SyncFromSettings()
+        {
+            _portInput = _settings.trackingPort.ToString();
+        }
+
         public void Draw()
         {
             _avatar.Refresh();

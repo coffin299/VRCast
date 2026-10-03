@@ -27,6 +27,10 @@ namespace VRCast.UI
         private static readonly Color Knob = new Color32(240, 242, 247, 255);
         private static readonly Color TextColor = new Color32(232, 234, 240, 255);
         private static readonly Color TextDim = new Color32(150, 156, 172, 255);
+        private static readonly Color DangerColor = new Color32(214, 64, 69, 255);
+        private static readonly Color DangerHover = new Color32(232, 88, 92, 255);
+        private static readonly Color DangerActive = new Color32(176, 48, 52, 255);
+        private static readonly Color SuccessColor = new Color32(96, 206, 140, 255);
 
         // 角丸の半径（px）
         private const int WindowRadius = 10;
@@ -63,6 +67,10 @@ namespace VRCast.UI
         public GUIStyle Card { get; private set; }
         public GUIStyle Sidebar { get; private set; }
         public GUIStyle Tab { get; private set; }
+
+        // 取り返しのつかない操作用の赤いボタンと、完了表示の緑の文字
+        public GUIStyle Danger { get; private set; }
+        public GUIStyle Success { get; private set; }
 
         /// <summary>
         /// テーマを作成する（OnGUI 内で呼ぶ）。
@@ -149,6 +157,8 @@ namespace VRCast.UI
             Hint.normal.textColor = TextDim;
             Value = new GUIStyle(Hint) { alignment = TextAnchor.MiddleRight, wordWrap = false };
             Centered = new GUIStyle(Skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = false };
+            Success = new GUIStyle(Skin.label) { fontStyle = FontStyle.Bold, wordWrap = false };
+            Success.normal.textColor = SuccessColor;
         }
 
         private void BuildButton()
@@ -166,6 +176,11 @@ namespace VRCast.UI
             SetStates(Skin.button, Rounded(Control, ControlRadius), Rounded(ControlHover, ControlRadius),
                 Rounded(ControlActive, ControlRadius), TextColor);
             SetOnStates(Skin.button, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius), Color.white);
+
+            // 赤いボタン（全設定のリセット等）
+            Danger = new GUIStyle(Skin.button) { fontStyle = FontStyle.Bold };
+            SetStates(Danger, Rounded(DangerColor, ControlRadius), Rounded(DangerHover, ControlRadius),
+                Rounded(DangerActive, ControlRadius), Color.white);
         }
 
         private void BuildToggle()

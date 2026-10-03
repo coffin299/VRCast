@@ -33,6 +33,40 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// 手順のカードを開始する（「1. 見出し」と、右端に完了 / 未完了の表示。EndCard で閉じる）。
+        /// done が null の手順（アプリ側で確認できない操作）は状態を出さない。
+        /// </summary>
+        public static void BeginStep(int number, string title, bool? done)
+        {
+            UiTheme theme = UiTheme.Current;
+            GUILayout.BeginVertical(theme != null ? theme.Card : GUI.skin.box);
+            GUILayout.BeginHorizontal();
+            GUILayout.Label($"{number}. {title}", theme != null ? theme.SectionTitle : GUI.skin.label);
+            GUILayout.FlexibleSpace();
+
+            // 完了は緑、未完了は控えめな文字
+            if (done == true)
+            {
+                GUILayout.Label(Loc.T("Done", "完了"), theme != null ? theme.Success : GUI.skin.label);
+            }
+            else if (done == false)
+            {
+                GUILayout.Label(Loc.T("To do", "未完了"), theme != null ? theme.Hint : GUI.skin.label);
+            }
+
+            GUILayout.EndHorizontal();
+        }
+
+        /// <summary>
+        /// 取り返しのつかない操作用の赤いボタン。押されたら true。
+        /// </summary>
+        public static bool DangerButton(string text)
+        {
+            UiTheme theme = UiTheme.Current;
+            return GUILayout.Button(text, theme != null ? theme.Danger : GUI.skin.button);
+        }
+
+        /// <summary>
         /// 補足・状態表示用の控えめな文字。
         /// </summary>
         public static void Hint(string text)
