@@ -147,6 +147,17 @@ namespace VRCast.UI
 
             GUILayout.EndHorizontal();
 
+            // アバターの明るさ（ライトを強くしても明るくならないシェーダー向け。1 = マテリアルのまま）
+            float brightness = GuiControls.Slider(Loc.T("Avatar brightness", "アバターの明るさ"), _rendering.AvatarBrightness,
+                AppSettings.MinAvatarBrightness, AppSettings.MaxAvatarBrightness);
+            if (!Mathf.Approximately(brightness, _rendering.AvatarBrightness))
+            {
+                _rendering.AvatarBrightness = brightness;
+            }
+
+            GuiControls.Hint(Loc.T("If more light does not help (lilToon etc. cap brightness), raise Avatar brightness",
+                "ライトを強くしても明るくならないとき（lilToon 等は明るさに上限あり）はアバターの明るさを上げてください"));
+
             // 値が変わったときだけ反映
             float ambient = GuiControls.Slider(
                 Loc.T("Ambient", "環境光"), _rendering.AmbientIntensity, 0f, AppSettings.MaxAmbientIntensity);
