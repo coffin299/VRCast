@@ -231,7 +231,7 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 
 - トラッカー: `Tools/MediaPipeTracker/vrcast_tracker.py`（Face / Pose（lite）/ Hand Landmarker、動画モード、CPU）。
   引数は facetracker と同じ形（`-l 1` / `-c` / `-i` / `-p`、追加で `--no-hands`）にして起動処理を共通化。
-  カメラ名は DirectShow（pygrabber）で取得し、UTF-8 で出力。`build.ps1` で exe 化し、モデル 3 種と一緒に `StreamingAssets/MediaPipeTracker/` へ配置
+  カメラ名は DirectShow（pygrabber）で取得し、UTF-8 で出力。`build.ps1`（ダブルクリック用の `build.bat` から呼び出し可）で exe 化し、モデル 3 種と一緒に `StreamingAssets/MediaPipeTracker/` へ配置
   （仮想環境・中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build`、`.pyc` を作らない設定）
 - 送信形式: 1 フレーム 1 パケットの UTF-8 JSON（プロトコル番号 `v`、顔の変換行列 4×4、BlendShape 51 種、腕 6 点と可視度、本人の左手・右手 21 点）。
   手の左右は体の手首に近い方で決め、体が映っていなければ左右ラベル（非鏡像入力では逆になる）で決める

@@ -147,7 +147,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 │       ├── Runtime/              共有フォーマット定義 (VRCast.AvatarFormat)
 │       └── Editor/               Exporter (VRCast.Converter.Editor)
 ├── Tools/
-│   └── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 で exe 化)
+│   └── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
         ├── Runtime/              スタンドアロンで動くコード (VRCast.Runtime)
@@ -177,6 +177,8 @@ MediaPipe トラッカー（`Tools/MediaPipeTracker/`）は exe 化したもの�
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 ```
+
+または `Tools\MediaPipeTracker\build.bat` をダブルクリック（中身は上と同じ。引数で Python のバージョンを指定可: `build.bat 3.11`）。
 
 - 仮想環境・中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build` に作られる（リポジトリは汚さない。`.pyc` も作らない設定）。
 - 出力（`vrcast_tracker.exe` 一式とモデル 3 種）は `VRCast/Assets/StreamingAssets/MediaPipeTracker/` に置かれ、Unity が StreamingAssets ごとビルドへ同梱する。
