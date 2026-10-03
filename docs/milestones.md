@@ -158,6 +158,7 @@ PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider
     重力 = gravity × falloff）→ コライダー → 角度制限 → 長さ拘束、最後に親から順に子粒子方向へ回転
   - `PhysBoneCollider`: 球・カプセル・平面（insideBounds 対応）。粒子の点ではなく**ボーン線分（半径付き）**と
     コライダー芯の最近接点で判定し、めり込み量をてこ比（1/接触位置）で子粒子へ伝える（ボーン数の少ないスカートのすり抜け対策）。
+    親粒子が既にコライダー内にある場合は子の点のみで押し出す。押し出し量は速度に含めない（前回位置も同量ずらす）。
     起動時にワールド寸法をログ出力
   - Humanoid ボーンは揺らさない（待機ポーズ・トラッキングと競合させない）
   - multiChildType = ignore で複数の子を持つ Transform は回転させず、その子を位置固定のチェーン起点とする

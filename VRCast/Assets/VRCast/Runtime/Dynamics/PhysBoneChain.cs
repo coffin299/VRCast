@@ -322,12 +322,17 @@ namespace VRCast.Dynamics
                 KeepLength(particle, parent.Position, restVector, target);
                 if (_colliders.Count > 0)
                 {
+                    // 押し出し前の位置（押し出し量を速度に含めないために使う）
+                    Vector3 beforeCollision = particle.Position;
                     foreach (PhysBoneCollider collider in _colliders)
                     {
                         collider.Collide(parent.Position, ref particle.Position, particle.Radius);
                     }
 
                     KeepLength(particle, parent.Position, restVector, target);
+
+                    // 押し出し分だけ前回位置もずらし、次ステップで外向きに飛ばないようにする
+                    particle.PreviousPosition += particle.Position - beforeCollision;
                 }
             }
         }
