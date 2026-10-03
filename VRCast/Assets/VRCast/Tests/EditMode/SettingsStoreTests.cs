@@ -165,6 +165,17 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Load_OutOfRangeLighting_IsClamped()
+        {
+            _store.Save(new AppSettings { lightTemperature = 100f, ambientIntensity = 9f });
+
+            // 色温度は下限、環境光は上限へ丸められること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.lightTemperature, Is.EqualTo(AppSettings.MinLightTemperature));
+            Assert.That(settings.ambientIntensity, Is.EqualTo(AppSettings.MaxAmbientIntensity));
+        }
+
+        [Test]
         public void Load_OutOfRangeVoiceScale_IsClamped()
         {
             _store.Save(new AppSettings { lipSyncVoiceScale = 0f });

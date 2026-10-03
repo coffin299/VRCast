@@ -42,15 +42,15 @@ namespace VRCast.UI
         }
 
         /// <summary>
-        /// ラベル + スライダー + 数値の 1 行を描画し、操作後の値を返す。
+        /// ラベル + スライダー + 数値（format の書式）の 1 行を描画し、操作後の値を返す。
         /// </summary>
-        public static float Slider(string label, float value, float min, float max)
+        public static float Slider(string label, float value, float min, float max, string format = "F2")
         {
             UiTheme theme = UiTheme.Current;
             GUILayout.BeginHorizontal();
             GUILayout.Label(label, GUILayout.Width(LabelWidth));
             float result = GUILayout.HorizontalSlider(value, min, max);
-            GUILayout.Label(result.ToString("F2"), theme != null ? theme.Value : GUI.skin.label, GUILayout.Width(ValueWidth));
+            GUILayout.Label(result.ToString(format), theme != null ? theme.Value : GUI.skin.label, GUILayout.Width(ValueWidth));
             GUILayout.EndHorizontal();
             return result;
         }
