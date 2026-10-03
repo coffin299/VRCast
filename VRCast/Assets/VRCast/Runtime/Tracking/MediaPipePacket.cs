@@ -191,9 +191,9 @@ namespace VRCast.Tracking
             // 平行移動（cm）をカメラ基準の Unity 座標（dm）へ
             face.HeadPosition = new Vector3(m[3], m[7], -m[11]) * PositionScale;
 
-            // まばたき（1 = 閉じ）を目の開き（1 = 開き）へ。左右は本人から見た左右
-            face.EyeOpenLeft = 1f - Mathf.InverseLerp(BlinkOpenScore, BlinkClosedScore, scores[EyeBlinkLeft]);
-            face.EyeOpenRight = 1f - Mathf.InverseLerp(BlinkOpenScore, BlinkClosedScore, scores[EyeBlinkRight]);
+            // まばたき（1 = 閉じ）を目の開き（1 = 開き）へ。MediaPipe の eyeBlink の左右は映像上の左右（本人とは逆）
+            face.EyeOpenLeft = 1f - Mathf.InverseLerp(BlinkOpenScore, BlinkClosedScore, scores[EyeBlinkRight]);
+            face.EyeOpenRight = 1f - Mathf.InverseLerp(BlinkOpenScore, BlinkClosedScore, scores[EyeBlinkLeft]);
             face.MouthOpen = Mathf.InverseLerp(JawClosedScore, JawOpenedScore, scores[JawOpen]);
 
             // 視線: 本人の右向き = 左目の内寄せ + 右目の外寄せ、上向き = 両目の上 − 下（左右の平均）
@@ -253,9 +253,9 @@ namespace VRCast.Tracking
 
         private static Vector3 ToUnity(float[] values, int point)
         {
-            // MediaPipe の world 座標（y = 下）をカメラ基準の Unity 座標（y = 上）へ
+            // MediaPipe の world 座標（x = 映像の左、y = 下）をカメラ基準の Unity 座標（x = 映像の右、y = 上）へ
             int index = point * 3;
-            return new Vector3(values[index], -values[index + 1], values[index + 2]);
+            return new Vector3(-values[index], -values[index + 1], values[index + 2]);
         }
 
         private static int IndexOf(string name)

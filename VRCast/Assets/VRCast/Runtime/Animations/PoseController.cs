@@ -15,7 +15,7 @@ namespace VRCast.Animations
         private const float ElbowBentMuscle = 0.3f;
 
         // 腕を下ろし切ったときの真下から外側への角度（腰・太ももへのめり込み防止）
-        private const float ArmSideAngle = 6f;
+        private const float ArmSideAngle = 12f;
 
         // 変更対象の筋肉名（HumanTrait.MuscleName と一致させる）
         private static readonly string[] ElbowMuscleNames = { "Left Forearm Stretch", "Right Forearm Stretch" };

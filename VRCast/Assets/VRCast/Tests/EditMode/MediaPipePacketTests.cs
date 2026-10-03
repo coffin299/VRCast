@@ -13,13 +13,13 @@ namespace VRCast.Tests
         [Test]
         public void TryParse_Face_ReadsPositionEyesAndMouth()
         {
-            // 単位回転・平行移動 (1, 2, 3) cm、左目を閉じ、口を最大まで開いた顔
+            // 単位回転・平行移動 (1, 2, 3) cm、映像上の右目（本人の左目）を閉じ、口を最大まで開いた顔
             MediaPipePacket.Message message = CreateMessage();
             message.matrix = RowMajor(Matrix4x4.Translate(new Vector3(1f, 2f, 3f)));
-            SetScore(message, "eyeBlinkLeft", 1f);
+            SetScore(message, "eyeBlinkRight", 1f);
             SetScore(message, "jawOpen", 0.6f);
 
-            // 位置は z 反転・dm 単位、目は左だけ閉じ、口は 1 になること
+            // 位置は z 反転・dm 単位、目は本人の左だけ閉じ、口は 1 になること
             Assert.That(Parse(message, out bool hasFace, out FaceTrackingFrame face, out _), Is.True);
             Assert.That(hasFace, Is.True);
             Assert.That(Quaternion.Angle(face.HeadRotation, Quaternion.identity), Is.LessThan(0.01f));
@@ -71,7 +71,7 @@ namespace VRCast.Tests
         }
 
         [Test]
-        public void TryParse_Arms_FlipsYAndChecksVisibility()
+        public void TryParse_Arms_FlipsXYAndChecksVisibility()
         {
             // 左腕は全点が見え、右腕は手首が見えていない
             MediaPipePacket.Message message = CreateMessage();
@@ -80,11 +80,11 @@ namespace VRCast.Tests
             message.visibility = new[] { 1f, 1f, 1f, 1f, 1f, 0.1f };
             WritePoint(message.arms, MediaPipePacket.LeftElbow, new Vector3(0.1f, 0.2f, 0.3f));
 
-            // 左腕だけ使え、y は上向きに反転していること
+            // 左腕だけ使え、x は映像の右向き・y は上向きに反転していること
             Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
             Assert.That(body.Left.HasArm, Is.True);
             Assert.That(body.Right.HasArm, Is.False);
-            Assert.That(Vector3.Distance(body.Left.Elbow, new Vector3(0.1f, -0.2f, 0.3f)), Is.LessThan(1e-5f));
+            Assert.That(Vector3.Distance(body.Left.Elbow, new Vector3(-0.1f, -0.2f, 0.3f)), Is.LessThan(1e-5f));
         }
 
         [Test]
@@ -96,11 +96,11 @@ namespace VRCast.Tests
             message.rightHand = new float[0];
             WritePoint(message.leftHand, 20, new Vector3(0.01f, 0.02f, 0.03f));
 
-            // 左手は 21 点（y 反転）、右手は無しになること
+            // 左手は 21 点（x・y 反転）、右手は無しになること
             Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
             Assert.That(body.Left.HasHand, Is.True);
             Assert.That(body.Left.Hand.Length, Is.EqualTo(MediaPipePacket.HandPointCount));
-            Assert.That(Vector3.Distance(body.Left.Hand[20], new Vector3(0.01f, -0.02f, 0.03f)), Is.LessThan(1e-5f));
+            Assert.That(Vector3.Distance(body.Left.Hand[20], new Vector3(-0.01f, -0.02f, 0.03f)), Is.LessThan(1e-5f));
             Assert.That(body.Right.HasHand, Is.False);
         }
 
