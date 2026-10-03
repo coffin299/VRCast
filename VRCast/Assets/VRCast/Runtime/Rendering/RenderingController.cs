@@ -26,6 +26,7 @@ namespace VRCast.Rendering
         // カメラ正面（アバターの正面）から当てるときのワールドの向き。カメラは +Z 側から -Z を向く
         private const float FrontYaw = 180f;
 
+        private readonly AvatarMaterials _avatarMaterials = new AvatarMaterials();
         private UnityEngine.Camera _camera;
         private Light _light;
         private AppSettings _settings;
@@ -103,6 +104,17 @@ namespace VRCast.Rendering
             }
         }
 
+        public float AvatarBrightness
+        {
+            get => _settings.avatarBrightness;
+            set
+            {
+                _settings.avatarBrightness = Mathf.Clamp(
+                    value, AppSettings.MinAvatarBrightness, AppSettings.MaxAvatarBrightness);
+                _avatarMaterials.Apply(_settings.avatarBrightness);
+            }
+        }
+
         public int Width => Screen.width;
         public int Height => Screen.height;
 
@@ -126,13 +138,23 @@ namespace VRCast.Rendering
         }
 
         /// <summary>
-        /// 設定値を直接書き換えた後（全設定のリセット等）に、背景・太陽光・環境光を反映し直す。
+        /// 設定値を直接書き換えた後（全設定のリセット等）に、背景・太陽光・環境光・アバターの明るさを反映し直す。
         /// </summary>
         public void ApplyAll()
         {
             ApplyBackground();
             ApplyLight();
             ApplyAmbient();
+            _avatarMaterials.Apply(_settings.avatarBrightness);
+        }
+
+        /// <summary>
+        /// 読み込んだアバターのマテリアルを登録し、保存済みの明るさを反映する。
+        /// </summary>
+        public void SetAvatar(GameObject instance)
+        {
+            _avatarMaterials.SetAvatar(instance);
+            _avatarMaterials.Apply(_settings.avatarBrightness);
         }
 
         /// <summary>

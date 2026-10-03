@@ -200,6 +200,16 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Load_OutOfRangeAvatarBrightness_IsClamped()
+        {
+            _store.Save(new AppSettings { avatarBrightness = 0f });
+
+            // 範囲外のアバターの明るさは下限へ丸められること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.avatarBrightness, Is.EqualTo(AppSettings.MinAvatarBrightness));
+        }
+
+        [Test]
         public void Load_OutOfRangeVoiceScale_IsClamped()
         {
             _store.Save(new AppSettings { lipSyncVoiceScale = 0f });

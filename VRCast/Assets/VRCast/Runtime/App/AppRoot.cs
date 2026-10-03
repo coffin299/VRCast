@@ -29,6 +29,7 @@ namespace VRCast.App
         private MicrophoneInput _microphone;
         private TrackingReceiver _tracker;
         private TrackingSkeletonView _skeleton;
+        private RenderingController _rendering;
         private string _initialAvatarPath;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -69,8 +70,8 @@ namespace VRCast.App
 
             // 背景・解像度・ライト（Bootstrap 未実行時は既定値で動かす）
             _settings = AppBootstrap.Settings ?? new AppSettings();
-            var rendering = gameObject.AddComponent<RenderingController>();
-            rendering.Initialize(mainCamera, _settings);
+            _rendering = gameObject.AddComponent<RenderingController>();
+            _rendering.Initialize(mainCamera, _settings);
 
             // 仮想カメラ出力（描画結果を受け取るためカメラに付ける）
             var virtualCamera = mainCamera.gameObject.AddComponent<VirtualCameraOutput>();
@@ -98,7 +99,7 @@ namespace VRCast.App
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
-                _session, _orbit, rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, fileDrop,
+                _session, _orbit, _rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, fileDrop,
                 _settings, _initialAvatarPath);
         }
 
@@ -149,6 +150,9 @@ namespace VRCast.App
                 ? avatar.Animator.GetBoneTransform(HumanBodyBones.Hips)
                 : null;
             _skeleton.SetAnchor(root, hips);
+
+            // アバターの明るさ（マテリアルの色の倍率）を反映
+            _rendering.SetAvatar(avatar.Instance);
 
             // アバター本体（Humanoid は骨格基準）が映るようにカメラを合わせる
             _orbit.Frame(avatar.CalculateFramingBounds());

@@ -24,6 +24,10 @@ namespace VRCast.Core
         public const float MinLightTemperature = 2500f;
         public const float MaxLightTemperature = 10000f;
 
+        // アバターの明るさ（マテリアルの色の倍率）の範囲
+        public const float MinAvatarBrightness = 0.5f;
+        public const float MaxAvatarBrightness = 2.5f;
+
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
         public const float MaxMicGain = 10f;
@@ -73,6 +77,9 @@ namespace VRCast.Core
         // 太陽光の色温度（6500K でほぼ白、低いほど暖色）と環境光の明るさ
         public float lightTemperature = 6000f;
         public float ambientIntensity = 1.2f;
+
+        // アバターの明るさ（1 = マテリアルのまま。シェーダーの明るさ上限を超えて明るくする）
+        public float avatarBrightness = 1f;
 
         // 待機ポーズ（0 = T ポーズのまま、1 = 腕を下ろし切る / 肘を曲げ切る）。既定は気を付け
         public float poseArmDown = 1f;
@@ -162,6 +169,8 @@ namespace VRCast.Core
             lightTemperature = Mathf.Clamp(lightTemperature, MinLightTemperature, MaxLightTemperature);
             // 環境光は 0〜上限に制限
             ambientIntensity = Mathf.Clamp(ambientIntensity, 0f, MaxAmbientIntensity);
+            // アバターの明るさは範囲内に制限
+            avatarBrightness = Mathf.Clamp(avatarBrightness, MinAvatarBrightness, MaxAvatarBrightness);
             // ポーズの度合いは 0〜1 に制限
             poseArmDown = Mathf.Clamp01(poseArmDown);
             // 肘の曲げも同様
