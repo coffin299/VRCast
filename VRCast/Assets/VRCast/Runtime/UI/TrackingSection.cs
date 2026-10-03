@@ -17,6 +17,12 @@ namespace VRCast.UI
         // 入力元の表示名（TrackingSource の並び順）
         private static readonly string[] SourceLabels = { "MediaPipe (face + hands)", "OpenSeeFace (face only)" };
 
+        // 体の動かし方の表示名（BodyMotion の並び順）
+        private static readonly string[] BodyMotionLabels =
+        {
+            "Body: lean (feet fixed)", "Body: move (whole body)", "Body: lean + move",
+        };
+
         private readonly AvatarComponentCache _avatar;
         private readonly IFaceTrackingProvider _tracker;
         private readonly TrackerProcess _process;
@@ -55,8 +61,7 @@ namespace VRCast.UI
             DrawPort();
             _settings.trackingMirror = GUILayout.Toggle(_settings.trackingMirror, " Mirror");
             DrawRawView();
-            _settings.trackingBodyLean = GuiControls.Slider(
-                "Body lean", _settings.trackingBodyLean, 0f, AppSettings.MaxTrackingBodyLean);
+            DrawBodyMotion();
             _settings.trackingGaze = GuiControls.Slider("Eye gaze", _settings.trackingGaze, 0f, AppSettings.MaxTrackingGaze);
             DrawWinkNote();
             DrawCalibrate();
@@ -89,6 +94,20 @@ namespace VRCast.UI
             {
                 GUILayout.Label(driver.IsTracking ? "Arms / hands: tracking" : "Arms / hands: not visible (idle pose)");
             }
+        }
+
+        private void DrawBodyMotion()
+        {
+            // 頭の位置に合わせた体の動かし方（傾き / 体全体の移動 / 両方）と強さ
+            int current = (int)_settings.trackingBodyMotion;
+            int selected = GuiControls.Selector(BodyMotionLabels, current, null);
+            if (selected != current && selected >= 0)
+            {
+                _settings.trackingBodyMotion = (BodyMotion)selected;
+            }
+
+            _settings.trackingBodyLean = GuiControls.Slider(
+                "Body motion", _settings.trackingBodyLean, 0f, AppSettings.MaxTrackingBodyLean);
         }
 
         private void DrawRawView()

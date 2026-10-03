@@ -143,5 +143,15 @@ namespace VRCast.Tests
             AppSettings settings = _store.Load();
             Assert.That(settings.trackingSource, Is.EqualTo(TrackingSource.MediaPipe));
         }
+
+        [Test]
+        public void Load_UnknownBodyMotion_FallsBackToLean()
+        {
+            _store.Save(new AppSettings { trackingBodyMotion = (BodyMotion)99 });
+
+            // 未知の体の動かし方は既定の傾きへ補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.trackingBodyMotion, Is.EqualTo(BodyMotion.Lean));
+        }
     }
 }
