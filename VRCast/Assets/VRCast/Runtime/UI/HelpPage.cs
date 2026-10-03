@@ -1,43 +1,28 @@
-using System;
-using System.IO;
 using UnityEngine;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// 同梱のヘルプページ（StreamingAssets/Help/index.html）を既定のブラウザで開く。
-    /// ページ側で日本語 / 英語を切り替える（ブラウザの言語に合わせ、手動切替も可）。
+    /// Web のヘルプページ（webpage ブランチを GitHub Pages で公開）を既定のブラウザで開く。
+    /// 操作パネルの表示言語をページへ渡し、ページ側でも日本語 / 英語を切り替えられる。
     /// </summary>
     public static class HelpPage
     {
-        // 同梱フォルダ名（StreamingAssets 内）とファイル名
-        private const string FolderName = "Help";
-        private const string FileName = "index.html";
+        // 公開サイトのトップ（概要）とヘルプ
+        public const string SiteUrl = "https://coffin299.github.io/VRCast/";
+        public const string Url = SiteUrl + "help/";
 
         /// <summary>
-        /// ヘルプページのフルパス。
+        /// 表示言語付きのヘルプページの URL。
         /// </summary>
-        public static string FilePath => Path.Combine(Application.streamingAssetsPath, FolderName, FileName);
+        public static string LocalizedUrl => Url + "?lang=" + (Loc.IsJapanese ? "ja" : "en");
 
         /// <summary>
-        /// ヘルプページが同梱されていれば true。
+        /// ブラウザでヘルプページを開く。
         /// </summary>
-        public static bool Exists => File.Exists(FilePath);
-
-        /// <summary>
-        /// ブラウザでヘルプページを開く。無ければ false。
-        /// </summary>
-        public static bool Open()
+        public static void Open()
         {
-            // 同梱されていなければ開かない
-            if (!Exists)
-            {
-                return false;
-            }
-
-            // ローカルファイルを file:// の URL として開く
-            Application.OpenURL(new Uri(FilePath).AbsoluteUri);
-            return true;
+            Application.OpenURL(LocalizedUrl);
         }
     }
 }

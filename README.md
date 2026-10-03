@@ -17,6 +17,9 @@ OBS (Window Capture / Game Capture) / 仮想カメラ (Discord / Zoom など)
 
 利用者は Unity Editor・VCC・VRChat 用プロジェクトを常時起動しておく必要がない設計とする。
 
+- Web サイト（概要・ヘルプ、日本語 / 英語、ライト / ダーク）: <https://coffin299.github.io/VRCast/>
+  （ソースは [`webpage` ブランチ](https://github.com/coffin299/VRCast/tree/webpage)。GitHub Pages でブランチのルートを公開）
+
 ## 現在の状態
 
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
@@ -98,7 +101,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 
 - **Start**（はじめに、起動時に開く）: アバターの読み込み → 背景の透過 → OBS への取り込み → パネルを隠す、までを手順で案内する。
   読み込み・透過は完了 / 未完了を表示し、その場のボタン（ファイルを選ぶ / 透過にする）で操作できる。仮想カメラ・トラッキング・口パクのタブへも移動できる。
-- **ヘルプ**: 見出しの **?**、Start / Settings の **Open help** でヘルプページ（`StreamingAssets/Help/index.html`、日本語 / 英語）をブラウザで開く。
+- **ヘルプ**: 見出しの **?**、Start / Settings の **Open help** で Web のヘルプページ（[coffin299.github.io/VRCast/help](https://coffin299.github.io/VRCast/help/)、日本語 / 英語）をブラウザで開く（パネルの表示言語で開く）。
 - **表示言語**: **Settings** の Display language で「自動（OS に合わせる）」/ English / 日本語 を選べる（既定は自動。OS が日本語なら日本語、それ以外は英語）。
 - **UI の大きさ**: **Settings** の UI size で 75% / 100% / 125% / 150% / 200% を選べる（高解像度ディスプレイ向け）。
 - **全設定のリセット**: **Settings** の赤いボタン **Reset all settings** → 確認の **Yes, reset** で全ての設定を初期状態に戻す
@@ -230,6 +233,7 @@ Unity Hub で `VRCast/` フォルダを開くか、以下をコマンドライ�
 
 Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルドできる。
 ビルド時に `Assets/VRCast/Branding/AppIcon.png` をアプリアイコン（exe・タスクバー・タイトルバー）に設定する。
+色空間は VRChat と同じ Linear に設定する（Gamma のままだとアバターが VRChat より暗く見える）。初回は Editor でテクスチャの再インポートが走る。
 差し替える場合は同じパスに透過付きの正方形 PNG（512px 以上推奨）を置く。
 
 ### MediaPipe トラッカーの同梱

@@ -67,6 +67,9 @@ namespace VRCast.Editor.Build
             PlayerSettings.runInBackground = true;
             PlayerSettings.visibleInBackground = true;
 
+            // VRChat / VCC プロジェクトと同じ Linear にする（Gamma だとアバターの陰影が VRChat より暗くなる）
+            PlayerSettings.colorSpace = ColorSpace.Linear;
+
             // アプリアイコンを設定
             ApplyAppIcon();
 

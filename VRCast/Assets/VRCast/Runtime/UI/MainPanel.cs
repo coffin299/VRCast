@@ -251,14 +251,12 @@ namespace VRCast.UI
             GUILayout.FlexibleSpace();
             GUILayout.Label(Loc.T("Tab: hide", "Tab: 隠す"), _theme.Hint);
 
-            // ヘルプページ（同梱されていなければ押せない）
-            GUI.enabled = HelpPage.Exists;
+            // ヘルプページ（Web）
             if (GUILayout.Button("?", GUILayout.Width(HelpButtonWidth)))
             {
                 HelpPage.Open();
             }
 
-            GUI.enabled = true;
             GUILayout.EndHorizontal();
             GUILayout.Space(4f);
         }

@@ -72,14 +72,11 @@ namespace VRCast.UI
             GuiControls.Hint(Loc.T("Step-by-step guide and troubleshooting (opens in your browser)",
                 "使い方の手順とトラブルシューティング（ブラウザで開きます）"));
 
-            // 同梱されていないビルドでは押せない
-            GUI.enabled = HelpPage.Exists;
             if (GUILayout.Button(Loc.T("Open help", "ヘルプを開く")))
             {
                 HelpPage.Open();
             }
 
-            GUI.enabled = true;
             GuiControls.EndCard();
         }
 
