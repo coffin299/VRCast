@@ -11,17 +11,8 @@ namespace VRCast.Tracking
     [DefaultExecutionOrder(-90)]
     public class HandTrackingDriver : MonoBehaviour
     {
-        // 平滑化（One Euro）: 静止時のカットオフ（Hz）と速度への追従係数。腕は単位ベクトル、手は m 単位の点
-        private const float ArmMinCutoff = 0.8f;
-        private const float ArmBeta = 0.3f;
-
-        // 腕の奥行き（カメラ方向）の倍率。単眼推定の奥行きは揺れが大きいため弱めて使う
-        private const float ArmDepthScale = 0.5f;
-        private const float HandMinCutoff = 1.5f;
-        private const float HandBeta = 20f;
-
-        // 見失ってから待機ポーズへ戻し始めるまでの猶予（可視度のちらつきで腕が落ちないように）
-        private const float LostGraceSeconds = 0.25f;
+        // 点の追従速度（大きいほど速い、1 秒あたり）
+        private const float Smoothing = 15f;
 
         // 映った・消えたときに待機ポーズとの間を切り替える秒数
         private const float FadeSeconds = 0.3f;
@@ -94,30 +85,9 @@ namespace VRCast.Tracking
             public Vector3 LowerDirection;
             public Vector3[] HandPoints = new Vector3[MediaPipePacket.HandPointCount];
 
-            // 上腕・前腕の向きと手の各点の平滑化フィルター
-            public OneEuroFilter UpperFilter = new OneEuroFilter(ArmMinCutoff, ArmBeta);
-            public OneEuroFilter LowerFilter = new OneEuroFilter(ArmMinCutoff, ArmBeta);
-            public OneEuroFilter[] HandFilters = CreateHandFilters();
-
-            // 最後に腕・手が映っていた時刻（見失った直後の猶予の判定用）
-            public float ArmSeenTime = float.NegativeInfinity;
-            public float HandSeenTime = float.NegativeInfinity;
-
             // 待機ポーズ（0）とトラッキング（1）の混ぜ具合
             public float ArmWeight;
             public float HandWeight;
-
-            private static OneEuroFilter[] CreateHandFilters()
-            {
-                // 手の点ごとに 1 つ
-                var filters = new OneEuroFilter[MediaPipePacket.HandPointCount];
-                for (int i = 0; i < filters.Length; i++)
-                {
-                    filters[i] = new OneEuroFilter(HandMinCutoff, HandBeta);
-                }
-
-                return filters;
-            }
         }
 
         private IBodyTrackingProvider _provider;
@@ -292,55 +262,34 @@ namespace VRCast.Tracking
                 return;
             }
 
-            float deltaTime = Time.deltaTime;
-            float fade = deltaTime / FadeSeconds;
+            float blend = 1f - Mathf.Exp(-Smoothing * Time.deltaTime);
+            float fade = Time.deltaTime / FadeSeconds;
 
-            // 腕: 映っていれば向きを追従（待機ポーズから戻ってきた直後は平滑化せず合わせる）
+            // 腕: 映っていれば向きを追従（待機ポーズから戻ってきた直後は補間せず合わせる）
             bool hasArm = received && data.HasArm;
             if (hasArm)
             {
-                Vector3 upper = ToAvatar(DampDepth(data.Elbow - data.Shoulder)).normalized;
-                Vector3 lower = ToAvatar(DampDepth(data.Wrist - data.Elbow)).normalized;
-                if (rig.ArmWeight <= 0f)
-                {
-                    rig.UpperFilter.Reset(upper);
-                    rig.LowerFilter.Reset(lower);
-                }
-
-                rig.UpperDirection = rig.UpperFilter.Filter(upper, deltaTime);
-                rig.LowerDirection = rig.LowerFilter.Filter(lower, deltaTime);
-                rig.ArmSeenTime = Time.time;
+                Vector3 upper = ToAvatar(data.Elbow - data.Shoulder).normalized;
+                Vector3 lower = ToAvatar(data.Wrist - data.Elbow).normalized;
+                bool following = rig.ArmWeight > 0f;
+                rig.UpperDirection = following ? Vector3.Slerp(rig.UpperDirection, upper, blend) : upper;
+                rig.LowerDirection = following ? Vector3.Slerp(rig.LowerDirection, lower, blend) : lower;
             }
 
             // 手: 同様に 21 点を追従
             bool hasHand = received && data.HasHand;
             if (hasHand)
             {
+                float t = rig.HandWeight > 0f ? blend : 1f;
                 for (int i = 0; i < rig.HandPoints.Length; i++)
                 {
-                    Vector3 point = ToAvatar(data.Hand[i]);
-                    if (rig.HandWeight <= 0f)
-                    {
-                        rig.HandFilters[i].Reset(point);
-                    }
-
-                    rig.HandPoints[i] = rig.HandFilters[i].Filter(point, deltaTime);
+                    rig.HandPoints[i] = Vector3.Lerp(rig.HandPoints[i], ToAvatar(data.Hand[i]), t);
                 }
-
-                rig.HandSeenTime = Time.time;
             }
 
-            // 映っている間（見失って猶予内も含む）はトラッキングへ、消えたら待機ポーズへ徐々に切り替える（最後の値を保持したまま）
-            bool keepArm = Time.time - rig.ArmSeenTime < LostGraceSeconds;
-            bool keepHand = Time.time - rig.HandSeenTime < LostGraceSeconds;
-            rig.ArmWeight = Mathf.MoveTowards(rig.ArmWeight, keepArm ? 1f : 0f, fade);
-            rig.HandWeight = Mathf.MoveTowards(rig.HandWeight, keepHand ? 1f : 0f, fade);
-        }
-
-        private static Vector3 DampDepth(Vector3 cameraVector)
-        {
-            // カメラ基準の奥行き成分だけを弱める
-            return new Vector3(cameraVector.x, cameraVector.y, cameraVector.z * ArmDepthScale);
+            // 映っている間はトラッキングへ、消えたら待機ポーズへ徐々に切り替える（最後の値を保持したまま）
+            rig.ArmWeight = Mathf.MoveTowards(rig.ArmWeight, hasArm ? 1f : 0f, fade);
+            rig.HandWeight = Mathf.MoveTowards(rig.HandWeight, hasHand ? 1f : 0f, fade);
         }
 
         private Vector3 ToAvatar(Vector3 cameraVector)
