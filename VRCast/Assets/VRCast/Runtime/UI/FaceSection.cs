@@ -13,6 +13,10 @@ namespace VRCast.UI
     /// </summary>
     public class FaceSection
     {
+        // 母音の表示名（VowelAnalyzer の並び A, I, U, E, O）
+        private static readonly string[] VowelLabels = { "A", "I", "U", "E", "O" };
+        private static readonly string[] VowelLabelsJapanese = { "あ", "い", "う", "え", "お" };
+
         private readonly AvatarComponentCache _avatar;
         private readonly MicrophoneInput _microphone;
         private readonly AppSettings _settings;
@@ -85,9 +89,43 @@ namespace VRCast.UI
                 GuiControls.Slider(Loc.T("Level", "音量"), _microphone.Level, 0f, 1f);
                 GUI.enabled = true;
                 GuiControls.Hint(_microphone.Status);
+                DrawVowels(lipSync);
             }
 
             GuiControls.EndCard();
+        }
+
+        private void DrawVowels(LipSyncController lipSync)
+        {
+            _settings.lipSyncVowels = GUILayout.Toggle(
+                _settings.lipSyncVowels, Loc.T("Vowel mouth shapes (A I U E O)", "母音で口の形を変える（あいうえお）"));
+
+            // 無効時は補正・判定結果を出さない
+            if (!_settings.lipSyncVowels)
+            {
+                return;
+            }
+
+            // あいうえおの Viseme が無いアバターは音量のみ
+            if (lipSync != null && lipSync.IsAvailable && !lipSync.HasVowels)
+            {
+                GuiControls.Hint(Loc.T("This avatar has no vowel visemes (volume only)",
+                    "このアバターには母音の Viseme がありません（音量のみ）"));
+            }
+
+            // 判定がずれるときの補正（声が高いほど右）
+            _settings.lipSyncVoiceScale = GuiControls.Slider(Loc.T("Voice pitch", "声の高さ補正"),
+                _settings.lipSyncVoiceScale, AppSettings.MinVoiceScale, AppSettings.MaxVoiceScale);
+
+            // 判定中の母音と推定したフォルマント（声が出ている間のみ）
+            if (_microphone.Level > 0f)
+            {
+                Vector2 formants = _microphone.Formants;
+                int dominant = _microphone.DominantVowel;
+                string vowel = Loc.T(VowelLabels[dominant], VowelLabelsJapanese[dominant]);
+                GuiControls.Hint(Loc.T("Vowel", "母音") + $": {vowel}"
+                    + $"    F1 {formants.x:F0} Hz / F2 {formants.y:F0} Hz");
+            }
         }
 
         private void DrawDeviceSelector()

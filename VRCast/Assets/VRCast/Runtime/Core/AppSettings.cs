@@ -24,6 +24,10 @@ namespace VRCast.Core
         public const float MaxMicGain = 10f;
         public const float MaxMicThreshold = 0.2f;
 
+        // 母音判定の声の高さ補正（代表フォルマントに掛ける倍率）の範囲
+        public const float MinVoiceScale = 0.8f;
+        public const float MaxVoiceScale = 1.3f;
+
         // フェイストラッキング受信ポートの既定値（OpenSeeFace / VSeeFace と同じ）と範囲
         public const int DefaultTrackingPort = 11573;
         public const int MinTrackingPort = 1024;
@@ -79,6 +83,10 @@ namespace VRCast.Core
         public float micGain = 1f;
         public float micThreshold = 0.01f;
 
+        // 母音（あいうえお）に合わせた口の形（Viseme のアバターのみ。OFF なら音量で aa だけ）と声の高さ補正
+        public bool lipSyncVowels = true;
+        public float lipSyncVoiceScale = 1f;
+
         // トラッキング（入力元のトラッカーから UDP 受信。鏡像 = 本人の動きを鏡のように反映）
         public bool trackingEnabled;
         public TrackingSource trackingSource = TrackingSource.MediaPipe;
@@ -132,6 +140,8 @@ namespace VRCast.Core
             micGain = Mathf.Clamp(micGain, MinMicGain, MaxMicGain);
             // しきい値は 0〜上限に制限
             micThreshold = Mathf.Clamp(micThreshold, 0f, MaxMicThreshold);
+            // 声の高さ補正は範囲内に制限
+            lipSyncVoiceScale = Mathf.Clamp(lipSyncVoiceScale, MinVoiceScale, MaxVoiceScale);
             // 未知の入力元（手編集・将来版の設定）は既定の MediaPipe へ
             if (!Enum.IsDefined(typeof(TrackingSource), trackingSource))
             {
