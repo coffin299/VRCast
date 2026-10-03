@@ -225,6 +225,34 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 確認結果: 同梱 OpenSeeFace（v1.20.5、`StreamingAssets/OpenSeeFace/` へ zip を展開）の自動起動・カメラ選択・受信・アバターへの反映を確認。
 頭の位置による上半身の傾き（前後・左右の向き、既定の強さ）も確認。
 
+### 追加: MediaPipe への移行と腕・手のトラッキング
+
+手を動かすため、既定の入力元を MediaPipe に変更（OpenSeeFace は代替として残し、Tracking セクションで切替）。
+
+- トラッカー: `Tools/MediaPipeTracker/vrcast_tracker.py`（Face / Pose（lite）/ Hand Landmarker、動画モード、CPU）。
+  引数は facetracker と同じ形（`-l 1` / `-c` / `-i` / `-p`、追加で `--no-hands`）にして起動処理を共通化。
+  カメラ名は DirectShow（pygrabber）で取得し、UTF-8 で出力。`build.ps1` で exe 化し、モデル 3 種と一緒に `StreamingAssets/MediaPipeTracker/` へ配置
+  （仮想環境・中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build`、`.pyc` を作らない設定）
+- 送信形式: 1 フレーム 1 パケットの UTF-8 JSON（プロトコル番号 `v`、顔の変換行列 4×4、BlendShape 51 種、腕 6 点と可視度、本人の左手・右手 21 点）。
+  手の左右は体の手首に近い方で決め、体が映っていなければ左右ラベル（非鏡像入力では逆になる）で決める
+- Runtime:
+  - `MediaPipePacket`: 頭の回転 `(x, -y, -z, w)`・位置 `(x, y, -z)`（cm → dm）、`eyeBlink*` → 目の開き、`jawOpen` → 口、
+    `eyeLook*` → 視線（1.0 = 30°）、腕・手の点は `(x, -y, z)`。壊れた部分（顔・腕・手）だけを無効にする
+  - `TrackingReceiver`（旧 `OpenSeeFaceReceiver`）: 入力元に合わせて解析を切替。顔と腕手の途絶は別々に判定
+  - `TrackerProcess`（旧 `FaceTrackerProcess`）: 入力元ごとの同梱版、入力元・手の ON/OFF の変更で一覧取得・再起動
+  - `HandTrackingDriver`: 上腕 → 前腕 → 手首（手首 → 中指の付け根と、小指 → 人差し指の付け根で決まる向き）→ 指 15 節の順に、
+    子ボーンへの向きをトラッキングの点の向きへ回す。肩・肘・手首の可視度が 0.5 未満の腕、映っていない手は 0.3 秒で待機ポーズへ戻す。
+    両腕とも待機ポーズの間はボーンに触れず、操作中に待機ポーズが変更されたら記録し直す。Mirror では本人の右腕 → アバターの左腕
+- UI: 入力元の切替、Arms / hands の ON/OFF と状態表示
+
+確認項目:
+
+- 腕を上げ下げ・前後に動かしたときアバターの腕が同じ向きに動くこと（Mirror ON/OFF の両方）
+- 指を曲げ伸ばし・開閉したとき指が追従すること、手首の向き（手のひら / 手の甲）が正しいこと
+- 腕を画面外へ下ろすと待機ポーズへ戻ること
+- MediaPipe での頭の向き・まばたき（左右）・口・視線の向き（BlendShape の左右が本人基準であること）
+- CPU 負荷とフレームレート（腕・手 OFF で手の推定が止まること）
+
 ## Milestone 6 — OSC
 
 OSC 受信・送信、Parameter Mapping（Milestone 3 から移した Animator Parameter を含む）。OSC 無効でも基本表示は動作すること。

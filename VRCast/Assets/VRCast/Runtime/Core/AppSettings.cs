@@ -68,14 +68,18 @@ namespace VRCast.Core
         public float micGain = 1f;
         public float micThreshold = 0.01f;
 
-        // フェイストラッキング（OpenSeeFace の UDP 受信。鏡像 = 本人の動きを鏡のように反映）
+        // トラッキング（入力元のトラッカーから UDP 受信。鏡像 = 本人の動きを鏡のように反映）
         public bool trackingEnabled;
+        public TrackingSource trackingSource = TrackingSource.MediaPipe;
         public int trackingPort = DefaultTrackingPort;
         public bool trackingMirror = true;
         public float trackingBodyLean = 1f;
         public float trackingGaze = 1f;
 
-        // VRCast から起動する OpenSeeFace（facetracker.exe のパスと、使うカメラのデバイス名）
+        // 腕・手（指）のトラッキング（MediaPipe のみ）
+        public bool trackingHands = true;
+
+        // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
         public string trackerCamera = string.Empty;
 
@@ -108,6 +112,12 @@ namespace VRCast.Core
             micGain = Mathf.Clamp(micGain, MinMicGain, MaxMicGain);
             // しきい値は 0〜上限に制限
             micThreshold = Mathf.Clamp(micThreshold, 0f, MaxMicThreshold);
+            // 未知の入力元（手編集・将来版の設定）は既定の MediaPipe へ
+            if (!Enum.IsDefined(typeof(TrackingSource), trackingSource))
+            {
+                trackingSource = TrackingSource.MediaPipe;
+            }
+
             // 受信ポートは特権ポートを避けた範囲に制限
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
             // 上半身の傾きの強さは 0〜上限に制限

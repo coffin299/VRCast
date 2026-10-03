@@ -36,6 +36,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 揺れもの（PhysBone 近似・コライダー） | 済 |
 | カメラトラッキング（OpenSeeFace 同梱: 頭の向き・上半身の傾き・まばたき・口） | 済 |
 | 視線（目ボーン）・左右別ウインク | 済（要確認） |
+| MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 実装済（要確認） |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
 
@@ -87,23 +88,31 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 **Face / Physics** で揺れもの（PhysBone 近似）、自動まばたき、マイクによる口パク（リップシンク）を ON/OFF できる。マイクは `<` `>` で選択し、
 Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
 
-**Tracking** で Web カメラによるフェイストラッキング（頭の向き・まばたき・口の開閉）を ON にできる。
-トラッカーには [OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)（`facetracker.exe`）を同梱し、VRCast が裏で起動して UDP で受信する。
+**Tracking** で Web カメラによるトラッキング（頭の向き・まばたき・口の開閉・視線、MediaPipe では腕・手・指も）を ON にできる。
+トラッカーは別プロセスとして同梱し、VRCast が裏で起動して UDP で受信する。入力元は `<` `>` で切り替える。
 
-1. **Face tracking** を ON にすると、カメラ一覧を取得して先頭のカメラで自動起動する。
+| 入力元 | 内容 | 実行ファイル |
+| :--- | :--- | :--- |
+| MediaPipe（既定） | 顔 + 腕・手・指（**Arms / hands** で ON/OFF） | `vrcast_tracker.exe`（[MediaPipe](https://ai.google.dev/edge/mediapipe) を使う同梱ツール） |
+| OpenSeeFace | 顔のみ | `facetracker.exe`（[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)） |
+
+1. **Tracking (webcam)** を ON にすると、カメラ一覧を取得して先頭のカメラで自動起動する。
 2. `<` `>` でカメラをデバイス名で選ぶと起動し直す（カメラ名は保存され、次回起動時も同じカメラを使う）。
 3. 起動に失敗した場合はトラッカーの最後の出力が表示され、5 秒ごとに再試行する（カメラを他のアプリが使用中など）。
    カメラを解放したら **Restart tracker** ですぐ再試行できる。OFF にするか VRCast を終了するとトラッカーも終了する。
 
-同梱版が無いビルドでは **facetracker.exe path** に `facetracker.exe` のフルパスを入力する
-（VSeeFace に同梱の `VSeeFace_Data\StreamingAssets\Binary\facetracker.exe` も使用可）。手動で起動してもよい:
+同梱版が無いビルドでは、パス入力欄に入力元の実行ファイル（`vrcast_tracker.exe` / `facetracker.exe`）のフルパスを入力する
+（OpenSeeFace は VSeeFace に同梱の `VSeeFace_Data\StreamingAssets\Binary\facetracker.exe` も使用可）。手動で起動してもよい（引数はどちらも同じ）:
 
 ```powershell
 # カメラ番号とデバイス名の確認
-.\facetracker.exe -l 1
-# カメラ 0 を 127.0.0.1:11573 へ送信（-v 3 -P 1 でプレビュー表示）
-.\facetracker.exe -c 0 -i 127.0.0.1 -p 11573
+.\vrcast_tracker.exe -l 1
+# カメラ 0 を 127.0.0.1:11573 へ送信（--no-hands で手の推定を止める）
+.\vrcast_tracker.exe -c 0 -i 127.0.0.1 -p 11573
 ```
+
+- 腕は肩・肘・手首がカメラに映っている間だけ動き、画面外へ下ろすと待機ポーズ（Pose の Arms down / Elbow bend）へ戻る。
+- 指は手が映っている間、曲げ伸ばし・開閉と手首の向きを反映する。単眼カメラのため奥行き方向の動きは不正確になりやすい。
 
 - 受信は `127.0.0.1` のみ（外部からの入力は受け付けない）。ポートはパネルで変更可（既定 11573）。
 - 受信開始時の顔の向き・位置を正面とする。ずれたらカメラを見て **Calibrate** を押す。**Mirror** で左右の反映を切り替える。
@@ -137,6 +146,8 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 │   └── com.vrcast.converter/     アバター変換パッケージ
 │       ├── Runtime/              共有フォーマット定義 (VRCast.AvatarFormat)
 │       └── Editor/               Exporter (VRCast.Converter.Editor)
+├── Tools/
+│   └── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 で exe 化)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
         ├── Runtime/              スタンドアロンで動くコード (VRCast.Runtime)
@@ -158,9 +169,23 @@ Unity Hub で `VRCast/` フォルダを開くか、以下をコマンドライ�
 
 Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルドできる。
 
-### OpenSeeFace の同梱
+### MediaPipe トラッカーの同梱
 
-フェイストラッキング用の OpenSeeFace はリポジトリに含めない（サイズが大きいため `.gitignore` 済み）。ビルド前に
+MediaPipe トラッカー（`Tools/MediaPipeTracker/`）は exe 化したものをリポジトリに含めない（サイズが大きいため `.gitignore` 済み）。
+ビルド前に一度、Python 3.12（[python.org](https://www.python.org/) 版、`py` ランチャー付き）を入れた環境でリポジトリ直下から実行する:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
+```
+
+- 仮想環境・中間ファイルは `%LOCALAPPDATA%\VRCast\tracker-build` に作られる（リポジトリは汚さない。`.pyc` も作らない設定）。
+- 出力（`vrcast_tracker.exe` 一式とモデル 3 種）は `VRCast/Assets/StreamingAssets/MediaPipeTracker/` に置かれ、Unity が StreamingAssets ごとビルドへ同梱する。
+- 実行ファイルは `MediaPipeTracker/` 以下を再帰的に探す。見つからない場合もビルドは続行し、警告ログを出す。
+- 配布時は MediaPipe（Apache-2.0）と同梱ライブラリのライセンス表記を含めること。
+
+### OpenSeeFace の同梱（任意）
+
+代替の入力元 OpenSeeFace はリポジトリに含めない（サイズが大きいため `.gitignore` 済み）。使う場合はビルド前に
 [OpenSeeFace Releases](https://github.com/emilianavt/OpenSeeFace/releases) の zip を展開し、中身（`Binary/`・ライセンス類を含む）を
 `VRCast/Assets/StreamingAssets/OpenSeeFace/` に置く。Unity が StreamingAssets ごとビルドへ同梱する。
 

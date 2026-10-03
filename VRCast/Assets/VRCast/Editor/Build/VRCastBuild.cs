@@ -4,6 +4,7 @@ using UnityEditor;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using VRCast.Core;
 using VRCast.Tracking;
 
 namespace VRCast.Editor.Build
@@ -85,11 +86,15 @@ namespace VRCast.Editor.Build
 
         private static void WarnIfTrackerMissing()
         {
-            // StreamingAssets/OpenSeeFace 以下に facetracker.exe があれば同梱される
-            if (FaceTrackerProcess.FindBundled(Application.streamingAssetsPath) == null)
+            // 入力元ごとに StreamingAssets/(フォルダ) 以下に実行ファイルがあれば同梱される
+            foreach (TrackingSource source in (TrackingSource[])System.Enum.GetValues(typeof(TrackingSource)))
             {
-                Debug.LogWarning("[VRCast][Build] OpenSeeFace not found in Assets/StreamingAssets/OpenSeeFace. "
-                    + "Face tracking will require a facetracker.exe path.");
+                if (TrackerProcess.FindBundled(Application.streamingAssetsPath, source) == null)
+                {
+                    string executable = TrackerProcess.ExecutableOf(source);
+                    Debug.LogWarning($"[VRCast][Build] {executable} not found in Assets/StreamingAssets/"
+                        + $"{TrackerProcess.FolderOf(source)}. {source} tracking will require an {executable} path.");
+                }
             }
         }
 

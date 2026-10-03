@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
@@ -10,26 +11,23 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// OpenSeeFace（facetracker.exe）を管理する。アプリ全体で 1 つ。
-    /// 既定は StreamingAssets に同梱した facetracker を使い、trackingEnabled の間は選択カメラで自動起動・異常終了時は再起動する。
-    /// カメラ一覧は「facetracker.exe -l 1」の出力から取得し、カメラはデバイス名で保存して起動時に番号へ解決する。
+    /// 入力元のトラッカー（MediaPipe: vrcast_tracker.exe / OpenSeeFace: facetracker.exe）を管理する。アプリ全体で 1 つ。
+    /// 既定は StreamingAssets に同梱した実行ファイルを使い、trackingEnabled の間は選択カメラで自動起動・異常終了時は再起動する。
+    /// どちらも同じ引数（一覧 "-l 1"、起動 "-c 番号 -i 127.0.0.1 -p ポート"）で扱い、カメラはデバイス名で保存して起動時に番号へ解決する。
     /// </summary>
-    public class FaceTrackerProcess : MonoBehaviour
+    public class TrackerProcess : MonoBehaviour
     {
-        /// <summary>
-        /// 同梱版を置く StreamingAssets 内のフォルダ名と実行ファイル名。
-        /// </summary>
-        public const string BundledFolder = "OpenSeeFace";
-        public const string ExecutableName = "facetracker.exe";
-
         // ログのカテゴリ名
         private const string LogCategory = "Tracker";
 
-        // カメラ一覧取得の待ち時間上限（ミリ秒）
-        private const int ListTimeoutMilliseconds = 15000;
+        // カメラ一覧取得の待ち時間上限（ミリ秒、MediaPipe 版は展開・読込に数秒かかる）
+        private const int ListTimeoutMilliseconds = 30000;
 
         // 起動失敗・異常終了後に再起動するまでの間隔（秒、カメラ使用中等で連続起動しないように）
         private const float RestartInterval = 5f;
+
+        // MediaPipe 版で手の推定を止める引数（腕・手を使わないときの CPU 負荷軽減）
+        private const string NoHandsArgument = " --no-hands";
 
         // 一覧の 1 行（"0: カメラ名"）
         private static readonly Regex CameraLine = new Regex(@"^\s*(\d+)\s*:\s*(.+?)\s*$");
@@ -40,19 +38,23 @@ namespace VRCast.Tracking
         private string _pendingError;
         private string _lastOutput = string.Empty;
 
-        private AppSettings _settings;
+        // 入力元ごとの同梱版のフルパス（起動時に 1 回だけ探す。無ければ null）
+        private readonly Dictionary<TrackingSource, string> _bundledPaths = new Dictionary<TrackingSource, string>();
 
-        // 同梱版のフルパス（起動時に 1 回だけ探す。無ければ null）
-        private string _bundledPath;
+        private AppSettings _settings;
         private Process _process;
         private int _startedPort;
         private string _startedCamera;
+        private TrackingSource _startedSource;
+        private bool _startedHands;
         private float _nextStartTime;
-        private bool _listRequested;
+
+        // 一覧を取得済み（または取得中）の入力元。null なら未取得
+        private TrackingSource? _listedSource;
         private List<string> _cameras = new List<string>();
 
         /// <summary>
-        /// 最後に取得したカメラ名（インデックス = facetracker のカメラ番号）。
+        /// 最後に取得したカメラ名（インデックス = トラッカーのカメラ番号）。
         /// </summary>
         public IReadOnlyList<string> Cameras => _cameras;
 
@@ -61,21 +63,42 @@ namespace VRCast.Tracking
         public bool IsRunning => _process != null;
 
         /// <summary>
-        /// 同梱版の facetracker.exe が見つかったか（無ければ UI でパス入力を求める）。
+        /// 現在の入力元の同梱版が見つかったか（無ければ UI でパス入力を求める）。
         /// </summary>
-        public bool HasBundled => _bundledPath != null;
+        public bool HasBundled => _settings != null && _bundledPaths[_settings.trackingSource] != null;
 
         public string Status { get; private set; } = "Not started";
 
         public void Initialize(AppSettings settings)
         {
             _settings = settings;
-            _bundledPath = FindBundled(Application.streamingAssetsPath);
-            VRCastLog.Info(LogCategory, "Bundled facetracker: " + (_bundledPath ?? "not found"));
+
+            // 全入力元の同梱版を探しておく
+            foreach (TrackingSource source in (TrackingSource[])Enum.GetValues(typeof(TrackingSource)))
+            {
+                _bundledPaths[source] = FindBundled(Application.streamingAssetsPath, source);
+                VRCastLog.Info(LogCategory, $"Bundled {ExecutableOf(source)}: {_bundledPaths[source] ?? "not found"}");
+            }
         }
 
         /// <summary>
-        /// facetracker の一覧出力からカメラ名を番号順に取り出す（番号の欠けは空文字で埋める）。
+        /// 同梱版を置く StreamingAssets 内のフォルダ名。
+        /// </summary>
+        public static string FolderOf(TrackingSource source)
+        {
+            return source == TrackingSource.OpenSeeFace ? "OpenSeeFace" : "MediaPipeTracker";
+        }
+
+        /// <summary>
+        /// トラッカーの実行ファイル名。
+        /// </summary>
+        public static string ExecutableOf(TrackingSource source)
+        {
+            return source == TrackingSource.OpenSeeFace ? "facetracker.exe" : "vrcast_tracker.exe";
+        }
+
+        /// <summary>
+        /// トラッカーの一覧出力からカメラ名を番号順に取り出す（番号の欠けは空文字で埋める）。
         /// </summary>
         public static List<string> ParseCameraList(string output)
         {
@@ -113,17 +136,24 @@ namespace VRCast.Tracking
         /// </summary>
         public void RefreshCameras()
         {
-            _listRequested = true;
+            // 取得中なら何もしない（入力元が変わっていれば完了後に取り直す）
+            if (IsListing)
+            {
+                return;
+            }
 
-            // 取得中・実行ファイル無しなら何もしない
-            if (IsListing || !TryGetExecutable(out string path))
+            // 実行ファイル無しなら取得済み扱い（パスが設定されるまで繰り返さない）
+            TrackingSource source = _settings.trackingSource;
+            _listedSource = source;
+            if (!TryGetExecutable(out string path))
             {
                 return;
             }
 
             IsListing = true;
             Status = "Listing cameras...";
-            Task.Run(() => ListCameras(path));
+            bool utf8 = source == TrackingSource.MediaPipe;
+            Task.Run(() => ListCameras(path, utf8));
         }
 
         /// <summary>
@@ -157,8 +187,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 有効化後の初回は一覧を自動取得
-            if (!_listRequested)
+            // 有効化後の初回と入力元の変更時は一覧を自動取得
+            if (_listedSource != _settings.trackingSource)
             {
                 RefreshCameras();
             }
@@ -191,11 +221,19 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 受信ポート・カメラが変わったら起動し直す
-            if (_startedPort != _settings.trackingPort || _startedCamera != _settings.trackerCamera)
+            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無が変わったら起動し直す
+            bool changed = _startedPort != _settings.trackingPort || _startedCamera != _settings.trackerCamera
+                || _startedSource != _settings.trackingSource || _startedHands != UsesHands();
+            if (changed)
             {
                 Restart();
             }
+        }
+
+        private bool UsesHands()
+        {
+            // 手の推定を行うのは MediaPipe で腕・手が有効なときだけ
+            return _settings.trackingSource == TrackingSource.MediaPipe && _settings.trackingHands;
         }
 
         private void StartTracker()
@@ -219,13 +257,19 @@ namespace VRCast.Tracking
 
             try
             {
-                // ループバックの受信ポートへ送らせる
+                // ループバックの受信ポートへ送らせる（MediaPipe で腕・手が無効なら手の推定を止める）
                 _startedPort = _settings.trackingPort;
                 _startedCamera = _settings.trackerCamera;
-                var process = new Process
+                _startedSource = _settings.trackingSource;
+                _startedHands = UsesHands();
+                bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
+                string arguments = $"-c {camera} -i 127.0.0.1 -p {_startedPort}";
+                if (mediaPipe && !_startedHands)
                 {
-                    StartInfo = CreateStartInfo(path, $"-c {camera} -i 127.0.0.1 -p {_startedPort}"),
-                };
+                    arguments += NoHandsArgument;
+                }
+
+                var process = new Process { StartInfo = CreateStartInfo(path, arguments, mediaPipe) };
 
                 // 出力を読み続けないとバッファが詰まって停止するため、最後の行だけ保持する
                 process.OutputDataReceived += OnOutput;
@@ -236,7 +280,7 @@ namespace VRCast.Tracking
                 _process = process;
 
                 Status = $"Running: {_startedCamera}";
-                VRCastLog.Info(LogCategory, $"Started camera {camera} ({_startedCamera}) -> port {_startedPort}");
+                VRCastLog.Info(LogCategory, $"Started {_startedSource} camera {camera} ({_startedCamera}) -> port {_startedPort}");
             }
             catch (Exception e) when (e is InvalidOperationException || e is System.ComponentModel.Win32Exception)
             {
@@ -272,14 +316,14 @@ namespace VRCast.Tracking
             VRCastLog.Info(LogCategory, $"{Status}: {string.Join(", ", _cameras)}");
         }
 
-        private void ListCameras(string path)
+        private void ListCameras(string path, bool utf8)
         {
             // バックグラウンドスレッドで実行（Unity API は使わない）
             List<string> cameras = new List<string>();
             string error = null;
             try
             {
-                using (Process process = Process.Start(CreateStartInfo(path, "-l 1")))
+                using (Process process = Process.Start(CreateStartInfo(path, "-l 1", utf8)))
                 {
                     // 標準出力・エラー出力の両方を読み切る（片方が詰まると終了しない）
                     Task<string> output = process.StandardOutput.ReadToEndAsync();
@@ -314,27 +358,31 @@ namespace VRCast.Tracking
         private bool TryGetExecutable(out string path)
         {
             // 利用者指定のパスを優先し、無ければ同梱版
+            TrackingSource source = _settings.trackingSource;
+            string executable = ExecutableOf(source);
             string custom = PathUtility.NormalizeInput(_settings.trackerPath);
-            path = string.IsNullOrEmpty(custom) ? _bundledPath : custom;
+            path = string.IsNullOrEmpty(custom) ? _bundledPaths[source] : custom;
 
-            // 実在する .exe のみ受け付ける
-            bool valid = path != null && path.EndsWith(".exe", StringComparison.OrdinalIgnoreCase) && File.Exists(path);
+            // 入力元に合った名前の実在する実行ファイルのみ受け付ける（入力元の切替後に別のトラッカーを起動しないように）
+            bool valid = path != null
+                && string.Equals(Path.GetFileName(path), executable, StringComparison.OrdinalIgnoreCase)
+                && File.Exists(path);
             if (!valid)
             {
-                Status = "facetracker.exe not found";
+                Status = executable + " not found";
             }
 
             return valid;
         }
 
         /// <summary>
-        /// streamingAssetsPath/OpenSeeFace 以下から facetracker.exe を探す（zip の展開階層に依存しない）。
+        /// streamingAssetsPath/(入力元のフォルダ) 以下からトラッカーの実行ファイルを探す（zip の展開階層に依存しない）。
         /// 複数あれば最も浅いもの。無ければ null。
         /// </summary>
-        public static string FindBundled(string streamingAssetsPath)
+        public static string FindBundled(string streamingAssetsPath, TrackingSource source)
         {
             // フォルダが無ければ同梱なし
-            string root = Path.Combine(streamingAssetsPath, BundledFolder);
+            string root = Path.Combine(streamingAssetsPath, FolderOf(source));
             if (!Directory.Exists(root))
             {
                 return null;
@@ -343,7 +391,7 @@ namespace VRCast.Tracking
             try
             {
                 // 配下を再帰検索し、パスの短い（浅い）ものを優先
-                string[] found = Directory.GetFiles(root, ExecutableName, SearchOption.AllDirectories);
+                string[] found = Directory.GetFiles(root, ExecutableOf(source), SearchOption.AllDirectories);
                 Array.Sort(found, (a, b) => a.Length.CompareTo(b.Length));
                 return found.Length > 0 ? found[0] : null;
             }
@@ -354,10 +402,10 @@ namespace VRCast.Tracking
             }
         }
 
-        private static ProcessStartInfo CreateStartInfo(string path, string arguments)
+        private static ProcessStartInfo CreateStartInfo(string path, string arguments, bool utf8)
         {
             // モデル等を相対パスで読むため作業ディレクトリは exe の場所。コンソールは出さない
-            return new ProcessStartInfo(path, arguments)
+            var info = new ProcessStartInfo(path, arguments)
             {
                 WorkingDirectory = Path.GetDirectoryName(path) ?? string.Empty,
                 UseShellExecute = false,
@@ -365,6 +413,15 @@ namespace VRCast.Tracking
                 RedirectStandardOutput = true,
                 RedirectStandardError = true,
             };
+
+            // MediaPipe 版は UTF-8 で出力する（日本語のカメラ名を化けさせない）
+            if (utf8)
+            {
+                info.StandardOutputEncoding = Encoding.UTF8;
+                info.StandardErrorEncoding = Encoding.UTF8;
+            }
+
+            return info;
         }
 
         private void OnOutput(object sender, DataReceivedEventArgs e)
@@ -409,7 +466,7 @@ namespace VRCast.Tracking
 
         private void OnDestroy()
         {
-            // アプリ終了時に facetracker を残さない
+            // アプリ終了時にトラッカーを残さない
             StopProcess();
         }
     }

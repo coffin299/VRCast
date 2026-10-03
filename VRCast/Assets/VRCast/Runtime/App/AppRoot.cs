@@ -25,7 +25,7 @@ namespace VRCast.App
         private OrbitCameraController _orbit;
         private AppSettings _settings;
         private MicrophoneInput _microphone;
-        private OpenSeeFaceReceiver _tracker;
+        private TrackingReceiver _tracker;
         private string _initialAvatarPath;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -73,12 +73,12 @@ namespace VRCast.App
             _microphone = gameObject.AddComponent<MicrophoneInput>();
             _microphone.Initialize(_settings);
 
-            // フェイストラッキング受信（アプリ全体で 1 つ）
-            _tracker = gameObject.AddComponent<OpenSeeFaceReceiver>();
+            // トラッキング受信（顔・腕・手、アプリ全体で 1 つ）
+            _tracker = gameObject.AddComponent<TrackingReceiver>();
             _tracker.Initialize(_settings);
 
-            // OpenSeeFace の起動・停止（任意。外部で起動したものも受信できる）
-            var trackerProcess = gameObject.AddComponent<FaceTrackerProcess>();
+            // 同梱トラッカー（MediaPipe / OpenSeeFace）の起動・停止（任意。外部で起動したものも受信できる）
+            var trackerProcess = gameObject.AddComponent<TrackerProcess>();
             trackerProcess.Initialize(_settings);
 
             // 操作パネル
@@ -119,6 +119,9 @@ namespace VRCast.App
             // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<FaceTrackingDriver>().Initialize(
                 avatar.Animator, _tracker, blink, lipSync, _settings);
+
+            // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
+            avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);
 
             // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化）
             avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);

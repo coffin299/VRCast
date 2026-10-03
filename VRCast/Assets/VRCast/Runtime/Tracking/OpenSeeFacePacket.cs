@@ -66,7 +66,7 @@ namespace VRCast.Tracking
             float mouth = ReadFloat(buffer, offset + FeaturesOffset + MouthOpenFeature * 4);
 
             // 壊れた値（NaN・無限大）を含むフレームは捨てる
-            if (!AllFinite(qx, qy, qz, qw, tx, ty, tz, rightEye, leftEye, mouth))
+            if (!TrackingMath.AllFinite(qx, qy, qz, qw, tx, ty, tz, rightEye, leftEye, mouth))
             {
                 return false;
             }
@@ -117,7 +117,7 @@ namespace VRCast.Tracking
 
             // Unity サンプルと同じ軸変換で視線方向にする（読込時の y 反転・X 反転・180° 回転をまとめたもの）
             direction = new Vector3(difference.x, difference.y, -difference.z);
-            return AllFinite(direction.x, direction.y, direction.z) && direction.sqrMagnitude > 1e-10f;
+            return TrackingMath.AllFinite(direction.x, direction.y, direction.z) && direction.sqrMagnitude > 1e-10f;
         }
 
         private static Vector3 ReadPoint3D(byte[] buffer, int offset, int point)
@@ -138,20 +138,6 @@ namespace VRCast.Tracking
             // ビッグエンディアン環境ではバイト順を反転
             var bytes = new[] { buffer[index + 3], buffer[index + 2], buffer[index + 1], buffer[index] };
             return BitConverter.ToSingle(bytes, 0);
-        }
-
-        private static bool AllFinite(params float[] values)
-        {
-            foreach (float value in values)
-            {
-                // 1 つでも非有限なら不正
-                if (float.IsNaN(value) || float.IsInfinity(value))
-                {
-                    return false;
-                }
-            }
-
-            return true;
         }
     }
 }

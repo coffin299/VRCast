@@ -7,23 +7,26 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// MainPanel 内の Tracking セクション（ON で同梱 OpenSeeFace を自動起動。カメラ選択・ポート・鏡像・キャリブレーション・状態）。
+    /// MainPanel 内の Tracking セクション（ON で同梱トラッカーを自動起動。入力元・カメラ選択・ポート・鏡像・腕と手・キャリブレーション・状態）。
     /// </summary>
     public class TrackingSection
     {
         // ラベル列の幅
         private const float LabelWidth = 100f;
 
+        // 入力元の表示名（TrackingSource の並び順）
+        private static readonly string[] SourceLabels = { "MediaPipe (face + hands)", "OpenSeeFace (face only)" };
+
         private readonly AvatarComponentCache _avatar;
         private readonly IFaceTrackingProvider _tracker;
-        private readonly FaceTrackerProcess _process;
+        private readonly TrackerProcess _process;
         private readonly AppSettings _settings;
 
         // 入力途中のポート文字列（確定するまで設定へ反映しない）
         private string _portInput;
 
         public TrackingSection(
-            AvatarSession session, IFaceTrackingProvider tracker, FaceTrackerProcess process, AppSettings settings)
+            AvatarSession session, IFaceTrackingProvider tracker, TrackerProcess process, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
             _tracker = tracker;
@@ -34,9 +37,9 @@ namespace VRCast.UI
 
         public void Draw()
         {
-            GUILayout.Label("Tracking (OpenSeeFace)");
+            GUILayout.Label("Tracking");
             _avatar.Refresh();
-            _settings.trackingEnabled = GUILayout.Toggle(_settings.trackingEnabled, " Face tracking");
+            _settings.trackingEnabled = GUILayout.Toggle(_settings.trackingEnabled, " Tracking (webcam)");
 
             // 無効時は詳細設定を出さない
             if (!_settings.trackingEnabled)
@@ -44,6 +47,7 @@ namespace VRCast.UI
                 return;
             }
 
+            DrawSource();
             DrawLauncher();
             DrawPort();
             _settings.trackingMirror = GUILayout.Toggle(_settings.trackingMirror, " Mirror");
@@ -55,12 +59,41 @@ namespace VRCast.UI
             GUILayout.Label(_tracker.Status);
         }
 
+        private void DrawSource()
+        {
+            // 入力元の切替（変更するとトラッカー・受信が起動し直す）
+            int current = (int)_settings.trackingSource;
+            int selected = GuiControls.Selector(SourceLabels, current, null);
+            if (selected != current && selected >= 0)
+            {
+                _settings.trackingSource = (TrackingSource)selected;
+            }
+
+            // 腕・手は MediaPipe のみ
+            if (_settings.trackingSource == TrackingSource.MediaPipe)
+            {
+                _settings.trackingHands = GUILayout.Toggle(_settings.trackingHands, " Arms / hands");
+                DrawHandStatus();
+            }
+        }
+
+        private void DrawHandStatus()
+        {
+            // 腕・手が有効で、アバターに適用中かどうか（映っていない間は待機ポーズ）
+            var driver = _avatar.Get<HandTrackingDriver>();
+            if (_settings.trackingHands && driver != null)
+            {
+                GUILayout.Label(driver.IsTracking ? "Arms / hands: tracking" : "Arms / hands: not visible (idle pose)");
+            }
+        }
+
         private void DrawLauncher()
         {
             // 同梱版が無い（開発ビルド等）か、既にパス指定済みのときだけパス入力を出す
+            string executable = TrackerProcess.ExecutableOf(_settings.trackingSource);
             if (!_process.HasBundled || !string.IsNullOrEmpty(_settings.trackerPath))
             {
-                GUILayout.Label("facetracker.exe path" + (_process.HasBundled ? " (empty = bundled)" : string.Empty));
+                GUILayout.Label(executable + " path" + (_process.HasBundled ? " (empty = bundled)" : string.Empty));
                 _settings.trackerPath = GUILayout.TextField(_settings.trackerPath);
             }
 
