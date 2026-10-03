@@ -17,7 +17,7 @@ OBS (Window Capture / Game Capture)
 
 ## 現在の状態
 
-**Milestone 1（Basic Avatar Runtime）** 完了。**Milestone 2（Transparent Rendering）** 実装済み・動作確認待ち。
+**Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、背景透過で OBS に取り込める（T ポーズ表示）。
 
 | 項目 | 状態 |
@@ -26,10 +26,10 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、背景透過�
 | ログ (`VRCastLog`) / 設定の保存・読込 (`SettingsStore`) | 済 |
 | Windows ビルドスクリプト (`VRCastBuild`) | 済 |
 | アバター書き出し (`VRCast > Avatar Exporter`) | 済 |
-| FX レイヤー既定状態の焼き込み（小物トグルの初期 ON/OFF） | 済（要動作確認） |
+| FX レイヤー既定状態の焼き込み（小物トグルの初期 ON/OFF） | 済 |
 | `.vrcaster` 読み込み・表示・オービットカメラ・最小 UI | 済 |
-| Humanoid 骨格基準のカメラフレーミング | 済（要動作確認） |
-| 背景透過・解像度プリセット・ライト調整 | 済（要動作確認） |
+| Humanoid 骨格基準のカメラフレーミング | 済 |
+| 背景透過・解像度プリセット・ライト調整 | 済 |
 | 表情・揺れもの・トラッキング | 未実装 |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
