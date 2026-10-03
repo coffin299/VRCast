@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-    Package the Windows build (VRCast/Builds/Windows) into dist/VRCast-<version>-win64.zip for distribution.
+    Package the Windows build (VRCast/Builds/Windows) and the exporter .unitypackage
+    into dist/VRCast-<version>-win64.zip for distribution.
 .PARAMETER Version
     Version in the zip name. Defaults to bundleVersion in ProjectSettings (Player > Version).
 .PARAMETER BuildPath
@@ -61,6 +62,9 @@ try {
     Copy-Item (Join-Path $repository "NOTICE") (Join-Path $staging "NOTICE.txt")
     Copy-Item (Join-Path $repository "CHANGELOG.txt") (Join-Path $staging "CHANGELOG.txt")
     Copy-Item (Join-Path $PSScriptRoot "README.txt") (Join-Path $staging "README.txt")
+
+    # アバターのプロジェクトに入れる書き出しツール
+    & (Join-Path $PSScriptRoot "unitypackage.ps1") -OutputPath (Join-Path $staging "VRCast-Converter.unitypackage")
 
     # 既存の同名 zip を消してから作成
     New-Item -ItemType Directory -Force $dist | Out-Null

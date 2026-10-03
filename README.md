@@ -61,9 +61,12 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 
 アバターがある Unity プロジェクト（VCC プロジェクト可、Unity 2022.3.22f1）に Converter パッケージを導入する。
 
-- Package Manager > `+` > **Add package from git URL...**
+- 配布 zip に入っている `VRCast-Converter.unitypackage` をダブルクリック（または Unity にドラッグ＆ドロップ）して **Import**。
+  `Assets/VRCast/Converter/` に入る。更新は新しい版を同じ手順で上書きインポート。
+- または Package Manager > `+` > **Add package from git URL...**（Git が必要）
   `https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter`
 - またはローカルのクローンから **Add package from disk...** で `Packages/com.vrcast.converter/package.json` を選択
+- unitypackage と Package Manager の両方で入れると同じ名前のアセンブリが重複してエラーになるため、どちらか一方にする。
 
 メニュー `VRCast > Avatar Exporter` を開き、シーン上のアバタールート（Animator 付き）を指定して **Export...**。
 
@@ -220,7 +223,7 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 │       └── Editor/               Exporter (VRCast.Converter.Editor)
 ├── Tools/
 │   ├── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
-│   ├── Package/                  配布用 zip の作成 (package.bat / package.ps1、同梱 README.txt)
+│   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (package.bat / unitypackage.bat、同梱 README.txt)
 │   └── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
@@ -305,7 +308,11 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 
 - 出力: `dist\VRCast-<バージョン>-win64.zip`（`.gitignore` 済み）。バージョンの既定は Player Settings の Version（`bundleVersion`。
   ビルド時に `VRCastBuild` の `AppVersion` が設定される）。
-- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
+- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）
+  + `VRCast-Converter.unitypackage`（書き出しツール）。
+- 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\VRCast-Converter-<バージョン>.unitypackage`）。
+  `Packages/com.vrcast.converter` を `Assets/VRCast/Converter/` に入るよう詰める。GUID はリポジトリの `.meta` を使うため版をまたいで同じ
+  （上書きインポートで更新できる）。ファイルを追加したら Unity で一度開いて `.meta` を作り、一緒にコミットする（無いと中止する）。
 
 ### バージョンと更新履歴
 

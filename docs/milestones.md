@@ -423,6 +423,8 @@ OBS 側で縁に色が付いて見える場合は背景色を暗くする。
 - バージョンを 1.0.0 に設定（アプリ: `VRCastBuild.AppVersion` → `bundleVersion`、書き出しツール: `package.json`）
 - `CHANGELOG.txt` を追加し、配布 zip に同梱
 - Cursor 用ルール `.cursor/rules/changelog.mdc`: 利用者に見える変更をしたら CHANGELOG の「未リリース」へ日英で追記する
+- 書き出しツールを unitypackage でも配布（`Tools/Package/unitypackage.bat`、配布 zip に同梱）。
+  書き出しツールの `.meta` をリポジトリに追加（Git URL で入れたときに Unity が `.meta` の無いファイルを無視していた問題も解消）
 
 ## 技術的リスク
 
