@@ -7,6 +7,7 @@ using VRCast.Avatars;
 using VRCast.Cameras;
 using VRCast.Core;
 using VRCast.Dynamics;
+using VRCast.Output;
 using VRCast.Rendering;
 using VRCast.Tracking;
 using VRCast.UI;
@@ -70,6 +71,10 @@ namespace VRCast.App
             var rendering = gameObject.AddComponent<RenderingController>();
             rendering.Initialize(mainCamera, _settings);
 
+            // 仮想カメラ出力（描画結果を受け取るためカメラに付ける）
+            var virtualCamera = mainCamera.gameObject.AddComponent<VirtualCameraOutput>();
+            virtualCamera.Initialize(_settings);
+
             // リップシンク用のマイク入力（アプリ全体で 1 つ）
             _microphone = gameObject.AddComponent<MicrophoneInput>();
             _microphone.Initialize(_settings);
@@ -89,7 +94,7 @@ namespace VRCast.App
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
-                _session, _orbit, rendering, _microphone, _tracker, trackerProcess, _skeleton, _settings,
+                _session, _orbit, rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, _settings,
                 _initialAvatarPath);
         }
 

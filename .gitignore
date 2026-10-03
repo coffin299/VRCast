@@ -15,6 +15,12 @@
 /VRCast/Assets/StreamingAssets/MediaPipeTracker/
 /VRCast/Assets/StreamingAssets/MediaPipeTracker.meta
 
+# Virtual camera (UnityCapture; fetched by Tools/UnityCapture/fetch.ps1, shipped in builds)
+/VRCast/Assets/StreamingAssets/UnityCapture/
+/VRCast/Assets/StreamingAssets/UnityCapture.meta
+/VRCast/Assets/Plugins/UnityCapture/
+/VRCast/Assets/Plugins/UnityCapture.meta
+
 # Python (MediaPipe tracker tool)
 __pycache__/
 *.pyc

@@ -11,8 +11,8 @@
 | 4 | Runtime Physics | 完了（既知の課題あり） |
 | 5 | Tracking | 完了（MediaPipe: 顔・腕・手・視線・ウインク） |
 | 6 | OSC | 見送り（要望があれば実装） |
-| 7 | Avatar Conversion Pipeline | 未着手 |
-| 8 | Advanced Output | 未着手 |
+| 7 | Avatar Conversion Pipeline | 完了（Constraint） |
+| 8 | Advanced Output | 仮想カメラ実装済み（Spout / NDI / OBS WebSocket は要望次第） |
 
 ## Milestone 0 — プロジェクト基盤
 
@@ -306,7 +306,28 @@ Descriptor（Milestone 3）・PhysBone（Milestone 4）は対応済みのため�
 
 ## Milestone 8 — Advanced Output
 
-必要性を確認したうえで Spout / NDI / Virtual Camera / OBS WebSocket。
+必要性を確認したうえで Spout / NDI / Virtual Camera / OBS WebSocket。まず仮想カメラを実装（他は要望があれば）。
+
+### 8a. 仮想カメラ
+
+- 方式: [UnityCapture](https://github.com/schellingb/UnityCapture)（zlib License）の DirectShow フィルターをドライバーとして同梱し、
+  `UnityCapturePlugin.dll` で描画結果のテクスチャを GPU 上でコピーして渡す（CPU への読み戻しをしないため軽い）。
+  VSeeFace の仮想カメラと同じ方式。MediaFoundation の仮想カメラ（Windows 11 のみ・COM DLL の自作が必要）は見送り
+- 取得: `Tools/UnityCapture/fetch.ps1` がコミット固定で DLL を取得して `StreamingAssets/UnityCapture/` と `Plugins/UnityCapture/x86_64/` に置く
+  （リポジトリには含めない）。未配置ならビルド時に警告
+- Runtime `Output/`
+  - `VirtualCameraOutput`: メインカメラの `OnRenderImage` で送信（操作パネルは映らない）。受け取る側の解像度へ拡大縮小。
+    無効時はコンポーネントを止める。プラグインが無ければ状態表示のみ
+  - `VirtualCameraInstaller`: `regsvr32` を管理者権限で実行して 32 / 64 bit のフィルターを「VRCast Camera」の名前で登録・解除。
+    登録状態は 64 bit フィルターの CLSID の `InprocServer32` を読み、同梱 DLL のパスと比べる（移動したら Reinstall を促す）
+- UI: Output セクション（Virtual camera の ON/OFF、Install / Reinstall / Uninstall driver、状態）
+
+確認項目:
+
+- Install driver で UAC が出て、登録後に Discord / Zoom / OBS（映像キャプチャデバイス）で「VRCast Camera」を選べること
+- アバターが映り、操作パネルが映らないこと。ウィンドウサイズを変えても映ること（拡大縮小）
+- OBS で映像フォーマットを ARGB にすると透過背景のまま取り込めること
+- OFF・アプリ終了で受け取る側の映像が停止表示になること、Uninstall driver で一覧から消えること
 
 ## 技術的リスク
 

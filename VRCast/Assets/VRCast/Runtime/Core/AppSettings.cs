@@ -44,6 +44,9 @@ namespace VRCast.Core
         public bool transparentBackground;
         public Color backgroundColor = new Color(0.25f, 0.25f, 0.25f, 1f);
 
+        // 仮想カメラ（VRCast Camera）への出力
+        public bool virtualCameraEnabled;
+
         // ディレクショナルライト
         public float lightIntensity = 1f;
         public float lightYaw = -30f;

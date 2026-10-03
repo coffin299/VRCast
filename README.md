@@ -10,7 +10,7 @@ MyAvatar.vrcaster
         ↓
 VRCast.exe (Runtime)
         ↓
-OBS (Window Capture / Game Capture)
+OBS (Window Capture / Game Capture) / 仮想カメラ (Discord / Zoom など)
 ```
 
 利用者は Unity Editor・VCC・VRChat 用プロジェクトを常時起動しておく必要がない設計とする。
@@ -38,6 +38,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 視線（目ボーン）・左右別ウインク | 済 |
 | MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 済 |
 | Constraint（VRC / Unity 標準の Position・Rotation・Scale・Parent・Aim・LookAt） | 済 |
+| 仮想カメラ出力（VRCast Camera、Discord / Zoom 等） | 済 |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
 
@@ -143,6 +144,19 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 ウィンドウキャプチャは透過に対応していないため、背景を抜く場合はゲームキャプチャを使う。
 透過不要なら単色背景にしてウィンドウキャプチャ + クロマキーでもよい。
 
+### 4. 仮想カメラで使う（Discord / Zoom など）
+
+1. パネル下部の Output で **Virtual camera (VRCast Camera)** を ON にする。
+2. 初回だけ **Install driver** を押す（管理者権限の確認が出る）。ドライバーは VRCast フォルダ内の DLL を登録するため、
+   VRCast のフォルダを移動・削除する前に **Uninstall driver** を押す（移動した場合は移動先で **Reinstall driver**）。
+3. 受け取る側のアプリのカメラ選択で **VRCast Camera** を選ぶ（一覧に出なければそのアプリを再起動）。
+
+- 映るのはカメラの描画結果のみで、操作パネルは映らない。解像度は受け取る側に合わせて拡大縮小される。
+- Discord / Zoom などは透過を扱えないため、単色背景（Transparent background OFF）で使う。
+  OBS の映像キャプチャデバイスで受ける場合は、映像フォーマットを ARGB にすると透過のまま取り込める。
+- DirectShow 方式の仮想カメラ（[UnityCapture](https://github.com/schellingb/UnityCapture)）のため、DirectShow のカメラを
+  一覧に出すアプリで使える。他のアプリが同じ UnityCapture を登録している場合は、後から登録した方の名前・場所になる。
+
 ## リポジトリ構成
 
 ```text
@@ -156,7 +170,8 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 │       ├── Runtime/              共有フォーマット定義 (VRCast.AvatarFormat)
 │       └── Editor/               Exporter (VRCast.Converter.Editor)
 ├── Tools/
-│   └── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
+│   ├── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
+│   └── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
         ├── Runtime/              スタンドアロンで動くコード (VRCast.Runtime)
@@ -201,6 +216,18 @@ powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 - 出力（`vrcast_tracker.exe` 一式とモデル 3 種）は `VRCast/Assets/StreamingAssets/MediaPipeTracker/` に置かれ、Unity が StreamingAssets ごとビルドへ同梱する。
 - 実行ファイルは `MediaPipeTracker/` 以下を再帰的に探す。見つからない場合もビルドは続行し、警告ログを出す。
 - 配布時は MediaPipe（Apache-2.0）と同梱ライブラリのライセンス表記を含めること（一覧は [NOTICE](NOTICE)）。
+
+### 仮想カメラ（UnityCapture）の同梱
+
+仮想カメラのドライバーと送信プラグインはリポジトリに含めない（`.gitignore` 済み）。ビルド前に一度、リポジトリ直下から実行する:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Tools\UnityCapture\fetch.ps1
+```
+
+- ドライバー（32 / 64 bit）とライセンス表記は `VRCast/Assets/StreamingAssets/UnityCapture/`、
+  送信プラグインは `VRCast/Assets/Plugins/UnityCapture/x86_64/` に置かれる（取得元のコミットは固定）。
+- 見つからない場合もビルドは続行し、警告ログを出す（仮想カメラは使えない）。
 
 ### OpenSeeFace の同梱（任意）
 

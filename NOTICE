@@ -53,6 +53,13 @@ MediaPipe Tracker (StreamingAssets/MediaPipeTracker/)
   are distributed under their own licenses, which are included in the
   tracker folder by PyInstaller.
 
+Unity Capture (StreamingAssets/UnityCapture/, Plugins/UnityCapturePlugin.dll)
+  Fetched by Tools/UnityCapture/fetch.ps1. Virtual camera driver and sender.
+  Copyright (c) 2018 Bernhard Schelling
+  Based on UnityCam, Copyright (c) 2016 MHD Yamen Saraiji
+  zlib License
+  https://github.com/schellingb/UnityCapture
+
 OpenSeeFace (StreamingAssets/OpenSeeFace/, optional)
   Copyright Emiliana (emilianavt)
   BSD 2-Clause License
