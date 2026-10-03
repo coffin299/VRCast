@@ -89,7 +89,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | クラス | 責務 |
 | :--- | :--- |
 | `VRCastLog` | `Debug.Log` をカテゴリ付きで薄くラップ |
-| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、ライト強度・向き、待機ポーズの度合い、自動まばたき、揺れもの ON/OFF、リップシンク・マイク設定、フェイストラッキングの ON/OFF・ポート・鏡像） |
+| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色、ライト強度・向き、待機ポーズの度合い、自動まばたき、揺れもの ON/OFF、リップシンク・マイク設定、フェイストラッキングの ON/OFF・ポート・鏡像・facetracker パス・カメラ名） |
 | `SettingsStore` | `settings.json` の読込・保存。破損時は既定値にフォールバック |
 | `AppBootstrap` | `RuntimeInitializeOnLoadMethod` で起動時に設定を読み込み（初回は既定値で作成）、終了時にウィンドウサイズを含めて保存する |
 
@@ -116,14 +116,16 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `IFaceTrackingProvider` / `FaceTrackingFrame` | フェイストラッキング入力元の共通インターフェースと 1 フレーム分の値 |
 | `OpenSeeFacePacket` | OpenSeeFace UDP パケット（1 顔 1785 バイト）の解析と座標変換 |
 | `OpenSeeFaceReceiver` | `127.0.0.1` のみで UDP を受信する Provider。途絶検出・再 bind・受信 fps |
+| `FaceTrackerProcess` | 指定された `facetracker.exe` の起動・停止、カメラ一覧（`-l 1`）の取得・解析、デバイス名 → 番号の解決 |
 | `FaceTrackingDriver` | 頭の向きを首・頭ボーンへ、まばたき・口を `BlinkController` / `LipSyncController` へ適用。キャリブレーション・鏡像 |
 | `MainPanel` | IMGUI パネル（Avatar / Pose / Expressions / Face / Tracking / Camera / Rendering）。Tab で表示切替 |
 | `AnimationSection` | MainPanel 内の Pose / Expressions セクション UI |
 | `FaceSection` | MainPanel 内の Face / Physics セクション UI（PhysBone、Auto blink、Lip sync、マイク選択・感度・メーター） |
-| `TrackingSection` | MainPanel 内の Tracking セクション UI（ON/OFF、ポート、Mirror、Calibrate、受信状態） |
+| `TrackingSection` | MainPanel 内の Tracking セクション UI（ON/OFF、facetracker パス・カメラ選択・Start / Stop、ポート、Mirror、Calibrate、受信状態） |
 | `AvatarComponentCache` | 表示中アバターのコンポーネントをアバター切替までキャッシュ |
 | `RenderingSection` | MainPanel 内の Rendering セクション UI |
-| `GuiControls` | セクション共通の IMGUI 部品（ラベル付きスライダー） |
+| `GuiControls` | セクション共通の IMGUI 部品（ラベル付きスライダー、`<` `>` の巡回選択） |
+| `PathUtility` | 入力パスの整形（前後の空白・`"` を除去） |
 
 ## Converter (`com.vrcast.converter`)
 
@@ -158,5 +160,6 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | :--- | :--- |
 | `AssemblyIsolationTests` | `VRCast.Runtime` / `VRCast.AvatarFormat` が `UnityEditor` / Editor アセンブリ / VRChat SDK を参照していない（`#if UNITY_EDITOR` 内の参照も違反として検出する） |
 | `SettingsStoreTests` | 設定の保存・再読込、ファイル欠落・破損時のフォールバック、値の補正 |
+| `FaceTrackerProcessTests` | facetracker のカメラ一覧出力の解析（見出し・CRLF・番号の欠け・無関係な出力） |
 | `OpenSeeFacePacketTests` | OpenSeeFace パケットの値の位置・四元数の座標変換・長さ不足・非有限値・長さ 0 四元数の拒否 |
 | `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情・descriptor・physbones データの読込・不正時の空扱い |

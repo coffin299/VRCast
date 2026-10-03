@@ -77,10 +77,14 @@ namespace VRCast.App
             _tracker = gameObject.AddComponent<OpenSeeFaceReceiver>();
             _tracker.Initialize(_settings);
 
+            // OpenSeeFace の起動・停止（任意。外部で起動したものも受信できる）
+            var trackerProcess = gameObject.AddComponent<FaceTrackerProcess>();
+            trackerProcess.Initialize(_settings);
+
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
-                _session, _orbit, rendering, _microphone, _tracker, _settings, _initialAvatarPath);
+                _session, _orbit, rendering, _microphone, _tracker, trackerProcess, _settings, _initialAvatarPath);
         }
 
         private void Start()

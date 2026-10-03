@@ -13,9 +13,6 @@ namespace VRCast.UI
     /// </summary>
     public class FaceSection
     {
-        // マイクのデバイス名の最大表示文字数
-        private const int MaxDeviceLabelLength = 28;
-
         private readonly AvatarComponentCache _avatar;
         private readonly MicrophoneInput _microphone;
         private readonly AppSettings _settings;
@@ -80,36 +77,16 @@ namespace VRCast.UI
 
         private void DrawDeviceSelector()
         {
-            // 候補は「既定」+ 接続中デバイス
+            // 候補は「既定」(-1) + 接続中デバイス
             string[] devices = Microphone.devices;
             int current = Array.IndexOf(devices, _settings.microphoneDevice);
+            int selected = GuiControls.Selector(devices, current, "Default microphone");
 
-            GUILayout.BeginHorizontal();
-
-            // 前のデバイスへ（-1 = 既定）
-            if (GUILayout.Button("<", GUILayout.Width(24f)))
+            // 操作されたときだけ設定へ反映（-1 = 既定は空文字）
+            if (selected != current)
             {
-                current = current <= -1 ? devices.Length - 1 : current - 1;
-                _settings.microphoneDevice = current < 0 ? string.Empty : devices[current];
+                _settings.microphoneDevice = selected < 0 ? string.Empty : devices[selected];
             }
-
-            // 現在のデバイス名
-            string label = current < 0 ? "Default microphone" : devices[current];
-            if (label.Length > MaxDeviceLabelLength)
-            {
-                label = label.Substring(0, MaxDeviceLabelLength - 1) + "…";
-            }
-
-            GUILayout.Label(label, GUILayout.ExpandWidth(true));
-
-            // 次のデバイスへ（末尾の次は既定）
-            if (GUILayout.Button(">", GUILayout.Width(24f)))
-            {
-                current = current >= devices.Length - 1 ? -1 : current + 1;
-                _settings.microphoneDevice = current < 0 ? string.Empty : devices[current];
-            }
-
-            GUILayout.EndHorizontal();
         }
     }
 }

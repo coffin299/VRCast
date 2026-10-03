@@ -67,6 +67,10 @@ namespace VRCast.Core
         public int trackingPort = DefaultTrackingPort;
         public bool trackingMirror = true;
 
+        // VRCast から起動する OpenSeeFace（facetracker.exe のパスと、使うカメラのデバイス名）
+        public string trackerPath = string.Empty;
+        public string trackerCamera = string.Empty;
+
         /// <summary>
         /// 読み込んだ値を安全な範囲に補正する。
         /// </summary>
@@ -98,6 +102,10 @@ namespace VRCast.Core
             micThreshold = Mathf.Clamp(micThreshold, 0f, MaxMicThreshold);
             // 受信ポートは特権ポートを避けた範囲に制限
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
+            // null のパス・カメラ名は未設定扱いの空文字へ
+            trackerPath ??= string.Empty;
+            // カメラ名も同様
+            trackerCamera ??= string.Empty;
         }
     }
 }
