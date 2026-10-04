@@ -17,7 +17,7 @@ namespace VRCast.UI
     /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings / Credits）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンを常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
-    /// 表示言語（日本語 / 英語）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
+    /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
     /// </summary>
     public class MainPanel : MonoBehaviour
     {
@@ -287,7 +287,25 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
+            DrawLanguageBar();
             GUILayout.Space(4f);
+        }
+
+        private void DrawLanguageBar()
+        {
+            // どのタブからでも切り替えられる表示言語（横並び。選択中はアクセント色、押すとその言語にする）
+            string[] labels = Loc.LanguageLabels(Loc.T("Auto", "自動", "자동", "自动", "自動"));
+            GUILayout.BeginHorizontal();
+            for (int i = 0; i < labels.Length; i++)
+            {
+                bool selected = (int)_settings.uiLanguage == i;
+                if (GUILayout.Toggle(selected, labels[i], GUI.skin.button) && !selected)
+                {
+                    _settings.uiLanguage = (UiLanguage)i;
+                }
+            }
+
+            GUILayout.EndHorizontal();
         }
 
         private void DrawSidebar()
