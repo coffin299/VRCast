@@ -5,7 +5,7 @@ VRCast 更新履歴 / Changelog
 Newest first. Each version is written in Japanese, then English.
 
 
-■ 未リリース / Unreleased
+■ 1.1.0 (2026-10-04)
 
 [日本語]
 - Web カメラの表情（笑顔・驚き・怒り・悲しみ）をアバターの表情に反映する機能を追加（MediaPipe のみ。トラッキングタブで ON/OFF・感度・割り当てを変更可能、既定は ON）
