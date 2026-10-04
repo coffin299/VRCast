@@ -12,6 +12,7 @@ Newest first. Each version is written in Japanese, then English.
 - ゲームや OBS と同時に使うときの負荷を減らす「軽量モード」を追加（設定タブ、既定は ON。描画を 30fps に抑え、トラッカーの処理も軽くする）
 - 描画のフレームレートを通常時も 60fps までに制限し、GPU を使いすぎないように変更
 - ダークモードを追加（設定タブの「テーマ」で切り替え。既定はライト。背景色も既定のままならテーマに合わせて暗くなる）
+- ウィンドウのタイトルにバージョン番号を表示するように変更
 
 [English]
 - [Beta] Added support for avatars customized with Modular Avatar and other NDMF tools; outfits, added expressions and toggles are exported as applied (preliminary support; some avatars may not export correctly)
@@ -19,6 +20,7 @@ Newest first. Each version is written in Japanese, then English.
 - Added "Low load mode" in the Settings tab to reduce load when running with games or OBS (on by default; limits drawing to 30 fps and lightens the tracker)
 - Drawing is now limited to 60 fps by default so the app no longer uses more GPU than needed
 - Added a dark mode (switch with "Theme" in the Settings tab; light by default; the background also turns dark if you have not changed its color)
+- The window title now shows the version number
 
 ■ 1.1.0 (2026-10-04)
 

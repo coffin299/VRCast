@@ -28,6 +28,9 @@ namespace VRCast.Platform
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
         private static extern int GetClassNameW(IntPtr window, StringBuilder name, int maxCount);
 
+        [DllImport("user32.dll", CharSet = CharSet.Unicode)]
+        private static extern bool SetWindowTextW(IntPtr window, string text);
+
         [DllImport("kernel32.dll")]
         private static extern uint GetCurrentThreadId();
 
@@ -45,6 +48,16 @@ namespace VRCast.Platform
             _found = IntPtr.Zero;
             EnumThreadWindows(GetCurrentThreadId(), EnumCallback, IntPtr.Zero);
             return _found;
+        }
+
+        /// <summary>
+        /// ウィンドウのタイトルを変更する。ウィンドウが見つからない・変更に失敗したら false。
+        /// </summary>
+        public static bool SetTitle(string title)
+        {
+            // ウィンドウが無ければ何もしない
+            IntPtr window = Find();
+            return window != IntPtr.Zero && SetWindowTextW(window, title);
         }
 
         [MonoPInvokeCallback(typeof(EnumWindowsProc))]
