@@ -34,7 +34,7 @@ CHANGELOG.txt をご覧ください。
 
 ■ ライセンス
 VRCast は Apache License 2.0 です（LICENSE.txt）。
-同梱しているサードパーティのライセンス表記は NOTICE.txt をご覧ください（アプリの「クレジット」タブでも読めます）。
+同梱しているサードパーティのライセンス表記は NOTICE.txt をご覧ください（アプリの「クレジット」タブから GitHub でも開けます）。
 開発者: ごみぃ（https://x.com/coffin299） / 協力者: Arche_039（https://x.com/Arche_039）
 https://github.com/coffin299/VRCast
 
@@ -72,6 +72,6 @@ See CHANGELOG.txt.
 
 - License
 VRCast is licensed under the Apache License 2.0 (LICENSE.txt).
-See NOTICE.txt for the notices of bundled third-party software (also shown in the Credits tab).
+See NOTICE.txt for the notices of bundled third-party software (also available on GitHub from the Credits tab).
 Developer: ごみぃ (https://x.com/coffin299) / Collaborator: Arche_039 (https://x.com/Arche_039)
 https://github.com/coffin299/VRCast

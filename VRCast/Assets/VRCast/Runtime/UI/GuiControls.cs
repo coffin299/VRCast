@@ -76,6 +76,18 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// ラベル + ボタンの 1 行を描画し、ボタンが押されたら true。
+        /// </summary>
+        public static bool LabeledButton(string label, string text)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, GUILayout.Width(LabelWidth));
+            bool pressed = GUILayout.Button(text);
+            GUILayout.EndHorizontal();
+            return pressed;
+        }
+
+        /// <summary>
         /// ラベル + スライダー + 数値（format の書式）の 1 行を描画し、操作後の値を返す。
         /// </summary>
         public static float Slider(string label, float value, float min, float max, string format = "F2")
