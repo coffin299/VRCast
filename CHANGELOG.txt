@@ -13,6 +13,7 @@ Newest first. Each version is written in Japanese, then English.
 - 描画のフレームレートを通常時も 60fps までに制限し、GPU を使いすぎないように変更
 - ダークモードを追加（設定タブの「テーマ」で切り替え。既定はライト。背景色も既定のままならテーマに合わせて暗くなる）
 - ウィンドウのタイトルにバージョン番号を表示するように変更
+- 起動時に新しいバージョンを確認し、あればパネル上部で知らせ、GitHub か BOOTH からダウンロードできる機能を追加（設定タブで OFF にでき、バージョンごとに通知を止めることも可能）
 
 [English]
 - [Beta] Added support for avatars customized with Modular Avatar and other NDMF tools; outfits, added expressions and toggles are exported as applied (preliminary support; some avatars may not export correctly)
@@ -21,6 +22,7 @@ Newest first. Each version is written in Japanese, then English.
 - Drawing is now limited to 60 fps by default so the app no longer uses more GPU than needed
 - Added a dark mode (switch with "Theme" in the Settings tab; light by default; the background also turns dark if you have not changed its color)
 - The window title now shows the version number
+- Added an update check at startup that shows a notice at the top of the panel when a new version is available, with download links to GitHub and BOOTH (can be turned off in the Settings tab, or skipped per version)
 
 ■ 1.1.0 (2026-10-04)
 

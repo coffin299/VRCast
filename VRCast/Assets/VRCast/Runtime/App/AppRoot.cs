@@ -101,11 +101,15 @@ namespace VRCast.App
             // ウィンドウへのファイルのドロップ（読み込みは操作パネルが行う）
             var fileDrop = gameObject.AddComponent<FileDropReceiver>();
 
+            // 新しいバージョンの確認（起動時に 1 回。設定で OFF にできる）
+            var updates = gameObject.AddComponent<UpdateChecker>();
+            updates.Initialize(_settings);
+
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
                 _session, _orbit, _rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, fileDrop,
-                _settings, _initialAvatarPath);
+                updates, _settings, _initialAvatarPath);
         }
 
         private void Start()

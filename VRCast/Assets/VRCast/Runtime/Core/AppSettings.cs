@@ -72,6 +72,10 @@ namespace VRCast.Core
         // 操作パネルのダークモード（既定はライト = ベージュ。OS の設定には合わせない）
         public bool darkMode;
 
+        // 起動時に Web サイトの version.json で新しいバージョンを確認するかと、通知しないことにしたバージョン
+        public bool checkForUpdates = true;
+        public string skippedVersion = string.Empty;
+
         // 軽量モード（描画のフレームレートとトラッカーの処理回数を下げ、ゲーム・OBS と同時に使うときの負荷を減らす）。
         // 配信ではゲーム・OBS と併用することが多いため既定は ON
         public bool lowLoadMode = true;
@@ -190,6 +194,8 @@ namespace VRCast.Core
 
             // パネルの拡大率は範囲内に制限
             uiScale = Mathf.Clamp(uiScale, MinUiScale, MaxUiScale);
+            // null の通知しないバージョンは未設定扱いの空文字へ
+            skippedVersion ??= string.Empty;
             // ライト強度は 0〜上限に制限
             lightIntensity = Mathf.Clamp(lightIntensity, 0f, MaxLightIntensity);
             // 仰角は真上〜真下の範囲に制限
