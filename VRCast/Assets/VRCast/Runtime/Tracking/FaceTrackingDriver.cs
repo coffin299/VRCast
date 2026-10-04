@@ -8,6 +8,7 @@ namespace VRCast.Tracking
     /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、頭の位置は背骨・胸の傾き（前後・左右）と
     /// 腰の移動（前後・左右・上下、足も一緒に動く）のどちらかまたは両方、
     /// 視線は目ボーン、まばたき（左右別）・口は既存コントローラーへ外部入力として渡す。
+    /// 表情（MediaPipe のみ）は判定結果が変わったときだけ、割り当てた表情プリセットへ切り替える。
     /// 揺れもの（PhysBoneSimulator）が回転後の頭を基準に計算できるよう、他の LateUpdate より先に実行する。
     /// </summary>
     [DefaultExecutionOrder(-100)]
@@ -51,7 +52,14 @@ namespace VRCast.Tracking
         private IFaceTrackingProvider _provider;
         private BlinkController _blink;
         private LipSyncController _lipSync;
+        private ExpressionController _expressions;
         private AppSettings _settings;
+
+        // 表情の判定と、自動で当てた表情プリセット（-1 = なし）、最後に割り当てを解決した表情と設定値
+        private readonly ExpressionDetector _detector = new ExpressionDetector();
+        private int _autoPreset = -1;
+        private FaceExpression _resolvedExpression = FaceExpression.Neutral;
+        private string _resolvedSaved;
 
         // 腰ボーンと読込時の位置（体全体の移動用）、前フレームに動かしたかどうか
         private Transform _hips;
@@ -102,13 +110,24 @@ namespace VRCast.Tracking
         /// </summary>
         public Vector3 HeadOffset => _currentOffset;
 
+        /// <summary>
+        /// 表情反映が動作中なら true（MediaPipe で受信中、設定 ON、表情データあり）。
+        /// </summary>
+        public bool IsDetectingExpression { get; private set; }
+
+        /// <summary>
+        /// 判定中の表情（表情反映が動作していなければニュートラル）。
+        /// </summary>
+        public FaceExpression DetectedExpression => _detector.Current;
+
         public void Initialize(
             Animator animator, IFaceTrackingProvider provider, BlinkController blink, LipSyncController lipSync,
-            AppSettings settings)
+            ExpressionController expressions, AppSettings settings)
         {
             _provider = provider;
             _blink = blink;
             _lipSync = lipSync;
+            _expressions = expressions;
             _settings = settings;
 
             // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口だけ）
@@ -195,8 +214,60 @@ namespace VRCast.Tracking
             }
 
             ApplyFace(received);
+            ApplyExpression(received);
             ApplyBody(received);
             ApplyEyes(received);
+        }
+
+        private void ApplyExpression(bool received)
+        {
+            // MediaPipe で受信中・設定 ON・表情データありのときだけ判定する
+            IsDetectingExpression = received && _settings.trackingExpressions
+                && _settings.trackingSource == TrackingSource.MediaPipe && _lastFrame.HasExpression
+                && _expressions != null && _expressions.Names.Count > 0;
+            if (!IsDetectingExpression)
+            {
+                // 自動で当てた表情だけを戻し、判定もやり直す
+                ReleaseAutoExpression();
+                _detector.Reset();
+                _resolvedExpression = FaceExpression.Neutral;
+                return;
+            }
+
+            FaceExpression detected = _detector.Update(
+                _lastFrame.Expression, _lastFrame.MouthOpen, _settings.trackingExpressionSensitivity, Time.deltaTime);
+
+            // 判定結果か割り当ての設定が変わったときだけ切り替える（手動で選んだ表情を毎フレーム上書きしない）
+            string saved = ExpressionMapping.GetSaved(_settings, detected);
+            if (detected == _resolvedExpression && saved == _resolvedSaved)
+            {
+                return;
+            }
+
+            _resolvedExpression = detected;
+            _resolvedSaved = saved;
+
+            // 割り当てが無い表情（ニュートラル含む）は、自動で当てた表情を戻すだけ
+            int preset = ExpressionMapping.Resolve(_expressions.Names, detected, saved);
+            if (preset < 0)
+            {
+                ReleaseAutoExpression();
+                return;
+            }
+
+            _expressions.Apply(preset);
+            _autoPreset = preset;
+        }
+
+        private void ReleaseAutoExpression()
+        {
+            // 自動で当てた表情が残っているときだけニュートラルへ（手動で選び直した表情は残す）
+            if (_expressions != null && _autoPreset >= 0 && _expressions.Current == _autoPreset)
+            {
+                _expressions.ResetToNeutral();
+            }
+
+            _autoPreset = -1;
         }
 
         private void ApplyFace(bool received)

@@ -126,7 +126,8 @@ namespace VRCast.App
             // 待機ポーズ・表情・まばたき・リップシンク・トラッキング・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
-            avatar.Instance.AddComponent<ExpressionController>().Initialize(root, avatar.Expressions);
+            var expressions = avatar.Instance.AddComponent<ExpressionController>();
+            expressions.Initialize(root, avatar.Expressions);
             var blink = avatar.Instance.AddComponent<BlinkController>();
             blink.Initialize(root, avatar.Descriptor.eyelids, _settings);
             var lipSync = avatar.Instance.AddComponent<LipSyncController>();
@@ -134,7 +135,7 @@ namespace VRCast.App
 
             // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<FaceTrackingDriver>().Initialize(
-                avatar.Animator, _tracker, blink, lipSync, _settings);
+                avatar.Animator, _tracker, blink, lipSync, expressions, _settings);
 
             // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);

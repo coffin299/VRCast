@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using VRCast.Core;
 
 namespace VRCast.UI
 {
@@ -10,8 +11,14 @@ namespace VRCast.UI
     /// </summary>
     public sealed class UiTheme
     {
-        // 日本語を含めて表示できる OS フォント（先頭から順に使い、無い文字は後続で補う）
-        private static readonly string[] FontNames = { "Yu Gothic UI", "Meiryo UI", "Segoe UI", "Arial" };
+        // 表示できる OS フォント（先頭から順に使い、無い文字は後続で補う）。漢字の字形が言語で違うため、
+        // 中国語表示では中国語フォントを日本語フォントより先にする。ハングルは Malgun Gothic
+        private static readonly string[] FontNames =
+            { "Yu Gothic UI", "Meiryo UI", "Malgun Gothic", "Microsoft YaHei UI", "Microsoft JhengHei UI", "Segoe UI", "Arial" };
+        private static readonly string[] FontNamesSimplified =
+            { "Microsoft YaHei UI", "Microsoft JhengHei UI", "Yu Gothic UI", "Malgun Gothic", "Segoe UI", "Arial" };
+        private static readonly string[] FontNamesTraditional =
+            { "Microsoft JhengHei UI", "Microsoft YaHei UI", "Yu Gothic UI", "Malgun Gothic", "Segoe UI", "Arial" };
         private const int FontSize = 14;
 
         // 配色（背景のベージュより濃いベージュの地、焦げ茶の文字、キャラメル色のアクセント）
@@ -61,6 +68,11 @@ namespace VRCast.UI
         /// </summary>
         public static UiTheme Current { get; private set; }
 
+        /// <summary>
+        /// フォントの選択に使った表示言語（変わったら作り直す）。
+        /// </summary>
+        public UiLanguage Language { get; private set; }
+
         public GUISkin Skin { get; private set; }
         public GUIStyle Title { get; private set; }
         public GUIStyle SectionTitle { get; private set; }
@@ -77,11 +89,11 @@ namespace VRCast.UI
         public GUIStyle Success { get; private set; }
 
         /// <summary>
-        /// テーマを作成する（OnGUI 内で呼ぶ）。
+        /// テーマを作成する（OnGUI 内で呼ぶ）。language は解決済みの表示言語（フォントの優先順に使う）。
         /// </summary>
-        public static UiTheme Create()
+        public static UiTheme Create(UiLanguage language)
         {
-            var theme = new UiTheme();
+            var theme = new UiTheme { Language = language };
             theme.Build();
             Current = theme;
             return theme;
@@ -116,7 +128,7 @@ namespace VRCast.UI
             // 既定スキンを複製してフォントを差し替える
             Skin = Object.Instantiate(GUI.skin);
             Skin.hideFlags = HideFlags.HideAndDontSave;
-            Skin.font = Font.CreateDynamicFontFromOSFont(FontNames, FontSize);
+            Skin.font = Font.CreateDynamicFontFromOSFont(FontNamesOf(Language), FontSize);
 
             BuildWindow();
             BuildText();
@@ -126,6 +138,20 @@ namespace VRCast.UI
             BuildSlider();
             BuildScrollbar();
             BuildPanels();
+        }
+
+        private static string[] FontNamesOf(UiLanguage language)
+        {
+            // 中国語は簡体字・繁体字それぞれのフォントを先頭に、それ以外は日本語フォントを先頭に
+            switch (language)
+            {
+                case UiLanguage.ChineseSimplified:
+                    return FontNamesSimplified;
+                case UiLanguage.ChineseTraditional:
+                    return FontNamesTraditional;
+                default:
+                    return FontNames;
+            }
         }
 
         private void BuildWindow()

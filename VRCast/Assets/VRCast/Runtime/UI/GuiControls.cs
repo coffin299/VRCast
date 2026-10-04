@@ -47,11 +47,11 @@ namespace VRCast.UI
             // 完了は緑、未完了は控えめな文字
             if (done == true)
             {
-                GUILayout.Label(Loc.T("Done", "完了"), theme != null ? theme.Success : GUI.skin.label);
+                GUILayout.Label(Loc.T("Done", "完了", "완료", "已完成", "已完成"), theme != null ? theme.Success : GUI.skin.label);
             }
             else if (done == false)
             {
-                GUILayout.Label(Loc.T("To do", "未完了"), theme != null ? theme.Hint : GUI.skin.label);
+                GUILayout.Label(Loc.T("To do", "未完了", "미완료", "未完成", "未完成"), theme != null ? theme.Hint : GUI.skin.label);
             }
 
             GUILayout.EndHorizontal();

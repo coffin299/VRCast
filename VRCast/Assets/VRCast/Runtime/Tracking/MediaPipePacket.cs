@@ -77,6 +77,28 @@ namespace VRCast.Tracking
         private static readonly int EyeLookUpRight = IndexOf("eyeLookUpRight");
         private static readonly int JawOpen = IndexOf("jawOpen");
 
+        // 表情の合成に使う BlendShape の位置（左右の組。左右の無い browInnerUp は 2 回並べて重みをそろえる）
+        private static readonly int[] SmileShapes =
+        {
+            IndexOf("mouthSmileLeft"), IndexOf("mouthSmileRight"),
+            IndexOf("cheekSquintLeft"), IndexOf("cheekSquintRight"),
+        };
+
+        private static readonly int[] SurpriseShapes =
+        {
+            IndexOf("browInnerUp"), IndexOf("browInnerUp"), IndexOf("eyeWideLeft"), IndexOf("eyeWideRight"),
+        };
+
+        private static readonly int[] AngryShapes =
+        {
+            IndexOf("browDownLeft"), IndexOf("browDownRight"), IndexOf("noseSneerLeft"), IndexOf("noseSneerRight"),
+        };
+
+        private static readonly int[] SadShapes =
+        {
+            IndexOf("mouthFrownLeft"), IndexOf("mouthFrownRight"), IndexOf("browInnerUp"), IndexOf("browInnerUp"),
+        };
+
         /// <summary>
         /// 送信される JSON の形（フィールド名は送信側と一致させる。欠けた配列は null）。
         /// </summary>
@@ -204,7 +226,29 @@ namespace VRCast.Tracking
                 - scores[EyeLookDownLeft] - scores[EyeLookDownRight]) * 0.5f;
             face.Gaze = new Vector2(right * GazeDegrees, upward * GazeDegrees);
             face.HasGaze = true;
+
+            // 表情: 口・頬・眉・目の BlendShape の平均（口だけに頼らず、発話中の誤判定を減らす）
+            face.Expression = new ExpressionScores
+            {
+                Smile = Average(scores, SmileShapes),
+                Surprise = Average(scores, SurpriseShapes),
+                Angry = Average(scores, AngryShapes),
+                Sad = Average(scores, SadShapes),
+            };
+            face.HasExpression = true;
             return true;
+        }
+
+        private static float Average(float[] scores, int[] indices)
+        {
+            // 指定位置の値の平均を 0〜1 に収める
+            float sum = 0f;
+            foreach (int index in indices)
+            {
+                sum += scores[index];
+            }
+
+            return Mathf.Clamp01(sum / indices.Length);
         }
 
         private static void ReadArms(float[] points, float[] visibility, ref BodyTrackingFrame body)

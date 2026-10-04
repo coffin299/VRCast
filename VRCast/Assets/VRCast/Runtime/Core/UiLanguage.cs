@@ -5,9 +5,12 @@ namespace VRCast.Core
     /// </summary>
     public enum UiLanguage
     {
-        // OS の言語に合わせる（日本語なら日本語、それ以外は英語）
+        // OS の言語に合わせる（日本語・韓国語・中国語ならその言語、それ以外は英語）
         Auto = 0,
         English = 1,
         Japanese = 2,
+        Korean = 3,
+        ChineseSimplified = 4,
+        ChineseTraditional = 5,
     }
 }

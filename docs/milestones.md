@@ -342,7 +342,7 @@ Descriptor（Milestone 3）・PhysBone（Milestone 4）は対応済みのため�
   高さは画面に収まる範囲に制限し、位置も画面内に保つ。見出しでドラッグ移動
 - 見た目: `UiTheme` がダークテーマ（角丸のカード・ボタン、スイッチ型トグル、細いスライダー・スクロールバー）を実行時に生成。
   フォントは OS の日本語フォント（Yu Gothic UI / Meiryo UI）。各セクションは見出し付きカード（`GuiControls.BeginCard`）で区切る
-- 言語: `Loc.T(英語, 日本語)` で表示時に選ぶ。設定 `uiLanguage`（Auto = OS に合わせる / English / Japanese）。
+- 言語: `Loc.T(英語, 日本語, 韓国語, 簡体字, 繁体字)` で表示時に選ぶ。設定 `uiLanguage`（Auto = OS に合わせる / English / Japanese / Korean / ChineseSimplified / ChineseTraditional。韓国語・中国語は 1.0.0 の後に追加）。
   ランタイム部品が返す状態文（受信状態・トラッカー出力など）は英語のまま
 - UI の大きさ: 設定 `uiScale`（0.75〜2）を `GUI.matrix` で適用。Settings タブのプリセットで選ぶ
 - Camera と Rendering は Display タブへ統合（`RenderingSection` は `DisplaySection` に置き換え）
