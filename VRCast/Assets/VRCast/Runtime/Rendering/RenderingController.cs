@@ -71,6 +71,35 @@ namespace VRCast.Rendering
             }
         }
 
+        /// <summary>
+        /// 操作パネルのダークモード。切り替え時、背景色が切り替え前のテーマの既定色のままなら新しいテーマの既定色にする
+        /// （利用者が選んだ色は残す）。パネルの配色は MainPanel が設定を見て作り直す。
+        /// </summary>
+        public bool DarkMode
+        {
+            get => _settings.darkMode;
+            set
+            {
+                // 変化が無ければ何もしない
+                if (value == _settings.darkMode)
+                {
+                    return;
+                }
+
+                bool defaultBackground = _settings.backgroundColor == DefaultBackgroundColor;
+                _settings.darkMode = value;
+                if (defaultBackground)
+                {
+                    BackgroundColor = DefaultBackgroundColor;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 現在のテーマに合った背景色の既定値。
+        /// </summary>
+        public Color DefaultBackgroundColor => AppSettings.DefaultBackgroundOf(_settings.darkMode);
+
         public float LightIntensity
         {
             get => _settings.lightIntensity;

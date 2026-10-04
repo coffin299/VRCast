@@ -56,6 +56,10 @@ namespace VRCast.Core
         public const float MinUiScale = 0.75f;
         public const float MaxUiScale = 2f;
 
+        // テーマごとの背景色の既定値（ライト = 目に優しいベージュ、ダーク = パネルより少し明るい暗い茶系の灰色）
+        public static readonly Color LightBackgroundColor = new Color(0.90f, 0.86f, 0.78f, 1f);
+        public static readonly Color DarkBackgroundColor = new Color(0.17f, 0.16f, 0.15f, 1f);
+
         public int version = CurrentVersion;
         public int windowWidth = 1280;
         public int windowHeight = 720;
@@ -71,10 +75,10 @@ namespace VRCast.Core
         // 軽量モード（描画のフレームレートとトラッカーの処理回数を下げ、ゲーム・OBS と同時に使うときの負荷を減らす）
         public bool lowLoadMode;
 
-        // 背景色（既定は目に優しいベージュ）。非透過時は不透明で使い、透過時は alpha 0 のまま色だけ塗る
+        // 背景色（既定はライトテーマのベージュ）。非透過時は不透明で使い、透過時は alpha 0 のまま色だけ塗る
         // （ウィンドウ上では色が見え、OBS のゲームキャプチャでは抜ける）
         public bool transparentBackground;
-        public Color backgroundColor = new Color(0.90f, 0.86f, 0.78f, 1f);
+        public Color backgroundColor = LightBackgroundColor;
 
         // 仮想カメラ（VRCast Camera）への出力
         public bool virtualCameraEnabled;
@@ -137,6 +141,14 @@ namespace VRCast.Core
         // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
         public string trackerCamera = string.Empty;
+
+        /// <summary>
+        /// テーマに合った背景色の既定値を返す。
+        /// </summary>
+        public static Color DefaultBackgroundOf(bool dark)
+        {
+            return dark ? DarkBackgroundColor : LightBackgroundColor;
+        }
 
         /// <summary>
         /// 全ての設定を既定値に戻す（ウィンドウサイズと最後に開いたアバターは保持）。
