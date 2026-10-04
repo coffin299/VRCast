@@ -40,11 +40,8 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Language", "言語", "언어", "语言", "語言"));
 
             // Auto は OS の言語（日本語・韓国語・中国語以外は英語）。並びは UiLanguage と同じ
-            string[] labels =
-            {
-                Loc.T("Auto (OS)", "自動（OS に合わせる）", "자동 (OS에 맞춤)", "自动（跟随系统）", "自動（跟隨系統）"),
-                "English", "日本語", "한국어", "简体中文", "繁體中文",
-            };
+            string[] labels = Loc.LanguageLabels(
+                Loc.T("Auto (OS)", "自動（OS に合わせる）", "자동 (OS에 맞춤)", "自动（跟随系统）", "自動（跟隨系統）"));
             _settings.uiLanguage = (UiLanguage)GuiControls.EnumSelector(
                 Loc.T("Display language", "表示言語", "표시 언어", "显示语言", "顯示語言"),
                 labels, (int)_settings.uiLanguage);
