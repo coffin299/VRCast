@@ -75,7 +75,7 @@ namespace VRCast.UI
                 "將 .vrcaster 檔案拖放到視窗，或透過「瀏覽」選擇，或輸入路徑"));
 
             GUILayout.BeginHorizontal();
-            _pathInput = GUILayout.TextField(_pathInput);
+            _pathInput = GUILayout.TextField(_pathInput, GuiControls.Shrinkable);
 
             // ファイル選択（Windows のみ、読込中は無効）
             GUI.enabled = FileDialog.IsSupported && !_session.IsLoading;
@@ -91,20 +91,20 @@ namespace VRCast.UI
 
             // 読込中はボタンを無効化
             GUI.enabled = !_session.IsLoading;
-            if (GUILayout.Button(Loc.T("Load", "読み込み", "불러오기", "加载", "載入")))
+            if (GUILayout.Button(Loc.T("Load", "読み込み", "불러오기", "加载", "載入"), GuiControls.Shrinkable))
             {
                 TryLoad(_pathInput);
             }
 
             // 表示中のアバターがある場合のみ有効
             GUI.enabled = !_session.IsLoading && _session.Current != null;
-            if (GUILayout.Button(Loc.T("Reload", "再読み込み", "다시 불러오기", "重新加载", "重新載入")))
+            if (GUILayout.Button(Loc.T("Reload", "再読み込み", "다시 불러오기", "重新加载", "重新載入"), GuiControls.Shrinkable))
             {
                 _inputError = InputError.None;
                 _session.Reload();
             }
 
-            if (GUILayout.Button(Loc.T("Unload", "解除", "해제", "卸载", "卸載")))
+            if (GUILayout.Button(Loc.T("Unload", "解除", "해제", "卸载", "卸載"), GuiControls.Shrinkable))
             {
                 _inputError = InputError.None;
                 _session.Unload();

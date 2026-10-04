@@ -116,7 +116,7 @@ namespace VRCast.UI
                 }
 
                 Vector2Int preset = ResolutionPresets[i];
-                if (GUILayout.Button($"{preset.x} x {preset.y}"))
+                if (GUILayout.Button($"{preset.x} x {preset.y}", GuiControls.Shrinkable))
                 {
                     _rendering.SetResolution(preset.x, preset.y);
                 }
@@ -142,17 +142,17 @@ namespace VRCast.UI
 
             // プリセット（太陽光と環境光をまとめて設定）
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("Sunny", "晴れ", "맑음", "晴天", "晴天")))
+            if (GUILayout.Button(Loc.T("Sunny", "晴れ", "맑음", "晴天", "晴天"), GuiControls.Shrinkable))
             {
                 _rendering.ApplyPreset(LightingPreset.Sunny);
             }
 
-            if (GUILayout.Button(Loc.T("Soft", "やわらか", "부드럽게", "柔和", "柔和")))
+            if (GUILayout.Button(Loc.T("Soft", "やわらか", "부드럽게", "柔和", "柔和"), GuiControls.Shrinkable))
             {
                 _rendering.ApplyPreset(LightingPreset.Soft);
             }
 
-            if (GUILayout.Button(Loc.T("Default", "既定", "기본", "默认", "預設")))
+            if (GUILayout.Button(Loc.T("Default", "既定", "기본", "默认", "預設"), GuiControls.Shrinkable))
             {
                 _rendering.ApplyPreset(LightingPreset.Default);
             }

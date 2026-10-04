@@ -18,6 +18,11 @@ namespace VRCast.UI
         private const int MaxOptionLabelLength = 32;
 
         /// <summary>
+        /// 横に並べるボタン用の配置指定。行の幅が足りないときに文字の幅より縮めて、パネルの右へはみ出さないようにする。
+        /// </summary>
+        public static readonly GUILayoutOption Shrinkable = GUILayout.MinWidth(0f);
+
+        /// <summary>
         /// 見出し付きのカードを開始する（EndCard で閉じる）。
         /// </summary>
         public static void BeginCard(string title)
@@ -82,7 +87,7 @@ namespace VRCast.UI
         {
             GUILayout.BeginHorizontal();
             GUILayout.Label(label, GUILayout.Width(LabelWidth));
-            bool pressed = GUILayout.Button(text);
+            bool pressed = GUILayout.Button(text, Shrinkable);
             GUILayout.EndHorizontal();
             return pressed;
         }
@@ -131,7 +136,7 @@ namespace VRCast.UI
             }
 
             UiTheme theme = UiTheme.Current;
-            GUILayout.Label(text, theme != null ? theme.Centered : GUI.skin.label, GUILayout.ExpandWidth(true));
+            GUILayout.Label(text, theme != null ? theme.Centered : GUI.skin.label, GUILayout.ExpandWidth(true), Shrinkable);
 
             // 次の候補へ（末尾の次は先頭）
             if (GUILayout.Button(">", GUILayout.Width(ArrowWidth)) && max >= min)

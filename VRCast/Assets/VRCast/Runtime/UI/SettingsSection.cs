@@ -58,7 +58,7 @@ namespace VRCast.UI
             foreach (float preset in ScalePresets)
             {
                 bool selected = Mathf.Approximately(_settings.uiScale, preset);
-                if (GUILayout.Toggle(selected, $"{preset * 100f:F0}%", GUI.skin.button) && !selected)
+                if (GUILayout.Toggle(selected, $"{preset * 100f:F0}%", GUI.skin.button, GuiControls.Shrinkable) && !selected)
                 {
                     _settings.uiScale = preset;
                 }

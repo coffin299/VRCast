@@ -93,7 +93,7 @@ namespace VRCast.UI
 
             // ファイル選択（読込中は無効）
             GUI.enabled = !_session.IsLoading;
-            if (GUILayout.Button(Loc.T("Choose file...", "ファイルを選ぶ...", "파일 선택...", "选择文件...", "選擇檔案...")))
+            if (GUILayout.Button(Loc.T("Choose file...", "ファイルを選ぶ...", "파일 선택...", "选择文件...", "選擇檔案..."), GuiControls.Shrinkable))
             {
                 _avatarSection.Browse();
             }
@@ -101,7 +101,7 @@ namespace VRCast.UI
             GUI.enabled = true;
 
             // 詳細（再読み込み・エラー内容）は Avatar タブ
-            if (GUILayout.Button(Loc.T("Avatar tab", "アバタータブへ", "아바타 탭으로", "前往虚拟形象标签页", "前往虛擬形象分頁")))
+            if (GUILayout.Button(Loc.T("Avatar tab", "アバタータブへ", "아바타 탭으로", "前往虚拟形象标签页", "前往虛擬形象分頁"), GuiControls.Shrinkable))
             {
                 _open(StartLink.Avatar);
             }
@@ -223,12 +223,12 @@ namespace VRCast.UI
                 "Web カメラで動かす / マイクで口パクする", "웹캠으로 움직이기 / 마이크로 립싱크",
                 "用摄像头驱动 / 用麦克风对口型", "用網路攝影機驅動 / 用麥克風對嘴型"));
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("Tracking tab", "トラッキングタブ", "트래킹 탭", "追踪标签页", "追蹤分頁")))
+            if (GUILayout.Button(Loc.T("Tracking tab", "トラッキングタブ", "트래킹 탭", "追踪标签页", "追蹤分頁"), GuiControls.Shrinkable))
             {
                 _open(StartLink.Tracking);
             }
 
-            if (GUILayout.Button(Loc.T("Face tab", "顔タブ", "얼굴 탭", "面部标签页", "臉部分頁")))
+            if (GUILayout.Button(Loc.T("Face tab", "顔タブ", "얼굴 탭", "面部标签页", "臉部分頁"), GuiControls.Shrinkable))
             {
                 _open(StartLink.Face);
             }
