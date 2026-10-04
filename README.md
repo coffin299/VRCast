@@ -282,7 +282,10 @@ powershell -ExecutionPolicy Bypass -File .\Tools\MediaPipeTracker\build.ps1
 - OpenCV の OpenCL を無効化し、カーネルのキャッシュ（`%TEMP%\opencv\...`）を書かせない。
 - トラッカーの出力は VRCast が読み捨て（最後の 1 行だけ保持）、ログファイルは作らない。
 - VRCast が異常終了してもトラッカーが自分で終了する（`--parent-pid`）。カメラを掴んだまま残らない。
-- 出力（`vrcast_tracker.exe` 一式とモデル 3 種）は `VRCast/Assets/StreamingAssets/MediaPipeTracker/` に置かれ、Unity が StreamingAssets ごとビルドへ同梱する。
+- 出力（`vrcast_tracker.exe` 一式とモデル 3 種）は `VRCast/Trackers/MediaPipeTracker/` に置かれ、Unity でのビルド後にビルドの `StreamingAssets` へコピーされる。
+  エディターでの実行時も `Trackers/` から起動する。
+- `Assets/` の中（`Assets/StreamingAssets/` を含む）には置かないこと。トラッカーの DLL 群を Unity がプラグインとして登録し、
+  エディターのスクリプトコンパイルが `OutOfMemoryException` で失敗する。
 - 実行ファイルは `MediaPipeTracker/` 以下を再帰的に探す。見つからない場合もビルドは続行し、警告ログを出す。
 - 配布時は MediaPipe（Apache-2.0）と同梱ライブラリのライセンス表記を含めること（一覧は [NOTICE](NOTICE)）。
 
@@ -301,8 +304,9 @@ powershell -ExecutionPolicy Bypass -File .\Tools\UnityCapture\fetch.ps1
 ### OpenSeeFace の同梱（任意）
 
 代替の入力元 OpenSeeFace はリポジトリに含めない（サイズが大きいため `.gitignore` 済み）。使う場合はビルド前に
-[OpenSeeFace Releases](https://github.com/emilianavt/OpenSeeFace/releases) の zip を展開し、中身（`Binary/`・ライセンス類を含む）を
-`VRCast/Assets/StreamingAssets/OpenSeeFace/` に置く。Unity が StreamingAssets ごとビルドへ同梱する。
+[OpenSeeFace Releases](https://github.com/emilianavt/OpenSeeFace/releases) の zip を展開し、`Binary/`・`models/`・`Licenses/`・`LICENSE` だけを
+`VRCast/Trackers/OpenSeeFace/` に置く（`Assets/` の外）。Unity でのビルド後にビルドの `StreamingAssets` へコピーされる。
+（`Unity/`・`escapi/`・`dshowcapture/`・`Source/` などは不要。同名 DLL が重複してサイズも増える）
 
 - 実行ファイルは `OpenSeeFace/` 以下を再帰的に探す（展開時のフォルダ階層は問わない）。
 - 見つからない場合もビルドは続行し、警告ログを出す（トラッキングはパス指定が必要になる）。
@@ -325,7 +329,6 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\VRCast-Converter-<バージョン>.unitypackage`）。
   `Packages/com.vrcast.converter` を `Assets/VRCast/Converter/` に入るよう詰める。GUID はリポジトリの `.meta` を使うため版をまたいで同じ
   （上書きインポートで更新できる）。ファイルを追加したら Unity で一度開いて `.meta` を作り、一緒にコミットする（無いと中止する）。
-
 ### バージョンと更新履歴
 
 - バージョンは `VRCastBuild` の `AppVersion` と `Packages/com.vrcast.converter/package.json` の `version` をそろえる。

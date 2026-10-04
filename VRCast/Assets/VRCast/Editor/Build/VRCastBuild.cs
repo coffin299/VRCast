@@ -110,13 +110,13 @@ namespace VRCast.Editor.Build
 
         private static void WarnIfTrackerMissing()
         {
-            // 入力元ごとに StreamingAssets/(フォルダ) 以下に実行ファイルがあれば同梱される
+            // 入力元ごとに Trackers/(フォルダ) 以下に実行ファイルがあればビルド後に同梱される（BundledTrackerCopier）
             foreach (TrackingSource source in (TrackingSource[])System.Enum.GetValues(typeof(TrackingSource)))
             {
-                if (TrackerProcess.FindBundled(Application.streamingAssetsPath, source) == null)
+                if (TrackerProcess.FindBundled(TrackerProcess.BundledRoot, source) == null)
                 {
                     string executable = TrackerProcess.ExecutableOf(source);
-                    Debug.LogWarning($"[VRCast][Build] {executable} not found in Assets/StreamingAssets/"
+                    Debug.LogWarning($"[VRCast][Build] {executable} not found in {TrackerProcess.EditorFolderName}/"
                         + $"{TrackerProcess.FolderOf(source)}. {source} tracking will require an {executable} path.");
                 }
             }

@@ -1,6 +1,7 @@
 <#
 .SYNOPSIS
-    Build vrcast_tracker.exe and place it with the models into VRCast/Assets/StreamingAssets/MediaPipeTracker.
+    Build vrcast_tracker.exe and place it with the models into VRCast/Trackers/MediaPipeTracker
+    (outside Assets; copied into the build's StreamingAssets after a Unity build).
 .PARAMETER PythonVersion
     Python version passed to the py launcher (MediaPipe supports 3.9 - 3.12).
 #>
@@ -13,10 +14,11 @@ $ErrorActionPreference = "Stop"
 # __pycache__ / .pyc を作らない
 $env:PYTHONDONTWRITEBYTECODE = "1"
 
-# 入力（このフォルダ）と配置先（StreamingAssets）
+# 入力（このフォルダ）と配置先（Unity プロジェクト直下の Trackers。Assets 内に置くと DLL がプラグイン扱いされエディターが壊れる）
 $source = $PSScriptRoot
 $repository = (Resolve-Path (Join-Path $source "..\..")).Path
-$output = Join-Path $repository "VRCast\Assets\StreamingAssets\MediaPipeTracker"
+$output = Join-Path $repository "VRCast\Trackers\MediaPipeTracker"
+New-Item -ItemType Directory -Force (Split-Path $output -Parent) | Out-Null
 
 # 仮想環境はこのフォルダの .venv、PyInstaller の中間ファイルはリポジトリの外に置く（完了後に削除）
 $venv = Join-Path $source ".venv"
