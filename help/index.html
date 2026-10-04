@@ -125,6 +125,16 @@
   <p class="note ko">원본 아바타는 변경되지 않습니다. 표정·립싱크·눈 깜빡임·흔들림·Constraint 설정도 함께 내보내집니다.</p>
   <p class="note zh-hans">不会修改原始虚拟形象。表情、口型同步、眨眼、物理摆动和 Constraint 的设置也会一并导出。</p>
   <p class="note zh-hant">不會修改原始虛擬形象。表情、口型同步、眨眼、物理擺動和 Constraint 的設定也會一併匯出。</p>
+  <p class="note ja">【ベータ版】Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
+    暫定対応のため、正しく書き出せない場合があります。</p>
+  <p class="note en">[Beta] Avatars customized with Modular Avatar and other NDMF tools are exported with the changes applied (merged outfits, added expressions and toggles).
+    This is preliminary support; some avatars may not export correctly.</p>
+  <p class="note ko">[베타] Modular Avatar 등으로 개조한 아바타는 그대로 지정하면 개조 후의 모습 (의상 통합·추가한 표정과 토글)으로 내보내집니다.
+    임시 지원이므로 올바르게 내보내지지 않을 수 있습니다.</p>
+  <p class="note zh-hans">【测试版】用 Modular Avatar 等改造过的虚拟形象，直接指定即可按改造后的样子（合并的服装、添加的表情和开关）导出。
+    目前为临时支持，部分虚拟形象可能无法正确导出。</p>
+  <p class="note zh-hant">【測試版】用 Modular Avatar 等改造過的虛擬形象，直接指定即可按改造後的樣子（合併的服裝、新增的表情和開關）匯出。
+    目前為暫時支援，部分虛擬形象可能無法正確匯出。</p>
   <p class="note ja">Package Manager で入れる場合は、<span class="ui">Window &gt; Package Manager</span> の <span class="ui">+</span> &gt;
     <span class="ui">Add package from git URL...</span> に <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
     を入力します（Git が必要）。unitypackage と両方入れるとエラーになるので、どちらか一方にしてください。</p>
@@ -351,6 +361,11 @@
         <span class="ko">정면이 어긋나면 카메라를 보고 패널 아래쪽 <span class="ui">초기화</span>의 <span class="ui">얼굴 방향</span> (얼굴·상체·시선)을 누릅니다. 시선만이라면 <span class="ui">시선</span>.</span>
         <span class="zh-hans">正面方向偏移时，请看着相机，点击面板底部 <span class="ui">重置</span> 中的 <span class="ui">头部朝向</span>（头部、上半身、视线）。只调整视线时点击 <span class="ui">视线</span>。</span>
         <span class="zh-hant">正面方向偏移時，請看著相機，點擊面板底部 <span class="ui">重設</span> 中的 <span class="ui">頭部朝向</span>（頭部、上半身、視線）。只調整視線時點擊 <span class="ui">視線</span>。</span></li>
+    <li><span class="ja">正面は、トラッキング開始時（入力元・カメラの変更後も）に頭が 0.5 秒ほど止まったときの向きで自動で決まります。顔を手で隠すなどして見失っても、正面は取り直しません。</span>
+        <span class="en">The front direction is set automatically when your head stays still for about 0.5 seconds after tracking starts (also after changing the source or camera). It is kept even if your face is lost, for example when covered by a hand.</span>
+        <span class="ko">정면은 트래킹 시작 시 (입력 소스·카메라 변경 후에도) 머리가 0.5초 정도 멈췄을 때의 방향으로 자동으로 정해집니다. 손으로 얼굴을 가리는 등으로 놓쳐도 정면은 다시 잡지 않습니다.</span>
+        <span class="zh-hans">开始追踪时（更改输入源或相机后也一样），头部静止约 0.5 秒时的朝向会自动成为正面。即使用手遮住脸等导致丢失，也不会重新设定正面。</span>
+        <span class="zh-hant">開始追蹤時（變更輸入來源或相機後也一樣），頭部靜止約 0.5 秒時的朝向會自動成為正面。即使用手遮住臉等導致遺失，也不會重新設定正面。</span></li>
     <li><span class="ja"><span class="ui">体の動き</span> で、頭の動きに合わせて上半身を傾けるか体ごと動かすかを選べます。</span>
         <span class="en"><span class="ui">Body</span> chooses whether the upper body leans or the whole body moves with your head.</span>
         <span class="ko"><span class="ui">몸의 움직임</span>에서 머리 움직임에 맞춰 상체를 기울일지 몸 전체를 움직일지 선택할 수 있습니다.</span>
@@ -377,6 +392,26 @@
         <span class="ko"><span class="ui">UI 크기</span>: 75%~200%.</span>
         <span class="zh-hans"><span class="ui">界面大小</span>：75%～200%。</span>
         <span class="zh-hant"><span class="ui">介面大小</span>：75%～200%。</span></li>
+    <li><span class="ja"><span class="ui">テーマ</span>: ライト（既定）/ ダーク。背景色を表示タブで変えていなければ、背景もテーマに合わせて切り替わります。</span>
+        <span class="en"><span class="ui">Theme</span>: Light (default) / Dark. The background also follows the theme unless you changed its color in the Display tab.</span>
+        <span class="ko"><span class="ui">테마</span>: 라이트 (기본) / 다크. 표시 탭에서 배경색을 바꾸지 않았다면 배경도 테마에 맞춰 바뀝니다.</span>
+        <span class="zh-hans"><span class="ui">主题</span>：浅色（默认）/ 深色。如果未在显示标签页中更改背景色，背景也会随主题切换。</span>
+        <span class="zh-hant"><span class="ui">主題</span>：淺色（預設）/ 深色。若未在顯示分頁中變更背景色，背景也會隨主題切換。</span></li>
+    <li><span class="ja"><span class="ui">軽量モード</span>（既定は ON）: 描画を 30fps（OFF なら 60fps）に抑え、同梱トラッカーの処理も軽くして、ゲームや OBS と同時に使うときの負荷を減らします。動きの滑らかさを優先するなら OFF にします。</span>
+        <span class="en"><span class="ui">Low load mode</span> (on by default): limits drawing to 30 fps (60 fps when off) and lightens the bundled tracker to reduce load when running with games or OBS. Turn it off if you prefer smoother motion.</span>
+        <span class="ko"><span class="ui">저부하 모드</span> (기본은 켜짐): 화면을 30fps (끄면 60fps)로 제한하고 내장 트래커의 처리도 가볍게 해 게임이나 OBS와 함께 쓸 때의 부하를 줄입니다. 움직임의 부드러움을 우선하려면 끕니다.</span>
+        <span class="zh-hans"><span class="ui">低负载模式</span>（默认开启）：将画面限制为 30fps（关闭时为 60fps），并减轻内置追踪器的处理，降低与游戏或 OBS 同时使用时的负载。如更重视动作流畅度，请关闭。</span>
+        <span class="zh-hant"><span class="ui">低負載模式</span>（預設開啟）：將畫面限制為 30fps（關閉時為 60fps），並減輕內建追蹤器的處理，降低與遊戲或 OBS 同時使用時的負載。如更重視動作流暢度，請關閉。</span></li>
+    <li><span class="ja"><span class="ui">アップデート</span>: 起動時に新しいバージョンがあるかを確認し、あればパネル上部に通知します（<span class="ui">GitHub からダウンロード</span> / <span class="ui">BOOTH からダウンロード</span> / <span class="ui">このバージョンは通知しない</span>）。
+        確認は最新のバージョン番号を読むためだけに Web サイト（coffin299.github.io）へ接続します。OFF にもできます。</span>
+        <span class="en"><span class="ui">Updates</span>: checks for a new version at startup and shows a notice at the top of the panel if there is one (<span class="ui">Download from GitHub</span> / <span class="ui">Download from BOOTH</span> / <span class="ui">Skip this version</span>).
+        It connects to the website (coffin299.github.io) only to read the latest version number, and can be turned off.</span>
+        <span class="ko"><span class="ui">업데이트</span>: 시작할 때 새 버전이 있는지 확인하고, 있으면 패널 위쪽에 알립니다 (<span class="ui">GitHub에서 다운로드</span> / <span class="ui">BOOTH에서 다운로드</span> / <span class="ui">이 버전은 알리지 않기</span>).
+        최신 버전 번호를 읽기 위해서만 웹사이트 (coffin299.github.io)에 접속합니다. 끌 수도 있습니다.</span>
+        <span class="zh-hans"><span class="ui">更新</span>：启动时检查是否有新版本，如有则在面板顶部提示（<span class="ui">从 GitHub 下载</span> / <span class="ui">从 BOOTH 下载</span> / <span class="ui">不再提示此版本</span>）。
+        仅为读取最新版本号而连接网站（coffin299.github.io），也可以关闭。</span>
+        <span class="zh-hant"><span class="ui">更新</span>：啟動時檢查是否有新版本，如有則在面板頂部提示（<span class="ui">從 GitHub 下載</span> / <span class="ui">從 BOOTH 下載</span> / <span class="ui">不再提示此版本</span>）。
+        僅為讀取最新版本號而連線網站（coffin299.github.io），也可以關閉。</span></li>
     <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
         <span class="en">Settings are saved when VRCast closes and restored next time.</span>
         <span class="ko">설정은 VRCast 종료 시 자동으로 저장되고, 다음 실행 시 복원됩니다.</span>
@@ -482,6 +517,13 @@
   <p class="ko">VRCast를 관리자 권한으로 실행하면 Windows 제한으로 드롭할 수 없습니다. 일반적으로 실행하거나 <span class="ui">파일 선택...</span>을 사용하세요.</p>
   <p class="zh-hans">以管理员身份运行 VRCast 时，Windows 会阻止拖放。请正常启动，或使用 <span class="ui">选择文件...</span>。</p>
   <p class="zh-hant">以系統管理員身分執行 VRCast 時，Windows 會阻止拖放。請正常啟動，或使用 <span class="ui">選擇檔案...</span>。</p>
+
+  <h3><span class="ja">ゲームや OBS と一緒に使うとトラッキングがカクつく</span><span class="en">Tracking stutters while running games or OBS</span><span class="ko">게임이나 OBS와 함께 쓰면 트래킹이 끊긴다</span><span class="zh-hans">与游戏或 OBS 同时使用时追踪卡顿</span><span class="zh-hant">與遊戲或 OBS 同時使用時追蹤卡頓</span></h3>
+  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。</p>
+  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Settings</span> tab is on (it is on by default). If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load.</p>
+  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다.</p>
+  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。</p>
+  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。</p>
 
   <h3><span class="ja">口パクしない</span><span class="en">Lip sync does not move</span><span class="ko">립싱크가 안 된다</span><span class="zh-hans">口型不动</span><span class="zh-hant">嘴型不動</span></h3>
   <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
