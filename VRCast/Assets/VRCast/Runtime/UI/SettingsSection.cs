@@ -6,7 +6,7 @@ using VRCast.Rendering;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Settings タブ（表示言語、UI の大きさ、軽量モード、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
+    /// Settings タブ（表示言語、UI の大きさ、テーマ（ライト / ダーク）、軽量モード、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
     /// </summary>
     public class SettingsSection
     {
@@ -33,6 +33,7 @@ namespace VRCast.UI
         {
             DrawLanguage();
             DrawScale();
+            DrawTheme();
             DrawPerformance();
             DrawHelp();
             DrawReset();
@@ -66,6 +67,29 @@ namespace VRCast.UI
                 {
                     _settings.uiScale = preset;
                 }
+            }
+
+            GUILayout.EndHorizontal();
+            GuiControls.EndCard();
+        }
+
+        private void DrawTheme()
+        {
+            GuiControls.BeginCard(Loc.T("Theme", "テーマ", "테마", "主题", "主題"));
+            GUILayout.BeginHorizontal();
+
+            // 選択中はアクセント色（反映は次の Layout で MainPanel がテーマを作り直す）
+            bool dark = _settings.darkMode;
+            if (GUILayout.Toggle(!dark, Loc.T("Light", "ライト", "라이트", "浅色", "淺色"), GUI.skin.button,
+                    GuiControls.Shrinkable) && dark)
+            {
+                _settings.darkMode = false;
+            }
+
+            if (GUILayout.Toggle(dark, Loc.T("Dark", "ダーク", "다크", "深色", "深色"), GUI.skin.button,
+                    GuiControls.Shrinkable) && !dark)
+            {
+                _settings.darkMode = true;
             }
 
             GUILayout.EndHorizontal();

@@ -5,7 +5,7 @@ using VRCast.Core;
 namespace VRCast.UI
 {
     /// <summary>
-    /// 操作パネルのベージュテーマ（アバター背景の既定ベージュに合わせる）。角丸・スイッチ・スライダーのテクスチャを実行時に生成し、
+    /// 操作パネルのテーマ（ライト = アバター背景の既定ベージュに合わせた配色、ダーク = 暗い茶系）。角丸・スイッチ・スライダーのテクスチャを実行時に生成し、
     /// IMGUI の既定スキンを複製して差し替える（GUILayout の既存の呼び出しがそのまま新しい見た目になる）。
     /// IMGUI のスキンは OnGUI 内でしか作れないため、最初の OnGUI で Create する。
     /// </summary>
@@ -21,26 +21,101 @@ namespace VRCast.UI
             { "Microsoft JhengHei UI", "Microsoft YaHei UI", "Yu Gothic UI", "Malgun Gothic", "Segoe UI", "Arial" };
         private const int FontSize = 14;
 
-        // 配色（背景のベージュより濃いベージュの地、焦げ茶の文字、キャラメル色のアクセント）
-        private static readonly Color Background = new Color32(204, 189, 162, 245);
-        private static readonly Color Surface = new Color32(191, 174, 145, 255);
-        private static readonly Color CardColor = new Color32(218, 205, 182, 255);
-        private static readonly Color Control = new Color32(196, 179, 149, 255);
-        private static readonly Color ControlHover = new Color32(182, 164, 133, 255);
-        private static readonly Color ControlActive = new Color32(168, 150, 119, 255);
-        private static readonly Color FieldColor = new Color32(240, 233, 220, 255);
-        private static readonly Color FieldFocus = new Color32(250, 246, 238, 255);
-        private static readonly Color Accent = new Color32(166, 98, 52, 255);
-        private static readonly Color AccentHover = new Color32(186, 117, 68, 255);
-        private static readonly Color OnAccent = new Color32(255, 250, 242, 255);
-        private static readonly Color TrackColor = new Color32(172, 154, 124, 255);
-        private static readonly Color Knob = new Color32(252, 248, 240, 255);
-        private static readonly Color TextColor = new Color32(58, 46, 34, 255);
-        private static readonly Color TextDim = new Color32(112, 96, 76, 255);
-        private static readonly Color DangerColor = new Color32(192, 56, 50, 255);
-        private static readonly Color DangerHover = new Color32(212, 74, 66, 255);
-        private static readonly Color DangerActive = new Color32(158, 42, 38, 255);
-        private static readonly Color SuccessColor = new Color32(52, 130, 76, 255);
+        /// <summary>
+        /// テーマの配色一式。
+        /// </summary>
+        private sealed class Palette
+        {
+            public Color Background;
+            public Color Surface;
+            public Color Card;
+            public Color Control;
+            public Color ControlHover;
+            public Color ControlActive;
+            public Color Field;
+            public Color FieldFocus;
+            public Color Accent;
+            public Color AccentHover;
+            public Color OnAccent;
+            public Color Track;
+            public Color Knob;
+            public Color Text;
+            public Color TextDim;
+            public Color Danger;
+            public Color DangerHover;
+            public Color DangerActive;
+            public Color Success;
+        }
+
+        // ライト（背景のベージュより濃いベージュの地、焦げ茶の文字、キャラメル色のアクセント）
+        private static readonly Palette LightPalette = new Palette
+        {
+            Background = new Color32(204, 189, 162, 245),
+            Surface = new Color32(191, 174, 145, 255),
+            Card = new Color32(218, 205, 182, 255),
+            Control = new Color32(196, 179, 149, 255),
+            ControlHover = new Color32(182, 164, 133, 255),
+            ControlActive = new Color32(168, 150, 119, 255),
+            Field = new Color32(240, 233, 220, 255),
+            FieldFocus = new Color32(250, 246, 238, 255),
+            Accent = new Color32(166, 98, 52, 255),
+            AccentHover = new Color32(186, 117, 68, 255),
+            OnAccent = new Color32(255, 250, 242, 255),
+            Track = new Color32(172, 154, 124, 255),
+            Knob = new Color32(252, 248, 240, 255),
+            Text = new Color32(58, 46, 34, 255),
+            TextDim = new Color32(112, 96, 76, 255),
+            Danger = new Color32(192, 56, 50, 255),
+            DangerHover = new Color32(212, 74, 66, 255),
+            DangerActive = new Color32(158, 42, 38, 255),
+            Success = new Color32(52, 130, 76, 255),
+        };
+
+        // ダーク（暗い焦げ茶の地、生成り色の文字、暗い地でも見えるよう明るめのキャラメル色のアクセント）
+        private static readonly Palette DarkPalette = new Palette
+        {
+            Background = new Color32(30, 27, 24, 245),
+            Surface = new Color32(40, 36, 32, 255),
+            Card = new Color32(50, 45, 40, 255),
+            Control = new Color32(64, 58, 51, 255),
+            ControlHover = new Color32(78, 71, 62, 255),
+            ControlActive = new Color32(92, 84, 73, 255),
+            Field = new Color32(34, 31, 28, 255),
+            FieldFocus = new Color32(26, 24, 21, 255),
+            Accent = new Color32(196, 124, 72, 255),
+            AccentHover = new Color32(214, 142, 88, 255),
+            OnAccent = new Color32(255, 250, 242, 255),
+            Track = new Color32(86, 78, 68, 255),
+            Knob = new Color32(236, 230, 220, 255),
+            Text = new Color32(236, 228, 216, 255),
+            TextDim = new Color32(168, 156, 140, 255),
+            Danger = new Color32(200, 64, 56, 255),
+            DangerHover = new Color32(220, 82, 72, 255),
+            DangerActive = new Color32(166, 48, 42, 255),
+            Success = new Color32(104, 186, 126, 255),
+        };
+
+        // 使用中の配色（以下の名前で各 Build から参照する）
+        private Palette _colors = LightPalette;
+        private Color Background => _colors.Background;
+        private Color Surface => _colors.Surface;
+        private Color CardColor => _colors.Card;
+        private Color Control => _colors.Control;
+        private Color ControlHover => _colors.ControlHover;
+        private Color ControlActive => _colors.ControlActive;
+        private Color FieldColor => _colors.Field;
+        private Color FieldFocus => _colors.FieldFocus;
+        private Color Accent => _colors.Accent;
+        private Color AccentHover => _colors.AccentHover;
+        private Color OnAccent => _colors.OnAccent;
+        private Color TrackColor => _colors.Track;
+        private Color Knob => _colors.Knob;
+        private Color TextColor => _colors.Text;
+        private Color TextDim => _colors.TextDim;
+        private Color DangerColor => _colors.Danger;
+        private Color DangerHover => _colors.DangerHover;
+        private Color DangerActive => _colors.DangerActive;
+        private Color SuccessColor => _colors.Success;
 
         // 角丸の半径（px）
         private const int WindowRadius = 10;
@@ -73,6 +148,11 @@ namespace VRCast.UI
         /// </summary>
         public UiLanguage Language { get; private set; }
 
+        /// <summary>
+        /// ダークモードの配色で作ったか（設定が変わったら作り直す）。
+        /// </summary>
+        public bool Dark { get; private set; }
+
         public GUISkin Skin { get; private set; }
         public GUIStyle Title { get; private set; }
         public GUIStyle SectionTitle { get; private set; }
@@ -89,11 +169,11 @@ namespace VRCast.UI
         public GUIStyle Success { get; private set; }
 
         /// <summary>
-        /// テーマを作成する（OnGUI 内で呼ぶ）。language は解決済みの表示言語（フォントの優先順に使う）。
+        /// テーマを作成する（OnGUI 内で呼ぶ）。language は解決済みの表示言語（フォントの優先順に使う）、dark はダークモードの配色にするか。
         /// </summary>
-        public static UiTheme Create(UiLanguage language)
+        public static UiTheme Create(UiLanguage language, bool dark)
         {
-            var theme = new UiTheme { Language = language };
+            var theme = new UiTheme { Language = language, Dark = dark, _colors = dark ? DarkPalette : LightPalette };
             theme.Build();
             Current = theme;
             return theme;

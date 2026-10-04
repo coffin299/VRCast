@@ -203,16 +203,17 @@ namespace VRCast.UI
             // 言語を先に決める（テーマのフォントの優先順に使う）
             Loc.Apply(_settings.uiLanguage);
 
-            // スキンは OnGUI 内でしか作れないため初回にここで作る。言語が変わったら Layout の時だけ作り直す
+            // スキンは OnGUI 内でしか作れないため初回にここで作る。言語・ダークモードが変わったら Layout の時だけ作り直す
             // （Layout と Repaint の間でフォントを変えると配置が食い違うため）
             if (_theme == null)
             {
-                _theme = UiTheme.Create(Loc.Current);
+                _theme = UiTheme.Create(Loc.Current, _settings.darkMode);
             }
-            else if (_theme.Language != Loc.Current && Event.current.type == EventType.Layout)
+            else if ((_theme.Language != Loc.Current || _theme.Dark != _settings.darkMode)
+                && Event.current.type == EventType.Layout)
             {
                 _theme.Destroy();
-                _theme = UiTheme.Create(Loc.Current);
+                _theme = UiTheme.Create(Loc.Current, _settings.darkMode);
             }
 
             // スキン・倍率を適用（終わったら元に戻す）
