@@ -1,5 +1,5 @@
 @echo off
-rem Build vrcast_tracker.exe and place it into VRCast\Assets\StreamingAssets\MediaPipeTracker.
+rem Build vrcast_tracker.exe and place it into VRCast\Trackers\MediaPipeTracker.
 rem Uses Python 3.12.x through the "py" launcher (install Python 3.12 from python.org).
 rem The virtual environment is created in .venv next to this file.
 

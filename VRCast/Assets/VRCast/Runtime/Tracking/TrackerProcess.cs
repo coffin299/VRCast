@@ -12,7 +12,7 @@ namespace VRCast.Tracking
 {
     /// <summary>
     /// 入力元のトラッカー（MediaPipe: vrcast_tracker.exe / OpenSeeFace: facetracker.exe）を管理する。アプリ全体で 1 つ。
-    /// 既定は StreamingAssets に同梱した実行ファイルを使い、trackingEnabled の間は選択カメラで自動起動・異常終了時は再起動する。
+    /// 既定は同梱した実行ファイル（ビルドでは StreamingAssets、エディターでは Trackers）を使い、trackingEnabled の間は選択カメラで自動起動・異常終了時は再起動する。
     /// どちらも同じ引数（一覧 "-l 1"、起動 "-c 番号 -i 127.0.0.1 -p ポート"）で扱い、カメラはデバイス名で保存して起動時に番号へ解決する。
     /// </summary>
     public class TrackerProcess : MonoBehaviour
@@ -86,13 +86,27 @@ namespace VRCast.Tracking
             // 全入力元の同梱版を探しておく
             foreach (TrackingSource source in (TrackingSource[])Enum.GetValues(typeof(TrackingSource)))
             {
-                _bundledPaths[source] = FindBundled(Application.streamingAssetsPath, source);
+                _bundledPaths[source] = FindBundled(BundledRoot, source);
                 VRCastLog.Info(LogCategory, $"Bundled {ExecutableOf(source)}: {_bundledPaths[source] ?? "not found"}");
             }
         }
 
         /// <summary>
-        /// 同梱版を置く StreamingAssets 内のフォルダ名。
+        /// エディターで同梱版を置くフォルダ名（Unity プロジェクト直下、Assets の外）。
+        /// トラッカーの DLL 群を Assets 内に置くと Unity がネイティブプラグインとして登録し、
+        /// エディターのスクリプトコンパイルが OutOfMemoryException で失敗するため。ビルド時に StreamingAssets へコピーする。
+        /// </summary>
+        public const string EditorFolderName = "Trackers";
+
+        /// <summary>
+        /// 同梱版を探す起点。ビルドでは StreamingAssets、エディターではプロジェクト直下の Trackers。
+        /// </summary>
+        public static string BundledRoot => Application.isEditor
+            ? Path.Combine(Path.GetDirectoryName(Application.dataPath) ?? string.Empty, EditorFolderName)
+            : Application.streamingAssetsPath;
+
+        /// <summary>
+        /// 同梱版を置くフォルダ名（BundledRoot 内）。
         /// </summary>
         public static string FolderOf(TrackingSource source)
         {
@@ -392,7 +406,7 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// streamingAssetsPath/(入力元のフォルダ) 以下からトラッカーの実行ファイルを探す（zip の展開階層に依存しない）。
+        /// (同梱版の起点)/(入力元のフォルダ) 以下からトラッカーの実行ファイルを探す（zip の展開階層に依存しない）。
         /// 複数あれば最も浅いもの。無ければ null。
         /// </summary>
         public static string FindBundled(string streamingAssetsPath, TrackingSource source)

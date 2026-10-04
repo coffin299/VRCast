@@ -9,7 +9,9 @@
 /VRCast/[Bb]uild/
 /VRCast/[Bb]uilds/
 
-# Bundled tracker binaries (OpenSeeFace / MediaPipe tracker; built or copied in locally, shipped in builds)
+# Bundled tracker binaries (OpenSeeFace / MediaPipe tracker; built or copied in locally, copied into builds)
+/VRCast/Trackers/
+# Old location (inside Assets; breaks Editor script compilation, kept ignored for existing checkouts)
 /VRCast/Assets/StreamingAssets/OpenSeeFace/
 /VRCast/Assets/StreamingAssets/OpenSeeFace.meta
 /VRCast/Assets/StreamingAssets/MediaPipeTracker/
