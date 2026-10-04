@@ -196,7 +196,10 @@ namespace VRCast.UI
             };
             KeyHint.normal.textColor = Accent;
             Value = new GUIStyle(Hint) { alignment = TextAnchor.MiddleRight, wordWrap = false };
-            Centered = new GUIStyle(Skin.label) { alignment = TextAnchor.MiddleCenter, wordWrap = false };
+            Centered = new GUIStyle(Skin.label)
+            {
+                alignment = TextAnchor.MiddleCenter, wordWrap = false, clipping = TextClipping.Clip,
+            };
             Success = new GUIStyle(Skin.label) { fontStyle = FontStyle.Bold, wordWrap = false };
             Success.normal.textColor = SuccessColor;
         }
@@ -212,6 +215,7 @@ namespace VRCast.UI
                 border = Offset(ControlRadius + 1),
                 padding = new RectOffset(10, 10, 6, 6),
                 margin = new RectOffset(4, 4, 3, 3),
+                clipping = TextClipping.Clip,
             };
             SetStates(Skin.button, Rounded(Control, ControlRadius), Rounded(ControlHover, ControlRadius),
                 Rounded(ControlActive, ControlRadius), TextColor);

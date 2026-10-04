@@ -81,6 +81,9 @@ namespace VRCast.UI
         private bool _visible = true;
         private Tab _tab = Tab.Start;
         private readonly Vector2[] _scroll = new Vector2[TabCount];
+
+        // タブの内容の幅（前回の描画で測った見えている幅。0 = 未計測）
+        private float _contentWidth;
         private Rect _windowRect = new Rect(ScreenMargin, ScreenMargin, WindowWidth, MaxWindowHeight);
 
         public void Initialize(
@@ -260,8 +263,21 @@ namespace VRCast.UI
             // 選択中のタブの内容（横スクロールバーは出さない）
             _scroll[(int)_tab] = GUILayout.BeginScrollView(
                 _scroll[(int)_tab], false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
+
+            // 内容の幅を見えている幅に固定する（ボタンの多い行は右へはみ出さず、行の中で縮む）
+            GUILayout.BeginVertical(_contentWidth > 0f ? GUILayout.Width(_contentWidth) : GUILayout.ExpandWidth(true));
             DrawContent();
+            GUILayout.EndVertical();
             GUILayout.EndScrollView();
+
+            // 見えている幅（スクロールバーの分を除く）を次のフレームの配置に使う
+            if (Event.current.type == EventType.Repaint)
+            {
+                GUIStyle scrollbar = GUI.skin.verticalScrollbar;
+                float scrollbarWidth = scrollbar.fixedWidth + scrollbar.margin.horizontal;
+                _contentWidth = Mathf.Max(0f, GUILayoutUtility.GetLastRect().width - scrollbarWidth);
+            }
+
             GUILayout.EndHorizontal();
 
             // どのタブでも押せるリセットボタン

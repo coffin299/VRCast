@@ -84,21 +84,21 @@ namespace VRCast.UI
             GUILayout.BeginHorizontal();
 
             // 気を付け（既定）: 腕を下ろし切り、肘はまっすぐ
-            if (GUILayout.Button(Loc.T("Attention", "気を付け", "차렷", "立正", "立正")))
+            if (GUILayout.Button(Loc.T("Attention", "気を付け", "차렷", "立正", "立正"), GuiControls.Shrinkable))
             {
                 _pose.ArmDown = 1f;
                 _pose.ElbowBend = 0f;
             }
 
             // 腕を少し開き、肘を軽く曲げる
-            if (GUILayout.Button(Loc.T("Relaxed", "リラックス", "편안하게", "放松", "放鬆")))
+            if (GUILayout.Button(Loc.T("Relaxed", "リラックス", "편안하게", "放松", "放鬆"), GuiControls.Shrinkable))
             {
                 _pose.ArmDown = 0.85f;
                 _pose.ElbowBend = 0.3f;
             }
 
             // 読込時の姿勢（通常 T ポーズ）
-            if (GUILayout.Button(Loc.T("T-Pose", "T ポーズ", "T 포즈", "T 姿势", "T 姿勢")))
+            if (GUILayout.Button(Loc.T("T-Pose", "T ポーズ", "T 포즈", "T 姿势", "T 姿勢"), GuiControls.Shrinkable))
             {
                 _pose.ArmDown = 0f;
                 _pose.ElbowBend = 0f;
@@ -149,7 +149,7 @@ namespace VRCast.UI
 
                 // 選択中はトグル表示、押されたら適用
                 bool selected = _expressions.Current == i;
-                if (GUILayout.Toggle(selected, Label(i), GUI.skin.button) && !selected)
+                if (GUILayout.Toggle(selected, Label(i), GUI.skin.button, GuiControls.Shrinkable) && !selected)
                 {
                     _expressions.Apply(i);
                 }

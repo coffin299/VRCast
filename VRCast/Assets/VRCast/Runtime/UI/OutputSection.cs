@@ -71,14 +71,14 @@ namespace VRCast.UI
             string installLabel = _registration == VirtualCameraRegistration.NotInstalled
                 ? Loc.T("Install driver", "ドライバーを登録", "드라이버 등록", "安装驱动程序", "安裝驅動程式")
                 : Loc.T("Reinstall driver", "ドライバーを再登録", "드라이버 재등록", "重新安装驱动程序", "重新安裝驅動程式");
-            if (GUILayout.Button(installLabel))
+            if (GUILayout.Button(installLabel, GuiControls.Shrinkable))
             {
                 Run(folder, true);
             }
 
             // 解除（登録されているときのみ）
             GUI.enabled = _pending == null && _registration != VirtualCameraRegistration.NotInstalled;
-            if (GUILayout.Button(Loc.T("Uninstall driver", "ドライバーを解除", "드라이버 해제", "卸载驱动程序", "解除安裝驅動程式")))
+            if (GUILayout.Button(Loc.T("Uninstall driver", "ドライバーを解除", "드라이버 해제", "卸载驱动程序", "解除安裝驅動程式"), GuiControls.Shrinkable))
             {
                 Run(folder, false);
             }

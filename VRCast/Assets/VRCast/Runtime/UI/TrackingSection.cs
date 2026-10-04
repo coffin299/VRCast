@@ -262,13 +262,13 @@ namespace VRCast.UI
             string refresh = _process.IsListing
                 ? Loc.T("Listing...", "取得中...", "가져오는 중...", "获取中...", "取得中...")
                 : Loc.T("Refresh cameras", "カメラ一覧を更新", "카메라 목록 새로 고침", "刷新相机列表", "重新整理相機清單");
-            if (GUILayout.Button(refresh))
+            if (GUILayout.Button(refresh, GuiControls.Shrinkable))
             {
                 _process.RefreshCameras();
             }
 
             // トラッカーの再起動（固まったとき・カメラを他アプリから解放したとき）
-            if (GUILayout.Button(Loc.T("Restart tracker", "トラッカーを再起動", "트래커 다시 시작", "重启追踪器", "重新啟動追蹤器")))
+            if (GUILayout.Button(Loc.T("Restart tracker", "トラッカーを再起動", "트래커 다시 시작", "重启追踪器", "重新啟動追蹤器"), GuiControls.Shrinkable))
             {
                 _process.Restart();
             }
