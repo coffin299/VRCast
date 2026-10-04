@@ -10,17 +10,18 @@ namespace VRCast.UI
     /// </summary>
     public class AnimationSection
     {
-        // 表情ボタンの列数
-        private const int ExpressionColumns = 3;
+        // 表情ボタンの列数（全ボタン同じ幅で並べる）
+        private const int ExpressionColumns = 2;
 
         // ボタンに表示する名前の最大文字数
-        private const int MaxButtonLabelLength = 14;
+        private const int MaxButtonLabelLength = 22;
 
         // 共通接頭辞を切る位置の区切り文字
         private static readonly char[] PrefixSeparators = { '_', '-', ' ' };
 
         private readonly AvatarComponentCache _avatar;
-        private readonly List<string> _labels = new List<string>();
+        // 表情ボタンの表示名（アバター切替時に作る）
+        private string[] _labels = new string[0];
         private PoseController _pose;
         private ExpressionController _expressions;
 
@@ -138,49 +139,30 @@ namespace VRCast.UI
                 }
             }
 
-            // 表情ボタンを列ごとに並べる（パネル全体がスクロールする）
-            for (int i = 0; i < _expressions.Names.Count; i++)
+            // 表情ボタンを同じ幅の格子に並べる（選択中はアクセント色。パネル全体がスクロールする）
+            int selected = GUILayout.SelectionGrid(
+                _expressions.Current, _labels, ExpressionColumns, GUI.skin.button, GuiControls.Shrinkable);
+            if (selected != _expressions.Current && selected >= 0)
             {
-                // 行の開始
-                if (i % ExpressionColumns == 0)
-                {
-                    GUILayout.BeginHorizontal();
-                }
-
-                // 選択中はトグル表示、押されたら適用
-                bool selected = _expressions.Current == i;
-                if (GUILayout.Toggle(selected, Label(i), GUI.skin.button, GuiControls.Shrinkable) && !selected)
-                {
-                    _expressions.Apply(i);
-                }
-
-                // 行の終了（最終要素でも閉じる）
-                if (i % ExpressionColumns == ExpressionColumns - 1 || i == _expressions.Names.Count - 1)
-                {
-                    GUILayout.EndHorizontal();
-                }
+                _expressions.Apply(selected);
             }
 
             GuiControls.EndCard();
         }
 
-        private string Label(int index)
-        {
-            // アバター切替時に作成済みの表示名
-            return _labels[index];
-        }
-
         private void BuildLabels()
         {
-            _labels.Clear();
+            // 表情が無ければ空
             if (_expressions == null)
             {
+                _labels = new string[0];
                 return;
             }
 
             // 全表情に共通する接頭辞（区切り文字まで）を表示から省く
             IReadOnlyList<string> names = _expressions.Names;
             int prefixLength = CommonPrefixLength(names);
+            _labels = new string[names.Count];
             for (int i = 0; i < names.Count; i++)
             {
                 // 接頭辞を除き、長い名前は省略
@@ -191,7 +173,7 @@ namespace VRCast.UI
                 }
 
                 // ホットキー対象には番号を前置
-                _labels.Add(i < 9 ? $"{i + 1}: {name}" : name);
+                _labels[i] = i < 9 ? $"{i + 1}: {name}" : name;
             }
         }
 
