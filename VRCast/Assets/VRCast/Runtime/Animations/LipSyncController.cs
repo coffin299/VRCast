@@ -9,7 +9,7 @@ namespace VRCast.Animations
     /// <summary>
     /// マイク音声で口を動かすリップシンク。
     /// Viseme 方式は母音（あいうえお）の重みで aa / ih / ou / E / oh を、JawFlap 方式は口開閉 BlendShape を音量に応じて上乗せする。
-    /// 外部入力（フェイストラッキングの口の開き）は aa（口を開く形）に使う。
+    /// 外部入力（フェイストラッキングの口の開き）は口の開き具合に使い、形は声が出ている間はマイクの母音、無音なら aa（口を開く形）。
     /// </summary>
     public class LipSyncController : MonoBehaviour
     {
@@ -43,7 +43,7 @@ namespace VRCast.Animations
         public bool HasVowels => _shapes.Count >= 2;
 
         /// <summary>
-        /// 外部（フェイストラッキング）からの口の開き（0〜1）。マイクの口の形と大きい方を使う。
+        /// 外部（フェイストラッキング）からの口の開き（0〜1）。マイクの音量と大きい方を口の開き具合に使う。
         /// </summary>
         public float ExternalLevel { get; set; }
 
@@ -118,15 +118,24 @@ namespace VRCast.Animations
             bool active = _settings.lipSyncEnabled && _microphone != null;
             float level = active ? _microphone.Level : 0f;
 
-            // 音量 × 母音の重みを各 BlendShape へ配る（同じ BlendShape の母音は合算）
+            // 口の開き具合はマイクの音量と外部入力（カメラの口の開き）の大きい方
+            float amount = Mathf.Max(level, Mathf.Clamp01(ExternalLevel));
             System.Array.Clear(_values, 0, _values.Length);
-            for (int v = 0; v < VowelAnalyzer.VowelCount; v++)
-            {
-                _values[_vowelShape[v]] += level * (active ? _microphone.GetVowel(v) : 0f);
-            }
 
-            // 外部入力は口を開く形と大きい方
-            _values[_openShape] = Mathf.Max(_values[_openShape], Mathf.Clamp01(ExternalLevel));
+            // 声が出ている間はマイクの母音の重みで各 BlendShape へ配る（同じ BlendShape の母音は合算）。
+            // カメラの開きを「あ」に足すと、い・う などの形が「あ」に潰れるため混ぜない
+            if (level > 0f)
+            {
+                for (int v = 0; v < VowelAnalyzer.VowelCount; v++)
+                {
+                    _values[_vowelShape[v]] += amount * _microphone.GetVowel(v);
+                }
+            }
+            else
+            {
+                // 無音（カメラだけ）は口を開く形
+                _values[_openShape] = amount;
+            }
 
             // 上乗せ（0 なら元の値に戻る）
             for (int i = 0; i < _shapes.Count; i++)
