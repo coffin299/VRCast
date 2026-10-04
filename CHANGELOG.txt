@@ -17,6 +17,7 @@ Newest first. Each version is written in Japanese, then English.
 - アプリアイコンを新しいデザインに変更
 - 表情一覧などのボタンや数値がパネルの右端で見切れる問題を修正
 - 表情の切り替えを、瞬時ではなくなめらかに変化するように変更
+- ポーズ・表情タブの表情ボタンを同じ幅の 2 列に整列
 - トラッキング中に話すと口の形が母音どおりにならず「あ」に寄る問題を修正
 
 [English]
@@ -29,6 +30,7 @@ Newest first. Each version is written in Japanese, then English.
 - Changed the app icon to a new design
 - Fixed buttons and values (such as the expression list) being cut off at the right edge of the panel
 - Expressions now blend smoothly instead of switching instantly
+- Expression buttons in the Pose tab are now laid out in two equal-width columns
 - Fixed mouth shapes drifting toward "A" instead of following vowels when talking during tracking
 
 
