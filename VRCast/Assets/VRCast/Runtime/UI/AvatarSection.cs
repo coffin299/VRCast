@@ -66,17 +66,20 @@ namespace VRCast.UI
 
         private void DrawLoader()
         {
-            GuiControls.BeginCard(Loc.T("Avatar file", "アバターファイル"));
+            GuiControls.BeginCard(Loc.T("Avatar file", "アバターファイル", "아바타 파일", "虚拟形象文件", "虛擬形象檔案"));
             GuiControls.Hint(Loc.T(
                 "Drop a .vrcaster file onto the window, choose one with Browse, or enter the path",
-                ".vrcaster ファイルをウィンドウにドロップするか、参照で選ぶか、パスを入力してください"));
+                ".vrcaster ファイルをウィンドウにドロップするか、参照で選ぶか、パスを入力してください",
+                ".vrcaster 파일을 창에 드롭하거나, 찾아보기로 선택하거나, 경로를 입력하세요",
+                "将 .vrcaster 文件拖放到窗口，或通过“浏览”选择，或输入路径",
+                "將 .vrcaster 檔案拖放到視窗，或透過「瀏覽」選擇，或輸入路徑"));
 
             GUILayout.BeginHorizontal();
             _pathInput = GUILayout.TextField(_pathInput);
 
             // ファイル選択（Windows のみ、読込中は無効）
             GUI.enabled = FileDialog.IsSupported && !_session.IsLoading;
-            if (GUILayout.Button(Loc.T("Browse...", "参照..."), GUILayout.Width(BrowseWidth)))
+            if (GUILayout.Button(Loc.T("Browse...", "参照...", "찾아보기...", "浏览...", "瀏覽..."), GUILayout.Width(BrowseWidth)))
             {
                 Browse();
             }
@@ -88,20 +91,20 @@ namespace VRCast.UI
 
             // 読込中はボタンを無効化
             GUI.enabled = !_session.IsLoading;
-            if (GUILayout.Button(Loc.T("Load", "読み込み")))
+            if (GUILayout.Button(Loc.T("Load", "読み込み", "불러오기", "加载", "載入")))
             {
                 TryLoad(_pathInput);
             }
 
             // 表示中のアバターがある場合のみ有効
             GUI.enabled = !_session.IsLoading && _session.Current != null;
-            if (GUILayout.Button(Loc.T("Reload", "再読み込み")))
+            if (GUILayout.Button(Loc.T("Reload", "再読み込み", "다시 불러오기", "重新加载", "重新載入")))
             {
                 _inputError = InputError.None;
                 _session.Reload();
             }
 
-            if (GUILayout.Button(Loc.T("Unload", "解除")))
+            if (GUILayout.Button(Loc.T("Unload", "解除", "해제", "卸载", "卸載")))
             {
                 _inputError = InputError.None;
                 _session.Unload();
@@ -124,7 +127,8 @@ namespace VRCast.UI
         {
             // 選ばれたら入力欄に反映して読み込む（キャンセル時は何もしない）
             string path = FileDialog.OpenFile(
-                Loc.T("Open avatar", "アバターを開く"), Loc.T("VRCast avatar", "VRCast アバター"),
+                Loc.T("Open avatar", "アバターを開く", "아바타 열기", "打开虚拟形象", "開啟虛擬形象"),
+                Loc.T("VRCast avatar", "VRCast アバター", "VRCast 아바타", "VRCast 虚拟形象", "VRCast 虛擬形象"),
                 AvatarPackageLayout.Extension, PathUtility.NormalizeInput(_pathInput));
             if (path != null)
             {
@@ -181,12 +185,12 @@ namespace VRCast.UI
 
         private void DrawInfo()
         {
-            GuiControls.BeginCard(Loc.T("Status", "状態"));
+            GuiControls.BeginCard(Loc.T("Status", "状態", "상태", "状态", "狀態"));
 
             // 状態表示: 読込中 > 読み込む前の確認エラー > 読込エラー > アバター情報 の優先順
             if (_session.IsLoading)
             {
-                GUILayout.Label(Loc.T("Loading...", "読み込み中..."));
+                GUILayout.Label(Loc.T("Loading...", "読み込み中...", "불러오는 중...", "加载中...", "載入中..."));
             }
             else if (_inputError != InputError.None)
             {
@@ -194,19 +198,24 @@ namespace VRCast.UI
             }
             else if (_session.LastError != null)
             {
-                GUILayout.Label(Loc.T("Error: ", "エラー: ") + _session.LastError);
+                GUILayout.Label(Loc.T("Error: ", "エラー: ", "오류: ", "错误：", "錯誤：") + _session.LastError);
             }
             else if (_session.Current != null)
             {
                 LoadedAvatar avatar = _session.Current;
-                GUILayout.Label(Loc.T("Name: ", "名前: ") + avatar.Manifest.name);
-                string humanoid = avatar.IsHumanoid ? Loc.T("Yes", "はい") : Loc.T("No", "いいえ");
-                GuiControls.Hint($"Humanoid: {humanoid}    {Loc.T("Renderers", "レンダラー")}: {avatar.RendererCount}");
-                GuiControls.Hint(Loc.T("Built with Unity ", "書き出し Unity ") + avatar.Manifest.unityVersion);
+                GUILayout.Label(Loc.T("Name: ", "名前: ", "이름: ", "名称：", "名稱：") + avatar.Manifest.name);
+                string humanoid = avatar.IsHumanoid
+                    ? Loc.T("Yes", "はい", "예", "是", "是")
+                    : Loc.T("No", "いいえ", "아니요", "否", "否");
+                string renderers = Loc.T("Renderers", "レンダラー", "렌더러", "渲染器", "渲染器");
+                GuiControls.Hint($"Humanoid: {humanoid}    {renderers}: {avatar.RendererCount}");
+                GuiControls.Hint(Loc.T("Built with Unity ", "書き出し Unity ", "내보낸 Unity ", "导出 Unity ", "匯出 Unity ")
+                    + avatar.Manifest.unityVersion);
             }
             else
             {
-                GUILayout.Label(Loc.T("No avatar loaded.", "アバターが読み込まれていません。"));
+                GUILayout.Label(Loc.T("No avatar loaded.", "アバターが読み込まれていません。", "불러온 아바타가 없습니다.",
+                    "尚未加载虚拟形象。", "尚未載入虛擬形象。"));
             }
 
             GuiControls.EndCard();
@@ -218,13 +227,24 @@ namespace VRCast.UI
             switch (_inputError)
             {
                 case InputError.Empty:
-                    return Loc.T("Error: enter the path of a .vrcaster file.", "エラー: .vrcaster ファイルのパスを入力してください。");
+                    return Loc.T("Error: enter the path of a .vrcaster file.",
+                        "エラー: .vrcaster ファイルのパスを入力してください。",
+                        "오류: .vrcaster 파일의 경로를 입력하세요.",
+                        "错误：请输入 .vrcaster 文件的路径。",
+                        "錯誤：請輸入 .vrcaster 檔案的路徑。");
                 case InputError.NotFound:
-                    return Loc.T($"Error: file not found ({_inputName}).", $"エラー: ファイルが見つかりません（{_inputName}）。");
+                    return Loc.T($"Error: file not found ({_inputName}).",
+                        $"エラー: ファイルが見つかりません（{_inputName}）。",
+                        $"오류: 파일을 찾을 수 없습니다 ({_inputName}).",
+                        $"错误：找不到文件（{_inputName}）。",
+                        $"錯誤：找不到檔案（{_inputName}）。");
                 default:
                     return Loc.T(
                         $"Error: unsupported file ({_inputName}). Only .vrcaster files can be loaded.",
-                        $"エラー: 対応していないファイルです（{_inputName}）。読み込めるのは .vrcaster ファイルのみです。");
+                        $"エラー: 対応していないファイルです（{_inputName}）。読み込めるのは .vrcaster ファイルのみです。",
+                        $"오류: 지원하지 않는 파일입니다 ({_inputName}). .vrcaster 파일만 불러올 수 있습니다.",
+                        $"错误：不支持的文件（{_inputName}）。只能加载 .vrcaster 文件。",
+                        $"錯誤：不支援的檔案（{_inputName}）。只能載入 .vrcaster 檔案。");
             }
         }
     }

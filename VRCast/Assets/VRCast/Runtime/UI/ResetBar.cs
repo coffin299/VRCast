@@ -25,19 +25,20 @@ namespace VRCast.UI
         {
             _avatar.Refresh();
             GUILayout.BeginHorizontal(style);
-            GUILayout.Label(Loc.T("Reset", "リセット"), UiTheme.Current.Hint, GUILayout.ExpandWidth(false));
+            GUILayout.Label(Loc.T("Reset", "リセット", "초기화", "重置", "重設"), UiTheme.Current.Hint,
+                GUILayout.ExpandWidth(false));
 
             // 顔の向き・上半身・視線を今の向きで正面にする（トラッキング受信中のみ）
             var face = _avatar.Get<FaceTrackingDriver>();
             bool tracking = face != null && face.IsTracking;
             GUI.enabled = tracking;
-            if (GUILayout.Button(Loc.T("Head", "顔の向き")))
+            if (GUILayout.Button(Loc.T("Head", "顔の向き", "얼굴 방향", "头部朝向", "頭部朝向")))
             {
                 face.Calibrate();
             }
 
             // 視線だけを正面にする
-            if (GUILayout.Button(Loc.T("Gaze", "視線")))
+            if (GUILayout.Button(Loc.T("Gaze", "視線", "시선", "视线", "視線")))
             {
                 face.CalibrateGaze();
             }
@@ -45,14 +46,14 @@ namespace VRCast.UI
             // 表情をニュートラルへ（表情データがあるときのみ）
             var expressions = _avatar.Get<ExpressionController>();
             GUI.enabled = expressions != null && expressions.Current >= 0;
-            if (GUILayout.Button(Loc.T("Expression", "表情")))
+            if (GUILayout.Button(Loc.T("Expression", "表情", "표정", "表情", "表情")))
             {
                 expressions.ResetToNeutral();
             }
 
             // カメラを正面の既定位置へ
             GUI.enabled = true;
-            if (GUILayout.Button(Loc.T("Camera", "カメラ")))
+            if (GUILayout.Button(Loc.T("Camera", "カメラ", "카메라", "相机", "相機")))
             {
                 _orbit.ResetView();
             }

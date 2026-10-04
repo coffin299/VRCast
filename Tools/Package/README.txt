@@ -9,6 +9,9 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 1. このフォルダの VRCast.exe を起動します（フォルダごと好きな場所に置けます）。
 2. 左のパネルの「はじめに」タブが、アバターの読み込みから OBS に映すまでを案内します。
 3. アバターは Unity で .vrcaster ファイルに書き出してから、VRCast のウィンドウにドラッグ＆ドロップします。
+4. Web カメラのトラッキング（MediaPipe）では、笑顔・驚き・怒り・悲しみがアバターの表情に反映されます。
+   「トラッキング」タブの「表情を反映」で ON/OFF・感度・割り当てを変えられます。
+表示言語は「設定」タブで 英語 / 日本語 / 韓国語 / 中国語（簡体字・繁体字）から選べます。
 
 ■ 書き出しツールの導入（アバターの Unity プロジェクト側）
 1. VCC からアバターの入ったプロジェクトを開きます。
@@ -31,7 +34,8 @@ CHANGELOG.txt をご覧ください。
 
 ■ ライセンス
 VRCast は Apache License 2.0 です（LICENSE.txt）。
-同梱しているサードパーティのライセンス表記は NOTICE.txt をご覧ください。
+同梱しているサードパーティのライセンス表記は NOTICE.txt をご覧ください（アプリの「クレジット」タブでも読めます）。
+開発者: ごみぃ（https://x.com/coffin299） / 協力者: Arche_039（https://x.com/Arche_039）
 https://github.com/coffin299/VRCast
 
 
@@ -43,6 +47,9 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
 1. Run VRCast.exe in this folder (you can put the folder anywhere).
 2. The "Start" tab in the left panel guides you from loading your avatar to showing it in OBS.
 3. Export your avatar to a .vrcaster file in Unity, then drag and drop it onto the VRCast window.
+4. With webcam tracking (MediaPipe), your smile, surprise, anger and sadness switch the avatar's expressions.
+   Use "Facial expressions" in the Tracking tab to turn it on/off and change sensitivity and mapping.
+The panel language can be English, Japanese, Korean or Chinese (Simplified / Traditional) (Settings tab).
 
 - Installing the exporter (in your avatar's Unity project)
 1. Open the project with your avatar from VCC.
@@ -65,5 +72,6 @@ See CHANGELOG.txt.
 
 - License
 VRCast is licensed under the Apache License 2.0 (LICENSE.txt).
-See NOTICE.txt for the notices of bundled third-party software.
+See NOTICE.txt for the notices of bundled third-party software (also shown in the Credits tab).
+Developer: ごみぃ (https://x.com/coffin299) / Collaborator: Arche_039 (https://x.com/Arche_039)
 https://github.com/coffin299/VRCast

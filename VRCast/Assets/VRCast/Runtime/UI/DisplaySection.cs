@@ -45,13 +45,17 @@ namespace VRCast.UI
 
         private void DrawCamera()
         {
-            GuiControls.BeginCard(Loc.T("Camera", "カメラ"));
+            GuiControls.BeginCard(Loc.T("Camera", "カメラ", "카메라", "相机", "相機"));
             GuiControls.Hint(Loc.T("Right drag: rotate / Middle drag: pan / Wheel: zoom",
-                "右ドラッグ: 回転 / 中ドラッグ: 移動 / ホイール: ズーム"));
-            _orbit.FieldOfView = GuiControls.Slider(Loc.T("Field of view", "画角"), _orbit.FieldOfView, MinFov, MaxFov);
+                "右ドラッグ: 回転 / 中ドラッグ: 移動 / ホイール: ズーム",
+                "오른쪽 드래그: 회전 / 가운데 드래그: 이동 / 휠: 확대·축소",
+                "右键拖动：旋转 / 中键拖动：平移 / 滚轮：缩放",
+                "右鍵拖曳：旋轉 / 中鍵拖曳：平移 / 滾輪：縮放"));
+            _orbit.FieldOfView = GuiControls.Slider(
+                Loc.T("Field of view", "画角", "화각", "视野", "視野"), _orbit.FieldOfView, MinFov, MaxFov);
 
             // 視点リセット
-            if (GUILayout.Button(Loc.T("Reset camera", "カメラをリセット")))
+            if (GUILayout.Button(Loc.T("Reset camera", "カメラをリセット", "카메라 초기화", "重置相机", "重設相機")))
             {
                 _orbit.ResetView();
             }
@@ -61,30 +65,35 @@ namespace VRCast.UI
 
         private void DrawBackground()
         {
-            GuiControls.BeginCard(Loc.T("Background", "背景"));
+            GuiControls.BeginCard(Loc.T("Background", "背景", "배경", "背景", "背景"));
 
             // 透過切替（OBS はゲームキャプチャ +「透過を許可」で取り込む）
             _rendering.TransparentBackground = GUILayout.Toggle(
-                _rendering.TransparentBackground, Loc.T("Transparent (OBS Game Capture)", "透過（OBS ゲームキャプチャ）"));
+                _rendering.TransparentBackground,
+                Loc.T("Transparent (OBS Game Capture)", "透過（OBS ゲームキャプチャ）", "투명 (OBS 게임 캡처)",
+                    "透明（OBS 游戏采集）", "透明（OBS 遊戲擷取）"));
 
             // 透過時は色がウィンドウ上だけに見えることを案内
             GuiControls.Hint(_rendering.TransparentBackground
                 ? Loc.T("Background color (shown only in this window, not captured by OBS)",
-                    "背景色（透過中はこの画面だけの表示で、OBS には映りません）")
-                : Loc.T("Background color", "背景色"));
+                    "背景色（透過中はこの画面だけの表示で、OBS には映りません）",
+                    "배경색 (투명 중에는 이 창에만 보이고 OBS에는 표시되지 않습니다)",
+                    "背景色（透明时仅在此窗口显示，不会出现在 OBS 中）",
+                    "背景色（透明時僅在此視窗顯示，不會出現在 OBS 中）")
+                : Loc.T("Background color", "背景色", "배경색", "背景色", "背景色"));
 
             // RGB スライダー（値が変わったときだけ反映）
             Color color = _rendering.BackgroundColor;
-            color.r = GuiControls.Slider(Loc.T("Red", "赤"), color.r, 0f, 1f);
-            color.g = GuiControls.Slider(Loc.T("Green", "緑"), color.g, 0f, 1f);
-            color.b = GuiControls.Slider(Loc.T("Blue", "青"), color.b, 0f, 1f);
+            color.r = GuiControls.Slider(Loc.T("Red", "赤", "빨강", "红", "紅"), color.r, 0f, 1f);
+            color.g = GuiControls.Slider(Loc.T("Green", "緑", "초록", "绿", "綠"), color.g, 0f, 1f);
+            color.b = GuiControls.Slider(Loc.T("Blue", "青", "파랑", "蓝", "藍"), color.b, 0f, 1f);
             if (color != _rendering.BackgroundColor)
             {
                 _rendering.BackgroundColor = color;
             }
 
             // 既定のベージュに戻す
-            if (GUILayout.Button(Loc.T("Beige (default)", "ベージュ（既定）")))
+            if (GUILayout.Button(Loc.T("Beige (default)", "ベージュ（既定）", "베이지 (기본)", "米色（默认）", "米色（預設）")))
             {
                 _rendering.BackgroundColor = new AppSettings().backgroundColor;
             }
@@ -94,8 +103,8 @@ namespace VRCast.UI
 
         private void DrawResolution()
         {
-            GuiControls.BeginCard(Loc.T("Resolution", "解像度"));
-            GuiControls.Hint(Loc.T("Current", "現在") + $": {_rendering.Width} x {_rendering.Height}");
+            GuiControls.BeginCard(Loc.T("Resolution", "解像度", "해상도", "分辨率", "解析度"));
+            GuiControls.Hint(Loc.T("Current", "現在", "현재", "当前", "目前") + $": {_rendering.Width} x {_rendering.Height}");
 
             // プリセットボタン（2 列）
             for (int i = 0; i < ResolutionPresets.Length; i++)
@@ -124,23 +133,26 @@ namespace VRCast.UI
 
         private void DrawLight()
         {
-            GuiControls.BeginCard(Loc.T("Light", "ライト"));
+            GuiControls.BeginCard(Loc.T("Light", "ライト", "조명", "灯光", "燈光"));
             GuiControls.Hint(Loc.T("Sunlight shines from one direction; ambient light brightens the whole avatar evenly",
-                "太陽光は一方向から当たる光、環境光はアバター全体を均一に明るくする光です"));
+                "太陽光は一方向から当たる光、環境光はアバター全体を均一に明るくする光です",
+                "태양광은 한 방향에서 비추는 빛, 환경광은 아바타 전체를 고르게 밝히는 빛입니다",
+                "阳光从一个方向照射，环境光会均匀照亮整个虚拟形象",
+                "陽光從一個方向照射，環境光會均勻照亮整個虛擬形象"));
 
             // プリセット（太陽光と環境光をまとめて設定）
             GUILayout.BeginHorizontal();
-            if (GUILayout.Button(Loc.T("Sunny", "晴れ")))
+            if (GUILayout.Button(Loc.T("Sunny", "晴れ", "맑음", "晴天", "晴天")))
             {
                 _rendering.ApplyPreset(LightingPreset.Sunny);
             }
 
-            if (GUILayout.Button(Loc.T("Soft", "やわらか")))
+            if (GUILayout.Button(Loc.T("Soft", "やわらか", "부드럽게", "柔和", "柔和")))
             {
                 _rendering.ApplyPreset(LightingPreset.Soft);
             }
 
-            if (GUILayout.Button(Loc.T("Default", "既定")))
+            if (GUILayout.Button(Loc.T("Default", "既定", "기본", "默认", "預設")))
             {
                 _rendering.ApplyPreset(LightingPreset.Default);
             }
@@ -148,46 +160,52 @@ namespace VRCast.UI
             GUILayout.EndHorizontal();
 
             // アバターの明るさ（ライトを強くしても明るくならないシェーダー向け。1 = マテリアルのまま）
-            float brightness = GuiControls.Slider(Loc.T("Avatar brightness", "アバターの明るさ"), _rendering.AvatarBrightness,
-                AppSettings.MinAvatarBrightness, AppSettings.MaxAvatarBrightness);
+            float brightness = GuiControls.Slider(Loc.T("Avatar brightness", "アバターの明るさ", "아바타 밝기", "虚拟形象亮度", "虛擬形象亮度"),
+                _rendering.AvatarBrightness, AppSettings.MinAvatarBrightness, AppSettings.MaxAvatarBrightness);
             if (!Mathf.Approximately(brightness, _rendering.AvatarBrightness))
             {
                 _rendering.AvatarBrightness = brightness;
             }
 
             GuiControls.Hint(Loc.T("If more light does not help (lilToon etc. cap brightness), raise Avatar brightness",
-                "ライトを強くしても明るくならないとき（lilToon 等は明るさに上限あり）はアバターの明るさを上げてください"));
+                "ライトを強くしても明るくならないとき（lilToon 等は明るさに上限あり）はアバターの明るさを上げてください",
+                "조명을 강하게 해도 밝아지지 않을 때 (lilToon 등은 밝기 상한이 있음) 아바타 밝기를 올리세요",
+                "增强灯光仍不变亮时（lilToon 等有亮度上限），请调高虚拟形象亮度",
+                "增強燈光仍不變亮時（lilToon 等有亮度上限），請調高虛擬形象亮度"));
 
             // 値が変わったときだけ反映
             float ambient = GuiControls.Slider(
-                Loc.T("Ambient", "環境光"), _rendering.AmbientIntensity, 0f, AppSettings.MaxAmbientIntensity);
+                Loc.T("Ambient", "環境光", "환경광", "环境光", "環境光"), _rendering.AmbientIntensity, 0f, AppSettings.MaxAmbientIntensity);
             if (!Mathf.Approximately(ambient, _rendering.AmbientIntensity))
             {
                 _rendering.AmbientIntensity = ambient;
             }
 
-            float intensity = GuiControls.Slider(Loc.T("Sunlight", "太陽光"), _rendering.LightIntensity, 0f, MaxSunlight);
+            float intensity = GuiControls.Slider(
+                Loc.T("Sunlight", "太陽光", "태양광", "阳光", "陽光"), _rendering.LightIntensity, 0f, MaxSunlight);
             if (!Mathf.Approximately(intensity, _rendering.LightIntensity))
             {
                 _rendering.LightIntensity = intensity;
             }
 
             // 色温度（左 = 夕日のような暖色、右 = 青白い光）。数値は K（100K 刻み）
-            float temperature = GuiControls.Slider(Loc.T("Sun color (K)", "太陽光の色 (K)"), _rendering.LightTemperature,
-                AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature, "F0");
+            float temperature = GuiControls.Slider(Loc.T("Sun color (K)", "太陽光の色 (K)", "태양광 색 (K)", "阳光颜色 (K)", "陽光顏色 (K)"),
+                _rendering.LightTemperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature, "F0");
             if (!Mathf.Approximately(temperature, _rendering.LightTemperature))
             {
                 _rendering.LightTemperature = Mathf.Round(temperature / 100f) * 100f;
             }
 
             // 向きは正面（カメラ側）からの角度、0 で正面から当たる
-            float yaw = GuiControls.Slider(Loc.T("Direction", "向き"), _rendering.LightYaw, -180f, 180f, "F0");
+            float yaw = GuiControls.Slider(
+                Loc.T("Direction", "向き", "방향", "方向", "方向"), _rendering.LightYaw, -180f, 180f, "F0");
             if (!Mathf.Approximately(yaw, _rendering.LightYaw))
             {
                 _rendering.LightYaw = yaw;
             }
 
-            float pitch = GuiControls.Slider(Loc.T("Height", "高さ"), _rendering.LightPitch, -90f, 90f, "F0");
+            float pitch = GuiControls.Slider(
+                Loc.T("Height", "高さ", "높이", "高度", "高度"), _rendering.LightPitch, -90f, 90f, "F0");
             if (!Mathf.Approximately(pitch, _rendering.LightPitch))
             {
                 _rendering.LightPitch = pitch;

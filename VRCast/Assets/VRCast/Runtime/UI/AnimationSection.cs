@@ -34,8 +34,9 @@ namespace VRCast.UI
             // アバター未表示なら案内だけ
             if (!RefreshControllers())
             {
-                GuiControls.BeginCard(Loc.T("Pose", "ポーズ"));
-                GuiControls.Hint(Loc.T("Load an avatar first.", "先にアバターを読み込んでください。"));
+                GuiControls.BeginCard(Loc.T("Pose", "ポーズ", "포즈", "姿势", "姿勢"));
+                GuiControls.Hint(Loc.T("Load an avatar first.", "先にアバターを読み込んでください。", "먼저 아바타를 불러오세요.",
+                    "请先加载虚拟形象。", "請先載入虛擬形象。"));
                 GuiControls.EndCard();
                 return;
             }
@@ -59,7 +60,7 @@ namespace VRCast.UI
 
         private void DrawPose()
         {
-            GuiControls.BeginCard(Loc.T("Pose", "ポーズ"));
+            GuiControls.BeginCard(Loc.T("Pose", "ポーズ", "포즈", "姿势", "姿勢"));
             if (_pose == null)
             {
                 GuiControls.EndCard();
@@ -67,12 +68,14 @@ namespace VRCast.UI
             }
 
             // アバターの向き（全アバター共通）
-            _pose.BodyYaw = GuiControls.Slider(Loc.T("Body yaw", "体の向き"), _pose.BodyYaw, -180f, 180f);
+            _pose.BodyYaw = GuiControls.Slider(Loc.T("Body yaw", "体の向き", "몸 방향", "身体朝向", "身體朝向"), _pose.BodyYaw, -180f, 180f);
 
             // 非 Humanoid は腕の操作不可
             if (!_pose.IsAvailable)
             {
-                GuiControls.Hint(Loc.T("Arm pose requires a Humanoid avatar.", "腕のポーズは Humanoid アバターのみ対応です。"));
+                GuiControls.Hint(Loc.T("Arm pose requires a Humanoid avatar.", "腕のポーズは Humanoid アバターのみ対応です。",
+                    "팔 포즈는 Humanoid 아바타만 지원합니다.",
+                    "手臂姿势仅支持 Humanoid 虚拟形象。", "手臂姿勢僅支援 Humanoid 虛擬形象。"));
                 GuiControls.EndCard();
                 return;
             }
@@ -81,21 +84,21 @@ namespace VRCast.UI
             GUILayout.BeginHorizontal();
 
             // 気を付け（既定）: 腕を下ろし切り、肘はまっすぐ
-            if (GUILayout.Button(Loc.T("Attention", "気を付け")))
+            if (GUILayout.Button(Loc.T("Attention", "気を付け", "차렷", "立正", "立正")))
             {
                 _pose.ArmDown = 1f;
                 _pose.ElbowBend = 0f;
             }
 
             // 腕を少し開き、肘を軽く曲げる
-            if (GUILayout.Button(Loc.T("Relaxed", "リラックス")))
+            if (GUILayout.Button(Loc.T("Relaxed", "リラックス", "편안하게", "放松", "放鬆")))
             {
                 _pose.ArmDown = 0.85f;
                 _pose.ElbowBend = 0.3f;
             }
 
             // 読込時の姿勢（通常 T ポーズ）
-            if (GUILayout.Button(Loc.T("T-Pose", "T ポーズ")))
+            if (GUILayout.Button(Loc.T("T-Pose", "T ポーズ", "T 포즈", "T 姿势", "T 姿勢")))
             {
                 _pose.ArmDown = 0f;
                 _pose.ElbowBend = 0f;
@@ -104,26 +107,30 @@ namespace VRCast.UI
             GUILayout.EndHorizontal();
 
             // 腕と肘の度合い
-            _pose.ArmDown = GuiControls.Slider(Loc.T("Arms down", "腕を下ろす"), _pose.ArmDown, 0f, 1f);
-            _pose.ElbowBend = GuiControls.Slider(Loc.T("Elbow bend", "肘の曲げ"), _pose.ElbowBend, 0f, 1f);
+            _pose.ArmDown = GuiControls.Slider(Loc.T("Arms down", "腕を下ろす", "팔 내리기", "放下手臂", "放下手臂"), _pose.ArmDown, 0f, 1f);
+            _pose.ElbowBend = GuiControls.Slider(Loc.T("Elbow bend", "肘の曲げ", "팔꿈치 굽힘", "肘部弯曲", "肘部彎曲"), _pose.ElbowBend, 0f, 1f);
             GuiControls.EndCard();
         }
 
         private void DrawExpressions()
         {
-            GuiControls.BeginCard(Loc.T("Expressions", "表情"));
-            GuiControls.Hint(Loc.T("Keys 1-9 to switch, 0 for neutral", "キー 1〜9 で切り替え、0 でニュートラル"));
+            GuiControls.BeginCard(Loc.T("Expressions", "表情", "표정", "表情", "表情"));
+            GuiControls.Hint(Loc.T("Keys 1-9 to switch, 0 for neutral", "キー 1〜9 で切り替え、0 でニュートラル",
+                "키 1~9로 전환, 0으로 무표정",
+                "按 1-9 键切换，0 键恢复无表情", "按 1-9 鍵切換，0 鍵恢復無表情"));
 
             // 表情データが無いアバター
             if (_expressions == null || _expressions.Names.Count == 0)
             {
-                GuiControls.Hint(Loc.T("No expressions in this package.", "このアバターには表情データがありません。"));
+                GuiControls.Hint(Loc.T("No expressions in this package.", "このアバターには表情データがありません。",
+                    "이 아바타에는 표정 데이터가 없습니다.",
+                    "此虚拟形象没有表情数据。", "此虛擬形象沒有表情資料。"));
                 GuiControls.EndCard();
                 return;
             }
 
             // ニュートラルは常に先頭
-            if (GUILayout.Toggle(_expressions.Current < 0, Loc.T("Neutral", "ニュートラル"), GUI.skin.button))
+            if (GUILayout.Toggle(_expressions.Current < 0, Loc.T("Neutral", "ニュートラル", "무표정", "无表情", "無表情"), GUI.skin.button))
             {
                 if (_expressions.Current >= 0)
                 {

@@ -14,7 +14,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings）で
+    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings / Credits）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンを常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（日本語 / 英語）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
@@ -52,6 +52,7 @@ namespace VRCast.UI
             Display,
             Output,
             Settings,
+            Credits,
         }
 
         private static readonly int TabCount = Enum.GetValues(typeof(Tab)).Length;
@@ -70,6 +71,7 @@ namespace VRCast.UI
         private DisplaySection _displaySection;
         private OutputSection _outputSection;
         private SettingsSection _settingsSection;
+        private CreditsSection _creditsSection;
         private ResetBar _resetBar;
 
         // テーマ（最初の OnGUI で作成）
@@ -102,6 +104,7 @@ namespace VRCast.UI
             _displaySection = new DisplaySection(orbit, rendering);
             _outputSection = new OutputSection(virtualCamera);
             _settingsSection = new SettingsSection(settings, ResetAllSettings);
+            _creditsSection = new CreditsSection();
             _resetBar = new ResetBar(session, orbit);
 
             // ウィンドウへのドロップで読み込む
@@ -194,14 +197,22 @@ namespace VRCast.UI
                 return;
             }
 
-            // スキンは OnGUI 内でしか作れないため初回にここで作る
+            // 言語を先に決める（テーマのフォントの優先順に使う）
+            Loc.Apply(_settings.uiLanguage);
+
+            // スキンは OnGUI 内でしか作れないため初回にここで作る。言語が変わったら Layout の時だけ作り直す
+            // （Layout と Repaint の間でフォントを変えると配置が食い違うため）
             if (_theme == null)
             {
-                _theme = UiTheme.Create();
+                _theme = UiTheme.Create(Loc.Current);
+            }
+            else if (_theme.Language != Loc.Current && Event.current.type == EventType.Layout)
+            {
+                _theme.Destroy();
+                _theme = UiTheme.Create(Loc.Current);
             }
 
-            // 言語・スキン・倍率を適用（終わったら元に戻す）
-            Loc.Apply(_settings.uiLanguage);
+            // スキン・倍率を適用（終わったら元に戻す）
             GUISkin previousSkin = GUI.skin;
             Matrix4x4 previousMatrix = GUI.matrix;
             float scale = _settings.uiScale;
@@ -266,7 +277,8 @@ namespace VRCast.UI
             GUILayout.BeginHorizontal(GUILayout.Height(HeaderHeight - 12f));
             GUILayout.Label("VRCast", _theme.Title);
             GUILayout.FlexibleSpace();
-            GUILayout.Label(Loc.T("[Tab] Hide all & transparent", "[Tab] 全部隠して透過"), _theme.KeyHint);
+            GUILayout.Label(Loc.T("[Tab] Hide all & transparent", "[Tab] 全部隠して透過", "[Tab] 모두 숨기고 투명",
+                "[Tab] 全部隐藏并透明", "[Tab] 全部隱藏並透明"), _theme.KeyHint);
 
             // ヘルプページ（Web）
             if (GUILayout.Button("?", GUILayout.Width(HelpButtonWidth)))
@@ -322,6 +334,9 @@ namespace VRCast.UI
                 case Tab.Output:
                     _outputSection.Draw();
                     break;
+                case Tab.Credits:
+                    _creditsSection.Draw();
+                    break;
                 default:
                     _settingsSection.Draw();
                     break;
@@ -334,21 +349,23 @@ namespace VRCast.UI
             switch (tab)
             {
                 case Tab.Start:
-                    return Loc.T("Start", "はじめに");
+                    return Loc.T("Start", "はじめに", "시작하기", "开始", "開始");
                 case Tab.Avatar:
-                    return Loc.T("Avatar", "アバター");
+                    return Loc.T("Avatar", "アバター", "아바타", "虚拟形象", "虛擬形象");
                 case Tab.Pose:
-                    return Loc.T("Pose", "ポーズ・表情");
+                    return Loc.T("Pose", "ポーズ・表情", "포즈·표정", "姿势·表情", "姿勢·表情");
                 case Tab.Face:
-                    return Loc.T("Face", "顔");
+                    return Loc.T("Face", "顔", "얼굴", "面部", "臉部");
                 case Tab.Tracking:
-                    return Loc.T("Tracking", "トラッキング");
+                    return Loc.T("Tracking", "トラッキング", "트래킹", "追踪", "追蹤");
                 case Tab.Display:
-                    return Loc.T("Display", "表示");
+                    return Loc.T("Display", "表示", "표시", "显示", "顯示");
                 case Tab.Output:
-                    return Loc.T("Output", "出力");
+                    return Loc.T("Output", "出力", "출력", "输出", "輸出");
+                case Tab.Credits:
+                    return Loc.T("Credits", "クレジット", "크레딧", "致谢", "致謝");
                 default:
-                    return Loc.T("Settings", "設定");
+                    return Loc.T("Settings", "設定", "설정", "设置", "設定");
             }
         }
     }

@@ -48,6 +48,10 @@ namespace VRCast.Core
         // 視線の強さの上限（0 = 目を動かさない）
         public const float MaxTrackingGaze = 2f;
 
+        // 表情反映の感度の範囲（大きいほど弱い表情でも反応する）
+        public const float MinExpressionSensitivity = 0.5f;
+        public const float MaxExpressionSensitivity = 2f;
+
         // 操作パネルの拡大率の範囲
         public const float MinUiScale = 0.75f;
         public const float MaxUiScale = 2f;
@@ -115,6 +119,14 @@ namespace VRCast.Core
 
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
+
+        // 表情反映（MediaPipe のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
+        public bool trackingExpressions = true;
+        public float trackingExpressionSensitivity = 1f;
+        public string expressionSmile = string.Empty;
+        public string expressionSurprise = string.Empty;
+        public string expressionAngry = string.Empty;
+        public string expressionSad = string.Empty;
 
         // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
@@ -204,6 +216,17 @@ namespace VRCast.Core
 
             // 視線の強さも同様
             trackingGaze = Mathf.Clamp(trackingGaze, 0f, MaxTrackingGaze);
+            // 表情反映の感度は範囲内に制限
+            trackingExpressionSensitivity = Mathf.Clamp(
+                trackingExpressionSensitivity, MinExpressionSensitivity, MaxExpressionSensitivity);
+            // null の割り当ては自動扱いの空文字へ
+            expressionSmile ??= string.Empty;
+            // 驚きも同様
+            expressionSurprise ??= string.Empty;
+            // 怒りも同様
+            expressionAngry ??= string.Empty;
+            // 悲しみも同様
+            expressionSad ??= string.Empty;
             // null のパス・カメラ名は未設定扱いの空文字へ
             trackerPath ??= string.Empty;
             // カメラ名も同様

@@ -60,6 +60,27 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void TryParse_Face_CombinesExpressionScores()
+        {
+            // 口角・頬を最大、眉を下げ切った顔
+            MediaPipePacket.Message message = CreateMessage();
+            SetScore(message, "mouthSmileLeft", 1f);
+            SetScore(message, "mouthSmileRight", 1f);
+            SetScore(message, "cheekSquintLeft", 1f);
+            SetScore(message, "cheekSquintRight", 1f);
+            SetScore(message, "browDownLeft", 1f);
+            SetScore(message, "browDownRight", 1f);
+
+            // 笑顔は 1、怒りは眉の分だけ（鼻のしわ無しで半分）、驚き・悲しみは 0 になること
+            Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
+            Assert.That(face.HasExpression, Is.True);
+            Assert.That(face.Expression.Smile, Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(face.Expression.Angry, Is.EqualTo(0.5f).Within(1e-5f));
+            Assert.That(face.Expression.Surprise, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(face.Expression.Sad, Is.EqualTo(0f).Within(1e-5f));
+        }
+
+        [Test]
         public void TryParse_BrokenFace_KeepsPacketWithoutFace()
         {
             // 行列の要素数が足りない顔は「顔なし」で、パケット自体は使えること
