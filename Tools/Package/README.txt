@@ -12,7 +12,8 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 4. Web カメラのトラッキング（MediaPipe）では、笑顔・驚き・怒り・悲しみがアバターの表情に反映されます。
    「トラッキング」タブの「表情を反映」で ON/OFF・しきい値・割り当てを変えられます。
 表示言語はパネル上部のボタン（または「設定」タブ）で 英語 / 日本語 / 韓国語 / 中国語（簡体字・繁体字）から選べます。
-ゲームや OBS と同時に使ってトラッキングがカクつくときは、「設定」タブの「軽量モード」を ON にしてください。
+ゲームや OBS と同時に使うときの負荷を減らす「軽量モード」が最初から ON になっています。
+動きの滑らかさを優先したいときは「設定」タブで OFF にしてください。
 
 ■ 書き出しツールの導入（アバターの Unity プロジェクト側）
 1. VCC からアバターの入ったプロジェクトを開きます。
@@ -52,7 +53,8 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
 4. With webcam tracking (MediaPipe), your smile, surprise, anger and sadness switch the avatar's expressions.
    Use "Facial expressions" in the Tracking tab to turn it on/off and change sensitivity and mapping.
 The panel language can be English, Japanese, Korean or Chinese (Simplified / Traditional) (buttons at the top of the panel, or the Settings tab).
-If tracking stutters while running games or OBS, turn on "Low load mode" in the Settings tab.
+"Low load mode", which reduces load when running with games or OBS, is on by default.
+Turn it off in the Settings tab if you prefer smoother motion.
 
 - Installing the exporter (in your avatar's Unity project)
 1. Open the project with your avatar from VCC.
