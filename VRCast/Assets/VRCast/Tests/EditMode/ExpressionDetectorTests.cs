@@ -11,6 +11,9 @@ namespace VRCast.Tests
         // 1 フレームの秒数（60 fps）
         private const float Frame = 1f / 60f;
 
+        // 既定のしきい値（AppSettings の既定と同じ）
+        private const float Threshold = 0.3f;
+
         [Test]
         public void Update_StrongSmile_SwitchesAfterHoldTime()
         {
@@ -18,7 +21,7 @@ namespace VRCast.Tests
             var smile = new ExpressionScores { Smile = 0.8f };
 
             // 一瞬だけではニュートラルのまま
-            Assert.That(detector.Update(smile, 0f, 1f, Frame), Is.EqualTo(FaceExpression.Neutral));
+            Assert.That(detector.Update(smile, 0f, Threshold, Frame), Is.EqualTo(FaceExpression.Neutral));
 
             // 保持時間（0.3 秒）続けば笑顔になること
             FaceExpression result = Run(detector, smile, 0f, 0.4f);
@@ -42,7 +45,7 @@ namespace VRCast.Tests
             Run(detector, new ExpressionScores { Smile = 0.8f }, 0f, 0.5f);
 
             // 入るしきい値より下でも、抜けるしきい値以上なら笑顔のまま
-            Assert.That(Run(detector, new ExpressionScores { Smile = 0.35f }, 0f, 1f), Is.EqualTo(FaceExpression.Smile));
+            Assert.That(Run(detector, new ExpressionScores { Smile = 0.25f }, 0f, 1f), Is.EqualTo(FaceExpression.Smile));
 
             // 抜けるしきい値を下回ればニュートラルへ戻ること
             Assert.That(Run(detector, new ExpressionScores { Smile = 0.1f }, 0f, 1f), Is.EqualTo(FaceExpression.Neutral));
@@ -62,7 +65,7 @@ namespace VRCast.Tests
         {
             // 口を開けている間は、同じ強さの笑顔でも反映しないこと
             var detector = new ExpressionDetector();
-            var smile = new ExpressionScores { Smile = 0.5f };
+            var smile = new ExpressionScores { Smile = 0.4f };
             Assert.That(Run(detector, smile, 0.8f, 1f), Is.EqualTo(FaceExpression.Neutral));
 
             // 口を閉じれば反映すること
@@ -70,12 +73,12 @@ namespace VRCast.Tests
         }
 
         [Test]
-        public void Update_HigherSensitivity_ReactsToWeakerExpression()
+        public void Update_LowerThreshold_ReactsToWeakerExpression()
         {
-            // 感度 1 では届かない強さでも、感度 2 なら反映すること
+            // しきい値 0.4 では届かない強さでも、しきい値 0.2 なら反映すること
             var scores = new ExpressionScores { Sad = 0.3f };
-            Assert.That(Run(new ExpressionDetector(), scores, 0f, 1f, 1f), Is.EqualTo(FaceExpression.Neutral));
-            Assert.That(Run(new ExpressionDetector(), scores, 0f, 1f, 2f), Is.EqualTo(FaceExpression.Sad));
+            Assert.That(Run(new ExpressionDetector(), scores, 0f, 1f, 0.4f), Is.EqualTo(FaceExpression.Neutral));
+            Assert.That(Run(new ExpressionDetector(), scores, 0f, 1f, 0.2f), Is.EqualTo(FaceExpression.Sad));
         }
 
         [Test]
@@ -89,13 +92,14 @@ namespace VRCast.Tests
         }
 
         private static FaceExpression Run(
-            ExpressionDetector detector, ExpressionScores scores, float mouthOpen, float seconds, float sensitivity = 1f)
+            ExpressionDetector detector, ExpressionScores scores, float mouthOpen, float seconds,
+            float threshold = Threshold)
         {
             // 指定秒数ぶん同じ値でフレームを進める
             FaceExpression result = detector.Current;
             for (float elapsed = 0f; elapsed < seconds; elapsed += Frame)
             {
-                result = detector.Update(scores, mouthOpen, sensitivity, Frame);
+                result = detector.Update(scores, mouthOpen, threshold, Frame);
             }
 
             return result;

@@ -235,7 +235,7 @@ namespace VRCast.Tracking
             }
 
             FaceExpression detected = _detector.Update(
-                _lastFrame.Expression, _lastFrame.MouthOpen, _settings.trackingExpressionSensitivity, Time.deltaTime);
+                _lastFrame.Expression, _lastFrame.MouthOpen, _settings.trackingExpressionThreshold, Time.deltaTime);
 
             // 判定結果か割り当ての設定が変わったときだけ切り替える（手動で選んだ表情を毎フレーム上書きしない）
             string saved = ExpressionMapping.GetSaved(_settings, detected);

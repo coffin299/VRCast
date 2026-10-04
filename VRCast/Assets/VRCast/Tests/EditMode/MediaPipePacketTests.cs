@@ -62,22 +62,42 @@ namespace VRCast.Tests
         [Test]
         public void TryParse_Face_CombinesExpressionScores()
         {
-            // 口角・頬を最大、眉を下げ切った顔
+            // 口角を最大、眉を下げ切った顔
             MediaPipePacket.Message message = CreateMessage();
             SetScore(message, "mouthSmileLeft", 1f);
             SetScore(message, "mouthSmileRight", 1f);
-            SetScore(message, "cheekSquintLeft", 1f);
-            SetScore(message, "cheekSquintRight", 1f);
             SetScore(message, "browDownLeft", 1f);
             SetScore(message, "browDownRight", 1f);
 
-            // 笑顔は 1、怒りは眉の分だけ（鼻のしわ無しで半分）、驚き・悲しみは 0 になること
+            // 笑顔・怒りは 1、驚き・悲しみは 0 になること
             Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
             Assert.That(face.HasExpression, Is.True);
             Assert.That(face.Expression.Smile, Is.EqualTo(1f).Within(1e-5f));
-            Assert.That(face.Expression.Angry, Is.EqualTo(0.5f).Within(1e-5f));
+            Assert.That(face.Expression.Angry, Is.EqualTo(1f).Within(1e-5f));
             Assert.That(face.Expression.Surprise, Is.EqualTo(0f).Within(1e-5f));
             Assert.That(face.Expression.Sad, Is.EqualTo(0f).Within(1e-5f));
+        }
+
+        [Test]
+        public void TryParse_Face_SeparatesSurpriseFromSad()
+        {
+            // 眉全体を上げた顔は驚きで、悲しみにはならないこと
+            MediaPipePacket.Message surprised = CreateMessage();
+            SetScore(surprised, "browInnerUp", 0.8f);
+            SetScore(surprised, "browOuterUpLeft", 0.8f);
+            SetScore(surprised, "browOuterUpRight", 0.8f);
+            Assert.That(Parse(surprised, out _, out FaceTrackingFrame surprise, out _), Is.True);
+            Assert.That(surprise.Expression.Surprise, Is.EqualTo(0.8f).Within(1e-5f));
+            Assert.That(surprise.Expression.Sad, Is.EqualTo(0f).Within(1e-5f));
+
+            // 眉の内側だけ上げて口角を下げた顔は、驚きより悲しみが強いこと
+            MediaPipePacket.Message sad = CreateMessage();
+            SetScore(sad, "browInnerUp", 0.6f);
+            SetScore(sad, "mouthFrownLeft", 0.2f);
+            SetScore(sad, "mouthFrownRight", 0.2f);
+            Assert.That(Parse(sad, out _, out FaceTrackingFrame sadFace, out _), Is.True);
+            Assert.That(sadFace.Expression.Sad, Is.EqualTo(0.8f).Within(1e-5f));
+            Assert.That(sadFace.Expression.Surprise, Is.EqualTo(0.3f).Within(1e-5f));
         }
 
         [Test]

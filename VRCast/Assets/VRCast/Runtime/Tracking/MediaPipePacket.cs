@@ -77,27 +77,12 @@ namespace VRCast.Tracking
         private static readonly int EyeLookUpRight = IndexOf("eyeLookUpRight");
         private static readonly int JawOpen = IndexOf("jawOpen");
 
-        // 表情の合成に使う BlendShape の位置（左右の組。左右の無い browInnerUp は 2 回並べて重みをそろえる）
-        private static readonly int[] SmileShapes =
-        {
-            IndexOf("mouthSmileLeft"), IndexOf("mouthSmileRight"),
-            IndexOf("cheekSquintLeft"), IndexOf("cheekSquintRight"),
-        };
-
-        private static readonly int[] SurpriseShapes =
-        {
-            IndexOf("browInnerUp"), IndexOf("browInnerUp"), IndexOf("eyeWideLeft"), IndexOf("eyeWideRight"),
-        };
-
-        private static readonly int[] AngryShapes =
-        {
-            IndexOf("browDownLeft"), IndexOf("browDownRight"), IndexOf("noseSneerLeft"), IndexOf("noseSneerRight"),
-        };
-
-        private static readonly int[] SadShapes =
-        {
-            IndexOf("mouthFrownLeft"), IndexOf("mouthFrownRight"), IndexOf("browInnerUp"), IndexOf("browInnerUp"),
-        };
+        // 表情の合成に使う BlendShape の位置（MediaPipe でよく動くものだけ。頬・鼻・目の見開きはほぼ 0 のままで平均を薄めるため使わない）
+        private static readonly int[] SmileShapes = { IndexOf("mouthSmileLeft"), IndexOf("mouthSmileRight") };
+        private static readonly int[] AngryShapes = { IndexOf("browDownLeft"), IndexOf("browDownRight") };
+        private static readonly int[] FrownShapes = { IndexOf("mouthFrownLeft"), IndexOf("mouthFrownRight") };
+        private static readonly int[] BrowOuterUpShapes = { IndexOf("browOuterUpLeft"), IndexOf("browOuterUpRight") };
+        private static readonly int BrowInnerUp = IndexOf("browInnerUp");
 
         /// <summary>
         /// 送信される JSON の形（フィールド名は送信側と一致させる。欠けた配列は null）。
@@ -227,13 +212,16 @@ namespace VRCast.Tracking
             face.Gaze = new Vector2(right * GazeDegrees, upward * GazeDegrees);
             face.HasGaze = true;
 
-            // 表情: 口・頬・眉・目の BlendShape の平均（口だけに頼らず、発話中の誤判定を減らす）
+            // 表情: 笑顔 = 口角、怒り = 眉を下げる、驚き = 眉全体（内側と外側）を上げる、
+            // 悲しみ = 口角を下げる + 眉の内側だけを上げる（外側も上がる驚きと区別する）
+            float browInner = scores[BrowInnerUp];
+            float browOuter = Average(scores, BrowOuterUpShapes);
             face.Expression = new ExpressionScores
             {
                 Smile = Average(scores, SmileShapes),
-                Surprise = Average(scores, SurpriseShapes),
+                Surprise = (browInner + browOuter) * 0.5f,
                 Angry = Average(scores, AngryShapes),
-                Sad = Average(scores, SadShapes),
+                Sad = Mathf.Clamp01(Average(scores, FrownShapes) + Mathf.Max(0f, browInner - browOuter)),
             };
             face.HasExpression = true;
             return true;

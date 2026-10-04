@@ -48,9 +48,9 @@ namespace VRCast.Core
         // 視線の強さの上限（0 = 目を動かさない）
         public const float MaxTrackingGaze = 2f;
 
-        // 表情反映の感度の範囲（大きいほど弱い表情でも反応する）
-        public const float MinExpressionSensitivity = 0.5f;
-        public const float MaxExpressionSensitivity = 2f;
+        // 表情に切り替わるしきい値の範囲（表情の強さ 0〜1 と同じ目盛り。小さいほど弱い表情でも反応する）
+        public const float MinExpressionThreshold = 0.1f;
+        public const float MaxExpressionThreshold = 0.8f;
 
         // 操作パネルの拡大率の範囲
         public const float MinUiScale = 0.75f;
@@ -122,7 +122,7 @@ namespace VRCast.Core
 
         // 表情反映（MediaPipe のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;
-        public float trackingExpressionSensitivity = 1f;
+        public float trackingExpressionThreshold = 0.3f;
         public string expressionSmile = string.Empty;
         public string expressionSurprise = string.Empty;
         public string expressionAngry = string.Empty;
@@ -216,9 +216,9 @@ namespace VRCast.Core
 
             // 視線の強さも同様
             trackingGaze = Mathf.Clamp(trackingGaze, 0f, MaxTrackingGaze);
-            // 表情反映の感度は範囲内に制限
-            trackingExpressionSensitivity = Mathf.Clamp(
-                trackingExpressionSensitivity, MinExpressionSensitivity, MaxExpressionSensitivity);
+            // 表情のしきい値は範囲内に制限
+            trackingExpressionThreshold = Mathf.Clamp(
+                trackingExpressionThreshold, MinExpressionThreshold, MaxExpressionThreshold);
             // null の割り当ては自動扱いの空文字へ
             expressionSmile ??= string.Empty;
             // 驚きも同様
