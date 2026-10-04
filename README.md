@@ -122,6 +122,9 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
   背景色が既定色のままならテーマに合わせて切り替わる（ライト = ベージュ、ダーク = ダークグレー。Display で変更した色は残す）。
 - **軽量モード**（既定 ON）: **Settings** の **Low load mode** が ON の間は、描画を 30fps（OFF なら 60fps）に抑え、同梱トラッカーの処理も軽くする
   （MediaPipe は推定を毎秒 20 回まで、OpenSeeFace は軽いモデル）。ゲームや OBS との併用向け。滑らかさを優先するなら OFF にする。
+- **アップデートの確認**（既定 ON）: 起動時に Web サイトの `https://coffin299.github.io/VRCast/version.json` を 1 回だけ読み、
+  新しいバージョンがあればパネル上部に通知する（**GitHub からダウンロード** / **BOOTH からダウンロード** / **このバージョンは通知しない**）。
+  通信は最新のバージョン番号を読むためだけで、失敗しても何も表示しない。**Settings** の **Check for updates at startup** で OFF にできる。
 - **全設定のリセット**: **Settings** の赤いボタン **Reset all settings** → 確認の **Yes, reset** で全ての設定を初期状態に戻す
   （ウィンドウサイズと最後に開いたアバターは保持。元に戻せない）。
 - 以下の説明は英語表示の項目名で記載する（日本語表示では対応する日本語名になる）。
@@ -343,6 +346,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - バージョンは `VRCastBuild` の `AppVersion` と `Packages/com.vrcast.converter/package.json` の `version` をそろえる。
 - 利用者に見える変更（バグ修正・機能追加など）は `CHANGELOG.txt` の先頭「未リリース / Unreleased」に日本語・英語で追記し、
   リリース時にバージョンと日付へ書き換える（手順は `.cursor/rules/changelog.mdc`）。
+- 配布 zip を公開したら、`webpage` ブランチの `version.json` の `version`（と必要なら `url`）を新しいバージョンにして公開する。
+  アプリは起動時にこれを読んで更新を通知する（先に更新すると、まだダウンロードできないバージョンを通知してしまう）。
   Unity が出力する配布不要のフォルダ（`*_BurstDebugInformation_DoNotShip` 等）は除く。
 - `VRCast.exe` が無ければ中止。同梱トラッカーや仮想カメラのドライバーが無い場合は警告を出して続行する
   （仮想カメラ入りで配布するなら `Tools\UnityCapture\fetch.ps1` の後にビルドし直す）。

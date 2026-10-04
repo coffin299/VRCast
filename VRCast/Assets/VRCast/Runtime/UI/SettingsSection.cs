@@ -1,12 +1,13 @@
 using System;
 using UnityEngine;
 using VRCast.Core;
+using VRCast.Platform;
 using VRCast.Rendering;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// Settings タブ（表示言語、UI の大きさ、テーマ（ライト / ダーク）、軽量モード、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
+    /// Settings タブ（表示言語、UI の大きさ、テーマ（ライト / ダーク）、軽量モード、アップデートの確認、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
     /// </summary>
     public class SettingsSection
     {
@@ -15,6 +16,7 @@ namespace VRCast.UI
 
         private readonly AppSettings _settings;
         private readonly RenderingController _rendering;
+        private readonly UpdateChecker _updates;
         private readonly Action _resetAll;
 
         // リセットの確認中か、直前にリセットしたか
@@ -22,10 +24,11 @@ namespace VRCast.UI
         private bool _resetDone;
 
         /// <param name="resetAll">全設定を既定値に戻して各機能へ反映する処理</param>
-        public SettingsSection(AppSettings settings, RenderingController rendering, Action resetAll)
+        public SettingsSection(AppSettings settings, RenderingController rendering, UpdateChecker updates, Action resetAll)
         {
             _settings = settings;
             _rendering = rendering;
+            _updates = updates;
             _resetAll = resetAll;
         }
 
@@ -35,6 +38,7 @@ namespace VRCast.UI
             DrawScale();
             DrawTheme();
             DrawPerformance();
+            DrawUpdates();
             DrawHelp();
             DrawReset();
             DrawAbout();
@@ -130,6 +134,60 @@ namespace VRCast.UI
                 $"（通常為 {RenderingController.NormalFrameRate}fps），並減輕內建追蹤器的處理。追蹤的流暢度會略有下降。"));
 
             GuiControls.EndCard();
+        }
+
+        private void DrawUpdates()
+        {
+            GuiControls.BeginCard(Loc.T("Updates", "アップデート", "업데이트", "更新", "更新"));
+
+            // ON にしたらその場で確認する（OFF の間は通信しない）
+            bool check = GUILayout.Toggle(_settings.checkForUpdates, Loc.T(
+                "Check for updates at startup", "起動時に新しいバージョンを確認する", "시작할 때 새 버전 확인",
+                "启动时检查新版本", "啟動時檢查新版本"));
+            if (check != _settings.checkForUpdates)
+            {
+                _settings.checkForUpdates = check;
+                if (check)
+                {
+                    _updates.Check();
+                }
+            }
+
+            GuiControls.Hint(Loc.T(
+                "Connects to the VRCast website (coffin299.github.io) only to read the latest version number",
+                "最新のバージョン番号を読むためだけに VRCast の Web サイト（coffin299.github.io）へ接続します",
+                "최신 버전 번호를 읽기 위해서만 VRCast 웹사이트(coffin299.github.io)에 접속합니다",
+                "仅为读取最新版本号而连接 VRCast 网站（coffin299.github.io）",
+                "僅為讀取最新版本號而連線 VRCast 網站（coffin299.github.io）"));
+            GuiControls.Hint(UpdateStatus());
+
+            // 新しいバージョンがあれば（通知しないことにしたものでも）ここから開ける
+            if (_updates.IsUpdateAvailable)
+            {
+                UpdateDownloadButtons.Draw(_updates);
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private string UpdateStatus()
+        {
+            // 確認の状態を表示言語で返す
+            switch (_updates.State)
+            {
+                case UpdateChecker.CheckState.Checking:
+                    return Loc.T("Checking...", "確認中...", "확인 중...", "正在检查...", "正在檢查...");
+                case UpdateChecker.CheckState.Failed:
+                    return Loc.T("Could not check (offline?)", "確認できませんでした（オフライン？）",
+                        "확인하지 못했습니다 (오프라인?)", "无法检查（是否离线？）", "無法檢查（是否離線？）");
+                case UpdateChecker.CheckState.Done:
+                    return _updates.IsUpdateAvailable
+                        ? Loc.T("New version", "新しいバージョン", "새 버전", "新版本", "新版本") + $": {_updates.LatestVersion}"
+                        : Loc.T("You are using the latest version", "最新のバージョンです", "최신 버전입니다",
+                            "已是最新版本", "已是最新版本");
+                default:
+                    return Loc.T("Not checked", "未確認", "확인 안 함", "未检查", "未檢查");
+            }
         }
 
         private void DrawHelp()

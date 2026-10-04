@@ -33,3 +33,5 @@ alwaysApply: true
    `Packages/com.vrcast.converter/package.json` の `version`。
 3. 修正だけなら z、機能追加なら y、互換性が壊れる変更なら x を上げる。
 4. 配布 zip は `Tools\Package\package.bat`（`CHANGELOG.txt` は自動で同梱される）。
+5. 配布 zip を公開したら、`webpage` ブランチ（作業フォルダ `../VRCast-webpage`）の `version.json` の `version` を同じバージョンにする
+ （アプリの更新通知に使う。zip の公開より先に変えない）。

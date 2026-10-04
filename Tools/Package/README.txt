@@ -14,6 +14,8 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 表示言語はパネル上部のボタン（または「設定」タブ）で 英語 / 日本語 / 韓国語 / 中国語（簡体字・繁体字）から選べます。
 ゲームや OBS と同時に使うときの負荷を減らす「軽量モード」が最初から ON になっています。
 動きの滑らかさを優先したいときは「設定」タブで OFF にしてください。
+起動時に新しいバージョンがあるかを確認し、あればパネル上部でお知らせします
+（最新のバージョン番号を読むためだけに Web サイトへ接続します。「設定」タブで OFF にできます）。
 
 ■ 書き出しツールの導入（アバターの Unity プロジェクト側）
 1. VCC からアバターの入ったプロジェクトを開きます。
@@ -55,6 +57,8 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
 The panel language can be English, Japanese, Korean or Chinese (Simplified / Traditional) (buttons at the top of the panel, or the Settings tab).
 "Low load mode", which reduces load when running with games or OBS, is on by default.
 Turn it off in the Settings tab if you prefer smoother motion.
+VRCast checks for a new version at startup and shows a notice at the top of the panel if there is one
+(it connects to the website only to read the latest version number; you can turn this off in the Settings tab).
 
 - Installing the exporter (in your avatar's Unity project)
 1. Open the project with your avatar from VCC.

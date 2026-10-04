@@ -59,6 +59,7 @@ namespace VRCast.UI
 
         private AvatarSession _session;
         private FileDropReceiver _fileDrop;
+        private UpdateChecker _updates;
         private OrbitCameraController _orbit;
         private AppSettings _settings;
         private RenderingController _rendering;
@@ -90,11 +91,12 @@ namespace VRCast.UI
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
             MicrophoneInput microphone, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
             TrackingSkeletonView skeleton, VirtualCameraOutput virtualCamera, FileDropReceiver fileDrop,
-            AppSettings settings, string initialPath)
+            UpdateChecker updates, AppSettings settings, string initialPath)
         {
             // 依存の受け取りと各タブの作成
             _session = session;
             _fileDrop = fileDrop;
+            _updates = updates;
             _orbit = orbit;
             _settings = settings;
             _rendering = rendering;
@@ -106,7 +108,7 @@ namespace VRCast.UI
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering);
             _outputSection = new OutputSection(virtualCamera);
-            _settingsSection = new SettingsSection(settings, rendering, ResetAllSettings);
+            _settingsSection = new SettingsSection(settings, rendering, updates, ResetAllSettings);
             _creditsSection = new CreditsSection();
             _resetBar = new ResetBar(session, orbit);
 
@@ -306,6 +308,31 @@ namespace VRCast.UI
             GUILayout.EndHorizontal();
             DrawLanguageBar();
             GUILayout.Space(4f);
+            DrawUpdateNotice();
+        }
+
+        private void DrawUpdateNotice()
+        {
+            // 新しいバージョンがあり、通知しないことにしていなければ見出しの下に出す
+            if (!_updates.ShouldNotify)
+            {
+                return;
+            }
+
+            GuiControls.BeginCard(Loc.T("Update available", "新しいバージョンがあります", "새 버전이 있습니다",
+                "有新版本", "有新版本"));
+            GuiControls.Hint(Loc.T("Current", "現在", "현재", "当前", "目前") + $": {Application.version} → "
+                + Loc.T("Latest", "最新", "최신", "最新", "最新") + $": {_updates.LatestVersion}");
+            UpdateDownloadButtons.Draw(_updates);
+
+            // このバージョンは通知しない（次の新しいバージョンでまた通知する）
+            if (GUILayout.Button(Loc.T("Skip this version", "このバージョンは通知しない", "이 버전은 알리지 않기",
+                    "不再提示此版本", "不再提示此版本"), GuiControls.Shrinkable))
+            {
+                _updates.SkipLatest();
+            }
+
+            GuiControls.EndCard();
         }
 
         private void DrawLanguageBar()
