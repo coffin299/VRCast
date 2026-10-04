@@ -9,7 +9,7 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - Web カメラの表情（笑顔・驚き・怒り・悲しみ）をアバターの表情に反映する機能を追加（MediaPipe のみ。トラッキングタブで ON/OFF・感度・割り当てを変更可能、既定は ON）
-- 開発者・協力者・ライセンス・NOTICE を表示する「クレジット」タブを追加
+- 開発者・協力者のリンクと、ライセンス・NOTICE を GitHub で開くボタンを並べた「クレジット」タブを追加
 - 操作パネルの韓国語・中国語（簡体字・繁体字）表示を追加
 - パネル上部に表示言語の切り替えボタンを追加（どのタブからでも切り替え可能）
 - Web サイトとヘルプページを韓国語・中国語（簡体字・繁体字）に対応し、ヘルプはパネルの表示言語で開くように変更
@@ -18,7 +18,7 @@ Newest first. Each version is written in Japanese, then English.
 
 [English]
 - Added facial expression tracking that switches the avatar's expressions from your webcam (smile, surprise, angry, sad; MediaPipe only, on by default, with on/off, sensitivity and mapping in the Tracking tab)
-- Added a Credits tab showing the developer, collaborator, license and notices
+- Added a Credits tab with links to the developer and collaborator, and buttons that open the license and notices on GitHub
 - Added Korean and Chinese (Simplified / Traditional) to the panel languages
 - Added language buttons at the top of the panel (switch from any tab)
 - Added Korean and Chinese (Simplified / Traditional) to the website and help page; help now opens in the panel language
