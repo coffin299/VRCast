@@ -106,7 +106,7 @@ namespace VRCast.UI
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering);
             _outputSection = new OutputSection(virtualCamera);
-            _settingsSection = new SettingsSection(settings, ResetAllSettings);
+            _settingsSection = new SettingsSection(settings, rendering, ResetAllSettings);
             _creditsSection = new CreditsSection();
             _resetBar = new ResetBar(session, orbit);
 

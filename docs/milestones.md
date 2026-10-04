@@ -195,7 +195,8 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
   - `IFaceTrackingProvider` / `FaceTrackingFrame`: Provider 共通の入力（頭の回転・左右の目の開き・口の開き）
   - `OpenSeeFacePacket`: 1 顔 1785 バイトのパケット解析（四元数は `(-y, -x, z, w)` で Unity 座標系へ。非有限値・長さ不足は破棄）
   - `OpenSeeFaceReceiver`: `127.0.0.1:<port>` のみ bind、スレッド無しで Update ポーリング。0.5 秒途絶で無効、bind 失敗は 3 秒ごと再試行
-  - `FaceTrackingDriver`: 首 40% / 頭 60% にアバタールート基準で回転（上限 70°、平滑化）。受信開始時（1 秒以上の途絶後も）の向きを正面とし、
+  - `FaceTrackingDriver`: 首 40% / 頭 60% にアバタールート基準で回転（上限 70°、平滑化）。受信開始時の向きを正面とし（後に、頭が 0.5 秒静止してから取る方式へ変更。
+    途絶後の再検出では取り直さず、トラッキング ON・入力元・カメラの変更時のみ。再検出直後 0.3 秒は頭の向きを使わない）、
     Calibrate で取り直し。Mirror で Y・Z 軸まわりを反転。揺れものが回転後の頭を基準にするよう他の LateUpdate より先に実行
   - 頭の位置（パケットの位置を `(-y, x, -z)` で Unity 座標系へ）の正面位置からの差分で上半身を傾ける:
     前後 → 前後の傾き、左右 → 横の傾き（1 単位 10° × Body lean、上限 20°）を Spine / Chest で分担し、
@@ -239,7 +240,7 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 手を動かすため、既定の入力元を MediaPipe に変更（OpenSeeFace は代替として残し、Tracking セクションで切替）。
 
 - トラッカー: `Tools/MediaPipeTracker/vrcast_tracker.py`（Face / Pose（lite）/ Hand Landmarker、動画モード、CPU）。
-  引数は facetracker と同じ形（`-l 1` / `-c` / `-i` / `-p`、追加で `--no-hands` / `--parent-pid`）にして起動処理を共通化。
+  引数は facetracker と同じ形（`-l 1` / `-c` / `-i` / `-p`、追加で `--no-hands` / `--parent-pid`、後に軽量モード用の `--max-fps`）にして起動処理を共通化。
   VRCast は自分の PID を渡し、トラッカーは親の終了（異常終了を含む）を検出して自分も終了する。
   キャッシュが溜まらないよう、exe はフォルダ形式（`_MEI` 展開なし）、OpenCV の OpenCL とカーネルキャッシュは無効、
   ビルドの中間ファイル・PyInstaller / pip のキャッシュは残さない。

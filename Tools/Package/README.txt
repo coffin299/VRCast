@@ -12,12 +12,14 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 4. Web カメラのトラッキング（MediaPipe）では、笑顔・驚き・怒り・悲しみがアバターの表情に反映されます。
    「トラッキング」タブの「表情を反映」で ON/OFF・しきい値・割り当てを変えられます。
 表示言語はパネル上部のボタン（または「設定」タブ）で 英語 / 日本語 / 韓国語 / 中国語（簡体字・繁体字）から選べます。
+ゲームや OBS と同時に使ってトラッキングがカクつくときは、「設定」タブの「軽量モード」を ON にしてください。
 
 ■ 書き出しツールの導入（アバターの Unity プロジェクト側）
 1. VCC からアバターの入ったプロジェクトを開きます。
 2. このフォルダの VRCast-Converter.unitypackage をダブルクリック（または Unity にドラッグ＆ドロップ）して「Import」を押します。
 3. メニュー「VRCast」→「Avatar Exporter」で、シーン上のアバターを指定して「Export...」で .vrcaster を保存します。
-元のアバターは変更しません。不要になったら Assets/VRCast/Converter フォルダを削除してください。
+元のアバターは変更しません。Modular Avatar で改変したアバターも、そのまま指定すれば改変後の姿で書き出されます（ベータ版）。
+不要になったら Assets/VRCast/Converter フォルダを削除してください。
 
 ■ ヘルプ
 https://coffin299.github.io/VRCast/help/
@@ -50,12 +52,14 @@ VRCast shows a VRChat avatar on its own and sends it to streaming software such 
 4. With webcam tracking (MediaPipe), your smile, surprise, anger and sadness switch the avatar's expressions.
    Use "Facial expressions" in the Tracking tab to turn it on/off and change sensitivity and mapping.
 The panel language can be English, Japanese, Korean or Chinese (Simplified / Traditional) (buttons at the top of the panel, or the Settings tab).
+If tracking stutters while running games or OBS, turn on "Low load mode" in the Settings tab.
 
 - Installing the exporter (in your avatar's Unity project)
 1. Open the project with your avatar from VCC.
 2. Double-click VRCast-Converter.unitypackage in this folder (or drag it into Unity) and click "Import".
 3. Open "VRCast" > "Avatar Exporter", pick your avatar in the scene and click "Export..." to save a .vrcaster file.
-Your original avatar is never modified. To remove it, delete the Assets/VRCast/Converter folder.
+Your original avatar is never modified. Avatars customized with Modular Avatar are exported with the changes applied (beta).
+To remove it, delete the Assets/VRCast/Converter folder.
 
 - Help
 https://coffin299.github.io/VRCast/help/

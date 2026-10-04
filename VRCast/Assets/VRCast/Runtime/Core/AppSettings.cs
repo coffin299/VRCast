@@ -65,6 +65,9 @@ namespace VRCast.Core
         public UiLanguage uiLanguage = UiLanguage.Auto;
         public float uiScale = 1f;
 
+        // 軽量モード（描画のフレームレートとトラッカーの処理回数を下げ、ゲーム・OBS と同時に使うときの負荷を減らす）
+        public bool lowLoadMode;
+
         // 背景色（既定は目に優しいベージュ）。非透過時は不透明で使い、透過時は alpha 0 のまま色だけ塗る
         // （ウィンドウ上では色が見え、OBS のゲームキャプチャでは抜ける）
         public bool transparentBackground;

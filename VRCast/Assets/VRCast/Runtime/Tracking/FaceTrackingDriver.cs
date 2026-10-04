@@ -27,8 +27,13 @@ namespace VRCast.Tracking
         private const float EyeClosedValue = 0.2f;
         private const float EyeOpenedValue = 0.55f;
 
-        // 途絶後に自動キャリブレーションをやり直すまでの秒数
-        private const float RecalibrateAfterSeconds = 1f;
+        // 自動キャリブレーションで静止とみなす頭の回転の変化（度）と、静止が続く必要がある秒数
+        // （映り始めや手で隠した直後の不安定な向きを正面にしないため）
+        private const float CalibrationStableAngle = 3f;
+        private const float CalibrationStableSeconds = 0.5f;
+
+        // 見失った顔を再検出した直後、頭の向きを使わない秒数（再検出直後の不正確な値で頭が跳ねないように）
+        private const float ReacquireSettleSeconds = 0.3f;
 
         // 頭の位置の差分 1 単位あたりの上半身の傾き（度、強さ 1 のとき）と上限（度）
         private const float LeanDegreesPerUnit = 10f;
@@ -89,6 +94,18 @@ namespace VRCast.Tracking
         private Quaternion _current = Quaternion.identity;
         private Vector3 _currentOffset;
 
+        // 正面を取ったときの入力元とカメラ（変わったら以前の正面は基準が違うため取り直す）
+        private TrackingSource _calibratedSource;
+        private string _calibratedCamera;
+
+        // 自動キャリブレーションの静止判定の基準の向きと、その向きになった時刻
+        private Quaternion _stableReference = Quaternion.identity;
+        private float _stableSince;
+
+        // 前フレームに受信していたかと、再検出直後で頭の向きを使わない期限
+        private bool _wasReceived;
+        private float _settleUntil;
+
         // 視線の正面（キャリブレーション時）と、目標・平滑化済みの目の角度（x = 左右、y = 上下）
         private Vector2 _neutralGaze;
         private bool _gazeCalibrated;
@@ -97,7 +114,6 @@ namespace VRCast.Tracking
 
         // 直近の両目の閉じ具合の平均（視線の更新可否に使う）
         private float _eyesClosed;
-        private float _lastFrameTime = float.NegativeInfinity;
         private FaceTrackingFrame _lastFrame;
 
         /// <summary>
@@ -195,28 +211,61 @@ namespace VRCast.Tracking
             // 有効かつ受信中のときだけ値を使う
             bool received = _settings.trackingEnabled && _provider != null && _provider.TryGetFrame(out _lastFrame);
 
-            // 途絶から一定時間後の再開時は、その時点の向きを正面として取り直す
-            if (received && Time.unscaledTime - _lastFrameTime > RecalibrateAfterSeconds)
+            // 無効化中や入力元・カメラの変更後は、次に映ったときに正面を取り直す
+            // （顔を見失っただけなら正面は保持する。再検出直後の不正確な向きで取り直すと以後ずっとずれるため）
+            if (!_settings.trackingEnabled || _settings.trackingSource != _calibratedSource
+                || _settings.trackerCamera != _calibratedCamera)
             {
                 _calibrated = false;
+                _calibratedSource = _settings.trackingSource;
+                _calibratedCamera = _settings.trackerCamera;
             }
 
-            IsTracking = received;
-            if (received)
+            // 見失った顔を再検出した直後は、値が落ち着くまで頭の向きを使わない
+            if (received && !_wasReceived)
             {
-                _lastFrameTime = Time.unscaledTime;
+                _settleUntil = Time.unscaledTime + ReacquireSettleSeconds;
+            }
 
-                // 初回フレームを正面とする
-                if (!_calibrated)
-                {
-                    Calibrate();
-                }
+            _wasReceived = received;
+            IsTracking = received;
+
+            // 正面が未設定なら、頭が静止したところで自動で取る
+            if (received && !_calibrated)
+            {
+                TryAutoCalibrate();
             }
 
             ApplyFace(received);
             ApplyExpression(received);
             ApplyBody(received);
             ApplyEyes(received);
+        }
+
+        private void TryAutoCalibrate()
+        {
+            float now = Time.unscaledTime;
+
+            // 再検出直後か、基準から頭が動いたら静止の計測をやり直す
+            if (now < _settleUntil
+                || Quaternion.Angle(_stableReference, _lastFrame.HeadRotation) > CalibrationStableAngle)
+            {
+                _stableReference = _lastFrame.HeadRotation;
+                _stableSince = now;
+                return;
+            }
+
+            // 一定時間ほぼ静止していたら、その向きを正面とする
+            if (now - _stableSince >= CalibrationStableSeconds)
+            {
+                Calibrate();
+            }
+        }
+
+        private bool IsHeadUsable(bool received)
+        {
+            // 正面が決まっていて、再検出直後でない受信フレームだけを頭・視線に使う
+            return received && _calibrated && Time.unscaledTime >= _settleUntil;
         }
 
         private void ApplyExpression(bool received)
@@ -333,9 +382,10 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 目標の相対回転・位置（途絶時は正面へ戻す）を平滑化
-            Quaternion target = received ? CalculateHeadDelta() : Quaternion.identity;
-            Vector3 targetOffset = received ? CalculateHeadOffset() : Vector3.zero;
+            // 目標の相対回転・位置（途絶時・正面の未設定時・再検出直後は正面へ戻す）を平滑化
+            bool usable = IsHeadUsable(received);
+            Quaternion target = usable ? CalculateHeadDelta() : Quaternion.identity;
+            Vector3 targetOffset = usable ? CalculateHeadOffset() : Vector3.zero;
             float blend = 1f - Mathf.Exp(-HeadSmoothing * Time.deltaTime);
             _current = Quaternion.Slerp(_current, target, blend);
             _currentOffset = Vector3.Lerp(_currentOffset, targetOffset, blend);
@@ -451,8 +501,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 目標の視線（途絶時は正面、目を閉じている間・視線なしのフレームは直前の値を保持）
-            if (!received)
+            // 目標の視線（途絶時・正面の未設定時・再検出直後は正面、目を閉じている間・視線なしのフレームは直前の値を保持）
+            if (!IsHeadUsable(received))
             {
                 _gazeTarget = Vector2.zero;
             }
