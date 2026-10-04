@@ -9,9 +9,8 @@ namespace VRCast.Tracking
     /// </summary>
     public class ExpressionDetector
     {
-        // 表情に入る・表情を抜けるしきい値（感度 1 のとき）
-        private const float EnterThreshold = 0.45f;
-        private const float ExitThreshold = 0.3f;
+        // 表情を抜けるしきい値（入るしきい値に対する倍率）
+        private const float ExitRatio = 0.65f;
 
         // 別の表情へ切り替えるまでに続く必要がある秒数
         private const float HoldSeconds = 0.3f;
@@ -34,11 +33,11 @@ namespace VRCast.Tracking
         /// </summary>
         /// <param name="scores">表情の強さ（0〜1）</param>
         /// <param name="mouthOpen">口の開き（0〜1）</param>
-        /// <param name="sensitivity">感度（AppSettings の範囲内。大きいほど弱い表情でも反応し、しきい値はこの値で割る）</param>
+        /// <param name="threshold">表情に入るしきい値（AppSettings の範囲内。表情の強さがこれ以上で切り替える）</param>
         /// <param name="deltaTime">前回からの経過秒数</param>
-        public FaceExpression Update(ExpressionScores scores, float mouthOpen, float sensitivity, float deltaTime)
+        public FaceExpression Update(ExpressionScores scores, float mouthOpen, float threshold, float deltaTime)
         {
-            FaceExpression target = FindTarget(scores, mouthOpen, sensitivity);
+            FaceExpression target = FindTarget(scores, mouthOpen, threshold);
 
             // 今の表情が続いているなら候補を捨てる
             if (target == Current)
@@ -76,11 +75,10 @@ namespace VRCast.Tracking
             _candidateSeconds = 0f;
         }
 
-        private FaceExpression FindTarget(ExpressionScores scores, float mouthOpen, float sensitivity)
+        private FaceExpression FindTarget(ExpressionScores scores, float mouthOpen, float threshold)
         {
-            // 感度は範囲内に収めてしきい値の倍率にする
-            float scale = 1f / Clamp(
-                sensitivity, AppSettings.MinExpressionSensitivity, AppSettings.MaxExpressionSensitivity);
+            // しきい値は範囲内に収める
+            float enter = Clamp(threshold, AppSettings.MinExpressionThreshold, AppSettings.MaxExpressionThreshold);
             bool talking = mouthOpen >= TalkingMouthOpen;
 
             // しきい値を超えた中で最も強い表情（無ければニュートラル）
@@ -89,17 +87,17 @@ namespace VRCast.Tracking
             for (var expression = FaceExpression.Smile; expression <= FaceExpression.Sad; expression++)
             {
                 // 今の表情は抜けるしきい値、それ以外は入るしきい値で比べる
-                float threshold = (expression == Current ? ExitThreshold : EnterThreshold) * scale;
+                float required = expression == Current ? enter * ExitRatio : enter;
 
                 // 発話中は笑顔を出にくくする
                 if (talking && expression == FaceExpression.Smile)
                 {
-                    threshold *= TalkingSmileFactor;
+                    required *= TalkingSmileFactor;
                 }
 
                 // 届いていて、これまでより強ければ採用
                 float score = scores.Get(expression);
-                if (score >= threshold && score > bestScore)
+                if (score >= required && score > bestScore)
                 {
                     best = expression;
                     bestScore = score;

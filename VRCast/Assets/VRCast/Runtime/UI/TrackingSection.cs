@@ -142,10 +142,16 @@ namespace VRCast.UI
                 return;
             }
 
-            _settings.trackingExpressionSensitivity = GuiControls.Slider(
-                Loc.T("Expression sensitivity", "表情の感度", "표정 감도", "表情灵敏度", "表情靈敏度"),
-                _settings.trackingExpressionSensitivity,
-                AppSettings.MinExpressionSensitivity, AppSettings.MaxExpressionSensitivity);
+            // しきい値（下の数値表示と同じ目盛り。小さいほど弱い表情でも切り替わる）
+            _settings.trackingExpressionThreshold = GuiControls.Slider(
+                Loc.T("Expression threshold", "表情のしきい値", "표정 임계값", "表情阈值", "表情閾值"),
+                _settings.trackingExpressionThreshold,
+                AppSettings.MinExpressionThreshold, AppSettings.MaxExpressionThreshold);
+            GuiControls.Hint(Loc.T("Switches when a value in the raw data reaches this (lower = reacts more easily)",
+                "生データの表情の値がこれを超えると切り替わります（低いほど反応しやすい）",
+                "원시 데이터의 표정 값이 이 값을 넘으면 전환됩니다 (낮을수록 쉽게 반응)",
+                "原始数据中的表情值超过此值时切换（越低越容易反应）",
+                "原始資料中的表情值超過此值時切換（越低越容易反應）"));
 
             // アバター未表示なら割り当ては出さない
             if (expressions == null)
@@ -383,7 +389,7 @@ namespace VRCast.UI
                     + Loc.T("Mouth", "口", "입", "嘴", "嘴") + $" {face.MouthOpen:F2}");
                 GuiControls.Hint(Loc.T("Gaze", "視線", "시선", "视线", "視線") + $" x {face.Gaze.x:F1}  y {face.Gaze.y:F1}");
 
-                // 表情の強さ（MediaPipe のみ。感度調整の目安）
+                // 表情の強さ（MediaPipe のみ。しきい値調整の目安）
                 if (face.HasExpression)
                 {
                     ExpressionScores scores = face.Expression;
