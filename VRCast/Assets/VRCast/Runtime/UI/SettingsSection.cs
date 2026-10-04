@@ -78,21 +78,27 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Theme", "テーマ", "테마", "主题", "主題"));
             GUILayout.BeginHorizontal();
 
-            // 選択中はアクセント色（反映は次の Layout で MainPanel がテーマを作り直す）
-            bool dark = _settings.darkMode;
+            // 選択中はアクセント色（パネルの配色は次の Layout で MainPanel が作り直す。背景色は既定色のときだけ追従）
+            bool dark = _rendering.DarkMode;
             if (GUILayout.Toggle(!dark, Loc.T("Light", "ライト", "라이트", "浅色", "淺色"), GUI.skin.button,
                     GuiControls.Shrinkable) && dark)
             {
-                _settings.darkMode = false;
+                _rendering.DarkMode = false;
             }
 
             if (GUILayout.Toggle(dark, Loc.T("Dark", "ダーク", "다크", "深色", "深色"), GUI.skin.button,
                     GuiControls.Shrinkable) && !dark)
             {
-                _settings.darkMode = true;
+                _rendering.DarkMode = true;
             }
 
             GUILayout.EndHorizontal();
+            GuiControls.Hint(Loc.T(
+                "The background color follows the theme unless you changed it in the Display tab",
+                "背景色は、表示タブで変更していなければテーマに合わせて切り替わります",
+                "배경색은 표시 탭에서 바꾸지 않았다면 테마에 맞춰 바뀝니다",
+                "如果未在显示标签页中更改背景色，背景色会随主题切换",
+                "若未在顯示分頁中變更背景色，背景色會隨主題切換"));
             GuiControls.EndCard();
         }
 

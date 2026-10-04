@@ -92,10 +92,13 @@ namespace VRCast.UI
                 _rendering.BackgroundColor = color;
             }
 
-            // 既定のベージュに戻す
-            if (GUILayout.Button(Loc.T("Beige (default)", "ベージュ（既定）", "베이지 (기본)", "米色（默认）", "米色（預設）")))
+            // 現在のテーマの既定色に戻す（ライト = ベージュ、ダーク = 暗い灰色）
+            string defaultLabel = _rendering.DarkMode
+                ? Loc.T("Dark gray (default)", "ダークグレー（既定）", "다크 그레이 (기본)", "深灰色（默认）", "深灰色（預設）")
+                : Loc.T("Beige (default)", "ベージュ（既定）", "베이지 (기본)", "米色（默认）", "米色（預設）");
+            if (GUILayout.Button(defaultLabel))
             {
-                _rendering.BackgroundColor = new AppSettings().backgroundColor;
+                _rendering.BackgroundColor = _rendering.DefaultBackgroundColor;
             }
 
             GuiControls.EndCard();
