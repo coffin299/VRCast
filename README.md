@@ -118,6 +118,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 - **Credits**（クレジット、タブ列の一番下）: 開発者（ごみぃ）・協力者（Arche_039）のリンクと、ライセンス・NOTICE を GitHub で開くボタン（配布物にも `LICENSE.txt` / `NOTICE.txt` を同梱）
   （配布フォルダにファイルが無い場合は GitHub のファイルを開くボタンになる）。
 - **UI の大きさ**: **Settings** の UI size で 75% / 100% / 125% / 150% / 200% を選べる（高解像度ディスプレイ向け）。
+- **テーマ**: **Settings** の Theme で **Light**（既定、ベージュ）/ **Dark**（暗い茶系）を選べる（OS の設定には合わせない）。
 - **軽量モード**: **Settings** の **Low load mode** を ON にすると、描画を 30fps（通常は 60fps）に抑え、同梱トラッカーの処理も軽くする
   （MediaPipe は推定を毎秒 20 回まで、OpenSeeFace は軽いモデル）。ゲームや OBS と同時に使ってトラッキングがカクつくとき向け。
 - **全設定のリセット**: **Settings** の赤いボタン **Reset all settings** → 確認の **Yes, reset** で全ての設定を初期状態に戻す

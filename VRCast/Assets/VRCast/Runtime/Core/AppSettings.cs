@@ -65,6 +65,9 @@ namespace VRCast.Core
         public UiLanguage uiLanguage = UiLanguage.Auto;
         public float uiScale = 1f;
 
+        // 操作パネルのダークモード（既定はライト = ベージュ。OS の設定には合わせない）
+        public bool darkMode;
+
         // 軽量モード（描画のフレームレートとトラッカーの処理回数を下げ、ゲーム・OBS と同時に使うときの負荷を減らす）
         public bool lowLoadMode;
 
