@@ -332,15 +332,15 @@
         <span class="zh-hans">打开 <span class="ui">启用追踪</span> 后，内置追踪器会自动启动，驱动头部朝向、眨眼、嘴部和视线（MediaPipe 还包括手臂和手）。</span>
         <span class="zh-hant">開啟 <span class="ui">啟用追蹤</span> 後，內建追蹤器會自動啟動，驅動頭部朝向、眨眼、嘴部和視線（MediaPipe 還包括手臂和手）。</span></li>
     <li><span class="ja">MediaPipe では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみを検出してアバターの表情に切り替えます。
-        <span class="ui">表情の感度</span> で反応のしやすさを、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
+        <span class="ui">表情のしきい値</span> で反応のしやすさ（低いほど反応しやすい。<span class="ui">生データ表示</span> 中に出る表情の値が目安）を、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
         <span class="en">With MediaPipe, <span class="ui">Facial expressions</span> (on by default) detects your smile, surprise, anger and sadness and switches the avatar's expression.
-        <span class="ui">Expression sensitivity</span> sets how easily it reacts, and you can choose which expression to use for each one (<span class="ui">Auto</span> guesses from the expression names).</span>
+        <span class="ui">Expression threshold</span> sets how easily it reacts (lower reacts more easily; compare it with the expression values shown in <span class="ui">Raw view</span>), and you can choose which expression to use for each one (<span class="ui">Auto</span> guesses from the expression names).</span>
         <span class="ko">MediaPipe에서 <span class="ui">표정 반영</span>을 켜면 (기본은 켜짐) 웃음·놀람·화남·슬픔을 감지해 아바타의 표정으로 바꿉니다.
-        <span class="ui">표정 감도</span>로 반응 정도를, 표정별 선택으로 사용할 표정을 바꿀 수 있습니다 (<span class="ui">자동</span>은 표정 이름으로 추정).</span>
+        <span class="ui">표정 임계값</span>으로 반응 정도를 (낮을수록 쉽게 반응. <span class="ui">원시 데이터 표시</span> 중에 나오는 표정 값이 기준), 표정별 선택으로 사용할 표정을 바꿀 수 있습니다 (<span class="ui">자동</span>은 표정 이름으로 추정).</span>
         <span class="zh-hans">使用 MediaPipe 时，打开 <span class="ui">反映表情</span>（默认开启）后，会检测笑脸、惊讶、生气、悲伤并切换虚拟形象的表情。
-        可用 <span class="ui">表情灵敏度</span> 调整反应程度，并为每种表情选择要使用的表情（<span class="ui">自动</span> 会根据表情名称推测）。</span>
+        可用 <span class="ui">表情阈值</span> 调整反应程度（越低越容易反应，可参考 <span class="ui">原始数据显示</span> 中的表情数值），并为每种表情选择要使用的表情（<span class="ui">自动</span> 会根据表情名称推测）。</span>
         <span class="zh-hant">使用 MediaPipe 時，開啟 <span class="ui">反映表情</span>（預設開啟）後，會偵測笑臉、驚訝、生氣、悲傷並切換虛擬形象的表情。
-        可用 <span class="ui">表情靈敏度</span> 調整反應程度，並為每種表情選擇要使用的表情（<span class="ui">自動</span> 會依表情名稱推測）。</span></li>
+        可用 <span class="ui">表情閾值</span> 調整反應程度（越低越容易反應，可參考 <span class="ui">原始資料顯示</span> 中的表情數值），並為每種表情選擇要使用的表情（<span class="ui">自動</span> 會依表情名稱推測）。</span></li>
     <li><span class="ja">カメラは <span class="ui">&lt;</span> <span class="ui">&gt;</span> で選びます。動かないときは <span class="ui">トラッカーを再起動</span>。</span>
         <span class="en">Choose the camera with <span class="ui">&lt;</span> <span class="ui">&gt;</span>. If nothing moves, press <span class="ui">Restart tracker</span>.</span>
         <span class="ko">카메라는 <span class="ui">&lt;</span> <span class="ui">&gt;</span>로 선택합니다. 움직이지 않으면 <span class="ui">트래커 다시 시작</span>.</span>
@@ -497,19 +497,19 @@
 
   <h3><span class="ja">表情が変わらない</span><span class="en">Expressions do not change</span><span class="ko">표정이 바뀌지 않는다</span><span class="zh-hans">表情不变化</span><span class="zh-hant">表情不變化</span></h3>
   <p class="ja">表情の反映は MediaPipe のみ対応です。<span class="ui">トラッキング</span> タブで入力元が MediaPipe になっているか、
-    <span class="ui">表情を反映</span> が ON か確認してください。反応しにくいときは <span class="ui">表情の感度</span> を上げ、
+    <span class="ui">表情を反映</span> が ON か確認してください。反応しにくいときは <span class="ui">表情のしきい値</span> を下げ、
     違う表情になるときは表情ごとの選択で使う表情を指定してください。</p>
   <p class="en">Expression tracking works with MediaPipe only. In the <span class="ui">Tracking</span> tab, check that the source is MediaPipe and
-    <span class="ui">Facial expressions</span> is on. If it rarely reacts, raise <span class="ui">Expression sensitivity</span>;
+    <span class="ui">Facial expressions</span> is on. If it rarely reacts, lower <span class="ui">Expression threshold</span>;
     if the wrong expression appears, pick the expression to use for each one.</p>
   <p class="ko">표정 반영은 MediaPipe만 지원합니다. <span class="ui">트래킹</span> 탭에서 입력 소스가 MediaPipe인지,
-    <span class="ui">표정 반영</span>이 켜져 있는지 확인하세요. 반응이 약하면 <span class="ui">표정 감도</span>를 올리고,
+    <span class="ui">표정 반영</span>이 켜져 있는지 확인하세요. 반응이 약하면 <span class="ui">표정 임계값</span>을 낮추고,
     다른 표정이 나오면 표정별 선택에서 사용할 표정을 지정하세요.</p>
   <p class="zh-hans">表情反映仅支持 MediaPipe。请在 <span class="ui">追踪</span> 标签页中确认输入源为 MediaPipe，
-    且 <span class="ui">反映表情</span> 已开启。反应不灵敏时请调高 <span class="ui">表情灵敏度</span>；
+    且 <span class="ui">反映表情</span> 已开启。反应不灵敏时请调低 <span class="ui">表情阈值</span>；
     出现错误的表情时，请为每种表情指定要使用的表情。</p>
   <p class="zh-hant">表情反映僅支援 MediaPipe。請在 <span class="ui">追蹤</span> 分頁中確認輸入來源為 MediaPipe，
-    且 <span class="ui">反映表情</span> 已開啟。反應不靈敏時請調高 <span class="ui">表情靈敏度</span>；
+    且 <span class="ui">反映表情</span> 已開啟。反應不靈敏時請調低 <span class="ui">表情閾值</span>；
     出現錯誤的表情時，請為每種表情指定要使用的表情。</p>
 
   <h3><span class="ja">設定ファイル・ログの場所</span><span class="en">Settings and log files</span><span class="ko">설정 파일·로그 위치</span><span class="zh-hans">设置文件与日志的位置</span><span class="zh-hant">設定檔與記錄檔的位置</span></h3>
