@@ -16,6 +16,7 @@ Newest first. Each version is written in Japanese, then English.
 - Web サイトの言語選択に「自動（ブラウザ）」を追加（既定。ブラウザの言語設定から対応言語を選ぶ）
 - アプリアイコンを新しいデザインに変更
 - 表情一覧などのボタンや数値がパネルの右端で見切れる問題を修正
+- 表情の切り替えを、瞬時ではなくなめらかに変化するように変更
 
 [English]
 - Added facial expression tracking that switches the avatar's expressions from your webcam (smile, surprise, angry, sad; MediaPipe only, on by default, with on/off, threshold and mapping in the Tracking tab)
@@ -26,6 +27,7 @@ Newest first. Each version is written in Japanese, then English.
 - Added "Auto (browser)" to the website language menu (default; picks a supported language from your browser settings)
 - Changed the app icon to a new design
 - Fixed buttons and values (such as the expression list) being cut off at the right edge of the panel
+- Expressions now blend smoothly instead of switching instantly
 
 
 ■ 1.0.0 (2026-10-03)
