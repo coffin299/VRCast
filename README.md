@@ -17,7 +17,7 @@ OBS (Window Capture / Game Capture) / 仮想カメラ (Discord / Zoom など)
 
 利用者は Unity Editor・VCC・VRChat 用プロジェクトを常時起動しておく必要がない設計とする。
 
-- Web サイト（概要・ヘルプ、日本語 / 英語、ライト / ダーク）: <https://coffin299.github.io/VRCast/>
+- Web サイト（概要・ヘルプ、日本語 / 英語 / 韓国語 / 中国語 簡体字・繁体字。既定はブラウザの言語に合わせる。ライト / ダーク）: <https://coffin299.github.io/VRCast/>
   （ソースは [`webpage` ブランチ](https://github.com/coffin299/VRCast/tree/webpage)。GitHub Pages でブランチのルートを公開）
 
 ## 現在の状態
@@ -110,9 +110,9 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 
 - **Start**（はじめに、起動時に開く）: アバターの読み込み → 背景の透過 → OBS への取り込み → パネルを隠す、までを手順で案内する。
   読み込み・透過は完了 / 未完了を表示し、その場のボタン（ファイルを選ぶ / 透過にする）で操作できる。仮想カメラ・トラッキング・口パクのタブへも移動できる。
-- **ヘルプ**: 見出しの **?**、Start / Settings の **Open help** で Web のヘルプページ（[coffin299.github.io/VRCast/help](https://coffin299.github.io/VRCast/help/)、日本語 / 英語）をブラウザで開く（パネルの表示言語で開く。韓国語・中国語表示のときは英語のページ）。
+- **ヘルプ**: 見出しの **?**、Start / Settings の **Open help** で Web のヘルプページ（[coffin299.github.io/VRCast/help](https://coffin299.github.io/VRCast/help/)、日本語 / 英語 / 韓国語 / 中国語 簡体字・繁体字）をブラウザで開く（パネルの表示言語で開く）。
 - **表示言語**: パネル上部（見出しの下）の言語ボタン、または **Settings** の Display language で「自動（OS に合わせる）」/ English / 日本語 / 한국어 / 简体中文 / 繁體中文 を選べる
-  （既定は自動。OS が日本語なら日本語、韓国語なら韓国語、中国語なら簡体字 / 繁体字、それ以外は英語）。韓国語・中国語は操作パネルのみ（ヘルプページ・配布物の説明は日本語 / 英語）。
+  （既定は自動。OS が日本語なら日本語、韓国語なら韓国語、中国語なら簡体字 / 繁体字、それ以外は英語）。Web サイト・ヘルプページも同じ 5 言語で、既定はブラウザの言語に合わせる（配布物の説明 README.txt は日本語 / 英語）。
 - **Credits**（クレジット、タブ列の一番下）: 開発者（ごみぃ）・協力者（Arche_039）のリンクと、ライセンス（`LICENSE.txt`）・NOTICE（`NOTICE.txt`）の本文を表示する
   （配布フォルダにファイルが無い場合は GitHub のファイルを開くボタンになる）。
 - **UI の大きさ**: **Settings** の UI size で 75% / 100% / 125% / 150% / 200% を選べる（高解像度ディスプレイ向け）。

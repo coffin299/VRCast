@@ -5,6 +5,17 @@ VRCast 更新履歴 / Changelog
 Newest first. Each version is written in Japanese, then English.
 
 
+■ 未リリース / Unreleased
+
+[日本語]
+- アプリアイコンを新しいデザインに変更
+- Web サイトの言語選択に「自動（ブラウザ）」を追加（既定。ブラウザの言語設定から対応言語を選ぶ）
+
+[English]
+- Changed the app icon to a new design
+- Added "Auto (browser)" to the website language menu (default; picks a supported language from your browser settings)
+
+
 ■ 1.1.0 (2026-10-04)
 
 [日本語]
@@ -12,12 +23,14 @@ Newest first. Each version is written in Japanese, then English.
 - 開発者・協力者・ライセンス・NOTICE を表示する「クレジット」タブを追加
 - 操作パネルの韓国語・中国語（簡体字・繁体字）表示を追加
 - パネル上部に表示言語の切り替えボタンを追加（どのタブからでも切り替え可能）
+- Web サイトとヘルプページを韓国語・中国語（簡体字・繁体字）に対応し、ヘルプはパネルの表示言語で開くように変更
 
 [English]
 - Added facial expression tracking that switches the avatar's expressions from your webcam (smile, surprise, angry, sad; MediaPipe only, on by default, with on/off, sensitivity and mapping in the Tracking tab)
 - Added a Credits tab showing the developer, collaborator, license and notices
 - Added Korean and Chinese (Simplified / Traditional) to the panel languages
 - Added language buttons at the top of the panel (switch from any tab)
+- Added Korean and Chinese (Simplified / Traditional) to the website and help page; help now opens in the panel language
 
 
 ■ 1.0.0 (2026-10-03)
