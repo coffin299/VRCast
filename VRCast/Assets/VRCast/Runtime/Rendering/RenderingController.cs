@@ -26,6 +26,10 @@ namespace VRCast.Rendering
         // カメラ正面（アバターの正面）から当てるときのワールドの向き。カメラは +Z 側から -Z を向く
         private const float FrontYaw = 180f;
 
+        // 描画のフレームレートの上限（通常 / 軽量モード）。上限が無いと GPU を使い切ってゲーム・OBS を圧迫する
+        public const int NormalFrameRate = 60;
+        public const int LowLoadFrameRate = 30;
+
         private readonly AvatarMaterials _avatarMaterials = new AvatarMaterials();
         private UnityEngine.Camera _camera;
         private Light _light;
@@ -129,6 +133,16 @@ namespace VRCast.Rendering
             }
         }
 
+        public bool LowLoadMode
+        {
+            get => _settings.lowLoadMode;
+            set
+            {
+                _settings.lowLoadMode = value;
+                ApplyFrameRate();
+            }
+        }
+
         public int Width => Screen.width;
         public int Height => Screen.height;
 
@@ -152,10 +166,11 @@ namespace VRCast.Rendering
         }
 
         /// <summary>
-        /// 設定値を直接書き換えた後（全設定のリセット等）に、背景・太陽光・環境光・アバターの明るさを反映し直す。
+        /// 設定値を直接書き換えた後（全設定のリセット等）に、フレームレート・背景・太陽光・環境光・アバターの明るさを反映し直す。
         /// </summary>
         public void ApplyAll()
         {
+            ApplyFrameRate();
             ApplyBackground();
             ApplyLight();
             ApplyAmbient();
@@ -222,6 +237,13 @@ namespace VRCast.Rendering
             _settings.ambientIntensity = Mathf.Clamp(ambient, 0f, AppSettings.MaxAmbientIntensity);
             ApplyLight();
             ApplyAmbient();
+        }
+
+        private void ApplyFrameRate()
+        {
+            // 垂直同期に任せるとモニターのリフレッシュレート（144Hz 等）で描画するため、止めて上限を明示する
+            QualitySettings.vSyncCount = 0;
+            Application.targetFrameRate = _settings.lowLoadMode ? LowLoadFrameRate : NormalFrameRate;
         }
 
         private void ApplyBackground()

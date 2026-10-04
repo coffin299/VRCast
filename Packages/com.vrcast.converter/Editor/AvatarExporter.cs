@@ -37,6 +37,7 @@ namespace VRCast.Converter.Editor
             public bool HasWink;
             public int PhysBoneCount;
             public int ConstraintCount;
+            public bool NdmfApplied;
             public ComponentStripper.Result Strip;
         }
 
@@ -87,6 +88,9 @@ namespace VRCast.Converter.Editor
             string bundleDir = FileUtil.GetUniqueTempPathInProject();
             string tempFolder = $"{TempFolderParent}/{TempFolderName}";
 
+            // NDMF が書き出し中に生成したアセットだけを後で消すため、既存分を控える
+            HashSet<string> generatedAssetsBefore = NdmfProcessor.ListGeneratedAssets();
+
             try
             {
                 // 元オブジェクトを壊さないよう複製し、原点に配置
@@ -94,9 +98,28 @@ namespace VRCast.Converter.Editor
                 clone.name = source.name;
                 clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
-                // VRChat アバターなら FX コントローラーを取得（無ければ null）
-                Component descriptor = VrcDescriptorReader.FindDescriptor(source);
+                // Modular Avatar 等の改変を VRChat のアップロード時と同じく複製へ適用（NDMF が無ければ何もしない）
+                report.NdmfApplied = NdmfProcessor.Process(clone);
+
+                // 以降は改変適用後の複製から読む（マージ後の FX・移動後のボーンを反映するため）
+                Component descriptor = VrcDescriptorReader.FindDescriptor(clone);
                 AnimatorController fx = descriptor != null ? VrcDescriptorReader.GetFxController(descriptor) : null;
+
+                // リップシンク・まぶた設定（パスは複製ルート基準）
+                AvatarDescriptorData descriptorData = descriptor != null
+                    ? VrcDescriptorReader.GetDescriptorData(descriptor, clone.transform)
+                    : new AvatarDescriptorData();
+                report.LipSyncMode = descriptorData.lipSync.mode;
+                report.HasBlink = descriptorData.eyelids.blinkBlendShapes.Length > 0;
+                report.HasWink = !string.IsNullOrEmpty(descriptorData.eyelids.winkLeftBlendShape);
+
+                // 揺れもの（FX の焼き込みで表示状態が変わる前に読む）
+                PhysBoneSet physBones = PhysBoneExtractor.Extract(clone);
+                report.PhysBoneCount = physBones.bones.Length;
+
+                // Constraint（FX の焼き込みで表示状態が変わる前に読む）
+                ConstraintSet constraints = ConstraintExtractor.Extract(clone);
+                report.ConstraintCount = constraints.constraints.Length;
 
                 // VRChat 上の初期状態に近づけるため、除去前に FX の既定状態を焼き込む
                 if (fx != null)
@@ -108,22 +131,6 @@ namespace VRCast.Converter.Editor
                 // FX から表情プリセットを抽出
                 ExpressionSet expressions = fx != null ? ExpressionExtractor.Extract(fx) : new ExpressionSet();
                 report.ExpressionCount = expressions.presets.Length;
-
-                // リップシンク・まぶた設定（パスは元アバター基準＝複製と同じ階層）
-                AvatarDescriptorData descriptorData = descriptor != null
-                    ? VrcDescriptorReader.GetDescriptorData(descriptor, source.transform)
-                    : new AvatarDescriptorData();
-                report.LipSyncMode = descriptorData.lipSync.mode;
-                report.HasBlink = descriptorData.eyelids.blinkBlendShapes.Length > 0;
-                report.HasWink = !string.IsNullOrEmpty(descriptorData.eyelids.winkLeftBlendShape);
-
-                // 揺れもの（除去前に元アバターから読む）
-                PhysBoneSet physBones = PhysBoneExtractor.Extract(source);
-                report.PhysBoneCount = physBones.bones.Length;
-
-                // Constraint（除去前に元アバターから読む）
-                ConstraintSet constraints = ConstraintExtractor.Extract(source);
-                report.ConstraintCount = constraints.constraints.Length;
 
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
@@ -200,6 +207,9 @@ namespace VRCast.Converter.Editor
 
                 AssetDatabase.DeleteAsset(tempFolder);
                 FileUtil.DeleteFileOrDirectory(bundleDir);
+
+                // bundle 化が済んだので NDMF の生成アセットも片付ける
+                NdmfProcessor.DeleteGeneratedAssets(generatedAssetsBefore);
             }
         }
 

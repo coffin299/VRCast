@@ -4,6 +4,19 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.2.0 (2026-10-05)
+
+[日本語]
+- 【ベータ版】Modular Avatar などで改変したアバターを、改変後の姿（衣装の統合・追加した表情やトグル）で書き出す機能を追加（暫定対応のため、正しく書き出せない場合があります）
+- トラッキング中に顔を手で隠すなどして見失うと、その後アバターが別の方向を向いたままになる問題を修正
+- ゲームや OBS と同時に使うときの負荷を減らす「軽量モード」を追加（設定タブ。描画を 30fps に抑え、トラッカーの処理も軽くする）
+- 描画のフレームレートを通常時も 60fps までに制限し、GPU を使いすぎないように変更
+
+[English]
+- [Beta] Added support for avatars customized with Modular Avatar and other NDMF tools; outfits, added expressions and toggles are exported as applied (preliminary support; some avatars may not export correctly)
+- Fixed the avatar staying turned in the wrong direction after the face was lost during tracking (e.g. covered by a hand)
+- Added "Low load mode" in the Settings tab to reduce load when running with games or OBS (limits drawing to 30 fps and lightens the tracker)
+- Drawing is now limited to 60 fps by default so the app no longer uses more GPU than needed
 
 ■ 1.1.0 (2026-10-04)
 

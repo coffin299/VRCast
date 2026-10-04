@@ -1,11 +1,12 @@
 using System;
 using UnityEngine;
 using VRCast.Core;
+using VRCast.Rendering;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// Settings タブ（表示言語、UI の大きさ、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
+    /// Settings タブ（表示言語、UI の大きさ、軽量モード、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
     /// </summary>
     public class SettingsSection
     {
@@ -13,6 +14,7 @@ namespace VRCast.UI
         private static readonly float[] ScalePresets = { 0.75f, 1f, 1.25f, 1.5f, 2f };
 
         private readonly AppSettings _settings;
+        private readonly RenderingController _rendering;
         private readonly Action _resetAll;
 
         // リセットの確認中か、直前にリセットしたか
@@ -20,9 +22,10 @@ namespace VRCast.UI
         private bool _resetDone;
 
         /// <param name="resetAll">全設定を既定値に戻して各機能へ反映する処理</param>
-        public SettingsSection(AppSettings settings, Action resetAll)
+        public SettingsSection(AppSettings settings, RenderingController rendering, Action resetAll)
         {
             _settings = settings;
+            _rendering = rendering;
             _resetAll = resetAll;
         }
 
@@ -30,6 +33,7 @@ namespace VRCast.UI
         {
             DrawLanguage();
             DrawScale();
+            DrawPerformance();
             DrawHelp();
             DrawReset();
             DrawAbout();
@@ -65,6 +69,36 @@ namespace VRCast.UI
             }
 
             GUILayout.EndHorizontal();
+            GuiControls.EndCard();
+        }
+
+        private void DrawPerformance()
+        {
+            GuiControls.BeginCard(Loc.T("Performance", "動作の軽さ", "성능", "性能", "效能"));
+
+            // 値が変わったときだけ反映（トラッカーは TrackerProcess が設定の変化を見て再起動する）
+            bool lowLoad = GUILayout.Toggle(_rendering.LowLoadMode, Loc.T(
+                "Low load mode", "軽量モード", "저부하 모드", "低负载模式", "低負載模式"));
+            if (lowLoad != _rendering.LowLoadMode)
+            {
+                _rendering.LowLoadMode = lowLoad;
+            }
+
+            GuiControls.Hint(Loc.T(
+                $"Use this with games or OBS: drawing is limited to {RenderingController.LowLoadFrameRate} fps " +
+                $"(normally {RenderingController.NormalFrameRate}) and the bundled tracker runs lighter. " +
+                "Tracking becomes slightly less smooth.",
+                $"ゲームや OBS と同時に使うときに。描画を {RenderingController.LowLoadFrameRate}fps " +
+                $"（通常は {RenderingController.NormalFrameRate}fps）に抑え、同梱トラッカーの処理も軽くします。" +
+                "トラッキングの滑らかさは少し下がります。",
+                $"게임이나 OBS와 함께 쓸 때 사용하세요. 화면을 {RenderingController.LowLoadFrameRate}fps" +
+                $"(평소 {RenderingController.NormalFrameRate}fps)로 제한하고 내장 트래커의 처리도 가볍게 합니다. " +
+                "트래킹의 부드러움은 조금 떨어집니다.",
+                $"与游戏或 OBS 同时使用时开启。将画面限制为 {RenderingController.LowLoadFrameRate}fps" +
+                $"（通常为 {RenderingController.NormalFrameRate}fps），并减轻内置追踪器的处理。追踪的流畅度会略有下降。",
+                $"與遊戲或 OBS 同時使用時開啟。將畫面限制為 {RenderingController.LowLoadFrameRate}fps" +
+                $"（通常為 {RenderingController.NormalFrameRate}fps），並減輕內建追蹤器的處理。追蹤的流暢度會略有下降。"));
+
             GuiControls.EndCard();
         }
 

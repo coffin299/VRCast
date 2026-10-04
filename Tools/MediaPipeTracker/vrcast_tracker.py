@@ -20,6 +20,8 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 
 頭の行列・腕・手・可視度は One Euro フィルターで平滑化してから送る
 （止まっているときの細かい揺れを消し、速い動きでは遅れを抑える。CPU 負荷はほぼ無い）。
+
+--max-fps を指定すると推定の回数を毎秒その回数までに間引く（VRCast の軽量モード）。
 """
 
 import argparse
@@ -114,6 +116,8 @@ def parse_arguments():
     parser.add_argument("--fps", type=int, default=DEFAULT_FPS)
     # 手の推定を止める（腕・手を使わないときの CPU 負荷軽減）
     parser.add_argument("--no-hands", action="store_true")
+    # 推定の回数の上限（毎秒、0 以下で無制限）。VRCast の軽量モードで CPU 負荷を下げる
+    parser.add_argument("--max-fps", type=float, default=0.0)
     # 親プロセス（VRCast）の PID。終了したらトラッカーも終了する
     parser.add_argument("--parent-pid", type=int, default=0)
     return parser.parse_args()
@@ -492,6 +496,9 @@ def run(arguments):
     failures = 0
     last_timestamp = -1
     smoother = Smoother()
+    # 推定の間隔（秒、0 なら全フレーム）と次に推定してよい時刻
+    interval = 1.0 / arguments.max_fps if arguments.max_fps > 0 else 0.0
+    next_due = 0.0
     try:
         while True:
             # 親プロセスが終了していればカメラを解放して終了
@@ -509,6 +516,14 @@ def run(arguments):
                     return 2
                 continue
             failures = 0
+
+            # 上限を超える分のフレームは読み捨てる（溜めると遅延するため読み取りは続ける）
+            now = time.perf_counter()
+            if now < next_due:
+                continue
+            # 次の推定時刻。大きく遅れたら今を起点にしてまとめて推定しない
+            # （半間隔までの遅れは持ち越し、カメラのフレーム間隔とのずれで回数が減りすぎないようにする）
+            next_due = max(next_due, now - interval / 2) + interval
 
             # 動画モードはタイムスタンプ（ms）が単調増加である必要がある
             timestamp = max(last_timestamp + 1,

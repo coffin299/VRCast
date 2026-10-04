@@ -32,6 +32,10 @@ namespace VRCast.Tracking
         // MediaPipe 版に親プロセス（VRCast）の PID を渡す引数（親の終了を検出して自分も終了する）
         private const string ParentPidArgument = " --parent-pid ";
 
+        // 軽量モードの引数（MediaPipe 版: 推定を毎秒 20 回までに間引く / OpenSeeFace: 既定（3）より軽いモデル）
+        private const string LowLoadMediaPipeArgument = " --max-fps 20";
+        private const string LowLoadOpenSeeFaceArgument = " --model 2";
+
         // 一覧の 1 行（"0: カメラ名"）
         private static readonly Regex CameraLine = new Regex(@"^\s*(\d+)\s*:\s*(.+?)\s*$");
 
@@ -51,6 +55,7 @@ namespace VRCast.Tracking
         private string _startedCamera;
         private TrackingSource _startedSource;
         private bool _startedHands;
+        private bool _startedLowLoad;
         private float _nextStartTime;
 
         // 一覧を取得済み（または取得中）の入力元。null なら未取得
@@ -245,9 +250,10 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無が変わったら起動し直す
+            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・軽量モードが変わったら起動し直す
             bool changed = _startedPort != _settings.trackingPort || _startedCamera != _settings.trackerCamera
-                || _startedSource != _settings.trackingSource || _startedHands != UsesHands();
+                || _startedSource != _settings.trackingSource || _startedHands != UsesHands()
+                || _startedLowLoad != _settings.lowLoadMode;
             if (changed)
             {
                 Restart();
@@ -286,11 +292,18 @@ namespace VRCast.Tracking
                 _startedCamera = _settings.trackerCamera;
                 _startedSource = _settings.trackingSource;
                 _startedHands = UsesHands();
+                _startedLowLoad = _settings.lowLoadMode;
                 bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
                 string arguments = $"-c {camera} -i 127.0.0.1 -p {_startedPort}";
                 if (mediaPipe && !_startedHands)
                 {
                     arguments += NoHandsArgument;
+                }
+
+                // 軽量モードでは入力元に合わせて処理を軽くする
+                if (_startedLowLoad)
+                {
+                    arguments += mediaPipe ? LowLoadMediaPipeArgument : LowLoadOpenSeeFaceArgument;
                 }
 
                 // MediaPipe 版には自分の PID を渡し、VRCast が異常終了してもトラッカー（とカメラ）を残さない
