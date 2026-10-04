@@ -21,11 +21,6 @@ namespace VRCast.UI
         public static UiLanguage Current { get; private set; } = UiLanguage.English;
 
         /// <summary>
-        /// 日本語で表示中なら true。
-        /// </summary>
-        public static bool IsJapanese => Current == UiLanguage.Japanese;
-
-        /// <summary>
         /// 設定の言語（Auto は OS の言語）を反映する。パネルの描画前に毎回呼ぶ。
         /// </summary>
         public static void Apply(UiLanguage language)

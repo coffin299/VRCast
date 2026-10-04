@@ -73,9 +73,9 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Help", "ヘルプ", "도움말", "帮助", "說明"));
             GuiControls.Hint(Loc.T("Step-by-step guide and troubleshooting (opens in your browser)",
                 "使い方の手順とトラブルシューティング（ブラウザで開きます）",
-                "사용 방법과 문제 해결 (브라우저에서 열립니다. 영어 페이지)",
-                "使用步骤与故障排除（在浏览器中打开，英文页面）",
-                "使用步驟與疑難排解（在瀏覽器中開啟，英文頁面）"));
+                "사용 방법과 문제 해결 (브라우저에서 열립니다)",
+                "使用步骤与故障排除（在浏览器中打开）",
+                "使用步驟與疑難排解（在瀏覽器中開啟）"));
 
             if (GUILayout.Button(Loc.T("Open help", "ヘルプを開く", "도움말 열기", "打开帮助", "開啟說明")))
             {

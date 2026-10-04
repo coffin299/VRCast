@@ -4,7 +4,7 @@ namespace VRCast.UI
 {
     /// <summary>
     /// Web のヘルプページ（webpage ブランチを GitHub Pages で公開）を既定のブラウザで開く。
-    /// 操作パネルの表示言語をページへ渡し、ページ側でも日本語 / 英語を切り替えられる。
+    /// 操作パネルの表示言語をページへ渡し、ページ側でも 5 言語を切り替えられる。
     /// </summary>
     public static class HelpPage
     {
@@ -13,9 +13,9 @@ namespace VRCast.UI
         public const string Url = SiteUrl + "help/";
 
         /// <summary>
-        /// 表示言語付きのヘルプページの URL（ページは日本語 / 英語のみのため、韓国語・中国語表示では英語）。
+        /// 表示言語付きのヘルプページの URL（?lang= の値はサイトの site.js と同じ）。
         /// </summary>
-        public static string LocalizedUrl => Url + "?lang=" + (Loc.IsJapanese ? "ja" : "en");
+        public static string LocalizedUrl => Url + "?lang=" + Loc.T("en", "ja", "ko", "zh-Hans", "zh-Hant");
 
         /// <summary>
         /// ブラウザでヘルプページを開く。
