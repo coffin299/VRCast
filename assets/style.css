@@ -19,7 +19,13 @@ body {
   margin: 0; background: var(--bg); color: var(--text); line-height: 1.75;
   font-family: "Yu Gothic UI", "Meiryo UI", "Segoe UI", "Hiragino Sans", sans-serif;
 }
-html.lang-ja .en, html.lang-en .ja { display: none; }
+/* 言語ごとのフォント（漢字の字形が言語で違うため、その言語のフォントを先にする） */
+html:lang(ko) body { font-family: "Malgun Gothic", "Apple SD Gothic Neo", "Segoe UI", sans-serif; }
+html:lang(zh-Hans) body { font-family: "Microsoft YaHei UI", "Microsoft YaHei", "PingFang SC", "Segoe UI", sans-serif; }
+html:lang(zh-Hant) body { font-family: "Microsoft JhengHei UI", "Microsoft JhengHei", "PingFang TC", "Segoe UI", sans-serif; }
+/* 表示中以外の言語の文言を隠す */
+html:not(.lang-ja) .ja, html:not(.lang-en) .en, html:not(.lang-ko) .ko,
+html:not(.lang-zh-hans) .zh-hans, html:not(.lang-zh-hant) .zh-hant { display: none; }
 a { color: var(--link); }
 
 /* ヘッダー（サイト内リンクと言語切替） */
@@ -37,6 +43,10 @@ header button {
   background: var(--line); color: var(--text); font: inherit;
 }
 header button.active { background: var(--accent); color: var(--on-accent); }
+header select {
+  border: 0; border-radius: 6px; padding: 6px 10px; cursor: pointer;
+  background: var(--line); color: var(--text); font: inherit;
+}
 header .group { display: flex; gap: 4px; }
 
 /* 本文 */

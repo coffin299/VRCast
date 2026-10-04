@@ -12,226 +12,430 @@
 <header>
   <a class="brand" href="../"><img src="../assets/icon.png" alt="">VRCast</a>
   <div class="links">
-    <a href="../"><span class="ja">概要</span><span class="en">Overview</span></a>
-    <a class="current" href="./"><span class="ja">ヘルプ</span><span class="en">Help</span></a>
+    <a href="../"><span class="ja">概要</span><span class="en">Overview</span><span class="ko">개요</span><span class="zh-hans">概要</span><span class="zh-hant">概要</span></a>
+    <a class="current" href="./"><span class="ja">ヘルプ</span><span class="en">Help</span><span class="ko">도움말</span><span class="zh-hans">帮助</span><span class="zh-hant">說明</span></a>
     <a href="https://github.com/coffin299/VRCast">GitHub</a>
   </div>
   <div class="spacer"></div>
   <div class="group">
-    <button data-theme-choice="light"><span class="ja">ライト</span><span class="en">Light</span></button>
-    <button data-theme-choice="dark"><span class="ja">ダーク</span><span class="en">Dark</span></button>
+    <button data-theme-choice="light"><span class="ja">ライト</span><span class="en">Light</span><span class="ko">라이트</span><span class="zh-hans">浅色</span><span class="zh-hant">淺色</span></button>
+    <button data-theme-choice="dark"><span class="ja">ダーク</span><span class="en">Dark</span><span class="ko">다크</span><span class="zh-hans">深色</span><span class="zh-hant">深色</span></button>
   </div>
-  <div class="group">
-    <button data-lang="ja">日本語</button>
-    <button data-lang="en">English</button>
-  </div>
+  <select data-lang-select aria-label="Language">
+    <option value="auto">Auto</option>
+    <option value="ja">日本語</option>
+    <option value="en">English</option>
+    <option value="ko">한국어</option>
+    <option value="zh-Hans">简体中文</option>
+    <option value="zh-Hant">繁體中文</option>
+  </select>
 </header>
 
 <div class="layout">
 <nav class="toc">
-  <a href="#quick"><span class="ja">かんたんスタート</span><span class="en">Quick start</span></a>
-  <a href="#export"><span class="ja">1. アバターの書き出し</span><span class="en">1. Export your avatar</span></a>
-  <a href="#load"><span class="ja">2. 読み込み</span><span class="en">2. Load</span></a>
-  <a href="#obs"><span class="ja">3. OBS に映す</span><span class="en">3. Show in OBS</span></a>
-  <a href="#vcam"><span class="ja">仮想カメラ</span><span class="en">Virtual camera</span></a>
-  <a href="#look"><span class="ja">見た目・ライト</span><span class="en">Look &amp; lighting</span></a>
-  <a href="#face"><span class="ja">口パク・まばたき</span><span class="en">Lip sync &amp; blink</span></a>
-  <a href="#tracking"><span class="ja">トラッキング</span><span class="en">Tracking</span></a>
-  <a href="#settings"><span class="ja">設定・リセット</span><span class="en">Settings &amp; reset</span></a>
-  <a href="#keys"><span class="ja">操作一覧</span><span class="en">Controls</span></a>
-  <a href="#trouble"><span class="ja">困ったとき</span><span class="en">Troubleshooting</span></a>
+  <a href="#quick"><span class="ja">かんたんスタート</span><span class="en">Quick start</span><span class="ko">빠른 시작</span><span class="zh-hans">快速开始</span><span class="zh-hant">快速開始</span></a>
+  <a href="#export"><span class="ja">1. アバターの書き出し</span><span class="en">1. Export your avatar</span><span class="ko">1. 아바타 내보내기</span><span class="zh-hans">1. 导出虚拟形象</span><span class="zh-hant">1. 匯出虛擬形象</span></a>
+  <a href="#load"><span class="ja">2. 読み込み</span><span class="en">2. Load</span><span class="ko">2. 불러오기</span><span class="zh-hans">2. 加载</span><span class="zh-hant">2. 載入</span></a>
+  <a href="#obs"><span class="ja">3. OBS に映す</span><span class="en">3. Show in OBS</span><span class="ko">3. OBS에 표시</span><span class="zh-hans">3. 在 OBS 中显示</span><span class="zh-hant">3. 在 OBS 中顯示</span></a>
+  <a href="#vcam"><span class="ja">仮想カメラ</span><span class="en">Virtual camera</span><span class="ko">가상 카메라</span><span class="zh-hans">虚拟摄像头</span><span class="zh-hant">虛擬攝影機</span></a>
+  <a href="#look"><span class="ja">見た目・ライト</span><span class="en">Look &amp; lighting</span><span class="ko">외형·조명</span><span class="zh-hans">外观与灯光</span><span class="zh-hant">外觀與燈光</span></a>
+  <a href="#face"><span class="ja">口パク・まばたき</span><span class="en">Lip sync &amp; blink</span><span class="ko">립싱크·눈 깜빡임</span><span class="zh-hans">口型同步与眨眼</span><span class="zh-hant">口型同步與眨眼</span></a>
+  <a href="#tracking"><span class="ja">トラッキング</span><span class="en">Tracking</span><span class="ko">트래킹</span><span class="zh-hans">追踪</span><span class="zh-hant">追蹤</span></a>
+  <a href="#settings"><span class="ja">設定・リセット</span><span class="en">Settings &amp; reset</span><span class="ko">설정·초기화</span><span class="zh-hans">设置与重置</span><span class="zh-hant">設定與重設</span></a>
+  <a href="#keys"><span class="ja">操作一覧</span><span class="en">Controls</span><span class="ko">조작 목록</span><span class="zh-hans">操作一览</span><span class="zh-hant">操作一覽</span></a>
+  <a href="#trouble"><span class="ja">困ったとき</span><span class="en">Troubleshooting</span><span class="ko">문제 해결</span><span class="zh-hans">故障排除</span><span class="zh-hant">疑難排解</span></a>
 </nav>
 
 <main>
 
 <section id="quick">
-  <h2><span class="ja">かんたんスタート</span><span class="en">Quick start</span></h2>
+  <h2><span class="ja">かんたんスタート</span><span class="en">Quick start</span><span class="ko">빠른 시작</span><span class="zh-hans">快速开始</span><span class="zh-hant">快速開始</span></h2>
   <p class="ja">VRCast は VRChat 用のアバターを単体で表示し、OBS などの配信ソフトに映すアプリです。
     VRCast を起動すると左のパネルに <span class="ui">はじめに</span> タブが開き、同じ手順を画面上で案内します。</p>
   <p class="en">VRCast shows a VRChat avatar on its own and sends it to streaming software such as OBS.
     When VRCast starts, the <span class="ui">Start</span> tab in the left panel guides you through the same steps.</p>
+  <p class="ko">VRCast는 VRChat용 아바타를 단독으로 표시하고 OBS 같은 방송 소프트웨어에 보내는 앱입니다.
+    VRCast를 실행하면 왼쪽 패널에 <span class="ui">시작하기</span> 탭이 열리고, 같은 단계를 화면에서 안내합니다.</p>
+  <p class="zh-hans">VRCast 是一款单独显示 VRChat 虚拟形象并输出到 OBS 等直播软件的应用。
+    启动 VRCast 后，左侧面板会打开 <span class="ui">开始</span> 标签页，在画面上引导相同的步骤。</p>
+  <p class="zh-hant">VRCast 是一款單獨顯示 VRChat 虛擬形象並輸出到 OBS 等直播軟體的應用程式。
+    啟動 VRCast 後，左側面板會開啟 <span class="ui">開始</span> 分頁，在畫面上引導相同的步驟。</p>
   <ol class="steps">
     <li><span class="ja">Unity でアバターを <code>.vrcaster</code> ファイルに書き出す</span>
-        <span class="en">Export your avatar to a <code>.vrcaster</code> file in Unity</span></li>
+        <span class="en">Export your avatar to a <code>.vrcaster</code> file in Unity</span>
+        <span class="ko">Unity에서 아바타를 <code>.vrcaster</code> 파일로 내보내기</span>
+        <span class="zh-hans">在 Unity 中将虚拟形象导出为 <code>.vrcaster</code> 文件</span>
+        <span class="zh-hant">在 Unity 中將虛擬形象匯出為 <code>.vrcaster</code> 檔案</span></li>
     <li><span class="ja"><code>.vrcaster</code> を VRCast のウィンドウにドラッグ＆ドロップ</span>
-        <span class="en">Drag and drop the <code>.vrcaster</code> file onto the VRCast window</span></li>
+        <span class="en">Drag and drop the <code>.vrcaster</code> file onto the VRCast window</span>
+        <span class="ko"><code>.vrcaster</code> 파일을 VRCast 창에 드래그 앤 드롭</span>
+        <span class="zh-hans">将 <code>.vrcaster</code> 文件拖放到 VRCast 窗口</span>
+        <span class="zh-hant">將 <code>.vrcaster</code> 檔案拖放到 VRCast 視窗</span></li>
     <li><span class="ja"><span class="ui">はじめに</span> タブの <span class="ui">透過にする</span> を押す</span>
-        <span class="en">Press <span class="ui">Make transparent</span> in the <span class="ui">Start</span> tab</span></li>
+        <span class="en">Press <span class="ui">Make transparent</span> in the <span class="ui">Start</span> tab</span>
+        <span class="ko"><span class="ui">시작하기</span> 탭의 <span class="ui">투명하게 하기</span>를 누르기</span>
+        <span class="zh-hans">点击 <span class="ui">开始</span> 标签页中的 <span class="ui">设为透明</span></span>
+        <span class="zh-hant">點擊 <span class="ui">開始</span> 分頁中的 <span class="ui">設為透明</span></span></li>
     <li><span class="ja">OBS で <span class="ui">ゲームキャプチャ</span> を追加して <span class="ui">透過を許可</span></span>
-        <span class="en">Add a <span class="ui">Game Capture</span> source in OBS and check <span class="ui">Allow Transparency</span></span></li>
+        <span class="en">Add a <span class="ui">Game Capture</span> source in OBS and check <span class="ui">Allow Transparency</span></span>
+        <span class="ko">OBS에서 <span class="ui">게임 캡처</span>를 추가하고 <span class="ui">투명도 허용</span>에 체크</span>
+        <span class="zh-hans">在 OBS 中添加 <span class="ui">游戏采集</span> 并勾选 <span class="ui">允许透明</span></span>
+        <span class="zh-hant">在 OBS 中新增 <span class="ui">遊戲擷取</span> 並勾選 <span class="ui">允許透明</span></span></li>
     <li><span class="ja"><kbd>Tab</kbd> キーで操作パネルを隠す</span>
-        <span class="en">Press <kbd>Tab</kbd> to hide the control panel</span></li>
+        <span class="en">Press <kbd>Tab</kbd> to hide the control panel</span>
+        <span class="ko"><kbd>Tab</kbd> 키로 조작 패널 숨기기</span>
+        <span class="zh-hans">按 <kbd>Tab</kbd> 键隐藏操作面板</span>
+        <span class="zh-hant">按 <kbd>Tab</kbd> 鍵隱藏操作面板</span></li>
   </ol>
 </section>
 
 <section id="export">
-  <h2><span class="ja">1. アバターを書き出す（Unity）</span><span class="en">1. Export your avatar (Unity)</span></h2>
+  <h2><span class="ja">1. アバターを書き出す（Unity）</span><span class="en">1. Export your avatar (Unity)</span><span class="ko">1. 아바타 내보내기 (Unity)</span><span class="zh-hans">1. 导出虚拟形象（Unity）</span><span class="zh-hant">1. 匯出虛擬形象（Unity）</span></h2>
   <p class="ja">アバターの入った Unity プロジェクト（VCC で作ったプロジェクトで OK、Unity 2022.3.22f1）で作業します。</p>
   <p class="en">Work in the Unity project that contains your avatar (a VCC project is fine, Unity 2022.3.22f1).</p>
+  <p class="ko">아바타가 들어 있는 Unity 프로젝트 (VCC로 만든 프로젝트도 가능, Unity 2022.3.22f1)에서 작업합니다.</p>
+  <p class="zh-hans">在包含虚拟形象的 Unity 项目（用 VCC 创建的项目亦可，Unity 2022.3.22f1）中操作。</p>
+  <p class="zh-hant">在包含虛擬形象的 Unity 專案（用 VCC 建立的專案亦可，Unity 2022.3.22f1）中操作。</p>
   <ol class="steps">
     <li>
       <span class="ja">配布 zip の中の <code>VRCast-Converter.unitypackage</code> をダブルクリック（または Unity にドラッグ＆ドロップ）して
         <span class="ui">Import</span> を押します（<code>Assets/VRCast/Converter</code> に入ります）。</span>
       <span class="en">Double-click <code>VRCast-Converter.unitypackage</code> from the zip (or drag it into Unity) and press
         <span class="ui">Import</span> (it goes into <code>Assets/VRCast/Converter</code>).</span>
+      <span class="ko">배포 zip 안의 <code>VRCast-Converter.unitypackage</code>를 더블 클릭 (또는 Unity에 드래그 앤 드롭)하고
+        <span class="ui">Import</span>를 누릅니다 (<code>Assets/VRCast/Converter</code>에 들어갑니다).</span>
+      <span class="zh-hans">双击发布 zip 中的 <code>VRCast-Converter.unitypackage</code>（或拖入 Unity），然后点击
+        <span class="ui">Import</span>（会放入 <code>Assets/VRCast/Converter</code>）。</span>
+      <span class="zh-hant">雙擊發佈 zip 中的 <code>VRCast-Converter.unitypackage</code>（或拖入 Unity），然後點擊
+        <span class="ui">Import</span>（會放入 <code>Assets/VRCast/Converter</code>）。</span>
     </li>
     <li><span class="ja">メニュー <span class="ui">VRCast &gt; Avatar Exporter</span> を開きます。</span>
-        <span class="en">Open <span class="ui">VRCast &gt; Avatar Exporter</span>.</span></li>
+        <span class="en">Open <span class="ui">VRCast &gt; Avatar Exporter</span>.</span>
+        <span class="ko">메뉴 <span class="ui">VRCast &gt; Avatar Exporter</span>를 엽니다.</span>
+        <span class="zh-hans">打开菜单 <span class="ui">VRCast &gt; Avatar Exporter</span>。</span>
+        <span class="zh-hant">開啟選單 <span class="ui">VRCast &gt; Avatar Exporter</span>。</span></li>
     <li><span class="ja">シーン上のアバター（一番上の親オブジェクト）を指定して <span class="ui">Export...</span> を押し、保存先を選びます。</span>
-        <span class="en">Select your avatar root in the scene, press <span class="ui">Export...</span> and choose where to save.</span></li>
+        <span class="en">Select your avatar root in the scene, press <span class="ui">Export...</span> and choose where to save.</span>
+        <span class="ko">씬의 아바타 (가장 위의 부모 오브젝트)를 지정하고 <span class="ui">Export...</span>를 눌러 저장 위치를 선택합니다.</span>
+        <span class="zh-hans">指定场景中的虚拟形象（最上层的父对象），点击 <span class="ui">Export...</span> 并选择保存位置。</span>
+        <span class="zh-hant">指定場景中的虛擬形象（最上層的父物件），點擊 <span class="ui">Export...</span> 並選擇儲存位置。</span></li>
   </ol>
   <p class="note ja">元のアバターは変更されません。表情・口パク・まばたき・揺れもの・Constraint の設定も一緒に書き出されます。</p>
   <p class="note en">Your original avatar is not modified. Expressions, lip sync, blink, PhysBones and constraints are exported too.</p>
+  <p class="note ko">원본 아바타는 변경되지 않습니다. 표정·립싱크·눈 깜빡임·흔들림·Constraint 설정도 함께 내보내집니다.</p>
+  <p class="note zh-hans">不会修改原始虚拟形象。表情、口型同步、眨眼、物理摆动和 Constraint 的设置也会一并导出。</p>
+  <p class="note zh-hant">不會修改原始虛擬形象。表情、口型同步、眨眼、物理擺動和 Constraint 的設定也會一併匯出。</p>
   <p class="note ja">Package Manager で入れる場合は、<span class="ui">Window &gt; Package Manager</span> の <span class="ui">+</span> &gt;
     <span class="ui">Add package from git URL...</span> に <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
     を入力します（Git が必要）。unitypackage と両方入れるとエラーになるので、どちらか一方にしてください。</p>
   <p class="note en">To use the Package Manager instead, open <span class="ui">Window &gt; Package Manager</span>, click <span class="ui">+</span> &gt;
     <span class="ui">Add package from git URL...</span> and enter <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
     (Git required). Do not install both the unitypackage and the package; it causes errors.</p>
+  <p class="note ko">Package Manager로 설치하려면 <span class="ui">Window &gt; Package Manager</span>의 <span class="ui">+</span> &gt;
+    <span class="ui">Add package from git URL...</span>에 <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+    를 입력합니다 (Git 필요). unitypackage와 둘 다 설치하면 오류가 나므로 한쪽만 사용하세요.</p>
+  <p class="note zh-hans">如需通过 Package Manager 安装，请在 <span class="ui">Window &gt; Package Manager</span> 中点击 <span class="ui">+</span> &gt;
+    <span class="ui">Add package from git URL...</span>，输入 <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+    （需要 Git）。同时安装 unitypackage 和此包会出错，请只选其一。</p>
+  <p class="note zh-hant">如需透過 Package Manager 安裝，請在 <span class="ui">Window &gt; Package Manager</span> 中點擊 <span class="ui">+</span> &gt;
+    <span class="ui">Add package from git URL...</span>，輸入 <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+    （需要 Git）。同時安裝 unitypackage 和此套件會出錯，請只選其一。</p>
 </section>
 
 <section id="load">
-  <h2><span class="ja">2. VRCast で読み込む</span><span class="en">2. Load it in VRCast</span></h2>
+  <h2><span class="ja">2. VRCast で読み込む</span><span class="en">2. Load it in VRCast</span><span class="ko">2. VRCast에서 불러오기</span><span class="zh-hans">2. 在 VRCast 中加载</span><span class="zh-hant">2. 在 VRCast 中載入</span></h2>
   <ul>
     <li><span class="ja"><code>.vrcaster</code> ファイルを VRCast のウィンドウにドラッグ＆ドロップすると読み込まれます。</span>
-        <span class="en">Drag and drop a <code>.vrcaster</code> file onto the VRCast window.</span></li>
+        <span class="en">Drag and drop a <code>.vrcaster</code> file onto the VRCast window.</span>
+        <span class="ko"><code>.vrcaster</code> 파일을 VRCast 창에 드래그 앤 드롭하면 불러옵니다.</span>
+        <span class="zh-hans">将 <code>.vrcaster</code> 文件拖放到 VRCast 窗口即可加载。</span>
+        <span class="zh-hant">將 <code>.vrcaster</code> 檔案拖放到 VRCast 視窗即可載入。</span></li>
     <li><span class="ja">または <span class="ui">はじめに</span> タブの <span class="ui">ファイルを選ぶ...</span>、
         <span class="ui">アバター</span> タブの <span class="ui">参照...</span> で選べます。</span>
         <span class="en">Or use <span class="ui">Choose file...</span> in the <span class="ui">Start</span> tab, or
-        <span class="ui">Browse...</span> in the <span class="ui">Avatar</span> tab.</span></li>
+        <span class="ui">Browse...</span> in the <span class="ui">Avatar</span> tab.</span>
+        <span class="ko">또는 <span class="ui">시작하기</span> 탭의 <span class="ui">파일 선택...</span>,
+        <span class="ui">아바타</span> 탭의 <span class="ui">찾아보기...</span>로 선택할 수 있습니다.</span>
+        <span class="zh-hans">也可以使用 <span class="ui">开始</span> 标签页的 <span class="ui">选择文件...</span>，
+        或 <span class="ui">虚拟形象</span> 标签页的 <span class="ui">浏览...</span> 选择。</span>
+        <span class="zh-hant">也可以使用 <span class="ui">開始</span> 分頁的 <span class="ui">選擇檔案...</span>，
+        或 <span class="ui">虛擬形象</span> 分頁的 <span class="ui">瀏覽...</span> 選擇。</span></li>
     <li><span class="ja">最後に読み込んだアバターは次回起動時に自動で読み込まれます。</span>
-        <span class="en">The last avatar is loaded automatically the next time you start VRCast.</span></li>
+        <span class="en">The last avatar is loaded automatically the next time you start VRCast.</span>
+        <span class="ko">마지막으로 불러온 아바타는 다음 실행 시 자동으로 불러옵니다.</span>
+        <span class="zh-hans">上次加载的虚拟形象会在下次启动时自动加载。</span>
+        <span class="zh-hant">上次載入的虛擬形象會在下次啟動時自動載入。</span></li>
   </ul>
   <p class="note warn ja"><code>.vrcaster</code> 以外のファイル（画像や unitypackage など）は読み込めません。エラーが表示された場合は書き出し直してください。</p>
   <p class="note warn en">Only <code>.vrcaster</code> files can be loaded (not images, unitypackages, etc.). If you see an error, export the avatar again.</p>
+  <p class="note warn ko"><code>.vrcaster</code> 이외의 파일 (이미지나 unitypackage 등)은 불러올 수 없습니다. 오류가 표시되면 다시 내보내세요.</p>
+  <p class="note warn zh-hans">只能加载 <code>.vrcaster</code> 文件（不能加载图片或 unitypackage 等）。如果显示错误，请重新导出。</p>
+  <p class="note warn zh-hant">只能載入 <code>.vrcaster</code> 檔案（不能載入圖片或 unitypackage 等）。如果顯示錯誤，請重新匯出。</p>
 </section>
 
 <section id="obs">
-  <h2><span class="ja">3. OBS に映す</span><span class="en">3. Show it in OBS</span></h2>
+  <h2><span class="ja">3. OBS に映す</span><span class="en">3. Show it in OBS</span><span class="ko">3. OBS에 표시하기</span><span class="zh-hans">3. 在 OBS 中显示</span><span class="zh-hant">3. 在 OBS 中顯示</span></h2>
   <ol class="steps">
     <li><span class="ja">VRCast の <span class="ui">はじめに</span> タブ（または <span class="ui">表示</span> タブ）で背景を <span class="ui">透過</span> にします。
         VRCast の画面では背景色のまま見えますが、OBS では背景が抜けます。</span>
         <span class="en">In VRCast, turn on <span class="ui">transparency</span> in the <span class="ui">Start</span> tab (or the <span class="ui">Display</span> tab).
-        The VRCast window keeps showing the background color, but OBS removes it.</span></li>
+        The VRCast window keeps showing the background color, but OBS removes it.</span>
+        <span class="ko">VRCast의 <span class="ui">시작하기</span> 탭 (또는 <span class="ui">표시</span> 탭)에서 배경을 <span class="ui">투명</span>하게 합니다.
+        VRCast 창에서는 배경색이 그대로 보이지만, OBS에서는 배경이 투명해집니다.</span>
+        <span class="zh-hans">在 VRCast 的 <span class="ui">开始</span> 标签页（或 <span class="ui">显示</span> 标签页）中将背景设为 <span class="ui">透明</span>。
+        VRCast 窗口中仍显示背景色，但 OBS 中背景会被去除。</span>
+        <span class="zh-hant">在 VRCast 的 <span class="ui">開始</span> 分頁（或 <span class="ui">顯示</span> 分頁）中將背景設為 <span class="ui">透明</span>。
+        VRCast 視窗中仍顯示背景色，但 OBS 中背景會被去除。</span></li>
     <li><span class="ja">OBS の <span class="ui">ソース</span> の <span class="ui">+</span> から <span class="ui">ゲームキャプチャ</span> を追加します。</span>
-        <span class="en">In OBS, click <span class="ui">+</span> under <span class="ui">Sources</span> and add <span class="ui">Game Capture</span>.</span></li>
+        <span class="en">In OBS, click <span class="ui">+</span> under <span class="ui">Sources</span> and add <span class="ui">Game Capture</span>.</span>
+        <span class="ko">OBS의 <span class="ui">소스</span> 아래 <span class="ui">+</span>를 눌러 <span class="ui">게임 캡처</span>를 추가합니다.</span>
+        <span class="zh-hans">在 OBS 的 <span class="ui">来源</span> 中点击 <span class="ui">+</span>，添加 <span class="ui">游戏采集</span>。</span>
+        <span class="zh-hant">在 OBS 的 <span class="ui">來源</span> 中點擊 <span class="ui">+</span>，新增 <span class="ui">遊戲擷取</span>。</span></li>
     <li><span class="ja">モードを <span class="ui">特定のウィンドウをキャプチャ</span>、ウィンドウを <code>[VRCast.exe]: VRCast</code> にします。</span>
-        <span class="en">Set Mode to <span class="ui">Capture specific window</span> and Window to <code>[VRCast.exe]: VRCast</code>.</span></li>
+        <span class="en">Set Mode to <span class="ui">Capture specific window</span> and Window to <code>[VRCast.exe]: VRCast</code>.</span>
+        <span class="ko">모드를 <span class="ui">특정 창 캡처</span>, 창을 <code>[VRCast.exe]: VRCast</code>로 설정합니다.</span>
+        <span class="zh-hans">模式选择 <span class="ui">采集特定窗口</span>，窗口选择 <code>[VRCast.exe]: VRCast</code>。</span>
+        <span class="zh-hant">模式選擇 <span class="ui">擷取特定視窗</span>，視窗選擇 <code>[VRCast.exe]: VRCast</code>。</span></li>
     <li><span class="ja"><span class="ui">透過を許可</span> にチェックを入れます。</span>
-        <span class="en">Check <span class="ui">Allow Transparency</span>.</span></li>
+        <span class="en">Check <span class="ui">Allow Transparency</span>.</span>
+        <span class="ko"><span class="ui">투명도 허용</span>에 체크합니다.</span>
+        <span class="zh-hans">勾选 <span class="ui">允许透明</span>。</span>
+        <span class="zh-hant">勾選 <span class="ui">允許透明</span>。</span></li>
     <li><span class="ja">VRCast で <kbd>Tab</kbd> キーを押して操作パネルを隠します（パネルも OBS に映るため）。隠している間は、透過を OFF にしていても OBS では背景が抜けます。</span>
-        <span class="en">Press <kbd>Tab</kbd> in VRCast to hide the control panel (it also appears in OBS). While hidden, the background is transparent in OBS even if transparency is off.</span></li>
+        <span class="en">Press <kbd>Tab</kbd> in VRCast to hide the control panel (it also appears in OBS). While hidden, the background is transparent in OBS even if transparency is off.</span>
+        <span class="ko">VRCast에서 <kbd>Tab</kbd> 키를 눌러 조작 패널을 숨깁니다 (패널도 OBS에 표시되기 때문). 숨긴 동안에는 투명이 꺼져 있어도 OBS에서 배경이 투명해집니다.</span>
+        <span class="zh-hans">在 VRCast 中按 <kbd>Tab</kbd> 键隐藏操作面板（面板也会显示在 OBS 中）。隐藏期间即使透明为关闭，OBS 中背景也会透明。</span>
+        <span class="zh-hant">在 VRCast 中按 <kbd>Tab</kbd> 鍵隱藏操作面板（面板也會顯示在 OBS 中）。隱藏期間即使透明為關閉，OBS 中背景也會透明。</span></li>
   </ol>
   <p class="note warn ja"><span class="ui">ウィンドウキャプチャ</span> は透過に対応していません。透過したいときは必ず <span class="ui">ゲームキャプチャ</span> を使ってください。</p>
   <p class="note warn en"><span class="ui">Window Capture</span> does not support transparency. Always use <span class="ui">Game Capture</span> for a transparent background.</p>
+  <p class="note warn ko"><span class="ui">윈도우 캡처</span>는 투명을 지원하지 않습니다. 투명하게 하려면 반드시 <span class="ui">게임 캡처</span>를 사용하세요.</p>
+  <p class="note warn zh-hans"><span class="ui">窗口采集</span> 不支持透明。需要透明背景时，请务必使用 <span class="ui">游戏采集</span>。</p>
+  <p class="note warn zh-hant"><span class="ui">視窗擷取</span> 不支援透明。需要透明背景時，請務必使用 <span class="ui">遊戲擷取</span>。</p>
 </section>
 
 <section id="vcam">
-  <h2><span class="ja">仮想カメラ（Discord / Zoom など）</span><span class="en">Virtual camera (Discord / Zoom, etc.)</span></h2>
+  <h2><span class="ja">仮想カメラ（Discord / Zoom など）</span><span class="en">Virtual camera (Discord / Zoom, etc.)</span><span class="ko">가상 카메라 (Discord / Zoom 등)</span><span class="zh-hans">虚拟摄像头（Discord / Zoom 等）</span><span class="zh-hant">虛擬攝影機（Discord / Zoom 等）</span></h2>
   <ol class="steps">
     <li><span class="ja"><span class="ui">出力</span> タブで仮想カメラの出力を ON にします。</span>
-        <span class="en">Turn on the virtual camera output in the <span class="ui">Output</span> tab.</span></li>
+        <span class="en">Turn on the virtual camera output in the <span class="ui">Output</span> tab.</span>
+        <span class="ko"><span class="ui">출력</span> 탭에서 가상 카메라 출력을 켭니다.</span>
+        <span class="zh-hans">在 <span class="ui">输出</span> 标签页中打开虚拟摄像头输出。</span>
+        <span class="zh-hant">在 <span class="ui">輸出</span> 分頁中開啟虛擬攝影機輸出。</span></li>
     <li><span class="ja">初回だけ <span class="ui">ドライバーを登録</span> を押します（管理者の確認が出ます）。</span>
-        <span class="en">The first time only, press <span class="ui">Install driver</span> (an administrator prompt appears).</span></li>
+        <span class="en">The first time only, press <span class="ui">Install driver</span> (an administrator prompt appears).</span>
+        <span class="ko">처음 한 번만 <span class="ui">드라이버 등록</span>을 누릅니다 (관리자 확인이 표시됩니다).</span>
+        <span class="zh-hans">仅首次需要点击 <span class="ui">安装驱动程序</span>（会出现管理员确认）。</span>
+        <span class="zh-hant">僅首次需要點擊 <span class="ui">安裝驅動程式</span>（會出現系統管理員確認）。</span></li>
     <li><span class="ja">使いたいアプリのカメラ選択で <span class="ui">VRCast Camera</span> を選びます（出ない場合はそのアプリを再起動）。</span>
-        <span class="en">Choose <span class="ui">VRCast Camera</span> as the camera in the other app (restart that app if it is not listed).</span></li>
+        <span class="en">Choose <span class="ui">VRCast Camera</span> as the camera in the other app (restart that app if it is not listed).</span>
+        <span class="ko">사용할 앱의 카메라 선택에서 <span class="ui">VRCast Camera</span>를 선택합니다 (없으면 그 앱을 다시 시작).</span>
+        <span class="zh-hans">在要使用的应用中选择 <span class="ui">VRCast Camera</span> 作为摄像头（若未列出，请重启该应用）。</span>
+        <span class="zh-hant">在要使用的應用程式中選擇 <span class="ui">VRCast Camera</span> 作為攝影機（若未列出，請重新啟動該應用程式）。</span></li>
   </ol>
   <p class="note ja">操作パネルは仮想カメラには映りません。Discord などは透過できないため、背景は背景色で映ります。
     VRCast のフォルダを移動・削除する前に <span class="ui">ドライバーを解除</span> を押してください。</p>
   <p class="note en">The control panel is not sent to the virtual camera. Apps like Discord cannot show transparency, so the background color is shown.
     Press <span class="ui">Uninstall driver</span> before moving or deleting the VRCast folder.</p>
+  <p class="note ko">조작 패널은 가상 카메라에 표시되지 않습니다. Discord 등은 투명을 표시할 수 없으므로 배경은 배경색으로 표시됩니다.
+    VRCast 폴더를 이동·삭제하기 전에 <span class="ui">드라이버 해제</span>를 누르세요.</p>
+  <p class="note zh-hans">操作面板不会输出到虚拟摄像头。Discord 等无法显示透明，因此背景会以背景色显示。
+    移动或删除 VRCast 文件夹前，请先点击 <span class="ui">卸载驱动程序</span>。</p>
+  <p class="note zh-hant">操作面板不會輸出到虛擬攝影機。Discord 等無法顯示透明，因此背景會以背景色顯示。
+    移動或刪除 VRCast 資料夾前，請先點擊 <span class="ui">解除安裝驅動程式</span>。</p>
 </section>
 
 <section id="look">
-  <h2><span class="ja">見た目・ライト（表示タブ）</span><span class="en">Look &amp; lighting (Display tab)</span></h2>
+  <h2><span class="ja">見た目・ライト（表示タブ）</span><span class="en">Look &amp; lighting (Display tab)</span><span class="ko">외형·조명 (표시 탭)</span><span class="zh-hans">外观与灯光（显示标签页）</span><span class="zh-hant">外觀與燈光（顯示分頁）</span></h2>
   <table>
-    <tr><th><span class="ja">項目</span><span class="en">Item</span></th><th><span class="ja">内容</span><span class="en">What it does</span></th></tr>
-    <tr><td><span class="ja">カメラ</span><span class="en">Camera</span></td>
+    <tr><th><span class="ja">項目</span><span class="en">Item</span><span class="ko">항목</span><span class="zh-hans">项目</span><span class="zh-hant">項目</span></th>
+        <th><span class="ja">内容</span><span class="en">What it does</span><span class="ko">내용</span><span class="zh-hans">说明</span><span class="zh-hant">說明</span></th></tr>
+    <tr><td><span class="ja">カメラ</span><span class="en">Camera</span><span class="ko">카메라</span><span class="zh-hans">相机</span><span class="zh-hant">相機</span></td>
         <td><span class="ja">画角の変更とリセット。右ドラッグで回転、中ドラッグで移動、ホイールでズーム。</span>
-            <span class="en">Field of view and reset. Right-drag to rotate, middle-drag to pan, wheel to zoom.</span></td></tr>
-    <tr><td><span class="ja">背景</span><span class="en">Background</span></td>
+            <span class="en">Field of view and reset. Right-drag to rotate, middle-drag to pan, wheel to zoom.</span>
+            <span class="ko">화각 변경과 초기화. 오른쪽 드래그로 회전, 가운데 드래그로 이동, 휠로 확대·축소.</span>
+            <span class="zh-hans">更改与重置视野。右键拖动旋转，中键拖动平移，滚轮缩放。</span>
+            <span class="zh-hant">變更與重設視野。右鍵拖曳旋轉，中鍵拖曳平移，滾輪縮放。</span></td></tr>
+    <tr><td><span class="ja">背景</span><span class="en">Background</span><span class="ko">배경</span><span class="zh-hans">背景</span><span class="zh-hant">背景</span></td>
         <td><span class="ja">背景色（既定はベージュ）と透過の切り替え。透過中も VRCast の画面では背景色が見えますが、OBS のゲームキャプチャでは抜けます。</span>
-            <span class="en">Background color (beige by default) and transparency. While transparent, the VRCast window still shows the color but OBS Game Capture removes it.</span></td></tr>
-    <tr><td><span class="ja">解像度</span><span class="en">Resolution</span></td>
+            <span class="en">Background color (beige by default) and transparency. While transparent, the VRCast window still shows the color but OBS Game Capture removes it.</span>
+            <span class="ko">배경색 (기본은 베이지)과 투명 전환. 투명 중에도 VRCast 창에서는 배경색이 보이지만, OBS 게임 캡처에서는 투명해집니다.</span>
+            <span class="zh-hans">背景色（默认米色）与透明切换。透明时 VRCast 窗口中仍显示背景色，但 OBS 游戏采集会去除背景。</span>
+            <span class="zh-hant">背景色（預設米色）與透明切換。透明時 VRCast 視窗中仍顯示背景色，但 OBS 遊戲擷取會去除背景。</span></td></tr>
+    <tr><td><span class="ja">解像度</span><span class="en">Resolution</span><span class="ko">해상도</span><span class="zh-hans">分辨率</span><span class="zh-hant">解析度</span></td>
         <td><span class="ja">ウィンドウの大きさ（横長・縦長のプリセット）。</span>
-            <span class="en">Window size presets (landscape / portrait).</span></td></tr>
-    <tr><td><span class="ja">ライト</span><span class="en">Light</span></td>
+            <span class="en">Window size presets (landscape / portrait).</span>
+            <span class="ko">창 크기 (가로·세로 프리셋).</span>
+            <span class="zh-hans">窗口大小（横向 / 纵向预设）。</span>
+            <span class="zh-hant">視窗大小（橫向 / 直向預設）。</span></td></tr>
+    <tr><td><span class="ja">ライト</span><span class="en">Light</span><span class="ko">조명</span><span class="zh-hans">灯光</span><span class="zh-hant">燈光</span></td>
         <td><span class="ja"><span class="ui">環境光</span> はアバター全体を均一に明るく、<span class="ui">太陽光</span> は一方向から照らします。
             暗いときは <span class="ui">晴れ</span> プリセットを押すか環境光を上げてください。<span class="ui">太陽光の色</span> は低いほど暖色。
             <span class="ui">向き</span> 0 で正面から当たります。ライトで明るくならないときは <span class="ui">アバターの明るさ</span> を上げます。</span>
             <span class="en"><span class="ui">Ambient</span> lights the whole avatar evenly; <span class="ui">Sunlight</span> shines from one direction.
             If the avatar looks dark, press the <span class="ui">Sunny</span> preset or raise Ambient. Lower <span class="ui">Sun color</span> is warmer.
-            <span class="ui">Direction</span> 0 lights the avatar from the front. If lights do not help, raise <span class="ui">Avatar brightness</span>.</span></td></tr>
+            <span class="ui">Direction</span> 0 lights the avatar from the front. If lights do not help, raise <span class="ui">Avatar brightness</span>.</span>
+            <span class="ko"><span class="ui">환경광</span>은 아바타 전체를 고르게 밝히고, <span class="ui">태양광</span>은 한 방향에서 비춥니다.
+            어두울 때는 <span class="ui">맑음</span> 프리셋을 누르거나 환경광을 올리세요. <span class="ui">태양광 색</span>은 낮을수록 따뜻한 색입니다.
+            <span class="ui">방향</span> 0이면 정면에서 비춥니다. 조명으로 밝아지지 않으면 <span class="ui">아바타 밝기</span>를 올립니다.</span>
+            <span class="zh-hans"><span class="ui">环境光</span> 会均匀照亮整个虚拟形象，<span class="ui">阳光</span> 从一个方向照射。
+            画面偏暗时，请点击 <span class="ui">晴天</span> 预设或调高环境光。<span class="ui">阳光颜色</span> 越低越偏暖色。
+            <span class="ui">方向</span> 为 0 时从正面照射。灯光无法变亮时，请调高 <span class="ui">虚拟形象亮度</span>。</span>
+            <span class="zh-hant"><span class="ui">環境光</span> 會均勻照亮整個虛擬形象，<span class="ui">陽光</span> 從一個方向照射。
+            畫面偏暗時，請點擊 <span class="ui">晴天</span> 預設或調高環境光。<span class="ui">陽光顏色</span> 越低越偏暖色。
+            <span class="ui">方向</span> 為 0 時從正面照射。燈光無法變亮時，請調高 <span class="ui">虛擬形象亮度</span>。</span></td></tr>
   </table>
   <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情（数字キー 1〜9、0 でニュートラル）を変更できます。</p>
   <p class="en">In the <span class="ui">Pose</span> tab you can change the avatar's direction, arm pose and expressions (number keys 1-9, 0 for neutral).</p>
+  <p class="ko"><span class="ui">포즈·표정</span> 탭에서는 아바타의 방향·팔 내리는 정도·표정 (숫자 키 1~9, 0으로 무표정)을 변경할 수 있습니다.</p>
+  <p class="zh-hans">在 <span class="ui">姿势·表情</span> 标签页中可以更改虚拟形象的朝向、手臂姿势和表情（数字键 1-9，0 为无表情）。</p>
+  <p class="zh-hant">在 <span class="ui">姿勢·表情</span> 分頁中可以變更虛擬形象的朝向、手臂姿勢和表情（數字鍵 1-9，0 為無表情）。</p>
 </section>
 
 <section id="face">
-  <h2><span class="ja">口パク・まばたき（顔タブ）</span><span class="en">Lip sync &amp; blink (Face tab)</span></h2>
+  <h2><span class="ja">口パク・まばたき（顔タブ）</span><span class="en">Lip sync &amp; blink (Face tab)</span><span class="ko">립싱크·눈 깜빡임 (얼굴 탭)</span><span class="zh-hans">口型同步与眨眼（面部标签页）</span><span class="zh-hant">口型同步與眨眼（臉部分頁）</span></h2>
   <ul>
     <li><span class="ja"><span class="ui">マイクで口パク</span> を ON にしてマイクを選び、<span class="ui">音量</span> メーターを見ながら
         <span class="ui">マイク感度</span> と <span class="ui">ノイズゲート</span>（この音量以下は無音）を調整します。</span>
         <span class="en">Turn on <span class="ui">Lip sync (microphone)</span>, choose your mic, and adjust <span class="ui">Mic gain</span> and
-        <span class="ui">Mic gate</span> (sound below this is ignored) while watching the <span class="ui">Level</span> meter.</span></li>
+        <span class="ui">Mic gate</span> (sound below this is ignored) while watching the <span class="ui">Level</span> meter.</span>
+        <span class="ko"><span class="ui">마이크로 립싱크</span>를 켜고 마이크를 선택한 뒤, <span class="ui">음량</span> 미터를 보면서
+        <span class="ui">마이크 감도</span>와 <span class="ui">노이즈 게이트</span> (이 음량 이하는 무음)를 조정합니다.</span>
+        <span class="zh-hans">打开 <span class="ui">用麦克风对口型</span> 并选择麦克风，一边看 <span class="ui">音量</span> 表，一边调整
+        <span class="ui">麦克风灵敏度</span> 和 <span class="ui">噪声门</span>（低于此音量视为无声）。</span>
+        <span class="zh-hant">開啟 <span class="ui">用麥克風對嘴型</span> 並選擇麥克風，一邊看 <span class="ui">音量</span> 表，一邊調整
+        <span class="ui">麥克風靈敏度</span> 和 <span class="ui">噪音閘</span>（低於此音量視為無聲）。</span></li>
     <li><span class="ja"><span class="ui">母音で口の形を変える</span> が ON なら、VRChat と同じように「あいうえお」で口の形が変わります。
         判定がずれるときは <span class="ui">声の高さ補正</span> を動かします（声が高い人は右）。</span>
         <span class="en">With <span class="ui">Vowel mouth shapes</span> on, the mouth changes shape with the vowels (A I U E O), like VRChat.
-        If vowels are misdetected, move <span class="ui">Voice pitch</span> (right for higher voices).</span></li>
+        If vowels are misdetected, move <span class="ui">Voice pitch</span> (right for higher voices).</span>
+        <span class="ko"><span class="ui">모음으로 입 모양 바꾸기</span>가 켜져 있으면 VRChat처럼 "아이우에오"로 입 모양이 바뀝니다.
+        판별이 어긋나면 <span class="ui">목소리 높이 보정</span>을 움직입니다 (목소리가 높은 사람은 오른쪽).</span>
+        <span class="zh-hans">打开 <span class="ui">根据元音改变口型</span> 后，会像 VRChat 一样根据元音（A I U E O）改变口型。
+        判断不准时，请调整 <span class="ui">音高校正</span>（声音较高的人向右）。</span>
+        <span class="zh-hant">開啟 <span class="ui">依母音改變嘴型</span> 後，會像 VRChat 一樣依母音（A I U E O）改變嘴型。
+        判斷不準時，請調整 <span class="ui">音高校正</span>（聲音較高的人向右）。</span></li>
     <li><span class="ja">揺れもの（PhysBone の近似）と自動まばたきも ON/OFF できます。</span>
-        <span class="en">PhysBone physics (approximation) and auto blink can be turned on or off.</span></li>
+        <span class="en">PhysBone physics (approximation) and auto blink can be turned on or off.</span>
+        <span class="ko">흔들림 (PhysBone 근사)과 자동 눈 깜빡임도 켜고 끌 수 있습니다.</span>
+        <span class="zh-hans">物理摆动（PhysBone 近似）和自动眨眼也可以开启或关闭。</span>
+        <span class="zh-hant">物理擺動（PhysBone 近似）和自動眨眼也可以開啟或關閉。</span></li>
   </ul>
 </section>
 
 <section id="tracking">
-  <h2><span class="ja">Web カメラトラッキング（トラッキングタブ）</span><span class="en">Webcam tracking (Tracking tab)</span></h2>
+  <h2><span class="ja">Web カメラトラッキング（トラッキングタブ）</span><span class="en">Webcam tracking (Tracking tab)</span><span class="ko">웹캠 트래킹 (트래킹 탭)</span><span class="zh-hans">摄像头追踪（追踪标签页）</span><span class="zh-hant">網路攝影機追蹤（追蹤分頁）</span></h2>
   <ul>
     <li><span class="ja"><span class="ui">トラッキングを有効にする</span> を ON にすると、同梱のトラッカーが自動で起動し、頭の向き・まばたき・口・視線（MediaPipe では腕・手も）が動きます。</span>
-        <span class="en">Turn on <span class="ui">Enable tracking</span>. The bundled tracker starts automatically and drives head, blink, mouth and gaze (and arms/hands with MediaPipe).</span></li>
+        <span class="en">Turn on <span class="ui">Enable tracking</span>. The bundled tracker starts automatically and drives head, blink, mouth and gaze (and arms/hands with MediaPipe).</span>
+        <span class="ko"><span class="ui">트래킹 사용</span>을 켜면 포함된 트래커가 자동으로 시작되어 머리 방향·눈 깜빡임·입·시선 (MediaPipe에서는 팔·손도)이 움직입니다.</span>
+        <span class="zh-hans">打开 <span class="ui">启用追踪</span> 后，内置追踪器会自动启动，驱动头部朝向、眨眼、嘴部和视线（MediaPipe 还包括手臂和手）。</span>
+        <span class="zh-hant">開啟 <span class="ui">啟用追蹤</span> 後，內建追蹤器會自動啟動，驅動頭部朝向、眨眼、嘴部和視線（MediaPipe 還包括手臂和手）。</span></li>
+    <li><span class="ja">MediaPipe では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみを検出してアバターの表情に切り替えます。
+        <span class="ui">表情の感度</span> で反応のしやすさを、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
+        <span class="en">With MediaPipe, <span class="ui">Facial expressions</span> (on by default) detects your smile, surprise, anger and sadness and switches the avatar's expression.
+        <span class="ui">Expression sensitivity</span> sets how easily it reacts, and you can choose which expression to use for each one (<span class="ui">Auto</span> guesses from the expression names).</span>
+        <span class="ko">MediaPipe에서 <span class="ui">표정 반영</span>을 켜면 (기본은 켜짐) 웃음·놀람·화남·슬픔을 감지해 아바타의 표정으로 바꿉니다.
+        <span class="ui">표정 감도</span>로 반응 정도를, 표정별 선택으로 사용할 표정을 바꿀 수 있습니다 (<span class="ui">자동</span>은 표정 이름으로 추정).</span>
+        <span class="zh-hans">使用 MediaPipe 时，打开 <span class="ui">反映表情</span>（默认开启）后，会检测笑脸、惊讶、生气、悲伤并切换虚拟形象的表情。
+        可用 <span class="ui">表情灵敏度</span> 调整反应程度，并为每种表情选择要使用的表情（<span class="ui">自动</span> 会根据表情名称推测）。</span>
+        <span class="zh-hant">使用 MediaPipe 時，開啟 <span class="ui">反映表情</span>（預設開啟）後，會偵測笑臉、驚訝、生氣、悲傷並切換虛擬形象的表情。
+        可用 <span class="ui">表情靈敏度</span> 調整反應程度，並為每種表情選擇要使用的表情（<span class="ui">自動</span> 會依表情名稱推測）。</span></li>
     <li><span class="ja">カメラは <span class="ui">&lt;</span> <span class="ui">&gt;</span> で選びます。動かないときは <span class="ui">トラッカーを再起動</span>。</span>
-        <span class="en">Choose the camera with <span class="ui">&lt;</span> <span class="ui">&gt;</span>. If nothing moves, press <span class="ui">Restart tracker</span>.</span></li>
+        <span class="en">Choose the camera with <span class="ui">&lt;</span> <span class="ui">&gt;</span>. If nothing moves, press <span class="ui">Restart tracker</span>.</span>
+        <span class="ko">카메라는 <span class="ui">&lt;</span> <span class="ui">&gt;</span>로 선택합니다. 움직이지 않으면 <span class="ui">트래커 다시 시작</span>.</span>
+        <span class="zh-hans">用 <span class="ui">&lt;</span> <span class="ui">&gt;</span> 选择相机。没有反应时，请点击 <span class="ui">重启追踪器</span>。</span>
+        <span class="zh-hant">用 <span class="ui">&lt;</span> <span class="ui">&gt;</span> 選擇相機。沒有反應時，請點擊 <span class="ui">重新啟動追蹤器</span>。</span></li>
     <li><span class="ja">正面がずれたらカメラを見て、パネル下部の <span class="ui">リセット</span> の <span class="ui">顔の向き</span>（顔・上半身・視線）を押します。視線だけなら <span class="ui">視線</span>。</span>
-        <span class="en">If the front direction is off, look at the camera and press <span class="ui">Reset</span> &gt; <span class="ui">Head</span> (head, body and gaze) at the bottom of the panel. Use <span class="ui">Gaze</span> for gaze only.</span></li>
+        <span class="en">If the front direction is off, look at the camera and press <span class="ui">Reset</span> &gt; <span class="ui">Head</span> (head, body and gaze) at the bottom of the panel. Use <span class="ui">Gaze</span> for gaze only.</span>
+        <span class="ko">정면이 어긋나면 카메라를 보고 패널 아래쪽 <span class="ui">초기화</span>의 <span class="ui">얼굴 방향</span> (얼굴·상체·시선)을 누릅니다. 시선만이라면 <span class="ui">시선</span>.</span>
+        <span class="zh-hans">正面方向偏移时，请看着相机，点击面板底部 <span class="ui">重置</span> 中的 <span class="ui">头部朝向</span>（头部、上半身、视线）。只调整视线时点击 <span class="ui">视线</span>。</span>
+        <span class="zh-hant">正面方向偏移時，請看著相機，點擊面板底部 <span class="ui">重設</span> 中的 <span class="ui">頭部朝向</span>（頭部、上半身、視線）。只調整視線時點擊 <span class="ui">視線</span>。</span></li>
     <li><span class="ja"><span class="ui">体の動き</span> で、頭の動きに合わせて上半身を傾けるか体ごと動かすかを選べます。</span>
-        <span class="en"><span class="ui">Body</span> chooses whether the upper body leans or the whole body moves with your head.</span></li>
+        <span class="en"><span class="ui">Body</span> chooses whether the upper body leans or the whole body moves with your head.</span>
+        <span class="ko"><span class="ui">몸의 움직임</span>에서 머리 움직임에 맞춰 상체를 기울일지 몸 전체를 움직일지 선택할 수 있습니다.</span>
+        <span class="zh-hans">在 <span class="ui">身体动作</span> 中可以选择随头部动作倾斜上半身，或整体移动身体。</span>
+        <span class="zh-hant">在 <span class="ui">身體動作</span> 中可以選擇隨頭部動作傾斜上半身，或整體移動身體。</span></li>
   </ul>
   <p class="note warn ja">他のアプリ（Discord・Zoom・VSeeFace など）が Web カメラを使っていると起動できません。</p>
   <p class="note warn en">The tracker cannot start while another app (Discord, Zoom, VSeeFace, etc.) is using the webcam.</p>
+  <p class="note warn ko">다른 앱 (Discord·Zoom·VSeeFace 등)이 웹캠을 사용 중이면 시작할 수 없습니다.</p>
+  <p class="note warn zh-hans">如果其他应用（Discord、Zoom、VSeeFace 等）正在使用摄像头，追踪器将无法启动。</p>
+  <p class="note warn zh-hant">如果其他應用程式（Discord、Zoom、VSeeFace 等）正在使用網路攝影機，追蹤器將無法啟動。</p>
 </section>
 
 <section id="settings">
-  <h2><span class="ja">設定・リセット（設定タブ）</span><span class="en">Settings &amp; reset (Settings tab)</span></h2>
+  <h2><span class="ja">設定・リセット（設定タブ）</span><span class="en">Settings &amp; reset (Settings tab)</span><span class="ko">설정·초기화 (설정 탭)</span><span class="zh-hans">设置与重置（设置标签页）</span><span class="zh-hant">設定與重設（設定分頁）</span></h2>
   <ul>
-    <li><span class="ja"><span class="ui">表示言語</span>: 自動（OS に合わせる）/ English / 日本語。</span>
-        <span class="en"><span class="ui">Display language</span>: Auto (OS) / English / 日本語.</span></li>
+    <li><span class="ja"><span class="ui">表示言語</span>: 自動（OS に合わせる）/ English / 日本語 / 한국어 / 简体中文 / 繁體中文。パネル上部の言語ボタンでも、どのタブからでも切り替えられます。</span>
+        <span class="en"><span class="ui">Display language</span>: Auto (OS) / English / 日本語 / 한국어 / 简体中文 / 繁體中文. You can also switch from any tab with the language buttons at the top of the panel.</span>
+        <span class="ko"><span class="ui">표시 언어</span>: 자동 (OS에 맞춤) / English / 日本語 / 한국어 / 简体中文 / 繁體中文. 패널 위쪽의 언어 버튼으로 어느 탭에서든 바꿀 수 있습니다.</span>
+        <span class="zh-hans"><span class="ui">显示语言</span>：自动（跟随系统）/ English / 日本語 / 한국어 / 简体中文 / 繁體中文。也可以在任意标签页中用面板顶部的语言按钮切换。</span>
+        <span class="zh-hant"><span class="ui">顯示語言</span>：自動（跟隨系統）/ English / 日本語 / 한국어 / 简体中文 / 繁體中文。也可以在任意分頁中用面板頂部的語言按鈕切換。</span></li>
     <li><span class="ja"><span class="ui">UI の大きさ</span>: 75%〜200%。</span>
-        <span class="en"><span class="ui">UI size</span>: 75% to 200%.</span></li>
+        <span class="en"><span class="ui">UI size</span>: 75% to 200%.</span>
+        <span class="ko"><span class="ui">UI 크기</span>: 75%~200%.</span>
+        <span class="zh-hans"><span class="ui">界面大小</span>：75%～200%。</span>
+        <span class="zh-hant"><span class="ui">介面大小</span>：75%～200%。</span></li>
     <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
-        <span class="en">Settings are saved when VRCast closes and restored next time.</span></li>
+        <span class="en">Settings are saved when VRCast closes and restored next time.</span>
+        <span class="ko">설정은 VRCast 종료 시 자동으로 저장되고, 다음 실행 시 복원됩니다.</span>
+        <span class="zh-hans">设置会在 VRCast 退出时自动保存，并在下次启动时恢复。</span>
+        <span class="zh-hant">設定會在 VRCast 結束時自動儲存，並在下次啟動時還原。</span></li>
+    <li><span class="ja">開発者・協力者とライセンスは <span class="ui">クレジット</span> タブで確認できます。</span>
+        <span class="en">The developer, collaborator and licenses are shown in the <span class="ui">Credits</span> tab.</span>
+        <span class="ko">개발자·협력자와 라이선스는 <span class="ui">크레딧</span> 탭에서 확인할 수 있습니다.</span>
+        <span class="zh-hans">开发者、协力者和许可证可在 <span class="ui">致谢</span> 标签页中查看。</span>
+        <span class="zh-hant">開發者、協力者和授權條款可在 <span class="ui">致謝</span> 分頁中查看。</span></li>
   </ul>
   <p class="note danger ja"><span class="ui">全ての設定をリセット</span>（赤いボタン）を押し、確認で <span class="ui">リセットする</span> を押すと、全ての設定が初期状態に戻ります
     （ウィンドウサイズと最後に開いたアバターは残ります）。元に戻せません。</p>
   <p class="note danger en">Press <span class="ui">Reset all settings</span> (red button), then <span class="ui">Yes, reset</span> to restore every setting to its default
     (window size and the last avatar are kept). This cannot be undone.</p>
+  <p class="note danger ko"><span class="ui">모든 설정 초기화</span> (빨간 버튼)를 누르고 확인에서 <span class="ui">초기화하기</span>를 누르면 모든 설정이 초기 상태로 돌아갑니다
+    (창 크기와 마지막으로 연 아바타는 유지됩니다). 되돌릴 수 없습니다.</p>
+  <p class="note danger zh-hans">点击 <span class="ui">重置所有设置</span>（红色按钮），再在确认中点击 <span class="ui">确定重置</span>，所有设置将恢复为默认值
+    （窗口大小和上次打开的虚拟形象会保留）。此操作无法撤销。</p>
+  <p class="note danger zh-hant">點擊 <span class="ui">重設所有設定</span>（紅色按鈕），再在確認中點擊 <span class="ui">確定重設</span>，所有設定將恢復為預設值
+    （視窗大小和上次開啟的虛擬形象會保留）。此操作無法復原。</p>
 </section>
 
 <section id="keys">
-  <h2><span class="ja">操作一覧</span><span class="en">Controls</span></h2>
+  <h2><span class="ja">操作一覧</span><span class="en">Controls</span><span class="ko">조작 목록</span><span class="zh-hans">操作一览</span><span class="zh-hant">操作一覽</span></h2>
   <table>
-    <tr><td><kbd>Tab</kbd></td><td><span class="ja">操作パネルの表示 / 非表示（隠している間は OBS で背景も透過）</span><span class="en">Show / hide the control panel (the background is transparent in OBS while hidden)</span></td></tr>
-    <tr><td><span class="ja">パネル下部のリセット</span><span class="en">Reset bar (panel bottom)</span></td>
+    <tr><td><kbd>Tab</kbd></td>
+        <td><span class="ja">操作パネルの表示 / 非表示（隠している間は OBS で背景も透過）</span>
+            <span class="en">Show / hide the control panel (the background is transparent in OBS while hidden)</span>
+            <span class="ko">조작 패널 표시 / 숨기기 (숨긴 동안에는 OBS에서 배경도 투명)</span>
+            <span class="zh-hans">显示 / 隐藏操作面板（隐藏期间 OBS 中背景也会透明）</span>
+            <span class="zh-hant">顯示 / 隱藏操作面板（隱藏期間 OBS 中背景也會透明）</span></td></tr>
+    <tr><td><span class="ja">パネル上部の言語ボタン</span><span class="en">Language buttons (panel top)</span><span class="ko">패널 위쪽의 언어 버튼</span><span class="zh-hans">面板顶部的语言按钮</span><span class="zh-hant">面板頂部的語言按鈕</span></td>
+        <td><span class="ja">表示言語の切り替え。どのタブを開いていても押せます</span>
+            <span class="en">Switch the display language, available from every tab</span>
+            <span class="ko">표시 언어 전환. 어느 탭에서든 누를 수 있습니다</span>
+            <span class="zh-hans">切换显示语言，在任意标签页中都可使用</span>
+            <span class="zh-hant">切換顯示語言，在任意分頁中都可使用</span></td></tr>
+    <tr><td><span class="ja">パネル下部のリセット</span><span class="en">Reset bar (panel bottom)</span><span class="ko">패널 아래쪽 초기화</span><span class="zh-hans">面板底部的重置</span><span class="zh-hant">面板底部的重設</span></td>
         <td><span class="ja">顔の向き / 視線 / 表情（ニュートラル）/ カメラ。どのタブを開いていても押せます</span>
-            <span class="en">Head / Gaze / Expression (neutral) / Camera, available from every tab</span></td></tr>
-    <tr><td><span class="ja">右ドラッグ</span><span class="en">Right-drag</span></td><td><span class="ja">カメラを回転</span><span class="en">Rotate the camera</span></td></tr>
-    <tr><td><span class="ja">中ドラッグ</span><span class="en">Middle-drag</span></td><td><span class="ja">カメラを移動</span><span class="en">Pan the camera</span></td></tr>
-    <tr><td><span class="ja">ホイール</span><span class="en">Wheel</span></td><td><span class="ja">ズーム</span><span class="en">Zoom</span></td></tr>
-    <tr><td><kbd>1</kbd>〜<kbd>9</kbd> / <kbd>0</kbd></td><td><span class="ja">表情の切り替え / ニュートラル</span><span class="en">Switch expression / neutral</span></td></tr>
+            <span class="en">Head / Gaze / Expression (neutral) / Camera, available from every tab</span>
+            <span class="ko">얼굴 방향 / 시선 / 표정 (무표정) / 카메라. 어느 탭에서든 누를 수 있습니다</span>
+            <span class="zh-hans">头部朝向 / 视线 / 表情（无表情）/ 相机，在任意标签页中都可使用</span>
+            <span class="zh-hant">頭部朝向 / 視線 / 表情（無表情）/ 相機，在任意分頁中都可使用</span></td></tr>
+    <tr><td><span class="ja">右ドラッグ</span><span class="en">Right-drag</span><span class="ko">오른쪽 드래그</span><span class="zh-hans">右键拖动</span><span class="zh-hant">右鍵拖曳</span></td>
+        <td><span class="ja">カメラを回転</span><span class="en">Rotate the camera</span><span class="ko">카메라 회전</span><span class="zh-hans">旋转相机</span><span class="zh-hant">旋轉相機</span></td></tr>
+    <tr><td><span class="ja">中ドラッグ</span><span class="en">Middle-drag</span><span class="ko">가운데 드래그</span><span class="zh-hans">中键拖动</span><span class="zh-hant">中鍵拖曳</span></td>
+        <td><span class="ja">カメラを移動</span><span class="en">Pan the camera</span><span class="ko">카메라 이동</span><span class="zh-hans">平移相机</span><span class="zh-hant">平移相機</span></td></tr>
+    <tr><td><span class="ja">ホイール</span><span class="en">Wheel</span><span class="ko">휠</span><span class="zh-hans">滚轮</span><span class="zh-hant">滾輪</span></td>
+        <td><span class="ja">ズーム</span><span class="en">Zoom</span><span class="ko">확대·축소</span><span class="zh-hans">缩放</span><span class="zh-hant">縮放</span></td></tr>
+    <tr><td><kbd>1</kbd>〜<kbd>9</kbd> / <kbd>0</kbd></td>
+        <td><span class="ja">表情の切り替え / ニュートラル</span><span class="en">Switch expression / neutral</span><span class="ko">표정 전환 / 무표정</span><span class="zh-hans">切换表情 / 无表情</span><span class="zh-hant">切換表情 / 無表情</span></td></tr>
   </table>
 </section>
 
 <section id="trouble">
-  <h2><span class="ja">困ったとき</span><span class="en">Troubleshooting</span></h2>
-  <h3><span class="ja">アバターが暗い</span><span class="en">The avatar looks dark</span></h3>
+  <h2><span class="ja">困ったとき</span><span class="en">Troubleshooting</span><span class="ko">문제 해결</span><span class="zh-hans">故障排除</span><span class="zh-hant">疑難排解</span></h2>
+
+  <h3><span class="ja">アバターが暗い</span><span class="en">The avatar looks dark</span><span class="ko">아바타가 어둡다</span><span class="zh-hans">虚拟形象偏暗</span><span class="zh-hant">虛擬形象偏暗</span></h3>
   <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
     <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
     lilToon 等は明るさがテクスチャの色までに制限されるため、太陽光を上げても一定以上は明るくなりません。
@@ -240,26 +444,81 @@
     Set <span class="ui">Direction</span> near 0 to light the avatar from the front.
     Shaders such as lilToon cap brightness at the texture color, so raising Sunlight stops helping past a point.
     In that case, raise <span class="ui">Avatar brightness</span> (0.5 to 10, 1 = material as is).</p>
-  <h3><span class="ja">OBS で背景が抜けない</span><span class="en">The background is not transparent in OBS</span></h3>
+  <p class="ko"><span class="ui">표시</span> 탭의 <span class="ui">맑음</span> 프리셋을 누르거나 <span class="ui">환경광</span>을 올리세요.
+    <span class="ui">방향</span>을 0 근처로 하면 정면에서 빛이 비춥니다.
+    lilToon 등은 밝기가 텍스처 색까지로 제한되므로, 태양광을 올려도 일정 이상은 밝아지지 않습니다.
+    그럴 때는 <span class="ui">아바타 밝기</span>를 올리세요 (0.5~10, 1 = 머티리얼 그대로).</p>
+  <p class="zh-hans">请点击 <span class="ui">显示</span> 标签页的 <span class="ui">晴天</span> 预设，或调高 <span class="ui">环境光</span>。
+    将 <span class="ui">方向</span> 设为 0 附近可从正面照射。
+    lilToon 等着色器的亮度上限为贴图颜色，因此调高阳光超过一定程度后不会再变亮。
+    此时请调高 <span class="ui">虚拟形象亮度</span>（0.5～10，1 = 保持材质原样）。</p>
+  <p class="zh-hant">請點擊 <span class="ui">顯示</span> 分頁的 <span class="ui">晴天</span> 預設，或調高 <span class="ui">環境光</span>。
+    將 <span class="ui">方向</span> 設為 0 附近可從正面照射。
+    lilToon 等著色器的亮度上限為貼圖顏色，因此調高陽光超過一定程度後不會再變亮。
+    此時請調高 <span class="ui">虛擬形象亮度</span>（0.5～10，1 = 保持材質原樣）。</p>
+
+  <h3><span class="ja">OBS で背景が抜けない</span><span class="en">The background is not transparent in OBS</span><span class="ko">OBS에서 배경이 투명해지지 않는다</span><span class="zh-hans">OBS 中背景不透明</span><span class="zh-hant">OBS 中背景不透明</span></h3>
   <p class="ja">VRCast の背景を <span class="ui">透過</span> にし、OBS は <span class="ui">ゲームキャプチャ</span>（ウィンドウキャプチャではなく）で
     <span class="ui">透過を許可</span> にチェックが入っているか確認してください。</p>
   <p class="en">Make sure VRCast's background is set to <span class="ui">transparent</span>, and that OBS uses <span class="ui">Game Capture</span>
     (not Window Capture) with <span class="ui">Allow Transparency</span> checked.</p>
-  <h3><span class="ja">OBS に何も映らない</span><span class="en">Nothing appears in OBS</span></h3>
+  <p class="ko">VRCast의 배경을 <span class="ui">투명</span>하게 하고, OBS는 <span class="ui">게임 캡처</span> (윈도우 캡처가 아님)에서
+    <span class="ui">투명도 허용</span>에 체크되어 있는지 확인하세요.</p>
+  <p class="zh-hans">请确认 VRCast 的背景已设为 <span class="ui">透明</span>，并且 OBS 使用的是 <span class="ui">游戏采集</span>（而非窗口采集），
+    且已勾选 <span class="ui">允许透明</span>。</p>
+  <p class="zh-hant">請確認 VRCast 的背景已設為 <span class="ui">透明</span>，並且 OBS 使用的是 <span class="ui">遊戲擷取</span>（而非視窗擷取），
+    且已勾選 <span class="ui">允許透明</span>。</p>
+
+  <h3><span class="ja">OBS に何も映らない</span><span class="en">Nothing appears in OBS</span><span class="ko">OBS에 아무것도 표시되지 않는다</span><span class="zh-hans">OBS 中什么都不显示</span><span class="zh-hant">OBS 中什麼都不顯示</span></h3>
   <p class="ja">ゲームキャプチャのウィンドウに <code>[VRCast.exe]: VRCast</code> を選び直してください。VRCast を最小化すると映らないことがあります。</p>
   <p class="en">Select <code>[VRCast.exe]: VRCast</code> again as the Game Capture window. Minimizing VRCast may stop the capture.</p>
-  <h3><span class="ja">ドラッグ＆ドロップできない</span><span class="en">Drag and drop does not work</span></h3>
+  <p class="ko">게임 캡처의 창으로 <code>[VRCast.exe]: VRCast</code>를 다시 선택하세요. VRCast를 최소화하면 표시되지 않을 수 있습니다.</p>
+  <p class="zh-hans">请在游戏采集的窗口中重新选择 <code>[VRCast.exe]: VRCast</code>。最小化 VRCast 可能会导致无法显示。</p>
+  <p class="zh-hant">請在遊戲擷取的視窗中重新選擇 <code>[VRCast.exe]: VRCast</code>。最小化 VRCast 可能會導致無法顯示。</p>
+
+  <h3><span class="ja">ドラッグ＆ドロップできない</span><span class="en">Drag and drop does not work</span><span class="ko">드래그 앤 드롭이 안 된다</span><span class="zh-hans">无法拖放</span><span class="zh-hant">無法拖放</span></h3>
   <p class="ja">VRCast を管理者として実行していると Windows の制限でドロップできません。通常どおり起動するか、<span class="ui">ファイルを選ぶ...</span> を使ってください。</p>
   <p class="en">Windows blocks drops into apps running as administrator. Start VRCast normally, or use <span class="ui">Choose file...</span>.</p>
-  <h3><span class="ja">口パクしない</span><span class="en">Lip sync does not move</span></h3>
+  <p class="ko">VRCast를 관리자 권한으로 실행하면 Windows 제한으로 드롭할 수 없습니다. 일반적으로 실행하거나 <span class="ui">파일 선택...</span>을 사용하세요.</p>
+  <p class="zh-hans">以管理员身份运行 VRCast 时，Windows 会阻止拖放。请正常启动，或使用 <span class="ui">选择文件...</span>。</p>
+  <p class="zh-hant">以系統管理員身分執行 VRCast 時，Windows 會阻止拖放。請正常啟動，或使用 <span class="ui">選擇檔案...</span>。</p>
+
+  <h3><span class="ja">口パクしない</span><span class="en">Lip sync does not move</span><span class="ko">립싱크가 안 된다</span><span class="zh-hans">口型不动</span><span class="zh-hant">嘴型不動</span></h3>
   <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
     動かなければ <span class="ui">マイク感度</span> を上げるか <span class="ui">ノイズゲート</span> を下げてください。</p>
   <p class="en">In the <span class="ui">Face</span> tab, check the selected microphone and that the <span class="ui">Level</span> meter moves.
     If not, raise <span class="ui">Mic gain</span> or lower <span class="ui">Mic gate</span>.</p>
-  <h3><span class="ja">設定ファイル・ログの場所</span><span class="en">Settings and log files</span></h3>
+  <p class="ko"><span class="ui">얼굴</span> 탭에서 올바른 마이크가 선택되어 있는지, <span class="ui">음량</span> 미터가 움직이는지 확인하고,
+    움직이지 않으면 <span class="ui">마이크 감도</span>를 올리거나 <span class="ui">노이즈 게이트</span>를 낮추세요.</p>
+  <p class="zh-hans">请在 <span class="ui">面部</span> 标签页中确认选择了正确的麦克风，以及 <span class="ui">音量</span> 表是否有反应。
+    如果没有反应，请调高 <span class="ui">麦克风灵敏度</span> 或调低 <span class="ui">噪声门</span>。</p>
+  <p class="zh-hant">請在 <span class="ui">臉部</span> 分頁中確認選擇了正確的麥克風，以及 <span class="ui">音量</span> 表是否有反應。
+    如果沒有反應，請調高 <span class="ui">麥克風靈敏度</span> 或調低 <span class="ui">噪音閘</span>。</p>
+
+  <h3><span class="ja">表情が変わらない</span><span class="en">Expressions do not change</span><span class="ko">표정이 바뀌지 않는다</span><span class="zh-hans">表情不变化</span><span class="zh-hant">表情不變化</span></h3>
+  <p class="ja">表情の反映は MediaPipe のみ対応です。<span class="ui">トラッキング</span> タブで入力元が MediaPipe になっているか、
+    <span class="ui">表情を反映</span> が ON か確認してください。反応しにくいときは <span class="ui">表情の感度</span> を上げ、
+    違う表情になるときは表情ごとの選択で使う表情を指定してください。</p>
+  <p class="en">Expression tracking works with MediaPipe only. In the <span class="ui">Tracking</span> tab, check that the source is MediaPipe and
+    <span class="ui">Facial expressions</span> is on. If it rarely reacts, raise <span class="ui">Expression sensitivity</span>;
+    if the wrong expression appears, pick the expression to use for each one.</p>
+  <p class="ko">표정 반영은 MediaPipe만 지원합니다. <span class="ui">트래킹</span> 탭에서 입력 소스가 MediaPipe인지,
+    <span class="ui">표정 반영</span>이 켜져 있는지 확인하세요. 반응이 약하면 <span class="ui">표정 감도</span>를 올리고,
+    다른 표정이 나오면 표정별 선택에서 사용할 표정을 지정하세요.</p>
+  <p class="zh-hans">表情反映仅支持 MediaPipe。请在 <span class="ui">追踪</span> 标签页中确认输入源为 MediaPipe，
+    且 <span class="ui">反映表情</span> 已开启。反应不灵敏时请调高 <span class="ui">表情灵敏度</span>；
+    出现错误的表情时，请为每种表情指定要使用的表情。</p>
+  <p class="zh-hant">表情反映僅支援 MediaPipe。請在 <span class="ui">追蹤</span> 分頁中確認輸入來源為 MediaPipe，
+    且 <span class="ui">反映表情</span> 已開啟。反應不靈敏時請調高 <span class="ui">表情靈敏度</span>；
+    出現錯誤的表情時，請為每種表情指定要使用的表情。</p>
+
+  <h3><span class="ja">設定ファイル・ログの場所</span><span class="en">Settings and log files</span><span class="ko">설정 파일·로그 위치</span><span class="zh-hans">设置文件与日志的位置</span><span class="zh-hant">設定檔與記錄檔的位置</span></h3>
   <p><code>%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\</code>
     <span class="ja">（<code>settings.json</code> と <code>Player.log</code>）。不具合の報告時は <code>Player.log</code> を添えてください。</span>
-    <span class="en">(<code>settings.json</code> and <code>Player.log</code>). Please attach <code>Player.log</code> when reporting a problem.</span></p>
+    <span class="en">(<code>settings.json</code> and <code>Player.log</code>). Please attach <code>Player.log</code> when reporting a problem.</span>
+    <span class="ko">(<code>settings.json</code>와 <code>Player.log</code>). 문제를 보고할 때는 <code>Player.log</code>를 첨부해 주세요.</span>
+    <span class="zh-hans">（<code>settings.json</code> 和 <code>Player.log</code>）。报告问题时请附上 <code>Player.log</code>。</span>
+    <span class="zh-hant">（<code>settings.json</code> 和 <code>Player.log</code>）。回報問題時請附上 <code>Player.log</code>。</span></p>
 </section>
 
 </main>
@@ -268,7 +527,10 @@
 <footer>
   <span class="ja">VRCast は VRChat Inc. の公式ツールではありません。</span>
   <span class="en">VRCast is not an official VRChat Inc. tool.</span>
-  &middot; <a href="https://github.com/coffin299/VRCast/issues"><span class="ja">不具合の報告</span><span class="en">Report a problem</span></a>
+  <span class="ko">VRCast는 VRChat Inc.의 공식 도구가 아닙니다.</span>
+  <span class="zh-hans">VRCast 并非 VRChat Inc. 的官方工具。</span>
+  <span class="zh-hant">VRCast 並非 VRChat Inc. 的官方工具。</span>
+  &middot; <a href="https://github.com/coffin299/VRCast/issues"><span class="ja">不具合の報告</span><span class="en">Report a problem</span><span class="ko">문제 보고</span><span class="zh-hans">报告问题</span><span class="zh-hant">回報問題</span></a>
 </footer>
 
 </body>

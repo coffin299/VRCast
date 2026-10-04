@@ -13,19 +13,23 @@
 <header>
   <a class="brand" href="./"><img src="assets/icon.png" alt="">VRCast</a>
   <div class="links">
-    <a class="current" href="./"><span class="ja">概要</span><span class="en">Overview</span></a>
-    <a href="help/"><span class="ja">ヘルプ</span><span class="en">Help</span></a>
+    <a class="current" href="./"><span class="ja">概要</span><span class="en">Overview</span><span class="ko">개요</span><span class="zh-hans">概要</span><span class="zh-hant">概要</span></a>
+    <a href="help/"><span class="ja">ヘルプ</span><span class="en">Help</span><span class="ko">도움말</span><span class="zh-hans">帮助</span><span class="zh-hant">說明</span></a>
     <a href="https://github.com/coffin299/VRCast">GitHub</a>
   </div>
   <div class="spacer"></div>
   <div class="group">
-    <button data-theme-choice="light"><span class="ja">ライト</span><span class="en">Light</span></button>
-    <button data-theme-choice="dark"><span class="ja">ダーク</span><span class="en">Dark</span></button>
+    <button data-theme-choice="light"><span class="ja">ライト</span><span class="en">Light</span><span class="ko">라이트</span><span class="zh-hans">浅色</span><span class="zh-hant">淺色</span></button>
+    <button data-theme-choice="dark"><span class="ja">ダーク</span><span class="en">Dark</span><span class="ko">다크</span><span class="zh-hans">深色</span><span class="zh-hant">深色</span></button>
   </div>
-  <div class="group">
-    <button data-lang="ja">日本語</button>
-    <button data-lang="en">English</button>
-  </div>
+  <select data-lang-select aria-label="Language">
+    <option value="auto">Auto</option>
+    <option value="ja">日本語</option>
+    <option value="en">English</option>
+    <option value="ko">한국어</option>
+    <option value="zh-Hans">简体中文</option>
+    <option value="zh-Hant">繁體中文</option>
+  </select>
 </header>
 
 <div class="page">
@@ -35,83 +39,130 @@
   <h1>VRCast</h1>
   <p class="lead ja">VRChat のアバターを、Unity を開かずにそのまま配信へ。</p>
   <p class="lead en">Your VRChat avatar on stream, without opening Unity.</p>
+  <p class="lead ko">VRChat 아바타를 Unity를 열지 않고 그대로 방송에.</p>
+  <p class="lead zh-hans">无需打开 Unity，直接用 VRChat 虚拟形象直播。</p>
+  <p class="lead zh-hant">無需開啟 Unity，直接用 VRChat 虛擬形象直播。</p>
   <div class="buttons">
     <a class="button primary" href="https://github.com/coffin299/VRCast/releases">
-      <span class="ja">ダウンロード</span><span class="en">Download</span></a>
-    <a class="button" href="help/"><span class="ja">使い方を見る</span><span class="en">How to use</span></a>
+      <span class="ja">ダウンロード</span><span class="en">Download</span><span class="ko">다운로드</span><span class="zh-hans">下载</span><span class="zh-hant">下載</span></a>
+    <a class="button" href="help/"><span class="ja">使い方を見る</span><span class="en">How to use</span><span class="ko">사용 방법</span><span class="zh-hans">使用方法</span><span class="zh-hant">使用方法</span></a>
     <a class="button" href="https://github.com/coffin299/VRCast">GitHub</a>
   </div>
 </div>
 
 <section>
-  <h2><span class="ja">VRCast とは</span><span class="en">What is VRCast?</span></h2>
+  <h2><span class="ja">VRCast とは</span><span class="en">What is VRCast?</span><span class="ko">VRCast란?</span><span class="zh-hans">什么是 VRCast？</span><span class="zh-hant">什麼是 VRCast？</span></h2>
   <p class="ja">VRCast は、VRChat 向けの 3D アバターを単体で表示し、OBS などの配信ソフトや Discord / Zoom に映す Windows 用アプリです。
     アバターを一度 <code>.vrcaster</code> ファイルに書き出せば、あとは Unity や VCC を起動せずに使えます。</p>
   <p class="en">VRCast is a Windows app that shows a VRChat 3D avatar on its own and sends it to streaming software such as OBS,
     or to Discord / Zoom. Export your avatar once to a <code>.vrcaster</code> file, and you no longer need Unity or VCC running.</p>
+  <p class="ko">VRCast는 VRChat용 3D 아바타를 단독으로 표시하고 OBS 같은 방송 소프트웨어나 Discord / Zoom에 보내는 Windows 앱입니다.
+    아바타를 한 번 <code>.vrcaster</code> 파일로 내보내면, 이후에는 Unity나 VCC를 실행하지 않고 사용할 수 있습니다.</p>
+  <p class="zh-hans">VRCast 是一款 Windows 应用，可单独显示 VRChat 用的 3D 虚拟形象，并输出到 OBS 等直播软件或 Discord / Zoom。
+    只需将虚拟形象导出为 <code>.vrcaster</code> 文件一次，之后无需启动 Unity 或 VCC 即可使用。</p>
+  <p class="zh-hant">VRCast 是一款 Windows 應用程式，可單獨顯示 VRChat 用的 3D 虛擬形象，並輸出到 OBS 等直播軟體或 Discord / Zoom。
+    只需將虛擬形象匯出為 <code>.vrcaster</code> 檔案一次，之後無需啟動 Unity 或 VCC 即可使用。</p>
   <div class="flow">
-    <span class="box"><span class="ja">VRChat アバター（Unity）</span><span class="en">VRChat avatar (Unity)</span></span>
+    <span class="box"><span class="ja">VRChat アバター（Unity）</span><span class="en">VRChat avatar (Unity)</span><span class="ko">VRChat 아바타 (Unity)</span><span class="zh-hans">VRChat 虚拟形象（Unity）</span><span class="zh-hant">VRChat 虛擬形象（Unity）</span></span>
     <span class="arrow">→</span>
     <span class="box"><code>.vrcaster</code></span>
     <span class="arrow">→</span>
     <span class="box">VRCast.exe</span>
     <span class="arrow">→</span>
-    <span class="box"><span class="ja">OBS / 仮想カメラ</span><span class="en">OBS / virtual camera</span></span>
+    <span class="box"><span class="ja">OBS / 仮想カメラ</span><span class="en">OBS / virtual camera</span><span class="ko">OBS / 가상 카메라</span><span class="zh-hans">OBS / 虚拟摄像头</span><span class="zh-hant">OBS / 虛擬攝影機</span></span>
   </div>
 </section>
 
 <div class="grid">
   <section>
-    <h3><span class="ja">OBS に背景透過で映せる</span><span class="en">Transparent in OBS</span></h3>
+    <h3><span class="ja">OBS に背景透過で映せる</span><span class="en">Transparent in OBS</span><span class="ko">OBS에서 배경 투명</span><span class="zh-hans">在 OBS 中透明背景</span><span class="zh-hant">在 OBS 中透明背景</span></h3>
     <p class="ja">ゲームキャプチャで背景を抜いて配信画面に重ねられます。VRCast の画面上は目に優しいベージュ背景のまま。</p>
     <p class="en">OBS Game Capture removes the background so the avatar sits on your scene, while the VRCast window keeps a soft beige background.</p>
+    <p class="ko">게임 캡처로 배경을 투명하게 해 방송 화면에 겹칠 수 있습니다. VRCast 창에서는 눈이 편한 베이지 배경 그대로입니다.</p>
+    <p class="zh-hans">通过游戏采集去除背景，叠加到直播画面上。VRCast 窗口中仍保持柔和的米色背景。</p>
+    <p class="zh-hant">透過遊戲擷取去除背景，疊加到直播畫面上。VRCast 視窗中仍保持柔和的米色背景。</p>
   </section>
   <section>
-    <h3><span class="ja">VRChat の設定をそのまま</span><span class="en">Keeps your VRChat setup</span></h3>
+    <h3><span class="ja">VRChat の設定をそのまま</span><span class="en">Keeps your VRChat setup</span><span class="ko">VRChat 설정 그대로</span><span class="zh-hans">保留 VRChat 设置</span><span class="zh-hant">保留 VRChat 設定</span></h3>
     <p class="ja">表情・小物の初期状態・揺れもの（PhysBone 近似）・Constraint を書き出して再現します。元のアバターは変更しません。</p>
     <p class="en">Expressions, default toggles, PhysBones (approximated) and constraints are exported and reproduced. Your original avatar is untouched.</p>
+    <p class="ko">표정·소품의 초기 상태·흔들림 (PhysBone 근사)·Constraint를 내보내 재현합니다. 원본 아바타는 변경하지 않습니다.</p>
+    <p class="zh-hans">导出并重现表情、配件的初始状态、物理摆动（PhysBone 近似）和 Constraint。不会修改原始虚拟形象。</p>
+    <p class="zh-hant">匯出並重現表情、配件的初始狀態、物理擺動（PhysBone 近似）和 Constraint。不會修改原始虛擬形象。</p>
   </section>
   <section>
-    <h3><span class="ja">あいうえおの口パク</span><span class="en">A-I-U-E-O lip sync</span></h3>
+    <h3><span class="ja">あいうえおの口パク</span><span class="en">A-I-U-E-O lip sync</span><span class="ko">아이우에오 립싱크</span><span class="zh-hans">A-I-U-E-O 口型同步</span><span class="zh-hant">A-I-U-E-O 口型同步</span></h3>
     <p class="ja">マイクの声から母音を判定し、VRChat と同じように口の形が変わります。自動まばたき付き。</p>
     <p class="en">Detects vowels from your microphone and changes mouth shapes like VRChat. Auto blink included.</p>
+    <p class="ko">마이크 음성에서 모음을 판별해 VRChat처럼 입 모양이 바뀝니다. 자동 눈 깜빡임 포함.</p>
+    <p class="zh-hans">根据麦克风声音判断元音，像 VRChat 一样改变口型。附带自动眨眼。</p>
+    <p class="zh-hant">根據麥克風聲音判斷母音，像 VRChat 一樣改變嘴型。附帶自動眨眼。</p>
   </section>
   <section>
-    <h3><span class="ja">Web カメラでトラッキング</span><span class="en">Webcam tracking</span></h3>
+    <h3><span class="ja">Web カメラでトラッキング</span><span class="en">Webcam tracking</span><span class="ko">웹캠 트래킹</span><span class="zh-hans">摄像头追踪</span><span class="zh-hant">網路攝影機追蹤</span></h3>
     <p class="ja">同梱の MediaPipe トラッカーで頭・まばたき・口・視線に加えて腕・手・指まで動きます（OpenSeeFace にも対応）。</p>
     <p class="en">The bundled MediaPipe tracker drives head, blink, mouth, gaze, arms, hands and fingers (OpenSeeFace is also supported).</p>
+    <p class="ko">포함된 MediaPipe 트래커로 머리·눈 깜빡임·입·시선에 더해 팔·손·손가락까지 움직입니다 (OpenSeeFace도 지원).</p>
+    <p class="zh-hans">内置的 MediaPipe 追踪器可驱动头部、眨眼、嘴部、视线，以及手臂、手和手指（也支持 OpenSeeFace）。</p>
+    <p class="zh-hant">內建的 MediaPipe 追蹤器可驅動頭部、眨眼、嘴部、視線，以及手臂、手和手指（也支援 OpenSeeFace）。</p>
   </section>
   <section>
-    <h3><span class="ja">仮想カメラ出力</span><span class="en">Virtual camera</span></h3>
+    <h3><span class="ja">表情もカメラで反映</span><span class="en">Facial expressions</span><span class="ko">표정도 카메라로 반영</span><span class="zh-hans">用摄像头反映表情</span><span class="zh-hant">用攝影機反映表情</span></h3>
+    <p class="ja">笑顔・驚き・怒り・悲しみを検出して、アバターの表情に切り替えます（MediaPipe のみ、OFF にもできます）。</p>
+    <p class="en">Your smile, surprise, anger and sadness switch the avatar's expressions (MediaPipe only, can be turned off).</p>
+    <p class="ko">웃음·놀람·화남·슬픔을 감지해 아바타의 표정으로 바꿉니다 (MediaPipe만, 끌 수도 있습니다).</p>
+    <p class="zh-hans">检测笑脸、惊讶、生气、悲伤，并切换为虚拟形象的表情（仅限 MediaPipe，可关闭）。</p>
+    <p class="zh-hant">偵測笑臉、驚訝、生氣、悲傷，並切換為虛擬形象的表情（僅限 MediaPipe，可關閉）。</p>
+  </section>
+  <section>
+    <h3><span class="ja">仮想カメラ出力</span><span class="en">Virtual camera</span><span class="ko">가상 카메라 출력</span><span class="zh-hans">虚拟摄像头输出</span><span class="zh-hant">虛擬攝影機輸出</span></h3>
     <p class="ja"><span class="ui">VRCast Camera</span> として Discord や Zoom のカメラに選べます。</p>
     <p class="en">Pick <span class="ui">VRCast Camera</span> as your camera in Discord, Zoom and more.</p>
+    <p class="ko">Discord나 Zoom의 카메라로 <span class="ui">VRCast Camera</span>를 선택할 수 있습니다.</p>
+    <p class="zh-hans">可在 Discord、Zoom 等中将 <span class="ui">VRCast Camera</span> 选为摄像头。</p>
+    <p class="zh-hant">可在 Discord、Zoom 等中將 <span class="ui">VRCast Camera</span> 選為攝影機。</p>
   </section>
   <section>
-    <h3><span class="ja">はじめてでも迷わない</span><span class="en">Beginner friendly</span></h3>
-    <p class="ja">起動すると「はじめに」タブが読み込みから OBS までを案内。ドラッグ＆ドロップで読み込め、日本語 / 英語に対応。</p>
-    <p class="en">The Start tab guides you from loading to OBS. Load by drag and drop. Japanese and English UI.</p>
+    <h3><span class="ja">はじめてでも迷わない</span><span class="en">Beginner friendly</span><span class="ko">처음이어도 헤매지 않음</span><span class="zh-hans">新手也不迷路</span><span class="zh-hant">新手也不迷路</span></h3>
+    <p class="ja">起動すると「はじめに」タブが読み込みから OBS までを案内。ドラッグ＆ドロップで読み込め、日本語 / 英語 / 韓国語 / 中国語（簡体字・繁体字）に対応。</p>
+    <p class="en">The Start tab guides you from loading to OBS. Load by drag and drop. English, Japanese, Korean and Chinese (Simplified / Traditional) UI.</p>
+    <p class="ko">실행하면 "시작하기" 탭이 불러오기부터 OBS까지 안내합니다. 드래그 앤 드롭으로 불러올 수 있으며, 한국어 / 영어 / 일본어 / 중국어 (간체·번체)를 지원합니다.</p>
+    <p class="zh-hans">启动后“开始”标签页会引导你从加载到 OBS 的全过程。支持拖放加载，界面支持简体中文 / 繁体中文 / 英语 / 日语 / 韩语。</p>
+    <p class="zh-hant">啟動後「開始」分頁會引導你從載入到 OBS 的全過程。支援拖放載入，介面支援繁體中文 / 簡體中文 / 英語 / 日語 / 韓語。</p>
   </section>
 </div>
 
 <section>
-  <h2><span class="ja">かんたん 3 ステップ</span><span class="en">Three easy steps</span></h2>
+  <h2><span class="ja">かんたん 3 ステップ</span><span class="en">Three easy steps</span><span class="ko">간단 3단계</span><span class="zh-hans">简单 3 步</span><span class="zh-hant">簡單 3 步</span></h2>
   <ol class="steps">
     <li><span class="ja">Unity でアバターを <code>.vrcaster</code> に書き出す（<a href="help/#export">手順</a>）</span>
-        <span class="en">Export your avatar to <code>.vrcaster</code> in Unity (<a href="help/#export">how</a>)</span></li>
+        <span class="en">Export your avatar to <code>.vrcaster</code> in Unity (<a href="help/#export">how</a>)</span>
+        <span class="ko">Unity에서 아바타를 <code>.vrcaster</code>로 내보내기 (<a href="help/#export">방법</a>)</span>
+        <span class="zh-hans">在 Unity 中将虚拟形象导出为 <code>.vrcaster</code>（<a href="help/#export">步骤</a>）</span>
+        <span class="zh-hant">在 Unity 中將虛擬形象匯出為 <code>.vrcaster</code>（<a href="help/#export">步驟</a>）</span></li>
     <li><span class="ja">VRCast のウィンドウにドラッグ＆ドロップして、背景を透過にする</span>
-        <span class="en">Drag and drop it onto VRCast and make the background transparent</span></li>
+        <span class="en">Drag and drop it onto VRCast and make the background transparent</span>
+        <span class="ko">VRCast 창에 드래그 앤 드롭하고 배경을 투명하게 하기</span>
+        <span class="zh-hans">拖放到 VRCast 窗口，并将背景设为透明</span>
+        <span class="zh-hant">拖放到 VRCast 視窗，並將背景設為透明</span></li>
     <li><span class="ja">OBS でゲームキャプチャを追加して <span class="ui">透過を許可</span>（<a href="help/#obs">手順</a>）</span>
-        <span class="en">Add a Game Capture in OBS and check <span class="ui">Allow Transparency</span> (<a href="help/#obs">how</a>)</span></li>
+        <span class="en">Add a Game Capture in OBS and check <span class="ui">Allow Transparency</span> (<a href="help/#obs">how</a>)</span>
+        <span class="ko">OBS에서 게임 캡처를 추가하고 <span class="ui">투명도 허용</span> (<a href="help/#obs">방법</a>)</span>
+        <span class="zh-hans">在 OBS 中添加游戏采集并勾选 <span class="ui">允许透明</span>（<a href="help/#obs">步骤</a>）</span>
+        <span class="zh-hant">在 OBS 中新增遊戲擷取並勾選 <span class="ui">允許透明</span>（<a href="help/#obs">步驟</a>）</span></li>
   </ol>
 </section>
 
 <section>
-  <h2><span class="ja">動作環境</span><span class="en">Requirements</span></h2>
+  <h2><span class="ja">動作環境</span><span class="en">Requirements</span><span class="ko">동작 환경</span><span class="zh-hans">运行环境</span><span class="zh-hant">執行環境</span></h2>
   <ul>
     <li>Windows 10 / 11 (x64)</li>
     <li><span class="ja">書き出し: アバターの入った Unity 2022.3.22f1 プロジェクト（VCC プロジェクト可）</span>
-        <span class="en">Export: a Unity 2022.3.22f1 project with your avatar (VCC projects are fine)</span></li>
-    <li><span class="ja">トラッキング: Web カメラ（任意）</span><span class="en">Tracking: a webcam (optional)</span></li>
+        <span class="en">Export: a Unity 2022.3.22f1 project with your avatar (VCC projects are fine)</span>
+        <span class="ko">내보내기: 아바타가 들어 있는 Unity 2022.3.22f1 프로젝트 (VCC 프로젝트 가능)</span>
+        <span class="zh-hans">导出：包含虚拟形象的 Unity 2022.3.22f1 项目（VCC 项目亦可）</span>
+        <span class="zh-hant">匯出：包含虛擬形象的 Unity 2022.3.22f1 專案（VCC 專案亦可）</span></li>
+    <li><span class="ja">トラッキング: Web カメラ（任意）</span><span class="en">Tracking: a webcam (optional)</span><span class="ko">트래킹: 웹캠 (선택)</span><span class="zh-hans">追踪：摄像头（可选）</span><span class="zh-hant">追蹤：網路攝影機（選用）</span></li>
   </ul>
 </section>
 
@@ -120,6 +171,9 @@
 <footer>
   <span class="ja">VRCast は VRChat Inc. の公式ツールではありません。</span>
   <span class="en">VRCast is not an official VRChat Inc. tool.</span>
+  <span class="ko">VRCast는 VRChat Inc.의 공식 도구가 아닙니다.</span>
+  <span class="zh-hans">VRCast 并非 VRChat Inc. 的官方工具。</span>
+  <span class="zh-hant">VRCast 並非 VRChat Inc. 的官方工具。</span>
   &middot; Apache License 2.0 &middot; <a href="https://github.com/coffin299/VRCast">github.com/coffin299/VRCast</a>
 </footer>
 
