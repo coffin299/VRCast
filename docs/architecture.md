@@ -109,7 +109,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 
 | クラス | 責務 |
 | :--- | :--- |
-| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `VirtualCameraOutput` / `MicrophoneInput` / `TrackingReceiver` / `TrackingSkeletonView` / `TrackerProcess` / `FileDropReceiver` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `ExpressionController` / `BlinkController` / `LipSyncController` / `FaceTrackingDriver` / `HandTrackingDriver` / `ConstraintSolver` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込 |
+| `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `VirtualCameraOutput` / `MicrophoneInput` / `TrackingReceiver` / `TrackingSkeletonView` / `TrackerProcess` / `FileDropReceiver` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `ExpressionController` / `BlinkController` / `LipSyncController` / `FaceTrackingDriver` / `HandTrackingDriver` / `ConstraintSolver` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込。Windows ビルドではウィンドウのタイトルを「VRCast バージョン」に変更（`productName` は保存先フォルダに使われるため変えない） |
 | `AvatarPackageReader` | `.vrcaster` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開。`metadata/*.json`（expressions / descriptor / physbones / constraints）を読み込み（不正なら空） |
 | `AvatarLoader` | bundle を非同期読込してアバターを生成し、許可リスト外コンポーネントを除去 |
 | `LoadedAvatar` | 生成済みアバターと bundle の組。`Dispose` で両方解放。フレーミング用境界（Humanoid は骨格基準、それ以外は Renderer 基準） |
@@ -152,7 +152,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `CreditsSection` | Credits タブ（開発者・協力者のリンク、ライセンス・NOTICE は GitHub のファイルを開くボタン）。各行は `GuiControls.LabeledButton`（固定幅ラベル + ボタン） |
 | `AvatarSection` | Avatar タブ（ドロップ・Browse・パス入力による読み込み、Reload / Unload、読込状態・アバター情報）。読み込む前に空・拡張子違い・存在しないファイルを確認し、表示言語に合わせたエラーを出す |
 | `AvatarFiles` | 読み込み対象（拡張子 `.vrcaster`）の判定と、複数パスからの最初の対象の選択 |
-| `UnityWindow` | メインスレッドの Unity のプレイヤーウィンドウ（`UnityWndClass`）のハンドルを探す || `FileDropReceiver` | Windows のスタンドアロン実行時に Unity のウィンドウへ `DragAcceptFiles` でドロップを許可し、メインスレッドの `WH_GETMESSAGE` フックで `WM_DROPFILES` を取り出してパスを `Update` で通知 |
+| `UnityWindow` | メインスレッドの Unity のプレイヤーウィンドウ（`UnityWndClass`）のハンドルを探す。タイトルの変更（`SetWindowTextW`） |
+| `FileDropReceiver` | Windows のスタンドアロン実行時に Unity のウィンドウへ `DragAcceptFiles` でドロップを許可し、メインスレッドの `WH_GETMESSAGE` フックで `WM_DROPFILES` を取り出してパスを `Update` で通知 |
 | `FileDialog` | Windows の「ファイルを開く」ダイアログ（`GetOpenFileNameW`、モーダル） |
 | `AnimationSection` | Pose タブ（向き・待機ポーズ、表情。表情ボタンは `SelectionGrid` で同じ幅の 2 列） |
 | `FaceSection` | Face タブ（PhysBone、Auto blink、Lip sync、マイク選択・感度・メーター） |

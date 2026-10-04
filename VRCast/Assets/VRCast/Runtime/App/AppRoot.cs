@@ -49,6 +49,11 @@ namespace VRCast.App
 
         private void Awake()
         {
+#if UNITY_STANDALONE_WIN && !UNITY_EDITOR
+            // ウィンドウのタイトルにバージョンを付ける（productName を変えると保存先のフォルダまで変わるため実行時に書き換える）
+            UnityWindow.SetTitle($"{Application.productName} {Application.version}");
+#endif
+
             // アバター管理
             _session = gameObject.AddComponent<AvatarSession>();
             _session.AvatarLoaded += OnAvatarLoaded;
