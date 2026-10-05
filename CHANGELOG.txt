@@ -14,6 +14,8 @@ Newest first. Each version is written in Japanese, then English.
 - デバッグログに MediaPipe / OpenSeeFace の状態を記録する機能を追加（トラッカーの起動・終了理由、データの途絶や入力元の設定違いの警告、カメラの実際の解像度など）
 - 「詳細ログ」スイッチを追加（ON の間だけ、受信の統計や推定にかかる時間などを DEBUG として記録）
 - 同じログが続いたときは 1 行にまとめ、トラッカーの出力が多すぎるときは間引くようにして、ログ採取の負荷を軽減
+- MediaPipe のトラッキングで、仮想カメラ（VRCast 自身・OBS など）や赤外線カメラが選ばれて顔が認識されないことがある問題を修正（カメラを自動で選ぶときは実際の Web カメラを優先し、選んでいる場合はトラッキングタブで警告）
+- MediaPipe のトラッカーが、映像が真っ黒・単色・暗すぎるときや、人が映っていないときに原因の目安をデバッグログに出すように変更
 - 配布 zip の書き出しツールを本体とは別の「VRCast-Converter」フォルダに分け、ファイル名にバージョンを記載（アバターのプロジェクトにインポートするものだと分かる説明ファイルも同梱）
 
 [English]
@@ -24,6 +26,8 @@ Newest first. Each version is written in Japanese, then English.
 - Added MediaPipe / OpenSeeFace status to the debug log (why the tracker started or stopped, warnings when data stops or the input source looks wrong, the camera's actual resolution, and more)
 - Added a "Detailed logging" switch that records receive statistics and inference times as DEBUG while it is on
 - Reduced the cost of logging by merging repeated lines and thinning out very frequent tracker output
+- Fixed MediaPipe tracking not detecting your face when a virtual camera (VRCast's own, OBS, etc.) or an infrared camera was selected (real webcams are now preferred when a camera is chosen automatically, and the Tracking tab warns if one is selected)
+- The MediaPipe tracker now writes likely causes to the debug log when the image is black, a single color or too dark, or when nobody is in view
 - Moved the exporter in the zip to its own "VRCast-Converter" folder, separate from the app, with the version in its file name (plus a note file saying it goes into your avatar project)
 
 ■ 1.2.0 (2026-10-05)

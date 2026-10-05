@@ -7,6 +7,7 @@ using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using UnityEngine;
 using VRCast.Core;
+using VRCast.Output;
 
 namespace VRCast.Tracking
 {
@@ -41,6 +42,13 @@ namespace VRCast.Tracking
 
         // 一覧の 1 行（"0: カメラ名"）
         private static readonly Regex CameraLine = new Regex(@"^\s*(\d+)\s*:\s*(.+?)\s*$");
+
+        // 顔を映せない（仮想カメラ・赤外線カメラ）とみなすカメラ名に含まれる語（大文字・小文字は区別しない）。
+        // VRCast 自身の仮想カメラを選ぶと自分の出力（未出力なら黒）を読み、顔も体も検出されない
+        private static readonly string[] UnusableCameraKeywords =
+        {
+            VirtualCameraInstaller.DeviceName, "Unity Video Capture", "Virtual", "VCam", "IR Camera", "Infrared",
+        };
 
         // glog（MediaPipe・TensorFlow Lite の内部ログ）の行頭（重要度 I/W/E/F + 月日 4 桁）
         private static readonly Regex GlogLine = new Regex(@"^([IWEF])\d{4}\s");
@@ -187,6 +195,59 @@ namespace VRCast.Tracking
             }
 
             return cameras;
+        }
+
+        /// <summary>
+        /// 顔を映せないカメラ（仮想カメラ・赤外線カメラ）らしい名前なら true。
+        /// </summary>
+        public static bool IsLikelyUnusableCamera(string name)
+        {
+            // 空の名前は判定しない
+            if (string.IsNullOrEmpty(name))
+            {
+                return false;
+            }
+
+            foreach (string keyword in UnusableCameraKeywords)
+            {
+                // 名前のどこかに含まれていれば該当
+                if (name.IndexOf(keyword, StringComparison.OrdinalIgnoreCase) >= 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 既定に選ぶカメラ名（顔を映せるカメラを優先し、無ければ先頭の名前。一覧が空なら空文字）。
+        /// </summary>
+        public static string ChooseDefaultCamera(IReadOnlyList<string> cameras)
+        {
+            string fallback = string.Empty;
+            foreach (string name in cameras)
+            {
+                // 番号の欠けた空の名前は飛ばす
+                if (string.IsNullOrEmpty(name))
+                {
+                    continue;
+                }
+
+                // 実カメラらしい最初のものを採用
+                if (!IsLikelyUnusableCamera(name))
+                {
+                    return name;
+                }
+
+                // 仮想カメラしか無いときのために先頭を覚えておく
+                if (fallback.Length == 0)
+                {
+                    fallback = name;
+                }
+            }
+
+            return fallback;
         }
 
         /// <summary>
@@ -420,6 +481,14 @@ namespace VRCast.Tracking
                 VRCastLog.Info(LogCategory,
                     $"Started {_startedSource} camera {camera} ({_startedCamera}) -> port {_startedPort}, " +
                     $"pid {process.Id}: \"{path}\" {arguments}");
+
+                // 仮想カメラ・赤外線カメラを選んでいると顔も体も検出されないため、起動のたびに警告する
+                if (IsLikelyUnusableCamera(_startedCamera))
+                {
+                    VRCastLog.Warning(LogCategory,
+                        $"\"{_startedCamera}\" looks like a virtual or infrared camera. " +
+                        "Your face will not be detected; select your real webcam");
+                }
             }
             catch (Exception e) when (e is InvalidOperationException || e is System.ComponentModel.Win32Exception)
             {
@@ -447,10 +516,10 @@ namespace VRCast.Tracking
                 listSeconds = _pendingListSeconds;
             }
 
-            // 未選択なら先頭の有効なカメラを既定にする（保存済みの名前は外れていても上書きしない）
+            // 未選択なら実カメラらしいものを既定にする（保存済みの名前は外れていても上書きしない）
             if (string.IsNullOrEmpty(_settings.trackerCamera))
             {
-                _settings.trackerCamera = _cameras.Find(name => !string.IsNullOrEmpty(name)) ?? string.Empty;
+                _settings.trackerCamera = ChooseDefaultCamera(_cameras);
             }
 
             IsListing = false;

@@ -101,6 +101,24 @@ DEFAULT_STATUS_INTERVAL = 5.0
 # 同じ種類の警告を出す最短間隔（秒。出力が増えすぎないように）
 WARNING_INTERVAL = 10.0
 
+# 顔も体も検出されない状態がこの秒数続いたら、映像の明るさを添えて警告する（以後も同じ間隔で）
+NO_PERSON_SECONDS = 10.0
+
+# 映像の明るさ・ばらつきを測るときの間引き（縦横この画素ごと。負荷を抑える）
+FRAME_SAMPLE_STEP = 8
+
+# 0〜255 の明るさの平均がこれ未満なら暗すぎ、標準偏差がこれ未満ならほぼ単色（黒画面・レンズを覆っている等）
+DARK_BRIGHTNESS = 20.0
+FLAT_CONTRAST = 4.0
+
+# --save-frame で保存するのは、カメラを開いてからこの秒数後のフレーム（露出が安定してから）
+SAVE_FRAME_DELAY = 2.0
+
+# --save-frame の容量対策: 1 回の起動で 1 枚だけ・同じファイルに上書きし、
+# 長辺をこの画素数までに縮小して JPEG 品質を抑える（1 枚あたり数十 KB 程度）
+SAVE_FRAME_MAX_SIZE = 640
+SAVE_FRAME_QUALITY = 80
+
 # 送信する値の小数点以下の桁数（パケットを小さくする）
 DIGITS = 5
 
@@ -139,6 +157,9 @@ def parse_arguments():
     # 統計の状態ログを出す間隔（秒、0 以下で出さない）
     parser.add_argument("--status-interval", type=float,
                         default=DEFAULT_STATUS_INTERVAL)
+    # カメラの映像を 1 枚 JPEG で保存する先（トラッカーに何が映っているかの確認用。
+    # 手動実行専用で VRCast からは渡さない。1 回の起動で 1 枚・同じファイルに上書き）
+    parser.add_argument("--save-frame", default="")
     return parser.parse_args()
 
 
@@ -353,12 +374,79 @@ def configure_output():
             stream.reconfigure(encoding="utf-8", errors="replace")
 
 
-def list_cameras():
-    """DirectShow のカメラ名を「番号: 名前」の形式で表示する。"""
-    # OpenCV の CAP_DSHOW と同じ列挙順の名前を取得
+def camera_names():
+    """DirectShow のカメラ名を OpenCV の CAP_DSHOW と同じ列挙順で返す。"""
     from pygrabber.dshow_graph import FilterGraph
 
-    names = FilterGraph().get_input_devices()
+    return FilterGraph().get_input_devices()
+
+
+def camera_name(index):
+    """カメラ番号の名前を返す（取得できなければ "unknown"。状態ログ用）。"""
+    try:
+        names = camera_names()
+    except Exception:  # noqa: BLE001 - COM のエラー等。名前はログ用なので続行する
+        return "unknown"
+    # 範囲外の番号は名前なし
+    return names[index] if 0 <= index < len(names) else "unknown"
+
+
+def describe_image(frame):
+    """映像の明るさの平均と標準偏差（0〜255、間引いて計算）を返す。"""
+    sample = frame[::FRAME_SAMPLE_STEP, ::FRAME_SAMPLE_STEP]
+    return float(sample.mean()), float(sample.std())
+
+
+def diagnose_no_person(frame, seconds):
+    """顔も体も検出されないときの、映像の状態に応じた警告文を返す。"""
+    brightness, contrast = describe_image(frame)
+    measured = f"brightness {brightness:.0f}, contrast {contrast:.1f}"
+    # ほぼ単色: 仮想カメラの黒画面・赤外線カメラ・レンズカバー・他アプリが使用中など
+    if contrast < FLAT_CONTRAST:
+        return (f"no face or body for {seconds:.0f} s and the image is almost "
+                f"a single color ({measured}): wrong camera (virtual or "
+                "infrared camera), lens covered or privacy shutter closed, "
+                "or the camera is used by another app")
+    # 暗すぎる
+    if brightness < DARK_BRIGHTNESS:
+        return (f"no face or body for {seconds:.0f} s and the image is too "
+                f"dark ({measured}): turn on a light")
+    # 映像は普通: カメラの向き・距離・別のカメラの可能性
+    return (f"no face or body for {seconds:.0f} s although the image looks "
+            f"normal ({measured}): make sure this camera faces you "
+            "(try --save-frame to see what it captures)")
+
+
+def save_frame(path, frame):
+    """フレームを縮小した JPEG で保存する（日本語を含むパスでも書けるようバイト列で書き込む）。"""
+    # フォルダを指定された場合は書かない（連番で増やさず、常に 1 ファイルだけにする）
+    if os.path.isdir(path):
+        log("WARN", f"--save-frame needs a file path, not a folder: {path}")
+        return
+    # 長辺が上限を超えていれば縦横比を保って縮小する
+    height, width = frame.shape[:2]
+    scale = SAVE_FRAME_MAX_SIZE / max(width, height)
+    if scale < 1.0:
+        frame = cv2.resize(frame, (int(width * scale), int(height * scale)),
+                           interpolation=cv2.INTER_AREA)
+    ok, data = cv2.imencode(".jpg", frame,
+                            [cv2.IMWRITE_JPEG_QUALITY, SAVE_FRAME_QUALITY])
+    # エンコードできなければ失敗
+    if not ok:
+        log("WARN", f"failed to encode the frame for {path}")
+        return
+    try:
+        with open(path, "wb") as file:
+            file.write(data.tobytes())
+        log("INFO", f"saved a camera frame to {path} ({len(data) // 1024} KB)")
+    except OSError as error:
+        # 書き込み先が無い・権限が無い等は警告だけして続ける
+        log("WARN", f"failed to save the frame to {path}: {error}")
+
+
+def list_cameras():
+    """DirectShow のカメラ名を「番号: 名前」の形式で表示する。"""
+    names = camera_names()
     print("Available cameras:")
     for index, name in enumerate(names):
         print(f"{index}: {name}")
@@ -561,6 +649,8 @@ def build_packet(face_result, pose_result, hand_result, smoother, now):
 
 def run(arguments):
     """カメラを開き、推定と送信を繰り返す。"""
+    # カメラ名は OpenCV がカメラを開く前に取る（COM の初期化を先に済ませて衝突を避ける）
+    name = camera_name(arguments.capture)
     # カメラを開く（開くまでの時間も調査用に記録する）
     opening = time.perf_counter()
     capture = open_camera(arguments.capture, arguments.width,
@@ -573,8 +663,9 @@ def run(arguments):
             "settings?)")
         return 1
     log("INFO",
-        f"camera {arguments.capture} opened in "
-        f"{time.perf_counter() - opening:.1f} s: {describe_camera(capture)} "
+        f"camera {arguments.capture} ({name}) "
+        f"opened in {time.perf_counter() - opening:.1f} s: "
+        f"{describe_camera(capture)} "
         f"(requested {arguments.width}x{arguments.height} @ "
         f"{arguments.fps} fps)")
 
@@ -605,6 +696,12 @@ def run(arguments):
     first_frame = True
     next_read_warning = 0.0
     next_send_warning = 0.0
+    # 人（顔か体）を最後に検出した時刻・一度でも検出したか・次に未検出を警告してよい時刻
+    last_person = time.perf_counter()
+    person_found = False
+    next_person_warning = last_person + NO_PERSON_SECONDS
+    # 映像の保存（指定時のみ。保存したら空にする）
+    save_path = arguments.save_frame
     # 推定の間隔（秒、0 なら全フレーム）と次に推定してよい時刻
     interval = 1.0 / arguments.max_fps if arguments.max_fps > 0 else 0.0
     next_due = 0.0
@@ -637,9 +734,16 @@ def run(arguments):
             # 最初のフレームだけ、届くまでの時間と実際の大きさを記録する
             if first_frame:
                 first_frame = False
+                brightness, contrast = describe_image(frame)
                 log("INFO",
                     f"first frame after {now - opening:.1f} s: "
-                    f"{frame.shape[1]}x{frame.shape[0]}")
+                    f"{frame.shape[1]}x{frame.shape[0]}, "
+                    f"brightness {brightness:.0f}, contrast {contrast:.1f}")
+
+            # 指定があれば露出が安定した頃のフレームを 1 枚保存する
+            if save_path and now - opening >= SAVE_FRAME_DELAY:
+                save_frame(save_path, frame)
+                save_path = ""
 
             # 上限を超える分のフレームは読み捨てる（溜めると遅延するため読み取りは続ける）
             if now < next_due:
@@ -672,10 +776,26 @@ def run(arguments):
             stats.pose_ms += (pose_done - face_done) * 1000.0
             stats.hand_ms += (hand_done - pose_done) * 1000.0
             # 見つかった顔・体・手の数
-            stats.faces += 1 if face_result.face_blendshapes else 0
-            stats.poses += 1 if pose_result.pose_landmarks else 0
+            has_face = bool(face_result.face_blendshapes)
+            has_pose = bool(pose_result.pose_landmarks)
+            stats.faces += 1 if has_face else 0
+            stats.poses += 1 if has_pose else 0
             if hand_result is not None:
                 stats.hands += len(hand_result.hand_world_landmarks)
+
+            # 人の検出状況: 初めて見つけたら記録し、長く見つからなければ映像の状態を添えて警告
+            if has_face or has_pose:
+                if not person_found:
+                    person_found = True
+                    log("INFO",
+                        f"person detected after {now - opening:.1f} s "
+                        f"(face {'yes' if has_face else 'no'}, "
+                        f"body {'yes' if has_pose else 'no'})")
+                last_person = now
+                next_person_warning = now + NO_PERSON_SECONDS
+            elif now >= next_person_warning:
+                next_person_warning = now + NO_PERSON_SECONDS
+                log("WARN", diagnose_no_person(frame, now - last_person))
 
             try:
                 sender.sendto(
