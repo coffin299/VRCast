@@ -50,20 +50,36 @@ namespace VRCast.Converter.Editor
             // 対象未指定
             if (source == null)
             {
-                return "Avatar GameObject is not set.";
+                return ExporterLoc.T(
+                    "Avatar GameObject is not set.",
+                    "アバターの GameObject が指定されていません。",
+                    "아바타 GameObject가 지정되지 않았습니다.",
+                    "未指定虚拟形象的 GameObject。",
+                    "未指定虛擬形象的 GameObject。");
             }
 
             // ルートに Animator が無いと Humanoid として扱えない
             var animator = source.GetComponent<Animator>();
             if (animator == null || animator.avatar == null)
             {
-                return "Root object must have an Animator with an Avatar.";
+                return ExporterLoc.T(
+                    "Root object must have an Animator with an Avatar.",
+                    "ルートのオブジェクトに、Avatar が設定された Animator が必要です。",
+                    "루트 오브젝트에 Avatar가 설정된 Animator가 필요합니다.",
+                    "根对象需要设置了 Avatar 的 Animator。",
+                    "根物件需要設定了 Avatar 的 Animator。");
             }
 
             // 一時フォルダが既に存在する場合はユーザー資産を消さないよう中断
-            if (AssetDatabase.IsValidFolder($"{TempFolderParent}/{TempFolderName}"))
+            string tempFolder = $"{TempFolderParent}/{TempFolderName}";
+            if (AssetDatabase.IsValidFolder(tempFolder))
             {
-                return $"Temporary folder '{TempFolderParent}/{TempFolderName}' already exists. Remove it and retry.";
+                return ExporterLoc.T(
+                    $"Temporary folder '{tempFolder}' already exists. Remove it and retry.",
+                    $"一時フォルダ「{tempFolder}」が既にあります。削除してからやり直してください。",
+                    $"임시 폴더 '{tempFolder}'가 이미 있습니다. 삭제한 후 다시 시도하세요.",
+                    $"临时文件夹“{tempFolder}”已存在。请删除后重试。",
+                    $"暫存資料夾「{tempFolder}」已存在。請刪除後重試。");
             }
 
             return null;

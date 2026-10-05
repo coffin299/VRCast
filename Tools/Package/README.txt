@@ -20,7 +20,8 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 ■ 書き出しツールの導入（アバターの Unity プロジェクト側）
 1. VCC からアバターの入ったプロジェクトを開きます。
 2. このフォルダの VRCast-Converter.unitypackage をダブルクリック（または Unity にドラッグ＆ドロップ）して「Import」を押します。
-3. メニュー「VRCast」→「Avatar Exporter」で、シーン上のアバターを指定して「Export...」で .vrcaster を保存します。
+3. メニュー「VRCast」→「Avatar Exporter」で、シーン上のアバターを指定して「書き出す...」で .vrcaster を保存します。
+   画面は OS の言語で表示されます（上部の「言語」で切り替えられます）。
 元のアバターは変更しません。Modular Avatar で改変したアバターも、そのまま指定すれば改変後の姿で書き出されます（ベータ版）。
 MA で付けた衣装・小物は、アバターのボーンに付け替えて体に追従させます。
 不要になったら Assets/VRCast/Converter フォルダを削除してください。
@@ -65,6 +66,7 @@ VRCast checks for a new version at startup and shows a notice at the top of the 
 1. Open the project with your avatar from VCC.
 2. Double-click VRCast-Converter.unitypackage in this folder (or drag it into Unity) and click "Import".
 3. Open "VRCast" > "Avatar Exporter", pick your avatar in the scene and click "Export..." to save a .vrcaster file.
+   The window follows your OS language (switch it with "Language" at the top).
 Your original avatar is never modified. Avatars customized with Modular Avatar are exported with the changes applied (beta).
 Outfits and accessories added with MA are attached to the avatar's bones so they follow the body.
 To remove it, delete the Assets/VRCast/Converter folder.
