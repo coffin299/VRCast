@@ -271,11 +271,11 @@
     <tr><th><span class="ja">項目</span><span class="en">Item</span><span class="ko">항목</span><span class="zh-hans">项目</span><span class="zh-hant">項目</span></th>
         <th><span class="ja">内容</span><span class="en">What it does</span><span class="ko">내용</span><span class="zh-hans">说明</span><span class="zh-hant">說明</span></th></tr>
     <tr><td><span class="ja">カメラ</span><span class="en">Camera</span><span class="ko">카메라</span><span class="zh-hans">相机</span><span class="zh-hant">相機</span></td>
-        <td><span class="ja">画角の変更とリセット。右ドラッグで回転、中ドラッグで移動、ホイールでズーム。</span>
-            <span class="en">Field of view and reset. Right-drag to rotate, middle-drag to pan, wheel to zoom.</span>
-            <span class="ko">화각 변경과 초기화. 오른쪽 드래그로 회전, 가운데 드래그로 이동, 휠로 확대·축소.</span>
-            <span class="zh-hans">更改与重置视野。右键拖动旋转，中键拖动平移，滚轮缩放。</span>
-            <span class="zh-hant">變更與重設視野。右鍵拖曳旋轉，中鍵拖曳平移，滾輪縮放。</span></td></tr>
+        <td><span class="ja">画角の変更とリセット。右ドラッグで回転、中ドラッグで移動、ホイールでズーム。カメラの位置と画角はアバターごとに記憶され、再起動後も戻ります。</span>
+            <span class="en">Field of view and reset. Right-drag to rotate, middle-drag to pan, wheel to zoom. The camera position and field of view are remembered for each avatar, also after restarting.</span>
+            <span class="ko">화각 변경과 초기화. 오른쪽 드래그로 회전, 가운데 드래그로 이동, 휠로 확대·축소. 카메라 위치와 화각은 아바타마다 기억되며, 다시 시작한 후에도 유지됩니다.</span>
+            <span class="zh-hans">更改与重置视野。右键拖动旋转，中键拖动平移，滚轮缩放。相机位置和视野会按虚拟形象分别记住，重启后也会恢复。</span>
+            <span class="zh-hant">變更與重設視野。右鍵拖曳旋轉，中鍵拖曳平移，滾輪縮放。相機位置和視野會依虛擬形象分別記住，重新啟動後也會恢復。</span></td></tr>
     <tr><td><span class="ja">背景</span><span class="en">Background</span><span class="ko">배경</span><span class="zh-hans">背景</span><span class="zh-hant">背景</span></td>
         <td><span class="ja">背景色（既定はベージュ）と透過の切り替え。透過中も VRCast の画面では背景色が見えますが、OBS のゲームキャプチャでは抜けます。</span>
             <span class="en">Background color (beige by default) and transparency. While transparent, the VRCast window still shows the color but OBS Game Capture removes it.</span>
@@ -412,6 +412,16 @@
         <span class="ko"><span class="ui">저부하 모드</span> (기본은 켜짐): 화면을 30fps (끄면 60fps)로 제한하고 내장 트래커의 처리도 가볍게 해 게임이나 OBS와 함께 쓸 때의 부하를 줄입니다. 움직임의 부드러움을 우선하려면 끕니다.</span>
         <span class="zh-hans"><span class="ui">低负载模式</span>（默认开启）：将画面限制为 30fps（关闭时为 60fps），并减轻内置追踪器的处理，降低与游戏或 OBS 同时使用时的负载。如更重视动作流畅度，请关闭。</span>
         <span class="zh-hant"><span class="ui">低負載模式</span>（預設開啟）：將畫面限制為 30fps（關閉時為 60fps），並減輕內建追蹤器的處理，降低與遊戲或 OBS 同時使用時的負載。如更重視動作流暢度，請關閉。</span></li>
+    <li><span class="ja"><span class="ui">プロセスの優先度</span>（既定は「通常」）: VRCast 本体と同梱トラッカーの優先度をまとめて変えます（すぐ反映）。ゲーム中にトラッキングがカクつくときは上げてください。「高」にすると他のアプリが重くなることがあります。</span>
+        <span class="en"><span class="ui">Process priority</span> (Normal by default): changes the priority of VRCast and the bundled tracker together (applied right away). Raise it if tracking stutters during games. High can make other apps slower.</span>
+        <span class="ko"><span class="ui">프로세스 우선순위</span> (기본은 「보통」): VRCast 본체와 내장 트래커의 우선순위를 함께 바꿉니다 (바로 적용). 게임 중에 트래킹이 끊기면 올려 주세요. 「높음」으로 하면 다른 앱이 느려질 수 있습니다.</span>
+        <span class="zh-hans"><span class="ui">进程优先级</span>（默认“正常”）：同时更改 VRCast 本体和内置追踪器的优先级（立即生效）。游戏时追踪卡顿可调高。设为“高”可能使其他应用变慢。</span>
+        <span class="zh-hant"><span class="ui">處理程序優先順序</span>（預設「正常」）：同時變更 VRCast 本體和內建追蹤器的優先順序（立即生效）。遊戲時追蹤卡頓可調高。設為「高」可能使其他應用程式變慢。</span></li>
+    <li><span class="ja"><span class="ui">描画に使う GPU</span>（既定は「自動」）: 自動 / 省電力 / 高パフォーマンス、または GPU を一覧から直接選べます。再起動すると反映されます（<span class="ui">今すぐ再起動</span> ボタン）。OBS のキャプチャや仮想カメラを使うときは、OBS と同じ GPU にすると最も軽くなります。同梱トラッカーは CPU で動くので、この設定は関係しません。</span>
+        <span class="en"><span class="ui">GPU for drawing</span> (Auto by default): choose Auto / Power saving / High performance, or pick a GPU from the list. It applies after a restart (<span class="ui">Restart now</span> button). For OBS capture or the virtual camera, using the same GPU as OBS is lightest. The bundled trackers run on the CPU and are not affected.</span>
+        <span class="ko"><span class="ui">렌더링에 사용할 GPU</span> (기본은 「자동」): 자동 / 절전 / 고성능을 고르거나 목록에서 GPU를 직접 고를 수 있습니다. 다시 시작하면 적용됩니다 (<span class="ui">지금 다시 시작</span> 버튼). OBS 캡처나 가상 카메라를 쓸 때는 OBS와 같은 GPU가 가장 가볍습니다. 내장 트래커는 CPU로 동작하므로 이 설정과 관계없습니다.</span>
+        <span class="zh-hans"><span class="ui">渲染使用的 GPU</span>（默认“自动”）：可选择自动 / 节能 / 高性能，或从列表中直接选择 GPU。重启后生效（<span class="ui">立即重启</span> 按钮）。使用 OBS 捕获或虚拟摄像头时，与 OBS 使用同一 GPU 最省资源。内置追踪器在 CPU 上运行，不受此设置影响。</span>
+        <span class="zh-hant"><span class="ui">繪製使用的 GPU</span>（預設「自動」）：可選擇自動 / 省電 / 高效能，或從清單中直接選擇 GPU。重新啟動後生效（<span class="ui">立即重新啟動</span> 按鈕）。使用 OBS 擷取或虛擬攝影機時，與 OBS 使用同一 GPU 最省資源。內建追蹤器在 CPU 上執行，不受此設定影響。</span></li>
     <li><span class="ja"><span class="ui">アップデート</span>: 起動時に新しいバージョンがあるかを確認し、あればパネル上部に通知します（<span class="ui">GitHub からダウンロード</span> / <span class="ui">BOOTH からダウンロード</span> / <span class="ui">このバージョンは通知しない</span>）。
         確認は最新のバージョン番号を読むためだけに Web サイト（coffin299.github.io）へ接続します。OFF にもできます。</span>
         <span class="en"><span class="ui">Updates</span>: checks for a new version at startup and shows a notice at the top of the panel if there is one (<span class="ui">Download from GitHub</span> / <span class="ui">Download from BOOTH</span> / <span class="ui">Skip this version</span>).
@@ -529,11 +539,11 @@
   <p class="zh-hant">以系統管理員身分執行 VRCast 時，Windows 會阻止拖放。請正常啟動，或使用 <span class="ui">選擇檔案...</span>。</p>
 
   <h3><span class="ja">ゲームや OBS と一緒に使うとトラッキングがカクつく</span><span class="en">Tracking stutters while running games or OBS</span><span class="ko">게임이나 OBS와 함께 쓰면 트래킹이 끊긴다</span><span class="zh-hans">与游戏或 OBS 同时使用时追踪卡顿</span><span class="zh-hant">與遊戲或 OBS 同時使用時追蹤卡頓</span></h3>
-  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。</p>
-  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Settings</span> tab is on (it is on by default). If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load.</p>
-  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다.</p>
-  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。</p>
-  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。</p>
+  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
+  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Settings</span> tab is on (it is on by default). If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load. Setting <span class="ui">Process priority</span> to Above normal can also help.</p>
+  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
+  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
+  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
 
   <h3><span class="ja">口パクしない</span><span class="en">Lip sync does not move</span><span class="ko">립싱크가 안 된다</span><span class="zh-hans">口型不动</span><span class="zh-hant">嘴型不動</span></h3>
   <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
