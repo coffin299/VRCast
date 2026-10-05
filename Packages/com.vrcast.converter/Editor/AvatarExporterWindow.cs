@@ -42,7 +42,9 @@ namespace VRCast.Converter.Editor
                 "Only Unity built-in components (Transform, Animator, Renderers, MeshFilter) are exported. " +
                 "VRChat components, scripts and the Animator Controller are removed from the exported copy. " +
                 "The FX layer's default state (toggles etc.) is baked into the copy before removal. " +
-                "If NDMF is installed, Modular Avatar and other NDMF tools are applied to the copy first.",
+                "If NDMF is installed, Modular Avatar and other NDMF tools are applied to the copy first. " +
+                "Outfits and accessories set up with MA Merge Armature / Bone Proxy that were not merged " +
+                "are attached to the avatar's bones by VRCast so that they follow the avatar.",
                 MessageType.Info);
 
             using (new EditorGUI.DisabledScope(error != null))
@@ -80,6 +82,7 @@ namespace VRCast.Converter.Editor
                     $"Size: {report.Manifest.bundleSize / (1024f * 1024f):F1} MB\n" +
                     $"Humanoid: {report.IsHumanoid}\n" +
                     $"NDMF (Modular Avatar) applied: {report.NdmfApplied}\n" +
+                    $"Outfits / accessories attached by VRCast: {report.ModularAvatarFallbackFixes}\n" +
                     $"Baked FX default clips: {report.BakedFxClips}\n" +
                     $"Expressions: {report.ExpressionCount}\n" +
                     $"Lip sync: {report.LipSyncMode}, blink: {report.HasBlink}, wink: {report.HasWink}\n" +

@@ -29,6 +29,34 @@ namespace VRCast.Converter.Editor
         }
 
         /// <summary>
+        /// public インスタンスプロパティの値を返す。対象が null・プロパティ無し・getter が例外なら null。
+        /// </summary>
+        public static object GetProperty(object target, string propertyName)
+        {
+            // Unity の偽 null も含めて null として扱う
+            if (target == null || (target is Object unityObject && unityObject == null))
+            {
+                return null;
+            }
+
+            PropertyInfo property = target.GetType().GetProperty(propertyName, InstanceFields);
+            if (property == null || !property.CanRead)
+            {
+                return null;
+            }
+
+            try
+            {
+                return property.GetValue(target);
+            }
+            catch (TargetInvocationException)
+            {
+                // 外部ツールの getter 内部の失敗は「値なし」として扱う
+                return null;
+            }
+        }
+
+        /// <summary>
         /// float フィールドを返す。無ければ既定値。
         /// </summary>
         public static float GetFloat(object target, string fieldName, float fallback)
