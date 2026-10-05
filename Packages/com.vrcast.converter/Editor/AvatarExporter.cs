@@ -38,6 +38,7 @@ namespace VRCast.Converter.Editor
             public int PhysBoneCount;
             public int ConstraintCount;
             public bool NdmfApplied;
+            public int ModularAvatarFallbackFixes;
             public ComponentStripper.Result Strip;
         }
 
@@ -98,8 +99,15 @@ namespace VRCast.Converter.Editor
                 clone.name = source.name;
                 clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
 
+                // NDMF が MA コンポーネントを消す前に、衣装・小物の統合先を控える
+                ModularAvatarFallback.Plan maPlan = ModularAvatarFallback.Capture(clone);
+
                 // Modular Avatar 等の改変を VRChat のアップロード時と同じく複製へ適用（NDMF が無ければ何もしない）
                 report.NdmfApplied = NdmfProcessor.Process(clone);
+
+                // NDMF で統合されなかった衣装・小物のボーンをアバターのボーンへ付け替え、追従させる
+                ModularAvatarFallback.Result maFallback = ModularAvatarFallback.Apply(maPlan);
+                report.ModularAvatarFallbackFixes = maFallback.FixedCount;
 
                 // 以降は改変適用後の複製から読む（マージ後の FX・移動後のボーンを反映するため）
                 Component descriptor = VrcDescriptorReader.FindDescriptor(clone);
@@ -125,7 +133,7 @@ namespace VRCast.Converter.Editor
                 if (fx != null)
                 {
                     report.BakedFxClips = FxDefaultStateBaker.Bake(
-                        clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor));
+                        clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor), maFallback.MovedObjects);
                 }
 
                 // FX から表情プリセットを抽出

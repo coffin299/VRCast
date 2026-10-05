@@ -28,8 +28,13 @@ namespace VRCast.Converter.Editor
 
         /// <summary>
         /// 焼き込んだアニメーションクリップ数を返す。
+        /// movedObjects は書き出し中に付け替えたオブジェクト（元のパス → 移動後）で、古いパスのカーブを読み替える。
         /// </summary>
-        public static int Bake(GameObject target, AnimatorController controller, IReadOnlyDictionary<string, float> overrides)
+        public static int Bake(
+            GameObject target,
+            AnimatorController controller,
+            IReadOnlyDictionary<string, float> overrides,
+            IReadOnlyDictionary<string, Transform> movedObjects = null)
         {
             // コントローラーのパラメーター既定値に Expression Parameters の既定値を上書き
             Dictionary<string, float> values = BuildParameterValues(controller, overrides);
@@ -57,7 +62,7 @@ namespace VRCast.Converter.Editor
             // レイヤー順に適用（後のレイヤーが優先される Animator の挙動に合わせる）
             foreach (AnimationClip clip in clips)
             {
-                ApplyClipAtStart(target, clip);
+                ApplyClipAtStart(target, clip, movedObjects);
             }
 
             return clips.Count;
@@ -68,7 +73,8 @@ namespace VRCast.Converter.Editor
         /// SampleAnimation は Humanoid のマッスルを既定ポーズへ戻し、Constraint 前提の Transform 値も
         /// 書き込んでしまうため使わない。Transform・マッスル・マテリアルプロパティは対象外。
         /// </summary>
-        private static void ApplyClipAtStart(GameObject root, AnimationClip clip)
+        private static void ApplyClipAtStart(
+            GameObject root, AnimationClip clip, IReadOnlyDictionary<string, Transform> movedObjects)
         {
             // 数値カーブ: GameObject 有効状態 / Renderer 有効状態 / BlendShape
             foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(clip))
@@ -79,7 +85,7 @@ namespace VRCast.Converter.Editor
                     continue;
                 }
 
-                ApplyFloat(AnimationUtility.GetAnimatedObject(root, binding), binding.propertyName, curve.Evaluate(0f));
+                ApplyFloat(ResolveAnimatedObject(root, binding, movedObjects), binding.propertyName, curve.Evaluate(0f));
             }
 
             // 参照カーブ: マテリアル差し替え
@@ -91,8 +97,54 @@ namespace VRCast.Converter.Editor
                     continue;
                 }
 
-                ApplyMaterial(AnimationUtility.GetAnimatedObject(root, binding), binding.propertyName, keys[0].value as Material);
+                ApplyMaterial(ResolveAnimatedObject(root, binding, movedObjects), binding.propertyName, keys[0].value as Material);
             }
+        }
+
+        private static Object ResolveAnimatedObject(
+            GameObject root, EditorCurveBinding binding, IReadOnlyDictionary<string, Transform> movedObjects)
+        {
+            // 通常はパスどおりに解決
+            Object animated = AnimationUtility.GetAnimatedObject(root, binding);
+            if (animated != null || movedObjects == null)
+            {
+                return animated;
+            }
+
+            // 付け替え前のパスで書かれたカーブは、最も深く一致する移動済みオブジェクトから残りのパスを辿る
+            Transform best = null;
+            string rest = null;
+            int bestLength = -1;
+            foreach (KeyValuePair<string, Transform> pair in movedObjects)
+            {
+                if (pair.Value == null || pair.Key.Length <= bestLength)
+                {
+                    continue;
+                }
+
+                if (binding.path == pair.Key)
+                {
+                    best = pair.Value;
+                    rest = string.Empty;
+                    bestLength = pair.Key.Length;
+                }
+                else if (binding.path.StartsWith(pair.Key + "/", System.StringComparison.Ordinal))
+                {
+                    best = pair.Value;
+                    rest = binding.path.Substring(pair.Key.Length + 1);
+                    bestLength = pair.Key.Length;
+                }
+            }
+
+            // 一致が無い・残りのパスが見つからなければ解決できない
+            Transform resolved = best == null ? null : (rest.Length == 0 ? best : best.Find(rest));
+            if (resolved == null)
+            {
+                return null;
+            }
+
+            // GameObject 自体のカーブ（有効状態）とコンポーネントのカーブを区別
+            return binding.type == typeof(GameObject) ? resolved.gameObject : (Object)resolved.GetComponent(binding.type);
         }
 
         private static void ApplyFloat(Object animated, string propertyName, float value)

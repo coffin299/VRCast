@@ -76,6 +76,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 - VRChat コンポーネント・スクリプト・Animator Controller は書き出し用の複製から除去される（元のアバターは変更されない）。
 - 【ベータ版・暫定対応】Modular Avatar など NDMF ベースの非破壊改変ツールが入っている場合、除去の前に複製へ改変を適用する（VRChat へのアップロード時と同じ処理）。
   衣装の統合（Merge Armature）や追加した FX レイヤー（Merge Animator）も反映される。書き出し中に生成したアセットは終了後に削除する。
+  NDMF の実行前に MA Merge Armature / Bone Proxy の設定を控え、NDMF で統合されなかった衣装・小物（NDMF 未導入や MA 内部の失敗）は、
+  VRCast がボーン名の対応でアバターのボーンの子へ付け替えて追従させる（付け替えで変わったパスは FX の焼き込み時に読み替える）。
 - 除去前に、FX レイヤーの初期状態（Expression Parameters の既定値で到達するステート）から、
   小物の表示 ON/OFF・BlendShape・マテリアル差し替えを焼き込む（ポーズと Transform は変更しない。近似処理のため完全一致ではない）。
 - FX 内の BlendShape だけを動かすクリップ（表情クリップ）を表情プリセットとして `metadata/expressions.json` に書き出す。
