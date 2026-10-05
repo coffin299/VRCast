@@ -201,29 +201,40 @@ namespace VRCast.Converter.Editor
                 return english ? en : T(en, ja, ko, zhHans, zhHant);
             }
 
+            // 補間文字列の {} 内で改行できない（C# 9）ため、項目名は先に変数へ取り出す
+            string exported = L("Exported", "出力先", "출력 위치", "输出位置", "輸出位置");
+            string size = L("Size", "サイズ", "크기", "大小", "大小");
+            string ndmf = L("NDMF (Modular Avatar) applied", "NDMF（Modular Avatar）の適用", "NDMF(Modular Avatar) 적용",
+                "已应用 NDMF（Modular Avatar）", "已套用 NDMF（Modular Avatar）");
+            string attached = L("Outfits / accessories attached by VRCast", "VRCast が付け替えた衣装・小物",
+                "VRCast가 다시 붙인 의상·소품", "VRCast 重新挂接的服装和小物", "VRCast 重新掛接的服裝和小物");
+            string baked = L("Baked FX default clips", "焼き込んだ FX 初期状態のクリップ", "반영한 FX 초기 상태 클립",
+                "已烘焙的 FX 初始状态剪辑", "已烘焙的 FX 初始狀態剪輯");
+            string expressions = L("Expressions", "表情", "표정", "表情", "表情");
+            string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
+            string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");
+            string wink = L("wink", "ウインク", "윙크", "眨单眼", "眨單眼");
+            string removed = L("Removed components", "取り除いたコンポーネント", "제거한 컴포넌트", "已移除的组件",
+                "已移除的元件");
+            string missing = L("missing scripts", "Missing Script", "Missing Script", "Missing Script",
+                "Missing Script");
+            string editorOnly = L("EditorOnly objects", "EditorOnly オブジェクト", "EditorOnly 오브젝트", "EditorOnly 对象",
+                "EditorOnly 物件");
+
             return
-                $"{L("Exported", "出力先", "출력 위치", "输出位置", "輸出位置")}: {report.OutputPath}\n" +
-                $"{L("Size", "サイズ", "크기", "大小", "大小")}: {report.Manifest.bundleSize / (1024f * 1024f):F1} MB\n" +
+                $"{exported}: {report.OutputPath}\n" +
+                $"{size}: {report.Manifest.bundleSize / (1024f * 1024f):F1} MB\n" +
                 $"Humanoid: {report.IsHumanoid}\n" +
-                $"{L("NDMF (Modular Avatar) applied", "NDMF（Modular Avatar）の適用", "NDMF(Modular Avatar) 적용",
-                    "已应用 NDMF（Modular Avatar）", "已套用 NDMF（Modular Avatar）")}: {report.NdmfApplied}\n" +
-                $"{L("Outfits / accessories attached by VRCast", "VRCast が付け替えた衣装・小物",
-                    "VRCast가 다시 붙인 의상·소품", "VRCast 重新挂接的服装和小物",
-                    "VRCast 重新掛接的服裝和小物")}: {report.ModularAvatarFallbackFixes}\n" +
-                $"{L("Baked FX default clips", "焼き込んだ FX 初期状態のクリップ", "반영한 FX 초기 상태 클립",
-                    "已烘焙的 FX 初始状态剪辑", "已烘焙的 FX 初始狀態剪輯")}: {report.BakedFxClips}\n" +
-                $"{L("Expressions", "表情", "표정", "表情", "表情")}: {report.ExpressionCount}\n" +
-                $"{L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步")}: {report.LipSyncMode}, " +
-                $"{L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼")}: {report.HasBlink}, " +
-                $"{L("wink", "ウインク", "윙크", "眨单眼", "眨單眼")}: {report.HasWink}\n" +
+                $"{ndmf}: {report.NdmfApplied}\n" +
+                $"{attached}: {report.ModularAvatarFallbackFixes}\n" +
+                $"{baked}: {report.BakedFxClips}\n" +
+                $"{expressions}: {report.ExpressionCount}\n" +
+                $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +
                 $"PhysBones: {report.PhysBoneCount}\n" +
                 $"Constraints: {report.ConstraintCount}\n" +
-                $"{L("Removed components", "取り除いたコンポーネント", "제거한 컴포넌트", "已移除的组件",
-                    "已移除的元件")}: {report.Strip.RemovedComponents}, " +
-                $"{L("missing scripts", "Missing Script", "Missing Script", "Missing Script",
-                    "Missing Script")}: {report.Strip.RemovedMissingScripts}, " +
-                $"{L("EditorOnly objects", "EditorOnly オブジェクト", "EditorOnly 오브젝트", "EditorOnly 对象",
-                    "EditorOnly 物件")}: {report.Strip.RemovedEditorOnlyObjects}";
+                $"{removed}: {report.Strip.RemovedComponents}, " +
+                $"{missing}: {report.Strip.RemovedMissingScripts}, " +
+                $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}";
         }
     }
 }
