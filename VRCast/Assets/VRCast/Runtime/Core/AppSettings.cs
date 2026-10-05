@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace VRCast.Core
@@ -56,6 +57,9 @@ namespace VRCast.Core
         public const float MinUiScale = 0.75f;
         public const float MaxUiScale = 2f;
 
+        // カメラの視点を覚えておくアバターの数の上限（設定ファイルが際限なく大きくならないように）
+        public const int MaxAvatarCameras = 50;
+
         // テーマごとの背景色の既定値（ライト = 目に優しいベージュ、ダーク = パネルより少し明るい暗い茶系の灰色）
         public static readonly Color LightBackgroundColor = new Color(0.90f, 0.86f, 0.78f, 1f);
         public static readonly Color DarkBackgroundColor = new Color(0.17f, 0.16f, 0.15f, 1f);
@@ -64,6 +68,9 @@ namespace VRCast.Core
         public int windowWidth = 1280;
         public int windowHeight = 720;
         public string lastAvatarPath = string.Empty;
+
+        // アバターごとのカメラの視点（古い順。上限を超えたら最も長く使っていないものから捨てる）
+        public List<AvatarCameraEntry> avatarCameras = new List<AvatarCameraEntry>();
 
         // 操作パネルの表示言語と拡大率
         public UiLanguage uiLanguage = UiLanguage.Auto;
@@ -79,6 +86,13 @@ namespace VRCast.Core
         // 軽量モード（描画のフレームレートとトラッカーの処理回数を下げ、ゲーム・OBS と同時に使うときの負荷を減らす）。
         // 配信ではゲーム・OBS と併用することが多いため既定は ON
         public bool lowLoadMode = true;
+
+        // VRCast 本体と同梱トラッカーのプロセスの優先度（両方に同じ値を使う）
+        public ProcessPriority processPriority = ProcessPriority.Normal;
+
+        // 描画に使う GPU（次回起動から反映）。gpuAdapter に GPU 名があれば直接指定し、gpuPreference より優先する
+        public GpuPreference gpuPreference = GpuPreference.Auto;
+        public string gpuAdapter = string.Empty;
 
         // 背景色（既定はライトテーマのベージュ）。非透過時は不透明で使い、透過時は alpha 0 のまま色だけ塗る
         // （ウィンドウ上では色が見え、OBS のゲームキャプチャでは抜ける）
@@ -159,7 +173,61 @@ namespace VRCast.Core
         }
 
         /// <summary>
-        /// 全ての設定を既定値に戻す（ウィンドウサイズと最後に開いたアバターは保持）。
+        /// アバターのカメラの視点を探す（パスの大文字・小文字は区別しない）。無ければ false。
+        /// </summary>
+        public bool TryGetAvatarCamera(string avatarPath, out CameraPose pose)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            pose = index >= 0 ? avatarCameras[index].pose : default;
+            return index >= 0;
+        }
+
+        /// <summary>
+        /// アバターのカメラの視点を記録する（最新として末尾へ移し、上限を超えたら古いものから捨てる）。
+        /// </summary>
+        public void SetAvatarCamera(string avatarPath, CameraPose pose)
+        {
+            // パスが無い・壊れた値は記録しない
+            if (string.IsNullOrEmpty(avatarPath) || !pose.IsFinite)
+            {
+                return;
+            }
+
+            // 既存の記録を外して末尾に追加
+            int index = FindAvatarCamera(avatarPath);
+            if (index >= 0)
+            {
+                avatarCameras.RemoveAt(index);
+            }
+
+            avatarCameras.Add(new AvatarCameraEntry { avatarPath = avatarPath, pose = pose });
+            TrimAvatarCameras();
+        }
+
+        private void TrimAvatarCameras()
+        {
+            // 上限を超えた分を古い順（先頭）から捨てる
+            if (avatarCameras.Count > MaxAvatarCameras)
+            {
+                avatarCameras.RemoveRange(0, avatarCameras.Count - MaxAvatarCameras);
+            }
+        }
+
+        private int FindAvatarCamera(string avatarPath)
+        {
+            // パスが無ければ見つからない
+            if (string.IsNullOrEmpty(avatarPath))
+            {
+                return -1;
+            }
+
+            // Windows のパスは大文字・小文字を区別しない
+            return avatarCameras.FindIndex(
+                entry => string.Equals(entry.avatarPath, avatarPath, StringComparison.OrdinalIgnoreCase));
+        }
+
+        /// <summary>
+        /// 全ての設定を既定値に戻す（ウィンドウサイズ・最後に開いたアバター・アバターごとのカメラの視点は保持）。
         /// 各機能が同じインスタンスを参照しているため、置き換えずに中身を上書きする。
         /// </summary>
         public void ResetToDefaults()
@@ -168,6 +236,7 @@ namespace VRCast.Core
             int width = windowWidth;
             int height = windowHeight;
             string avatarPath = lastAvatarPath;
+            List<AvatarCameraEntry> cameras = avatarCameras;
 
             // 既定値で上書き
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(new AppSettings()), this);
@@ -176,6 +245,7 @@ namespace VRCast.Core
             windowWidth = width;
             windowHeight = height;
             lastAvatarPath = avatarPath;
+            avatarCameras = cameras;
         }
 
         /// <summary>
@@ -189,6 +259,11 @@ namespace VRCast.Core
             windowHeight = Mathf.Max(MinWindowSize, windowHeight);
             // JSON に null が入っていた場合に備えて空文字へ正規化
             lastAvatarPath ??= string.Empty;
+            // カメラの視点は、パスの無いもの・壊れた値を捨て、上限を超えた古いものも捨てる
+            avatarCameras ??= new List<AvatarCameraEntry>();
+            avatarCameras.RemoveAll(entry => entry == null || string.IsNullOrEmpty(entry.avatarPath) || !entry.pose.IsFinite);
+            TrimAvatarCameras();
+
             // 未知の表示言語は OS 準拠へ
             if (!Enum.IsDefined(typeof(UiLanguage), uiLanguage))
             {
@@ -199,6 +274,20 @@ namespace VRCast.Core
             uiScale = Mathf.Clamp(uiScale, MinUiScale, MaxUiScale);
             // null の通知しないバージョンは未設定扱いの空文字へ
             skippedVersion ??= string.Empty;
+            // 未知の優先度（リアルタイム等の手編集）は通常へ
+            if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))
+            {
+                processPriority = ProcessPriority.Normal;
+            }
+
+            // 未知の GPU の優先設定は Windows に任せる
+            if (!Enum.IsDefined(typeof(GpuPreference), gpuPreference))
+            {
+                gpuPreference = GpuPreference.Auto;
+            }
+
+            // null の GPU 名は直接指定なしの空文字へ
+            gpuAdapter ??= string.Empty;
             // ライト強度は 0〜上限に制限
             lightIntensity = Mathf.Clamp(lightIntensity, 0f, MaxLightIntensity);
             // 仰角は真上〜真下の範囲に制限

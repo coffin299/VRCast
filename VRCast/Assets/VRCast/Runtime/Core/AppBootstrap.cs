@@ -1,5 +1,6 @@
 using System.IO;
 using UnityEngine;
+using VRCast.Platform;
 
 namespace VRCast.Core
 {
@@ -31,6 +32,12 @@ namespace VRCast.Core
             // 起動直後のトラッカー起動などの詳細ログも残せるよう、パネルの初期化を待たずに反映する
             LogBuffer.DetailEnabled = Settings.detailedLogging;
 
+            // 指定の GPU で起動し直す場合は、この起動では保存・ウィンドウ変更をしない（新しい起動に任せる）
+            if (GpuSelection.RelaunchIfNeeded(Settings))
+            {
+                return;
+            }
+
             // 初回起動時は既定値でファイルを作成し、終了処理に頼らず編集可能な状態にする
             if (!File.Exists(_store.FilePath))
             {
@@ -46,6 +53,18 @@ namespace VRCast.Core
             // 終了時に保存する。Editor の Domain Reload 無効時の二重登録を防ぐため一度外す
             Application.quitting -= OnQuitting;
             Application.quitting += OnQuitting;
+        }
+
+        /// <summary>
+        /// 現在の設定をすぐに保存する（終了を待たずに再起動する前など）。
+        /// </summary>
+        public static void Save()
+        {
+            // 未初期化の場合は保存対象が無い
+            if (_store != null && Settings != null)
+            {
+                _store.Save(Settings);
+            }
         }
 
         private static void OnQuitting()

@@ -111,7 +111,9 @@ namespace VRCast.UI
                 $"VRCast {Application.version} / Unity {Application.unityVersion}",
                 $"OS: {SystemInfo.operatingSystem}",
                 $"CPU: {SystemInfo.processorType} ({SystemInfo.processorCount})",
-                $"GPU: {SystemInfo.graphicsDeviceName} ({SystemInfo.graphicsDeviceType})",
+                $"GPU: {SystemInfo.graphicsDeviceName} ({SystemInfo.graphicsDeviceType}), " +
+                    $"setting {(_settings.gpuAdapter.Length > 0 ? _settings.gpuAdapter : _settings.gpuPreference.ToString())}",
+                $"Process priority: {_settings.processPriority}",
                 $"Tracking: {_settings.trackingSource}, " +
                     (_settings.trackingEnabled ? "enabled" : "disabled") +
                     (_settings.lowLoadMode ? ", low load" : string.Empty),

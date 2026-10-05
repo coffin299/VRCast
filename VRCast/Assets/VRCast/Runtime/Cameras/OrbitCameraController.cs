@@ -1,4 +1,5 @@
 using UnityEngine;
+using VRCast.Core;
 
 namespace VRCast.Cameras
 {
@@ -50,6 +51,36 @@ namespace VRCast.Cameras
         {
             get => _camera.fieldOfView;
             set => _camera.fieldOfView = Mathf.Clamp(value, 1f, 120f);
+        }
+
+        /// <summary>
+        /// 現在の視点（注視点・距離・向き・画角）。
+        /// </summary>
+        public CameraPose Pose => new CameraPose
+        {
+            target = _target,
+            distance = _distance,
+            yaw = _yaw,
+            pitch = _pitch,
+            fieldOfView = FieldOfView,
+        };
+
+        /// <summary>
+        /// 保存しておいた視点に合わせる（範囲外の値は補正、壊れた値は無視）。Reset の戻り先は変えない。
+        /// </summary>
+        public void SetPose(CameraPose pose)
+        {
+            if (!pose.IsFinite)
+            {
+                return;
+            }
+
+            FieldOfView = pose.fieldOfView;
+            _target = pose.target;
+            _distance = Mathf.Clamp(pose.distance, MinDistance, MaxDistance);
+            _yaw = pose.yaw;
+            _pitch = Mathf.Clamp(pose.pitch, MinPitch, MaxPitch);
+            Apply();
         }
 
         private void Awake()
