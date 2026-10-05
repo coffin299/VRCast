@@ -10,11 +10,21 @@ Newest first. Each version is written in Japanese, then English.
 - Modular Avatar で付けた衣装や小物が体に追従せず、その場に残ってしまうことがある問題を修正
 - Unity の書き出しツールの画面を日本語・韓国語・中国語（簡体字・繁体字）に対応（既定は OS の言語、画面上部で切り替え可能）
 - Unity の書き出しツールの画面上部とタブにアプリアイコンを表示
+- カメラが認識されないときなどの原因を調べられる「デバッグログ」タブを追加（INFO / WARN / ERROR やカテゴリ・文字列で絞り込み、新しい順 / 古い順の切り替え、環境と一緒にコピー可能）
+- デバッグログに MediaPipe / OpenSeeFace の状態を記録する機能を追加（トラッカーの起動・終了理由、データの途絶や入力元の設定違いの警告、カメラの実際の解像度など）
+- 「詳細ログ」スイッチを追加（ON の間だけ、受信の統計や推定にかかる時間などを DEBUG として記録）
+- 同じログが続いたときは 1 行にまとめ、トラッカーの出力が多すぎるときは間引くようにして、ログ採取の負荷を軽減
+- 配布 zip の書き出しツールを本体とは別の「VRCast-Converter」フォルダに分け、ファイル名にバージョンを記載（アバターのプロジェクトにインポートするものだと分かる説明ファイルも同梱）
 
 [English]
 - Fixed outfits and accessories added with Modular Avatar sometimes staying in place instead of following the body
 - The Unity exporter window is now available in Japanese, Korean and Chinese (Simplified / Traditional) (follows the OS language by default; switch it at the top of the window)
 - The Unity exporter window now shows the app icon in its header and tab
+- Added a "Debug log" tab to look into problems such as the camera not being detected (filter by INFO / WARN / ERROR, category or text, newest or oldest first, and copy together with your environment)
+- Added MediaPipe / OpenSeeFace status to the debug log (why the tracker started or stopped, warnings when data stops or the input source looks wrong, the camera's actual resolution, and more)
+- Added a "Detailed logging" switch that records receive statistics and inference times as DEBUG while it is on
+- Reduced the cost of logging by merging repeated lines and thinning out very frequent tracker output
+- Moved the exporter in the zip to its own "VRCast-Converter" folder, separate from the app, with the version in its file name (plus a note file saying it goes into your avatar project)
 
 ■ 1.2.0 (2026-10-05)
 

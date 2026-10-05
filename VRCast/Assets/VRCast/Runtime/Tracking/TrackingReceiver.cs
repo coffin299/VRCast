@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Sockets;
+using System.Text;
 using UnityEngine;
 using VRCast.Core;
 
@@ -42,6 +43,39 @@ namespace VRCast.Tracking
         private int _framesThisSecond;
         private float _rateWindowStart;
         private int _framesPerSecond;
+
+        // 診断: 受信統計を詳細ログへ出す間隔（秒）、途絶を警告するまでの秒数、不正パケットの警告の最短間隔（秒）
+        private const float SummaryInterval = 5f;
+        private const float SilenceWarningSeconds = 3f;
+        private const float InvalidWarningInterval = 10f;
+
+        // 診断: 顔を見失ったと記録するまでの秒数
+        private const float FaceLostSeconds = 1f;
+
+        // 不正パケットの警告に添える先頭部分の最大文字数
+        private const int PreviewLength = 80;
+
+        // 診断: 集計期間内の件数（パケット・不正・顔・腕・左手・右手）とバイト数。整数の加算だけにして毎パケットの負荷を抑える
+        private int _statPackets;
+        private int _statInvalid;
+        private int _statFaces;
+        private int _statArms;
+        private int _statLeftHands;
+        private int _statRightHands;
+        private long _statBytes;
+        private float _statStart;
+
+        // 診断: データが届いている状態か・最後の受信時刻・顔が映っている状態か・次に不正パケットを警告してよい時刻
+        private bool _receiving;
+        private float _lastPacketTime = float.NegativeInfinity;
+        private bool _faceVisible;
+        private float _nextInvalidWarningTime;
+
+        // 診断: 待ち受けを始めてから一度もデータが来ないことを警告するまでの秒数と、待ち受け開始時刻・受信したか・警告済みか
+        private const float NoDataWarningSeconds = 15f;
+        private float _listenStart;
+        private bool _receivedSinceOpen;
+        private bool _warnedNoData;
 
         public string Status { get; private set; } = "Disabled";
 
@@ -99,6 +133,7 @@ namespace VRCast.Tracking
             {
                 Receive();
                 UpdateStatus();
+                UpdateDiagnostics();
             }
         }
 
@@ -114,6 +149,9 @@ namespace VRCast.Tracking
                 _socket.Bind(new IPEndPoint(IPAddress.Loopback, port));
                 _boundPort = port;
                 _boundSource = source;
+                _listenStart = Time.unscaledTime;
+                _receivedSinceOpen = false;
+                _warnedNoData = false;
                 Status = $"Listening on 127.0.0.1:{port}";
                 VRCastLog.Info(LogCategory, $"{Status} ({source})");
             }
@@ -134,9 +172,26 @@ namespace VRCast.Tracking
                 {
                     // 1 パケット受信して入力元の形式で解析（不正なものは捨てる）
                     int length = _socket.ReceiveFrom(_buffer, ref remote);
+                    _statPackets++;
+                    _statBytes += length;
+                    _lastPacketTime = Time.unscaledTime;
+
+                    // 途絶後・待ち受け開始後の最初のパケットだけ送信元を記録（毎回は文字列を作らない）
+                    if (!_receiving)
+                    {
+                        _receiving = true;
+                        _receivedSinceOpen = true;
+                        VRCastLog.Info(LogCategory, $"Receiving {_boundSource} data from {remote}");
+                    }
+
                     if (Parse(length))
                     {
                         _framesThisSecond++;
+                    }
+                    else
+                    {
+                        _statInvalid++;
+                        WarnInvalidPacket(length);
                     }
                 }
             }
@@ -162,6 +217,7 @@ namespace VRCast.Tracking
 
                 _latestFace = frame;
                 _faceTime = now;
+                _statFaces++;
                 return true;
             }
 
@@ -176,11 +232,156 @@ namespace VRCast.Tracking
             {
                 _latestFace = face;
                 _faceTime = now;
+                _statFaces++;
             }
 
             _latestBody = body;
             _bodyTime = now;
+
+            // 腕（どちらか）・左手・右手が映っていたフレーム数
+            if (body.Left.HasArm || body.Right.HasArm)
+            {
+                _statArms++;
+            }
+
+            if (body.Left.HasHand)
+            {
+                _statLeftHands++;
+            }
+
+            if (body.Right.HasHand)
+            {
+                _statRightHands++;
+            }
+
             return true;
+        }
+
+        private void WarnInvalidPacket(int length)
+        {
+            // 同じ原因で毎フレーム警告しないよう間隔を空ける（件数は受信統計に出る）
+            float now = Time.unscaledTime;
+            if (now < _nextInvalidWarningTime)
+            {
+                return;
+            }
+
+            _nextInvalidWarningTime = now + InvalidWarningInterval;
+            VRCastLog.Warning(LogCategory,
+                $"Ignored invalid {_boundSource} packet ({length} bytes): {DescribeInvalid(length)}");
+        }
+
+        private string DescribeInvalid(int length)
+        {
+            // 先頭が '{' なら MediaPipe 版の JSON、それ以外はバイナリ（OpenSeeFace）とみなして原因を推定する
+            bool json = length > 0 && _buffer[0] == (byte)'{';
+            if (_boundSource == TrackingSource.MediaPipe)
+            {
+                if (!json)
+                {
+                    return length >= OpenSeeFacePacket.FrameSize
+                        ? "looks like OpenSeeFace data. Set the input source to OpenSeeFace"
+                        : "not MediaPipe JSON";
+                }
+
+                // JSON なのに読めない = 送信側と形式が違う（古い / 新しいトラッカー）可能性が高い
+                string preview = Encoding.UTF8.GetString(_buffer, 0, Mathf.Min(length, PreviewLength));
+                return $"JSON could not be read (tracker version mismatch? expected v{MediaPipePacket.ProtocolVersion}): {preview}";
+            }
+
+            if (json)
+            {
+                return "looks like MediaPipe data. Set the input source to MediaPipe";
+            }
+
+            return length < OpenSeeFacePacket.FrameSize
+                ? $"too short for OpenSeeFace ({length} < {OpenSeeFacePacket.FrameSize} bytes)"
+                : "contains invalid values";
+        }
+
+        private void UpdateDiagnostics()
+        {
+            float now = Time.unscaledTime;
+
+            // 受信していたのに一定時間届かなければ途絶として警告（トラッカーの停止・カメラの切断・ポート違い等）
+            if (_receiving && now - _lastPacketTime > SilenceWarningSeconds)
+            {
+                _receiving = false;
+
+                // OpenSeeFace は顔が映っていない間は何も送らないため、その可能性も添える
+                string hint = _boundSource == TrackingSource.OpenSeeFace
+                    ? "face out of view, tracker stopped, or camera disconnected?"
+                    : "tracker stopped or camera disconnected?";
+                VRCastLog.Warning(LogCategory, $"No {_boundSource} data for {SilenceWarningSeconds:F0} s ({hint})");
+            }
+
+            // 待ち受けを始めてから一度もデータが来ない（トラッカーが起動していない・カメラが開けない・ポート違い）
+            if (!_receivedSinceOpen && !_warnedNoData && now - _listenStart > NoDataWarningSeconds)
+            {
+                _warnedNoData = true;
+                VRCastLog.Warning(LogCategory,
+                    $"No {_boundSource} data on port {_boundPort} for {NoDataWarningSeconds:F0} s since listening started " +
+                    "(tracker not running, camera not opened, or port mismatch?)");
+            }
+
+            // 顔が映った / 見失った瞬間（受信中のみ。詳細ログ。一瞬の見失いで交互に並ばないよう長めの猶予で判定）
+            bool faceVisible = _receiving && now - _faceTime <= FaceLostSeconds;
+            if (faceVisible != _faceVisible)
+            {
+                _faceVisible = faceVisible;
+                if (_receiving)
+                {
+                    VRCastLog.Detail(LogCategory, faceVisible ? "Face detected" : "Face lost");
+                }
+            }
+
+            // 一定間隔で受信統計を詳細ログへ出して集計を戻す（詳細ログ OFF なら文字列を作らない）
+            if (now - _statStart < SummaryInterval)
+            {
+                return;
+            }
+
+            if (VRCastLog.DetailEnabled && _statPackets > 0)
+            {
+                VRCastLog.Detail(LogCategory, FormatSummary(now - _statStart));
+            }
+
+            ResetStatistics(now);
+        }
+
+        private string FormatSummary(float seconds)
+        {
+            // パケットのレート・平均サイズ・不正件数と、映っていた割合（MediaPipe は腕・手も）
+            int valid = Mathf.Max(1, _statPackets - _statInvalid);
+            string summary = $"{_boundSource}: {_statPackets / seconds:F1} packets/s, " +
+                $"{_statBytes / Mathf.Max(1, _statPackets)} bytes/packet, invalid {_statInvalid}, " +
+                $"face {Percent(_statFaces, valid)}";
+            if (_boundSource == TrackingSource.MediaPipe)
+            {
+                summary += $", arms {Percent(_statArms, valid)}, " +
+                    $"left hand {Percent(_statLeftHands, valid)}, right hand {Percent(_statRightHands, valid)}";
+            }
+
+            return summary;
+        }
+
+        private static string Percent(int count, int total)
+        {
+            // 0〜100% の整数表記
+            return $"{count * 100 / total}%";
+        }
+
+        private void ResetStatistics(float now)
+        {
+            // 集計期間を始め直す
+            _statPackets = 0;
+            _statInvalid = 0;
+            _statFaces = 0;
+            _statArms = 0;
+            _statLeftHands = 0;
+            _statRightHands = 0;
+            _statBytes = 0;
+            _statStart = now;
         }
 
         private void UpdateStatus()
@@ -222,6 +423,11 @@ namespace VRCast.Tracking
             _faceTime = float.NegativeInfinity;
             _bodyTime = float.NegativeInfinity;
             Status = status;
+
+            // 診断の状態も始め直す（次に開いたときの最初のパケットを記録するため）
+            _receiving = false;
+            _faceVisible = false;
+            ResetStatistics(Time.unscaledTime);
         }
 
         private void OnDestroy()

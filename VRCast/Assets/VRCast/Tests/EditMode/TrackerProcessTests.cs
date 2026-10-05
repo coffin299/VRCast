@@ -59,5 +59,31 @@ namespace VRCast.Tests
                 Directory.Delete(root, true);
             }
         }
+
+        [TestCase("STATS: camera 30.0 fps", LogLevel.Debug)]
+        [TestCase("INFO: camera 0 opened", LogLevel.Info)]
+        [TestCase("WARN: camera read failed", LogLevel.Warning)]
+        [TestCase("ERROR: Failed to open camera 0", LogLevel.Error)]
+        [TestCase("Traceback (most recent call last):", LogLevel.Error)]
+        [TestCase("W0000 00:00:1700000000.000000 1234 inference.cc:12] slow", LogLevel.Warning)]
+        [TestCase("E0000 00:00:1700000000.000000 1234 gl_context.cc:34] failed", LogLevel.Error)]
+        [TestCase("I0000 00:00:1700000000.000000 1234 delegate.cc:56] Created", LogLevel.Info)]
+        [TestCase("Tracking camera 0 -> 127.0.0.1:11573", LogLevel.Info)]
+        public void ClassifyOutput_UsesLinePrefix(string line, LogLevel expected)
+        {
+            // 同梱トラッカーの接頭辞・glog の重要度・Python の例外から重要度を決めること
+            Assert.That(TrackerProcess.ClassifyOutput(line), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void DescribeExitCode_ExplainsKnownCodes()
+        {
+            // MediaPipe 版の終了コードと Windows の異常終了コードを説明し、不明なものは unknown
+            StringAssert.Contains("camera stopped",
+                TrackerProcess.DescribeExitCode(TrackingSource.MediaPipe, 2));
+            StringAssert.Contains("DLL",
+                TrackerProcess.DescribeExitCode(TrackingSource.OpenSeeFace, unchecked((int)0xC0000135)));
+            Assert.That(TrackerProcess.DescribeExitCode(TrackingSource.OpenSeeFace, 2), Is.EqualTo("unknown"));
+        }
     }
 }

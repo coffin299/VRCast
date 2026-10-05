@@ -147,6 +147,9 @@ namespace VRCast.Core
         public string trackerPath = string.Empty;
         public string trackerCamera = string.Empty;
 
+        // デバッグログタブの詳細ログ（トラッキングの受信統計・状態の変化など。調査時だけ ON にする想定で既定は OFF）
+        public bool detailedLogging;
+
         /// <summary>
         /// テーマに合った背景色の既定値を返す。
         /// </summary>
