@@ -225,7 +225,7 @@ Converter が除外する。Freeze To World は対象外（通常の Constraint 
 - 含めるのは **Unity 標準コンポーネントのみ**: Transform, Animator, SkinnedMeshRenderer, MeshRenderer, MeshFilter。
   依存として Mesh, Material, Shader, Texture, Avatar (Humanoid) が含まれる。
 - Animator Controller は含めない（VRChat 固有の StateMachineBehaviour を含むため）。表情等は Milestone 3 で metadata 化する。
-  代わりに FX レイヤーの初期状態（小物トグル・初期表情等）を書き出し時に GameObject / Renderer の有効状態、BlendShape、マテリアル差し替えへ焼き込む（Transform・ポーズは変更しない）。
+  代わりに FX レイヤーの初期状態（小物トグル・初期表情等）を書き出し時に GameObject / Renderer の有効状態、BlendShape、マテリアル差し替えへ焼き込む（Transform・ポーズは変更しない。BlendShape は既定ではシーン上の値を優先する）。
 - VRChat コンポーネント（Avatar Descriptor, PhysBone, Constraint 等）・自作 MonoBehaviour は含めない。
   Runtime で使う設定は Converter が `metadata/*.json` に変換する（Descriptor・PhysBone・Constraint）。
 

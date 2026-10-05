@@ -15,6 +15,9 @@ namespace VRCast.Converter.Editor
         // 次回の保存ダイアログ初期フォルダを保持する EditorPrefs キー
         private const string LastDirectoryKey = "VRCast.Converter.LastExportDirectory";
 
+        // 「シーンの BlendShape の値を優先」の選択を保持する EditorPrefs キー
+        private const string KeepSceneBlendShapesKey = "VRCast.Converter.KeepSceneBlendShapes";
+
         // ダイアログ・進捗バーのタイトル（製品名なので訳さない）
         private const string Title = "VRCast Exporter";
 
@@ -104,6 +107,8 @@ namespace VRCast.Converter.Editor
                     "VRCast 會把它們重新掛到虛擬形象的骨骼上並跟隨身體。"),
                 MessageType.Info);
 
+            DrawBlendShapeOption();
+
             using (new EditorGUI.DisabledScope(error != null))
             {
                 if (GUILayout.Button(T("Export...", "書き出す...", "내보내기...", "导出...", "匯出...")))
@@ -111,6 +116,33 @@ namespace VRCast.Converter.Editor
                     ExportWithDialog();
                 }
             }
+        }
+
+        private static void DrawBlendShapeOption()
+        {
+            // 既定はシーンの値を優先（Unity 上で調整した体型・表情をそのまま書き出す）
+            bool keep = EditorPrefs.GetBool(KeepSceneBlendShapesKey, true);
+            bool changed = EditorGUILayout.ToggleLeft(
+                T("Keep blend shape values from the scene", "シーンのブレンドシェイプの値を優先する",
+                    "씬의 블렌드셰이프 값을 우선", "优先使用场景中的 BlendShape 值", "優先使用場景中的 BlendShape 值"),
+                keep);
+            if (changed != keep)
+            {
+                EditorPrefs.SetBool(KeepSceneBlendShapesKey, changed);
+            }
+
+            // OFF のときの挙動を補足（縮小用ブレンドシェイプなど FX で切り替える仕組み向け）
+            EditorGUILayout.HelpBox(
+                T(
+                    "When off, blend shapes animated by the FX layer use their default-state values instead " +
+                    "(useful when outfit toggles also drive shrink blend shapes).",
+                    "OFF にすると、FX レイヤーで動かしているブレンドシェイプは初期状態の値で書き出します" +
+                    "（衣装の切り替えに合わせて縮小用ブレンドシェイプも動かしている場合など）。",
+                    "OFF로 하면 FX 레이어에서 움직이는 블렌드셰이프는 초기 상태의 값으로 내보냅니다" +
+                    "(의상 전환에 맞춰 축소용 블렌드셰이프도 움직이는 경우 등).",
+                    "关闭后，FX 层驱动的 BlendShape 会以初始状态的值导出（例如切换服装时同时驱动收缩用 BlendShape）。",
+                    "關閉後，FX 層驅動的 BlendShape 會以初始狀態的值匯出（例如切換服裝時同時驅動收縮用 BlendShape）。"),
+                MessageType.None);
         }
 
         private void DrawHeader()
@@ -171,7 +203,8 @@ namespace VRCast.Converter.Editor
                     T("Building avatar package...", "アバターパッケージを作成中...", "아바타 패키지 생성 중...",
                         "正在生成虚拟形象包...", "正在產生虛擬形象包..."),
                     0.5f);
-                AvatarExporter.Report report = AvatarExporter.Export(_avatar, path);
+                AvatarExporter.Report report = AvatarExporter.Export(
+                    _avatar, path, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true));
 
                 // Console のログは問い合わせ時に読みやすいよう英語固定、ダイアログは表示言語
                 Debug.Log("[VRCast][Exporter] " + BuildSummary(report, true).Replace("\n", " / "));
@@ -210,6 +243,8 @@ namespace VRCast.Converter.Editor
                 "VRCast가 다시 붙인 의상·소품", "VRCast 重新挂接的服装和小物", "VRCast 重新掛接的服裝和小物");
             string baked = L("Baked FX default clips", "焼き込んだ FX 初期状態のクリップ", "반영한 FX 초기 상태 클립",
                 "已烘焙的 FX 初始状态剪辑", "已烘焙的 FX 初始狀態剪輯");
+            string sceneBlendShapes = L("Kept scene blend shapes", "シーンのブレンドシェイプを優先",
+                "씬의 블렌드셰이프 우선", "优先场景 BlendShape", "優先場景 BlendShape");
             string expressions = L("Expressions", "表情", "표정", "表情", "表情");
             string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
             string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");
@@ -228,6 +263,7 @@ namespace VRCast.Converter.Editor
                 $"{ndmf}: {report.NdmfApplied}\n" +
                 $"{attached}: {report.ModularAvatarFallbackFixes}\n" +
                 $"{baked}: {report.BakedFxClips}\n" +
+                $"{sceneBlendShapes}: {report.KeptSceneBlendShapes}\n" +
                 $"{expressions}: {report.ExpressionCount}\n" +
                 $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +
                 $"PhysBones: {report.PhysBoneCount}\n" +

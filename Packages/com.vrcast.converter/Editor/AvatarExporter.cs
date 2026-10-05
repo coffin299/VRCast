@@ -31,6 +31,7 @@ namespace VRCast.Converter.Editor
             public AvatarManifest Manifest;
             public bool IsHumanoid;
             public int BakedFxClips;
+            public bool KeptSceneBlendShapes;
             public int ExpressionCount;
             public string LipSyncMode;
             public bool HasBlink;
@@ -85,7 +86,10 @@ namespace VRCast.Converter.Editor
             return null;
         }
 
-        public static Report Export(GameObject source, string outputPath)
+        /// <summary>
+        /// keepSceneBlendShapes が true なら、FX の初期状態ではなくシーン上の BlendShape の値を書き出す。
+        /// </summary>
+        public static Report Export(GameObject source, string outputPath, bool keepSceneBlendShapes = true)
         {
             // 事前検証に失敗したら例外で中断
             string error = Validate(source);
@@ -100,7 +104,7 @@ namespace VRCast.Converter.Editor
                 outputPath += AvatarPackageLayout.Extension;
             }
 
-            var report = new Report { OutputPath = outputPath };
+            var report = new Report { OutputPath = outputPath, KeptSceneBlendShapes = keepSceneBlendShapes };
             GameObject clone = null;
             string bundleDir = FileUtil.GetUniqueTempPathInProject();
             string tempFolder = $"{TempFolderParent}/{TempFolderName}";
@@ -149,7 +153,8 @@ namespace VRCast.Converter.Editor
                 if (fx != null)
                 {
                     report.BakedFxClips = FxDefaultStateBaker.Bake(
-                        clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor), maFallback.MovedObjects);
+                        clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor), maFallback.MovedObjects,
+                        keepSceneBlendShapes);
                 }
 
                 // FX から表情プリセットを抽出

@@ -8,14 +8,20 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - VRCast が背面にある間（他のウィンドウを操作中）、MediaPipe のトラッキングで手を見失いやすくなる問題を修正
+- Unity で設定したブレンドシェイプの値が、書き出し時に FX レイヤーの値で上書きされてしまう問題を修正
+- ラジアルメニューのスライダーなどの初期値が、書き出し時に中間の値にならず 0 か最大になってしまう問題を修正
 - 設定タブに「プロセスの優先度」を追加（VRCast 本体と同梱トラッカーに同じ優先度を設定、すぐ反映）
 - 設定タブに「描画に使う GPU」を追加（自動 / 省電力 / 高パフォーマンス、または GPU を一覧から直接指定。再起動で反映）
+- 書き出しツールに「シーンのブレンドシェイプの値を優先する」を追加（既定 ON。OFF にすると従来どおり FX の初期状態の値を使う）
 - カメラの位置と画角をアバターごとに記憶し、次にそのアバターを開いたとき（再起動後も含む）に戻すように変更
 
 [English]
 - Fixed MediaPipe tracking often losing your hands while VRCast was in the background (while using another window)
+- Fixed blend shape values set in Unity being overwritten by FX layer values on export
+- Fixed default values of radial menu sliders and similar controls being exported as 0 or the maximum instead of the in-between value
 - Added "Process priority" to the Settings tab (sets the same priority for VRCast and the bundled tracker, applied right away)
 - Added "GPU for drawing" to the Settings tab (Auto / Power saving / High performance, or pick a GPU from the list; applied after a restart)
+- Added "Keep blend shape values from the scene" to the exporter (on by default; turn it off to use the FX default-state values as before)
 - The camera position and field of view are now remembered for each avatar and restored the next time you open it, including after a restart
 
 ■ 1.3.0 (2026-10-05)
