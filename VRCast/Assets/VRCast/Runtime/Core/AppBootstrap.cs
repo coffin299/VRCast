@@ -28,6 +28,9 @@ namespace VRCast.Core
             _store = SettingsStore.CreateDefault();
             Settings = _store.Load();
 
+            // 起動直後のトラッカー起動などの詳細ログも残せるよう、パネルの初期化を待たずに反映する
+            LogBuffer.DetailEnabled = Settings.detailedLogging;
+
             // 初回起動時は既定値でファイルを作成し、終了処理に頼らず編集可能な状態にする
             if (!File.Exists(_store.FilePath))
             {

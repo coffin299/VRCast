@@ -2,6 +2,7 @@
 .SYNOPSIS
     Package the Windows build (VRCast/Builds/Windows) and the exporter .unitypackage
     into dist/VRCast-<version>-win64.zip for distribution.
+    The zip contains VRCast/ (the app) and VRCast-Converter/ (the exporter for the avatar project).
 .PARAMETER Version
     Version in the zip name. Defaults to bundleVersion in ProjectSettings (Player > Version).
 .PARAMETER BuildPath
@@ -45,11 +46,17 @@ foreach ($path in $optional.Keys) {
     }
 }
 
-# 作業フォルダはリポジトリの外（完了後に削除）。zip を展開すると VRCast フォルダになるよう中に VRCast を作る
+# 書き出しツールのバージョン（ファイル名に入れる）: package.json の version
+$converterVersion = (Get-Content -Raw (Join-Path $repository "Packages\com.vrcast.converter\package.json") | ConvertFrom-Json).version
+
+# 作業フォルダはリポジトリの外（完了後に削除）。zip を展開すると、本体の VRCast フォルダと
+# アバターのプロジェクトに入れる書き出しツールの VRCast-Converter フォルダが並ぶ（取り違えないよう分ける）
 $work = Join-Path $env:LOCALAPPDATA "VRCast\package-build"
 if (Test-Path $work) { Remove-Item $work -Recurse -Force }
 $staging = Join-Path $work "VRCast"
+$converter = Join-Path $work "VRCast-Converter"
 New-Item -ItemType Directory -Force $staging | Out-Null
+New-Item -ItemType Directory -Force $converter | Out-Null
 
 try {
     # ビルド一式をコピー（Unity が「配布しない」と名付けるデバッグ用フォルダは除く）
@@ -63,8 +70,11 @@ try {
     Copy-Item (Join-Path $repository "CHANGELOG.txt") (Join-Path $staging "CHANGELOG.txt")
     Copy-Item (Join-Path $PSScriptRoot "README.txt") (Join-Path $staging "README.txt")
 
-    # アバターのプロジェクトに入れる書き出しツール
-    & (Join-Path $PSScriptRoot "unitypackage.ps1") -OutputPath (Join-Path $staging "VRCast-Converter.unitypackage")
+    # アバターのプロジェクトに入れる書き出しツール（バージョン付きの名前）と、
+    # 「アバターのプロジェクトにインポートする」と名前で伝える説明（日本語のファイル名はスクリプトに書かず Converter フォルダから複製）
+    & (Join-Path $PSScriptRoot "unitypackage.ps1") -Version $converterVersion `
+        -OutputPath (Join-Path $converter "VRCast-Converter-$converterVersion.unitypackage")
+    Copy-Item (Join-Path $PSScriptRoot "Converter\*") $converter -Recurse -Force
 
     # 既存の同名 zip を消してから作成
     New-Item -ItemType Directory -Force $dist | Out-Null
@@ -72,12 +82,12 @@ try {
     if (Test-Path $zip) { Remove-Item $zip -Force }
     Add-Type -AssemblyName System.IO.Compression
     Add-Type -AssemblyName System.IO.Compression.FileSystem
-    # 親フォルダ (staging の一つ上) からの相対パスをエントリ名にする
-    $root = Split-Path $staging -Parent
+    # 作業フォルダからの相対パス（VRCast/... と VRCast-Converter/...）をエントリ名にする
+    $root = $work
     $archive = [System.IO.Compression.ZipFile]::Open(
         $zip, [System.IO.Compression.ZipArchiveMode]::Create)
     try {
-        foreach ($file in Get-ChildItem $staging -Recurse -File) {
+        foreach ($file in Get-ChildItem $work -Recurse -File) {
             # Windows PowerShell 5.1 は "\" 区切りのエントリを作るため "/" に揃える
             $entry = $file.FullName.Substring($root.Length + 1).Replace('\', '/')
             [void][System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(

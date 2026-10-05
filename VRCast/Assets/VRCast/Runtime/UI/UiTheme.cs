@@ -45,6 +45,7 @@ namespace VRCast.UI
             public Color DangerHover;
             public Color DangerActive;
             public Color Success;
+            public Color Warning;
         }
 
         // ライト（背景のベージュより濃いベージュの地、焦げ茶の文字、キャラメル色のアクセント）
@@ -69,6 +70,7 @@ namespace VRCast.UI
             DangerHover = new Color32(212, 74, 66, 255),
             DangerActive = new Color32(158, 42, 38, 255),
             Success = new Color32(52, 130, 76, 255),
+            Warning = new Color32(160, 104, 0, 255),
         };
 
         // ダーク（暗い焦げ茶の地、生成り色の文字、暗い地でも見えるよう明るめのキャラメル色のアクセント）
@@ -93,6 +95,7 @@ namespace VRCast.UI
             DangerHover = new Color32(220, 82, 72, 255),
             DangerActive = new Color32(166, 48, 42, 255),
             Success = new Color32(104, 186, 126, 255),
+            Warning = new Color32(232, 184, 72, 255),
         };
 
         // 使用中の配色（以下の名前で各 Build から参照する）
@@ -116,6 +119,7 @@ namespace VRCast.UI
         private Color DangerHover => _colors.DangerHover;
         private Color DangerActive => _colors.DangerActive;
         private Color SuccessColor => _colors.Success;
+        private Color WarningColor => _colors.Warning;
 
         // 角丸の半径（px）
         private const int WindowRadius = 10;
@@ -167,6 +171,10 @@ namespace VRCast.UI
         // 取り返しのつかない操作用の赤いボタンと、完了表示の緑の文字
         public GUIStyle Danger { get; private set; }
         public GUIStyle Success { get; private set; }
+
+        // デバッグログの重要度ラベル（警告は黄、エラーは赤の太字）
+        public GUIStyle WarningText { get; private set; }
+        public GUIStyle ErrorText { get; private set; }
 
         /// <summary>
         /// テーマを作成する（OnGUI 内で呼ぶ）。language は解決済みの表示言語（フォントの優先順に使う）、dark はダークモードの配色にするか。
@@ -282,6 +290,10 @@ namespace VRCast.UI
             };
             Success = new GUIStyle(Skin.label) { fontStyle = FontStyle.Bold, wordWrap = false };
             Success.normal.textColor = SuccessColor;
+            WarningText = new GUIStyle(Success);
+            WarningText.normal.textColor = WarningColor;
+            ErrorText = new GUIStyle(Success);
+            ErrorText.normal.textColor = DangerColor;
         }
 
         private void BuildButton()

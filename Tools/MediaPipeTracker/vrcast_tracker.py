@@ -22,12 +22,22 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 （止まっているときの細かい揺れを消し、速い動きでは遅れを抑える。CPU 負荷はほぼ無い）。
 
 --max-fps を指定すると推定の回数を毎秒その回数までに間引く（VRCast の軽量モード）。
+
+状態ログ（VRCast のデバッグログタブで行頭から重要度を判定する）:
+    INFO: ...   起動・カメラ・モデルの状態（標準出力）
+    WARN: ...   読み取り失敗・送信失敗など（エラー出力）
+    ERROR: ...  終了につながる失敗（エラー出力）
+    STATS: ...  --status-interval 秒ごとの統計（標準出力。VRCast では DEBUG 扱い）
+
+終了コード（VRCast 側 TrackerProcess.DescribeExitCode と一致させる）:
+    0 正常終了 / 1 カメラが開けない・エラー / 2 カメラからフレームが届かなくなった
 """
 
 import argparse
 import json
 import math
 import os
+import platform
 import socket
 import sys
 import time
@@ -85,6 +95,12 @@ DEFAULT_FPS = 30
 # 連続でこの回数フレームを読めなければ終了する（VRCast が再起動する）
 MAX_READ_FAILURES = 30
 
+# 統計の状態ログを出す既定の間隔（秒）
+DEFAULT_STATUS_INTERVAL = 5.0
+
+# 同じ種類の警告を出す最短間隔（秒。出力が増えすぎないように）
+WARNING_INTERVAL = 10.0
+
 # 送信する値の小数点以下の桁数（パケットを小さくする）
 DIGITS = 5
 
@@ -120,7 +136,69 @@ def parse_arguments():
     parser.add_argument("--max-fps", type=float, default=0.0)
     # 親プロセス（VRCast）の PID。終了したらトラッカーも終了する
     parser.add_argument("--parent-pid", type=int, default=0)
+    # 統計の状態ログを出す間隔（秒、0 以下で出さない）
+    parser.add_argument("--status-interval", type=float,
+                        default=DEFAULT_STATUS_INTERVAL)
     return parser.parse_args()
+
+
+def log(level, message):
+    """重要度付きの状態ログを 1 行出す（INFO / STATS は標準出力、それ以外はエラー出力）。"""
+    stream = sys.stdout if level in ("INFO", "STATS") else sys.stderr
+    print(f"{level}: {message}", file=stream)
+    # VRCast がすぐ受け取れるよう行ごとに書き出す
+    stream.flush()
+
+
+class Stats:
+    """推定の統計を集計し、一定間隔で STATS 行を出す（加算だけなので負荷はほぼ無い）。"""
+
+    def __init__(self, interval, use_hands):
+        """interval 秒ごとに出す（0 以下なら出さない）。use_hands は手の推定の有無。"""
+        self._interval = interval
+        self._use_hands = use_hands
+        self._start = time.perf_counter()
+        self._clear()
+
+    def _clear(self):
+        """集計を 0 に戻す。"""
+        # 読み取り・間引き・読み取り失敗・推定・送信失敗の回数
+        self.read = 0
+        self.skipped = 0
+        self.read_failures = 0
+        self.inferred = 0
+        self.send_errors = 0
+        # 顔・体が見つかった回数と、見つかった手の本数の合計
+        self.faces = 0
+        self.poses = 0
+        self.hands = 0
+        # モデルごとの推定時間の合計（ms）
+        self.face_ms = 0.0
+        self.pose_ms = 0.0
+        self.hand_ms = 0.0
+
+    def report(self, now):
+        """間隔が過ぎていれば STATS 行を出して集計を戻す。"""
+        # 無効、または間隔が過ぎていなければ何もしない
+        elapsed = now - self._start
+        if self._interval <= 0 or elapsed < self._interval:
+            return
+        # 0 除算を避けた推定回数
+        inferred = max(self.inferred, 1)
+        hands = (f"hands {self.hand_ms / inferred:.1f} ms"
+                 if self._use_hands else "hands off")
+        log("STATS",
+            f"camera {self.read / elapsed:.1f} fps, "
+            f"inference {self.inferred / elapsed:.1f} fps "
+            f"(face {self.face_ms / inferred:.1f} ms, "
+            f"pose {self.pose_ms / inferred:.1f} ms, {hands}), "
+            f"face found {self.faces * 100 // inferred}%, "
+            f"pose found {self.poses * 100 // inferred}%, "
+            f"hands per frame {self.hands / inferred:.2f}, "
+            f"skipped {self.skipped}, read failures {self.read_failures}, "
+            f"send errors {self.send_errors}")
+        self._start = now
+        self._clear()
 
 
 class ParentWatch:
@@ -349,6 +427,17 @@ def open_camera(index, width, height, fps):
     return capture
 
 
+def describe_camera(capture):
+    """カメラの実際のバックエンド・解像度・フレームレートを文字列にする。"""
+    # 古い OpenCV には getBackendName が無い
+    backend = (capture.getBackendName()
+               if hasattr(capture, "getBackendName") else "unknown")
+    width = int(capture.get(cv2.CAP_PROP_FRAME_WIDTH))
+    height = int(capture.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    fps = capture.get(cv2.CAP_PROP_FPS)
+    return f"{backend} {width}x{height} @ {fps:.0f} fps"
+
+
 def rounded(values):
     """float の列を丸めたリストにする。"""
     return [round(float(value), DIGITS) for value in values]
@@ -472,12 +561,22 @@ def build_packet(face_result, pose_result, hand_result, smoother, now):
 
 def run(arguments):
     """カメラを開き、推定と送信を繰り返す。"""
+    # カメラを開く（開くまでの時間も調査用に記録する）
+    opening = time.perf_counter()
     capture = open_camera(arguments.capture, arguments.width,
                           arguments.height, arguments.fps)
     # カメラが開けなければ VRCast に理由を表示させて終了
     if capture is None:
-        print(f"Failed to open camera {arguments.capture}", file=sys.stderr)
+        log("ERROR",
+            f"Failed to open camera {arguments.capture} (in use by another "
+            "app, disconnected, or blocked by Windows camera privacy "
+            "settings?)")
         return 1
+    log("INFO",
+        f"camera {arguments.capture} opened in "
+        f"{time.perf_counter() - opening:.1f} s: {describe_camera(capture)} "
+        f"(requested {arguments.width}x{arguments.height} @ "
+        f"{arguments.fps} fps)")
 
     # OpenCV の OpenCL（T-API）を明示的に無効化
     cv2.ocl.setUseOpenCL(False)
@@ -486,16 +585,26 @@ def run(arguments):
     watch = (ParentWatch(arguments.parent_pid)
              if arguments.parent_pid > 0 else None)
 
-    face, pose, hands = create_landmarkers(not arguments.no_hands)
+    # 推定器を作る（モデルの読み込み時間を記録する）
+    use_hands = not arguments.no_hands
+    loading = time.perf_counter()
+    face, pose, hands = create_landmarkers(use_hands)
+    log("INFO",
+        f"models loaded in {time.perf_counter() - loading:.1f} s "
+        f"(hands {'on' if use_hands else 'off'})")
     sender = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     target = (arguments.ip, arguments.port)
-    print(f"Tracking camera {arguments.capture} -> "
-          f"{arguments.ip}:{arguments.port}")
-    sys.stdout.flush()
+    log("INFO", f"Tracking camera {arguments.capture} -> "
+                f"{arguments.ip}:{arguments.port}")
 
     failures = 0
     last_timestamp = -1
     smoother = Smoother()
+    stats = Stats(arguments.status_interval, use_hands)
+    # 最初のフレームを記録したか・次に読み取り失敗 / 送信失敗を警告してよい時刻
+    first_frame = True
+    next_read_warning = 0.0
+    next_send_warning = 0.0
     # 推定の間隔（秒、0 なら全フレーム）と次に推定してよい時刻
     interval = 1.0 / arguments.max_fps if arguments.max_fps > 0 else 0.0
     next_due = 0.0
@@ -503,23 +612,38 @@ def run(arguments):
         while True:
             # 親プロセスが終了していればカメラを解放して終了
             if watch is not None and not watch.alive():
-                print("Parent process exited", file=sys.stderr)
+                log("INFO", "Parent process exited")
                 return 0
 
             ok, frame = capture.read()
+            now = time.perf_counter()
+            stats.report(now)
             # 読めないフレームが続いたらカメラ切断とみなして終了
             if not ok:
                 failures += 1
+                stats.read_failures += 1
+                # 失敗が始まったことを間隔を空けて警告する
+                if failures == 1 and now >= next_read_warning:
+                    next_read_warning = now + WARNING_INTERVAL
+                    log("WARN", "camera read failed; retrying "
+                                f"(exits after {MAX_READ_FAILURES} in a row)")
                 if failures >= MAX_READ_FAILURES:
-                    print("Camera stopped delivering frames",
-                          file=sys.stderr)
+                    log("ERROR", "Camera stopped delivering frames")
                     return 2
                 continue
             failures = 0
+            stats.read += 1
+
+            # 最初のフレームだけ、届くまでの時間と実際の大きさを記録する
+            if first_frame:
+                first_frame = False
+                log("INFO",
+                    f"first frame after {now - opening:.1f} s: "
+                    f"{frame.shape[1]}x{frame.shape[0]}")
 
             # 上限を超える分のフレームは読み捨てる（溜めると遅延するため読み取りは続ける）
-            now = time.perf_counter()
             if now < next_due:
+                stats.skipped += 1
                 continue
             # 次の推定時刻。大きく遅れたら今を起点にしてまとめて推定しない
             # （半間隔までの遅れは持ち越し、カメラのフレーム間隔とのずれで回数が減りすぎないようにする）
@@ -534,20 +658,37 @@ def run(arguments):
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-            # 顔・体・（有効なら）手を推定
+            # 顔・体・（有効なら）手を推定し、モデルごとの時間を集計する
+            started = time.perf_counter()
             face_result = face.detect_for_video(image, timestamp)
+            face_done = time.perf_counter()
             pose_result = pose.detect_for_video(image, timestamp)
+            pose_done = time.perf_counter()
             hand_result = (hands.detect_for_video(image, timestamp)
                            if hands is not None else None)
+            hand_done = time.perf_counter()
+            stats.inferred += 1
+            stats.face_ms += (face_done - started) * 1000.0
+            stats.pose_ms += (pose_done - face_done) * 1000.0
+            stats.hand_ms += (hand_done - pose_done) * 1000.0
+            # 見つかった顔・体・手の数
+            stats.faces += 1 if face_result.face_blendshapes else 0
+            stats.poses += 1 if pose_result.pose_landmarks else 0
+            if hand_result is not None:
+                stats.hands += len(hand_result.hand_world_landmarks)
 
             try:
                 sender.sendto(
                     build_packet(face_result, pose_result, hand_result,
                                  smoother, timestamp / 1000.0),
                     target)
-            except OSError:
-                # 受信側が未起動などの送信エラーは無視して続ける
-                pass
+            except OSError as error:
+                # 受信側が未起動などの送信エラーは続行し、間隔を空けて警告する
+                stats.send_errors += 1
+                if now >= next_send_warning:
+                    next_send_warning = now + WARNING_INTERVAL
+                    log("WARN", f"failed to send to "
+                                f"{arguments.ip}:{arguments.port}: {error}")
     finally:
         # カメラ・推定器・ソケット・監視ハンドルを解放
         capture.release()
@@ -563,10 +704,16 @@ def main():
     """エントリーポイント。"""
     configure_output()
     arguments = parse_arguments()
-    # 一覧表示モード
+    # 一覧表示モード（出力は VRCast が「番号: 名前」として読むため状態ログは出さない）
     if arguments.list_cameras > 0:
         list_cameras()
         return 0
+    # 調査用にトラッカー・ライブラリの版と引数を記録する
+    log("INFO",
+        f"VRCast MediaPipe tracker (protocol {PROTOCOL_VERSION}), "
+        f"Python {platform.python_version()}, OpenCV {cv2.__version__}, "
+        f"MediaPipe {getattr(mp, '__version__', 'unknown')}")
+    log("INFO", f"arguments: {' '.join(sys.argv[1:])}")
     try:
         return run(arguments)
     except KeyboardInterrupt:
@@ -574,7 +721,7 @@ def main():
         return 0
     except (OSError, RuntimeError, ValueError) as error:
         # モデル欠け・推定器の初期化失敗などは理由を表示して終了
-        print(f"Tracker error: {error}", file=sys.stderr)
+        log("ERROR", f"Tracker error: {error}")
         return 1
 
 

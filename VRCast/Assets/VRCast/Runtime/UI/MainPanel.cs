@@ -14,7 +14,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings / Credits）で
+    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings / Log / Credits）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンを常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
@@ -52,6 +52,7 @@ namespace VRCast.UI
             Display,
             Output,
             Settings,
+            Log,
             Credits,
         }
 
@@ -72,6 +73,7 @@ namespace VRCast.UI
         private DisplaySection _displaySection;
         private OutputSection _outputSection;
         private SettingsSection _settingsSection;
+        private LogSection _logSection;
         private CreditsSection _creditsSection;
         private ResetBar _resetBar;
 
@@ -109,6 +111,7 @@ namespace VRCast.UI
             _displaySection = new DisplaySection(orbit, rendering);
             _outputSection = new OutputSection(virtualCamera);
             _settingsSection = new SettingsSection(settings, rendering, updates, ResetAllSettings);
+            _logSection = new LogSection(trackerProcess, tracker, settings);
             _creditsSection = new CreditsSection();
             _resetBar = new ResetBar(session, orbit);
 
@@ -173,6 +176,9 @@ namespace VRCast.UI
             {
                 return;
             }
+
+            // 詳細ログの ON/OFF を反映（設定のリセットにも追従するよう毎フレーム）
+            LogBuffer.DetailEnabled = _settings.detailedLogging;
 
             // 表示切替（隠すと背景も透過）
             if (Input.GetKeyDown(ToggleKey))
@@ -396,6 +402,9 @@ namespace VRCast.UI
                 case Tab.Output:
                     _outputSection.Draw();
                     break;
+                case Tab.Log:
+                    _logSection.Draw();
+                    break;
                 case Tab.Credits:
                     _creditsSection.Draw();
                     break;
@@ -424,6 +433,8 @@ namespace VRCast.UI
                     return Loc.T("Display", "表示", "표시", "显示", "顯示");
                 case Tab.Output:
                     return Loc.T("Output", "出力", "출력", "输出", "輸出");
+                case Tab.Log:
+                    return Loc.T("Debug log", "デバッグログ", "디버그 로그", "调试日志", "偵錯日誌");
                 case Tab.Credits:
                     return Loc.T("Credits", "クレジット", "크레딧", "致谢", "致謝");
                 default:

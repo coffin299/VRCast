@@ -19,7 +19,8 @@ VRChat のアバターを単体で表示し、OBS などの配信ソフトや Di
 
 ■ 書き出しツールの導入（アバターの Unity プロジェクト側）
 1. VCC からアバターの入ったプロジェクトを開きます。
-2. このフォルダの VRCast-Converter.unitypackage をダブルクリック（または Unity にドラッグ＆ドロップ）して「Import」を押します。
+2. zip を展開したときにこの VRCast フォルダの隣にできる VRCast-Converter フォルダの
+   VRCast-Converter-(バージョン).unitypackage をダブルクリック（または Unity にドラッグ＆ドロップ）して「Import」を押します。
 3. メニュー「VRCast」→「Avatar Exporter」で、シーン上のアバターを指定して「書き出す...」で .vrcaster を保存します。
    画面は OS の言語で表示されます（上部の「言語」で切り替えられます）。
 元のアバターは変更しません。Modular Avatar で改変したアバターも、そのまま指定すれば改変後の姿で書き出されます（ベータ版）。
@@ -38,6 +39,8 @@ CHANGELOG.txt をご覧ください。
 - 仮想カメラを使った場合は、このフォルダを移動・削除する前に「出力」タブの「ドライバーを解除」を押してください。
 - 設定とログ: %USERPROFILE%\AppData\LocalLow\VRCast\VRCast\
   不具合の報告時は Player.log を添えてください: https://github.com/coffin299/VRCast/issues
+  カメラが認識されない等のときは、「デバッグログ」タブの「表示中をコピー」で、ログと環境をまとめてコピーして貼り付けられます。
+  原因がわからないときは「詳細ログ」を ON にしてから症状を再現してコピーしてください（調べ終わったら OFF に戻してください）。
 
 ■ ライセンス
 VRCast は Apache License 2.0 です（LICENSE.txt）。
@@ -64,7 +67,8 @@ VRCast checks for a new version at startup and shows a notice at the top of the 
 
 - Installing the exporter (in your avatar's Unity project)
 1. Open the project with your avatar from VCC.
-2. Double-click VRCast-Converter.unitypackage in this folder (or drag it into Unity) and click "Import".
+2. Double-click VRCast-Converter-(version).unitypackage in the VRCast-Converter folder, which sits next to this VRCast folder
+   when you extract the zip (or drag it into Unity), and click "Import".
 3. Open "VRCast" > "Avatar Exporter", pick your avatar in the scene and click "Export..." to save a .vrcaster file.
    The window follows your OS language (switch it with "Language" at the top).
 Your original avatar is never modified. Avatars customized with Modular Avatar are exported with the changes applied (beta).
@@ -83,6 +87,8 @@ See CHANGELOG.txt.
 - If you used the virtual camera, press "Uninstall driver" in the Output tab before moving or deleting this folder.
 - Settings and logs: %USERPROFILE%\AppData\LocalLow\VRCast\VRCast\
   Please attach Player.log when reporting a problem: https://github.com/coffin299/VRCast/issues
+  If your camera is not detected, "Copy shown" in the "Debug log" tab copies the logs and your environment so you can paste them.
+  If the cause is unclear, turn on "Detailed logging", reproduce the problem, then copy (turn it off again when you are done).
 
 - License
 VRCast is licensed under the Apache License 2.0 (LICENSE.txt).

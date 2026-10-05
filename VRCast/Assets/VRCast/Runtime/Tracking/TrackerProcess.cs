@@ -20,6 +20,9 @@ namespace VRCast.Tracking
         // ログのカテゴリ名
         private const string LogCategory = "Tracker";
 
+        // トラッカー自身の出力（標準出力・エラー出力）のカテゴリ名
+        private const string OutputLogCategory = "TrackerOutput";
+
         // カメラ一覧取得の待ち時間上限（ミリ秒、MediaPipe 版は展開・読込に数秒かかる）
         private const int ListTimeoutMilliseconds = 30000;
 
@@ -39,11 +42,37 @@ namespace VRCast.Tracking
         // 一覧の 1 行（"0: カメラ名"）
         private static readonly Regex CameraLine = new Regex(@"^\s*(\d+)\s*:\s*(.+?)\s*$");
 
+        // glog（MediaPipe・TensorFlow Lite の内部ログ）の行頭（重要度 I/W/E/F + 月日 4 桁）
+        private static readonly Regex GlogLine = new Regex(@"^([IWEF])\d{4}\s");
+
+        // トラッカー出力をデバッグログへ残す上限（行/秒。超えた INFO 行は捨てて件数だけ報告し、ログ採取の負荷を抑える）
+        private const int MaxOutputLinesPerSecond = 30;
+
+        // 捨てた出力行の件数を報告する最短間隔（秒）
+        private const float SuppressedReportInterval = 5f;
+
+        // Windows の異常終了コード（DLL が見つからない / メモリアクセス違反）
+        private const int StatusDllNotFound = unchecked((int)0xC0000135);
+        private const int StatusAccessViolation = unchecked((int)0xC0000005);
+
         // バックグラウンドスレッドと共有する値の排他
         private readonly object _lock = new object();
         private List<string> _pendingCameras;
         private string _pendingError;
+        private double _pendingListSeconds;
         private string _lastOutput = string.Empty;
+
+        // 出力の流量制限（OnOutput は別スレッドのため Environment.TickCount で 1 秒の窓を計る。_lock で保護）
+        private int _outputWindowStart;
+        private int _outputLinesInWindow;
+        private int _suppressedOutputLines;
+        private float _nextSuppressedReportTime;
+
+        // 同じ警告（カメラ未選択・実行ファイル無し等）を再試行のたびに記録しないよう、最後に記録した状態
+        private string _lastWarnedStatus;
+
+        // 起動時刻（終了時に動作時間を記録する）
+        private float _startTime;
 
         // 入力元ごとの同梱版のフルパス（起動時に 1 回だけ探す。無ければ null）
         private readonly Dictionary<TrackingSource, string> _bundledPaths = new Dictionary<TrackingSource, string>();
@@ -203,6 +232,7 @@ namespace VRCast.Tracking
             }
 
             ApplyPendingCameras();
+            ReportSuppressedOutput();
 
             // 受信を無効にしたら停止
             if (!_settings.trackingEnabled)
@@ -211,6 +241,7 @@ namespace VRCast.Tracking
                 {
                     StopProcess();
                     Status = "Stopped";
+                    VRCastLog.Info(LogCategory, "Tracking disabled; tracker stopped");
                 }
 
                 return;
@@ -246,7 +277,11 @@ namespace VRCast.Tracking
                     Status = $"Tracker exited ({code}): {_lastOutput}";
                 }
 
-                VRCastLog.Warning(LogCategory, Status);
+                // 終了コードの意味と動作時間を添える（起動直後の終了ならカメラ・DLL の問題の可能性が高い）
+                float seconds = Time.unscaledTime - _startTime;
+                VRCastLog.Warning(LogCategory,
+                    $"{Status} [{DescribeExitCode(_startedSource, code)}, ran {seconds:F1} s, " +
+                    $"restarting in {RestartInterval:F0} s]");
                 return;
             }
 
@@ -256,8 +291,59 @@ namespace VRCast.Tracking
                 || _startedLowLoad != _settings.lowLoadMode;
             if (changed)
             {
+                VRCastLog.Info(LogCategory, "Tracking settings changed; restarting tracker");
                 Restart();
             }
+        }
+
+        /// <summary>
+        /// トラッカーの終了コードの意味（不明なら "unknown"）。
+        /// </summary>
+        public static string DescribeExitCode(TrackingSource source, int code)
+        {
+            // Windows の異常終了は入力元に関係なく判定
+            if (code == StatusDllNotFound)
+            {
+                return "a required DLL was not found (install the Visual C++ Redistributable?)";
+            }
+
+            if (code == StatusAccessViolation)
+            {
+                return "crashed (access violation)";
+            }
+
+            // 0 は正常終了（親プロセスの終了検出など）
+            if (code == 0)
+            {
+                return "exited normally";
+            }
+
+            // 同梱の MediaPipe 版が返す終了コード（vrcast_tracker.py と一致させる）
+            if (source == TrackingSource.MediaPipe)
+            {
+                switch (code)
+                {
+                    case 1:
+                        return "camera could not be opened or tracker error";
+                    case 2:
+                        return "camera stopped delivering frames";
+                }
+            }
+
+            return "unknown";
+        }
+
+        private void WarnStatus(string status)
+        {
+            // 状態を表示し、前回と違うときだけ警告として記録（再試行のたびに同じ警告を並べない）
+            Status = status;
+            if (status == _lastWarnedStatus)
+            {
+                return;
+            }
+
+            _lastWarnedStatus = status;
+            VRCastLog.Warning(LogCategory, status);
         }
 
         private bool UsesHands()
@@ -281,7 +367,12 @@ namespace VRCast.Tracking
             int camera = string.IsNullOrEmpty(_settings.trackerCamera) ? -1 : _cameras.IndexOf(_settings.trackerCamera);
             if (camera < 0)
             {
-                Status = _cameras.Count == 0 ? "No camera found (Refresh cameras)" : "Select a camera";
+                // 保存済みのカメラが一覧に無いときは名前も添える（抜き差しで名前が変わった等の調査用）
+                WarnStatus(_cameras.Count == 0
+                    ? "No camera found (Refresh cameras)"
+                    : string.IsNullOrEmpty(_settings.trackerCamera)
+                        ? "Select a camera"
+                        : $"Select a camera (saved camera \"{_settings.trackerCamera}\" is not in the list)");
                 return;
             }
 
@@ -321,20 +412,26 @@ namespace VRCast.Tracking
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 _process = process;
+                _startTime = Time.unscaledTime;
+                _lastWarnedStatus = null;
 
+                // 起動したコマンドライン全体と PID を残す（手動で同じ引数を試せるように）
                 Status = $"Running: {_startedCamera}";
-                VRCastLog.Info(LogCategory, $"Started {_startedSource} camera {camera} ({_startedCamera}) -> port {_startedPort}");
+                VRCastLog.Info(LogCategory,
+                    $"Started {_startedSource} camera {camera} ({_startedCamera}) -> port {_startedPort}, " +
+                    $"pid {process.Id}: \"{path}\" {arguments}");
             }
             catch (Exception e) when (e is InvalidOperationException || e is System.ComponentModel.Win32Exception)
             {
-                // 起動失敗（権限・壊れた実行ファイル等）
-                Status = "Failed to start: " + e.Message;
-                VRCastLog.Warning(LogCategory, Status);
+                // 起動失敗（権限・壊れた実行ファイル・ウイルス対策ソフトによるブロック等）
+                WarnStatus("Failed to start: " + e.Message);
             }
         }
 
         private void ApplyPendingCameras()
         {
+            bool listFailed;
+            double listSeconds;
             lock (_lock)
             {
                 // バックグラウンドの取得結果が無ければ何もしない
@@ -346,6 +443,8 @@ namespace VRCast.Tracking
                 _cameras = _pendingCameras;
                 _pendingCameras = null;
                 Status = _pendingError ?? $"{_cameras.Count} camera(s) found";
+                listFailed = _pendingError != null;
+                listSeconds = _pendingListSeconds;
             }
 
             // 未選択なら先頭の有効なカメラを既定にする（保存済みの名前は外れていても上書きしない）
@@ -356,7 +455,17 @@ namespace VRCast.Tracking
 
             IsListing = false;
             _nextStartTime = 0f;
-            VRCastLog.Info(LogCategory, $"{Status}: {string.Join(", ", _cameras)}");
+
+            // カメラが見つからない・一覧の取得に失敗したときは警告にして、デバッグログで目立たせる（所要時間も添える）
+            string message = $"{Status} in {listSeconds:F1} s: {string.Join(", ", _cameras)}";
+            if (listFailed)
+            {
+                VRCastLog.Warning(LogCategory, message);
+            }
+            else
+            {
+                VRCastLog.Info(LogCategory, message);
+            }
         }
 
         private void ListCameras(string path, bool utf8)
@@ -364,6 +473,7 @@ namespace VRCast.Tracking
             // バックグラウンドスレッドで実行（Unity API は使わない）
             List<string> cameras = new List<string>();
             string error = null;
+            Stopwatch watch = Stopwatch.StartNew();
             try
             {
                 using (Process process = Process.Start(CreateStartInfo(path, "-l 1", utf8)))
@@ -395,6 +505,7 @@ namespace VRCast.Tracking
             {
                 _pendingCameras = cameras;
                 _pendingError = error;
+                _pendingListSeconds = watch.Elapsed.TotalSeconds;
             }
         }
 
@@ -412,7 +523,7 @@ namespace VRCast.Tracking
                 && File.Exists(path);
             if (!valid)
             {
-                Status = executable + " not found";
+                WarnStatus($"{executable} not found ({path ?? "no path"})");
             }
 
             return valid;
@@ -475,10 +586,107 @@ namespace VRCast.Tracking
                 return;
             }
 
+            string line = e.Data.Trim();
+            LogLevel level = ClassifyOutput(line);
+
+            // 定期統計は終了理由の表示に使わず、詳細ログ OFF なら排他も取らずに捨てる
+            if (level == LogLevel.Debug)
+            {
+                if (LogBuffer.DetailEnabled)
+                {
+                    LogBuffer.Add(level, OutputLogCategory, line);
+                }
+
+                return;
+            }
+
+            int now = Environment.TickCount;
             lock (_lock)
             {
-                _lastOutput = e.Data.Trim();
+                _lastOutput = line;
+
+                // 1 秒の窓ごとに行数を数え直す（TickCount の折り返しも差分なら正しく扱える）
+                if (now - _outputWindowStart >= 1000)
+                {
+                    _outputWindowStart = now;
+                    _outputLinesInWindow = 0;
+                }
+
+                // 上限を超えた INFO 行は捨てて件数だけ数える（警告・エラーは原因調査に必要なので常に残す）
+                _outputLinesInWindow++;
+                if (level == LogLevel.Info && _outputLinesInWindow > MaxOutputLinesPerSecond)
+                {
+                    _suppressedOutputLines++;
+                    return;
+                }
             }
+
+            // カメラが開けない等の原因を追えるよう、デバッグログタブに残す（量が多いため Player.log には書かない）
+            LogBuffer.Add(level, OutputLogCategory, line);
+        }
+
+        /// <summary>
+        /// トラッカーの出力行の重要度（行頭の "ERROR"/"WARN"/"STATS"、glog の重要度、Python の例外から判定。それ以外は INFO）。
+        /// </summary>
+        public static LogLevel ClassifyOutput(string line)
+        {
+            // 同梱の MediaPipe 版の定期統計は詳細ログ（DEBUG。詳細ログ OFF なら記録しない）
+            if (line.StartsWith("STATS:", StringComparison.Ordinal))
+            {
+                return LogLevel.Debug;
+            }
+
+            // glog は行頭 1 文字が重要度（I 情報 / W 警告 / E エラー / F 致命的）
+            Match glog = GlogLine.Match(line);
+            if (glog.Success)
+            {
+                char severity = glog.Groups[1].Value[0];
+                return severity == 'I' ? LogLevel.Info : severity == 'W' ? LogLevel.Warning : LogLevel.Error;
+            }
+
+            // 同梱トラッカーのエラー行・Python の例外
+            if (line.StartsWith("ERROR", StringComparison.OrdinalIgnoreCase)
+                || line.StartsWith("Traceback", StringComparison.Ordinal)
+                || line.StartsWith("Tracker error", StringComparison.Ordinal)
+                || line.StartsWith("Failed", StringComparison.Ordinal)
+                || line.IndexOf("Exception", StringComparison.Ordinal) >= 0)
+            {
+                return LogLevel.Error;
+            }
+
+            // 同梱トラッカーの警告行・Python の警告
+            if (line.StartsWith("WARN", StringComparison.OrdinalIgnoreCase)
+                || line.IndexOf("Warning:", StringComparison.Ordinal) >= 0)
+            {
+                return LogLevel.Warning;
+            }
+
+            return LogLevel.Info;
+        }
+
+        private void ReportSuppressedOutput()
+        {
+            // 報告は間隔を空ける（大量出力が続く間に警告だけで埋まらないように）
+            if (Time.unscaledTime < _nextSuppressedReportTime)
+            {
+                return;
+            }
+
+            int suppressed;
+            lock (_lock)
+            {
+                suppressed = _suppressedOutputLines;
+                _suppressedOutputLines = 0;
+            }
+
+            if (suppressed == 0)
+            {
+                return;
+            }
+
+            _nextSuppressedReportTime = Time.unscaledTime + SuppressedReportInterval;
+            VRCastLog.Warning(LogCategory,
+                $"Skipped {suppressed} tracker output line(s) (over {MaxOutputLinesPerSecond} lines/s)");
         }
 
         private void StopProcess()

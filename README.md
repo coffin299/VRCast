@@ -46,6 +46,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 済 |
 | 表情反映（MediaPipe のみ。笑顔・驚き・怒り・悲しみ → 表情プリセット） | 済 |
 | 表示言語（英語 / 日本語 / 韓国語 / 中国語 簡体字・繁体字）・クレジットタブ | 済 |
+| デバッグログタブ（重要度・カテゴリ・文字列の絞り込み、環境の要約、コピー） | 済 |
 | Constraint（VRC / Unity 標準の Position・Rotation・Scale・Parent・Aim・LookAt） | 済 |
 | 仮想カメラ出力（VRCast Camera、Discord / Zoom 等） | 済 |
 
@@ -63,7 +64,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 
 アバターがある Unity プロジェクト（VCC プロジェクト可、Unity 2022.3.22f1）に Converter パッケージを導入する。
 
-- 配布 zip に入っている `VRCast-Converter.unitypackage` をダブルクリック（または Unity にドラッグ＆ドロップ）して **Import**。
+- 配布 zip の `VRCast-Converter` フォルダに入っている `VRCast-Converter-<バージョン>.unitypackage` をダブルクリック（または Unity にドラッグ＆ドロップ）して **Import**。
   `Assets/VRCast/Converter/` に入る。更新は新しい版を同じ手順で上書きインポート。
 - または Package Manager > `+` > **Add package from git URL...**（Git が必要）
   `https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter`
@@ -110,7 +111,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | Tab | 操作パネルの表示切替（隠している間は OBS で背景も透過） |
 | 1〜9 / 0 | 表情プリセット切替 / ニュートラル |
 
-操作パネルは左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings / Credits）で項目を切り替え、内容は縦にスクロールする。
+操作パネルは左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings / Debug log / Credits）で項目を切り替え、内容は縦にスクロールする。
 配色は背景のベージュに合わせた濃いめのベージュ（焦げ茶の文字、キャラメル色のアクセント）。
 パネル下部には、どのタブでも押せるリセットボタン（**Head** 顔の向き / **Gaze** 視線 / **Expression** 表情をニュートラルへ / **Camera** カメラ）を常に表示する。
 パネルは見出し部分をドラッグして移動でき、高さは画面に収まるよう自動で調整される。
@@ -120,6 +121,17 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 - **ヘルプ**: 見出しの **?**、Start / Settings の **Open help** で Web のヘルプページ（[coffin299.github.io/VRCast/help](https://coffin299.github.io/VRCast/help/)、日本語 / 英語 / 韓国語 / 中国語 簡体字・繁体字）をブラウザで開く（パネルの表示言語で開く）。
 - **表示言語**: パネル上部（見出しの下）の言語ボタン、または **Settings** の Display language で「自動（OS に合わせる）」/ English / 日本語 / 한국어 / 简体中文 / 繁體中文 を選べる
   （既定は自動。OS が日本語なら日本語、韓国語なら韓国語、中国語なら簡体字 / 繁体字、それ以外は英語）。Web サイト・ヘルプページも同じ 5 言語で、既定はブラウザの言語に合わせる（配布物の説明 README.txt は日本語 / 英語）。
+- **Debug log**（デバッグログ）: カメラが認識されない等の原因調査用。環境の要約（バージョン・OS・CPU・GPU・トラッカーと受信の状態・カメラ一覧）と、
+  起動直後からのログ（最大 2000 件、アプリを閉じると消える）を表示する。**DEBUG / INFO / WARN / ERROR** の表示切替（件数付き）、カテゴリ（`Tracker` / `TrackerOutput` / `Tracking` がカメラ関係）、
+  文字列検索、新しい順 / 古い順で絞り込め、表示中のログを環境と一緒にコピーできる（不具合報告にそのまま貼れる）。
+  トラッカー自身の出力（`TrackerOutput`）と DEBUG はこのタブにだけ残し、Player.log には書かない。**ログフォルダ** で Player.log のあるフォルダを開く。
+  - **トラッカーの状態**（常に記録）: 起動したコマンドライン・PID、終了コードとその意味（カメラが開けない / フレームが届かない / DLL 不足など）と動作時間、
+    カメラ一覧の取得時間、最初のパケットの送信元、データの途絶（3 秒）・待ち受け開始から 15 秒届かない、入力元の設定違いの推定（MediaPipe を選んで OpenSeeFace のデータが届く等）。
+    同梱の MediaPipe 版は Python / OpenCV / MediaPipe の版、カメラの実際の解像度・FPS・バックエンド、モデルの読込時間、読み取り・送信の失敗を `INFO:` / `WARN:` / `ERROR:` 付きで出し、重要度に振り分ける。
+  - **詳細ログ**（スイッチ、既定 OFF、設定に保存）: ON の間だけ DEBUG を記録する。受信側の 5 秒ごとの統計（パケット/秒・サイズ・不正件数・顔 / 腕 / 手が映っていた割合）と顔の検出 / 見失い、
+    MediaPipe 版の `STATS:` 行（カメラ FPS・推定 FPS・モデルごとの推定時間・検出率・間引き / 失敗の件数。`--status-interval` 秒ごと、既定 5）。
+  - **負荷対策**: 連続した同じログは 1 行にまとめて回数（×N）を表示、トラッカー出力の INFO は毎秒 30 行まで（超えた分は件数だけ警告）、
+    不正パケットの警告は 10 秒に 1 回、統計は詳細ログ OFF なら文字列も作らない、一覧の作り直しは 0.25 秒に 1 回まで、配布版では通常ログ・警告のスタックトレースを取らない。
 - **Credits**（クレジット、タブ列の一番下）: 開発者（ごみぃ）・協力者（Arche_039）のリンクと、ライセンス・NOTICE を GitHub で開くボタン（配布物にも `LICENSE.txt` / `NOTICE.txt` を同梱）
   （配布フォルダにファイルが無い場合は GitHub のファイルを開くボタンになる）。
 - **UI の大きさ**: **Settings** の UI size で 75% / 100% / 125% / 150% / 200% を選べる（高解像度ディスプレイ向け）。
@@ -341,8 +353,9 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 
 - 出力: `dist\VRCast-<バージョン>-win64.zip`（`.gitignore` 済み）。バージョンの既定は Player Settings の Version（`bundleVersion`。
   ビルド時に `VRCastBuild` の `AppVersion` が設定される）。
-- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）
-  + `VRCast-Converter.unitypackage`（書き出しツール）。
+- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
+  本体と取り違えないよう、別の `VRCast-Converter\` フォルダに書き出しツール `VRCast-Converter-<package.json の version>.unitypackage` と、
+  「アバターのプロジェクトにインポートする」ことをファイル名で伝える説明（`Tools/Package/Converter/` の中身をそのまま複製）を入れる。
 - 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\VRCast-Converter-<バージョン>.unitypackage`）。
   `Packages/com.vrcast.converter` を `Assets/VRCast/Converter/` に入るよう詰める。GUID はリポジトリの `.meta` を使うため版をまたいで同じ
   （上書きインポートで更新できる）。ファイルを追加したら Unity で一度開いて `.meta` を作り、一緒にコミットする（無いと中止する）。
