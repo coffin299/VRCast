@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 1.4.0 (2026-10-05)
 
 [日本語]
 - VRCast が背面にある間（他のウィンドウを操作中）、MediaPipe のトラッキングで手を見失いやすくなる問題を修正
