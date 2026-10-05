@@ -261,6 +261,17 @@ namespace VRCast.UI
                 _settings.trackerCamera = _process.Cameras[selected];
             }
 
+            // 仮想カメラ・赤外線カメラでは顔が映らないため、実際の Web カメラを選ぶよう促す
+            if (TrackerProcess.IsLikelyUnusableCamera(_settings.trackerCamera))
+            {
+                GuiControls.Hint(Loc.T(
+                    "This looks like a virtual or infrared camera, so your face will not be detected. Select your webcam.",
+                    "仮想カメラまたは赤外線カメラのようです。顔が認識されないため、お使いの Web カメラを選んでください。",
+                    "가상 카메라 또는 적외선 카메라로 보입니다. 얼굴이 인식되지 않으므로 사용 중인 웹캠을 선택하세요.",
+                    "这似乎是虚拟摄像头或红外摄像头，无法识别面部。请选择您的网络摄像头。",
+                    "這似乎是虛擬攝影機或紅外線攝影機，無法辨識臉部。請選擇您的網路攝影機。"));
+            }
+
             GUILayout.BeginHorizontal();
 
             // 一覧の再取得（カメラの抜き差し後など）

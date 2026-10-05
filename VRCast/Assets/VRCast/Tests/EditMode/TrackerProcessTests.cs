@@ -75,6 +75,29 @@ namespace VRCast.Tests
             Assert.That(TrackerProcess.ClassifyOutput(line), Is.EqualTo(expected));
         }
 
+        [TestCase("VRCast Camera", true)]
+        [TestCase("OBS Virtual Camera", true)]
+        [TestCase("Integrated IR Camera", true)]
+        [TestCase("Integrated Camera", false)]
+        [TestCase("Logitech BRIO", false)]
+        [TestCase("", false)]
+        public void IsLikelyUnusableCamera_DetectsVirtualAndInfrared(string name, bool expected)
+        {
+            // 仮想カメラ（VRCast 自身・OBS）と赤外線カメラだけを該当とすること
+            Assert.That(TrackerProcess.IsLikelyUnusableCamera(name), Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void ChooseDefaultCamera_PrefersRealCamera()
+        {
+            // 先頭が仮想カメラでも実カメラを選び、仮想カメラしか無ければその先頭を選ぶこと
+            Assert.That(TrackerProcess.ChooseDefaultCamera(new[] { "VRCast Camera", "", "USB Camera" }),
+                Is.EqualTo("USB Camera"));
+            Assert.That(TrackerProcess.ChooseDefaultCamera(new[] { "", "OBS Virtual Camera" }),
+                Is.EqualTo("OBS Virtual Camera"));
+            Assert.That(TrackerProcess.ChooseDefaultCamera(new string[0]), Is.Empty);
+        }
+
         [Test]
         public void DescribeExitCode_ExplainsKnownCodes()
         {
