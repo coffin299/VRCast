@@ -98,15 +98,15 @@
   <p class="zh-hant">在包含虛擬形象的 Unity 專案（用 VCC 建立的專案亦可，Unity 2022.3.22f1）中操作。</p>
   <ol class="steps">
     <li>
-      <span class="ja">配布 zip の中の <code>VRCast-Converter.unitypackage</code> をダブルクリック（または Unity にドラッグ＆ドロップ）して
+      <span class="ja">配布 zip の <code>VRCast-Converter</code> フォルダ（本体の <code>VRCast</code> フォルダとは別）にある <code>VRCast-Converter-バージョン.unitypackage</code> をダブルクリック（または Unity にドラッグ＆ドロップ）して
         <span class="ui">Import</span> を押します（<code>Assets/VRCast/Converter</code> に入ります）。</span>
-      <span class="en">Double-click <code>VRCast-Converter.unitypackage</code> from the zip (or drag it into Unity) and press
+      <span class="en">Double-click <code>VRCast-Converter-version.unitypackage</code> in the <code>VRCast-Converter</code> folder of the zip (separate from the app's <code>VRCast</code> folder) (or drag it into Unity) and press
         <span class="ui">Import</span> (it goes into <code>Assets/VRCast/Converter</code>).</span>
-      <span class="ko">배포 zip 안의 <code>VRCast-Converter.unitypackage</code>를 더블 클릭 (또는 Unity에 드래그 앤 드롭)하고
+      <span class="ko">배포 zip의 <code>VRCast-Converter</code> 폴더(본체 <code>VRCast</code> 폴더와 별도)에 있는 <code>VRCast-Converter-버전.unitypackage</code>를 더블 클릭 (또는 Unity에 드래그 앤 드롭)하고
         <span class="ui">Import</span>를 누릅니다 (<code>Assets/VRCast/Converter</code>에 들어갑니다).</span>
-      <span class="zh-hans">双击发布 zip 中的 <code>VRCast-Converter.unitypackage</code>（或拖入 Unity），然后点击
+      <span class="zh-hans">双击发布 zip 中 <code>VRCast-Converter</code> 文件夹（与主程序的 <code>VRCast</code> 文件夹分开）里的 <code>VRCast-Converter-版本.unitypackage</code>（或拖入 Unity），然后点击
         <span class="ui">Import</span>（会放入 <code>Assets/VRCast/Converter</code>）。</span>
-      <span class="zh-hant">雙擊發佈 zip 中的 <code>VRCast-Converter.unitypackage</code>（或拖入 Unity），然後點擊
+      <span class="zh-hant">雙擊發佈 zip 中 <code>VRCast-Converter</code> 資料夾（與主程式的 <code>VRCast</code> 資料夾分開）裡的 <code>VRCast-Converter-版本.unitypackage</code>（或拖入 Unity），然後點擊
         <span class="ui">Import</span>（會放入 <code>Assets/VRCast/Converter</code>）。</span>
     </li>
     <li><span class="ja">メニュー <span class="ui">VRCast &gt; Avatar Exporter</span> を開きます。</span>
@@ -563,6 +563,48 @@
   <p class="zh-hant">表情反映僅支援 MediaPipe。請在 <span class="ui">追蹤</span> 分頁中確認輸入來源為 MediaPipe，
     且 <span class="ui">反映表情</span> 已開啟。反應不靈敏時請調低 <span class="ui">表情閾值</span>；
     出現錯誤的表情時，請為每種表情指定要使用的表情。</p>
+
+  <h3><span class="ja">カメラが認識されない・トラッキングが動かない</span><span class="en">The camera is not detected / tracking does not work</span><span class="ko">카메라가 인식되지 않는다·트래킹이 안 된다</span><span class="zh-hans">无法识别摄像头·追踪不工作</span><span class="zh-hant">無法辨識攝影機·追蹤不運作</span></h3>
+  <p class="ja">まず <span class="ui">トラッキング</span> タブの <span class="ui">カメラ</span> で、お使いの Web カメラが選ばれているか確認してください。
+    <code>VRCast Camera</code>（VRCast の仮想カメラ）・<code>OBS Virtual Camera</code> などの仮想カメラや、顔認証用の赤外線（IR）カメラを選ぶと、映像は届いても顔が認識されません。</p>
+  <p class="en">First, check that your webcam is selected under <span class="ui">Camera</span> in the <span class="ui">Tracking</span> tab.
+    With a virtual camera such as <code>VRCast Camera</code> (VRCast's own) or <code>OBS Virtual Camera</code>, or an infrared (IR) camera for face sign-in, the video arrives but your face is not detected.</p>
+  <p class="ko">먼저 <span class="ui">트래킹</span> 탭의 <span class="ui">카메라</span>에서 사용 중인 웹캠이 선택되어 있는지 확인하세요.
+    <code>VRCast Camera</code>(VRCast의 가상 카메라)·<code>OBS Virtual Camera</code> 등의 가상 카메라나 얼굴 인증용 적외선(IR) 카메라를 선택하면 영상은 들어와도 얼굴이 인식되지 않습니다.</p>
+  <p class="zh-hans">请先在 <span class="ui">追踪</span> 标签页的 <span class="ui">相机</span> 中确认选择的是您的网络摄像头。
+    如果选择了 <code>VRCast Camera</code>（VRCast 的虚拟摄像头）、<code>OBS Virtual Camera</code> 等虚拟摄像头，或用于人脸登录的红外（IR）摄像头，即使有画面也无法识别面部。</p>
+  <p class="zh-hant">請先在 <span class="ui">追蹤</span> 分頁的 <span class="ui">相機</span> 中確認選擇的是您的網路攝影機。
+    如果選擇了 <code>VRCast Camera</code>（VRCast 的虛擬攝影機）、<code>OBS Virtual Camera</code> 等虛擬攝影機，或用於臉部登入的紅外線（IR）攝影機，即使有畫面也無法辨識臉部。</p>
+  <p class="ja"><span class="ui">デバッグログ</span> タブを開くと、カメラ一覧・トラッカーの状態と、起動してからのログを確認できます。
+    <span class="ui">WARN</span> / <span class="ui">ERROR</span> だけを表示したり、カテゴリを <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（カメラ関係）に絞ったりできます。
+    不具合を報告するときは <span class="ui">表示中をコピー</span> を押して、ログと環境をそのまま貼り付けてください。</p>
+  <p class="en">Open the <span class="ui">Debug log</span> tab to see the camera list, the tracker status and the logs since startup.
+    You can show only <span class="ui">WARN</span> / <span class="ui">ERROR</span>, or narrow the category to <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code> (camera related).
+    When reporting a problem, press <span class="ui">Copy shown</span> and paste the logs and environment as they are.</p>
+  <p class="ko"><span class="ui">디버그 로그</span> 탭을 열면 카메라 목록·트래커 상태와 시작 후의 로그를 확인할 수 있습니다.
+    <span class="ui">WARN</span> / <span class="ui">ERROR</span>만 표시하거나, 카테고리를 <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>(카메라 관련)으로 좁힐 수 있습니다.
+    문제를 보고할 때는 <span class="ui">표시 중 복사</span>를 눌러 로그와 환경을 그대로 붙여 넣어 주세요.</p>
+  <p class="zh-hans">打开 <span class="ui">调试日志</span> 标签页，可以查看摄像头列表、追踪器状态以及启动以来的日志。
+    可以只显示 <span class="ui">WARN</span> / <span class="ui">ERROR</span>，或将类别限定为 <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（与摄像头相关）。
+    报告问题时，请点击 <span class="ui">复制显示内容</span>，然后直接粘贴日志和环境信息。</p>
+  <p class="zh-hant">開啟 <span class="ui">偵錯日誌</span> 分頁，可以查看攝影機清單、追蹤器狀態以及啟動以來的日誌。
+    可以只顯示 <span class="ui">WARN</span> / <span class="ui">ERROR</span>，或將類別限定為 <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（與攝影機相關）。
+    回報問題時，請點擊 <span class="ui">複製顯示內容</span>，然後直接貼上日誌和環境資訊。</p>
+  <p class="ja">原因がわからないときは <span class="ui">詳細ログ</span> を ON にして、症状が出るまで待ってからコピーしてください。
+    受信の統計（1 秒あたりのデータ数、顔・腕・手が映っていた割合）や MediaPipe の推定にかかる時間などが <span class="ui">DEBUG</span> として記録されます。
+    設定は保存されるため、調べ終わったら OFF に戻してください。</p>
+  <p class="en">If the cause is unclear, turn on <span class="ui">Detailed logging</span>, wait until the problem happens, then copy.
+    Receive statistics (data per second, how often the face, arms and hands were visible) and MediaPipe inference times are recorded as <span class="ui">DEBUG</span>.
+    The switch is saved, so turn it off again when you are done.</p>
+  <p class="ko">원인을 알 수 없을 때는 <span class="ui">상세 로그</span>를 켜고 증상이 나타날 때까지 기다린 뒤 복사해 주세요.
+    수신 통계(초당 데이터 수, 얼굴·팔·손이 보였던 비율)와 MediaPipe 추정 시간 등이 <span class="ui">DEBUG</span>로 기록됩니다.
+    설정은 저장되므로 조사가 끝나면 다시 꺼 주세요.</p>
+  <p class="zh-hans">原因不明时，请开启 <span class="ui">详细日志</span>，等到问题出现后再复制。
+    接收统计（每秒数据量、面部·手臂·手被拍到的比例）和 MediaPipe 的推理耗时等会作为 <span class="ui">DEBUG</span> 记录。
+    该设置会被保存，排查结束后请关闭。</p>
+  <p class="zh-hant">原因不明時，請開啟 <span class="ui">詳細日誌</span>，等到問題出現後再複製。
+    接收統計（每秒資料量、臉部·手臂·手被拍到的比例）和 MediaPipe 的推論耗時等會作為 <span class="ui">DEBUG</span> 記錄。
+    該設定會被儲存，排查結束後請關閉。</p>
 
   <h3><span class="ja">設定ファイル・ログの場所</span><span class="en">Settings and log files</span><span class="ko">설정 파일·로그 위치</span><span class="zh-hans">设置文件与日志的位置</span><span class="zh-hant">設定檔與記錄檔的位置</span></h3>
   <p><code>%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\</code>
