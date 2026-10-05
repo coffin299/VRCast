@@ -269,7 +269,7 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 │       └── Editor/               Exporter (VRCast.Converter.Editor)
 ├── Tools/
 │   ├── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
-│   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (package.bat / unitypackage.bat、同梱 README.txt)
+│   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (一括 release.bat / package.bat / unitypackage.bat、同梱 README.txt)
 │   └── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
@@ -348,7 +348,17 @@ powershell -ExecutionPolicy Bypass -File .\Tools\UnityCapture\fetch.ps1
 
 ### 配布用 zip の作成
 
-Windows ビルドの後、`Tools\Package\package.bat` をダブルクリック（またはリポジトリ直下から実行）:
+**一括（推奨）**: Unity で Windows ビルドをした後、`Tools\Package\release.bat` を実行すると、
+MediaPipe トラッカーのビルド → ビルド済みの `VRCast\Builds\Windows` の StreamingAssets へトラッカーを上書きコピー（Unity で再ビルドしなくても新しいトラッカーが入る）
+→ 書き出しツールの unitypackage（`dist\`）→ 配布 zip を順に作る。開始時に VRCast.exe の有無と、ビルドのバージョンと書き出しツールのバージョンの不一致を確認する。
+
+```powershell
+.\Tools\Package\release.bat
+# トラッカーのビルドを省く（VRCast\Trackers にあるものを使う）
+.\Tools\Package\release.bat -SkipTracker
+```
+
+**個別**: Windows ビルドの後、`Tools\Package\package.bat` をダブルクリック（またはリポジトリ直下から実行）:
 
 ```powershell
 .\Tools\Package\package.bat
