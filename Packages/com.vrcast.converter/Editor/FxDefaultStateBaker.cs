@@ -14,9 +14,6 @@ namespace VRCast.Converter.Editor
         // 遷移を辿る最大回数（循環対策）
         private const int MaxHops = 16;
 
-        // Direct BlendTree の子を有効とみなす重みの下限
-        private const float DirectWeightThreshold = 0.5f;
-
         // ON/OFF 系カーブを ON とみなす値の下限
         private const float OnThreshold = 0.5f;
 
@@ -26,20 +23,42 @@ namespace VRCast.Converter.Editor
         private const string BlendShapePrefix = "blendShape.";
         private const string MaterialPropertyPrefix = "m_Materials.Array.data[";
 
+        // BlendTree の重みを掛け合わせたクリップ
+        private readonly struct WeightedClip
+        {
+            public readonly AnimationClip Clip;
+            public readonly float Weight;
+
+            public WeightedClip(AnimationClip clip, float weight)
+            {
+                Clip = clip;
+                Weight = weight;
+            }
+        }
+
+        // 1 レイヤー内で同じプロパティを動かすカーブの重み付き合計
+        private struct FloatSample
+        {
+            public float WeightedSum;
+            public float TotalWeight;
+        }
+
         /// <summary>
         /// 焼き込んだアニメーションクリップ数を返す。
         /// movedObjects は書き出し中に付け替えたオブジェクト（元のパス → 移動後）で、古いパスのカーブを読み替える。
+        /// keepSceneBlendShapes が true なら BlendShape は焼き込まず、シーン上の値を残す。
         /// </summary>
         public static int Bake(
             GameObject target,
             AnimatorController controller,
             IReadOnlyDictionary<string, float> overrides,
-            IReadOnlyDictionary<string, Transform> movedObjects = null)
+            IReadOnlyDictionary<string, Transform> movedObjects = null,
+            bool keepSceneBlendShapes = false)
         {
             // コントローラーのパラメーター既定値に Expression Parameters の既定値を上書き
             Dictionary<string, float> values = BuildParameterValues(controller, overrides);
 
-            var clips = new List<AnimationClip>();
+            int bakedCount = 0;
             AnimatorControllerLayer[] layers = controller.layers;
             for (int i = 0; i < layers.Length; i++)
             {
@@ -51,54 +70,103 @@ namespace VRCast.Converter.Editor
                     continue;
                 }
 
-                // 初期状態で到達するステートのモーションからクリップを集める
+                // 初期状態で到達するステートのモーションから、重み付きでクリップを集める
                 AnimatorState state = ResolveState(layer.stateMachine, values);
-                if (state != null)
+                if (state == null)
                 {
-                    CollectClips(state.motion, values, clips);
+                    continue;
                 }
+
+                var clips = new List<WeightedClip>();
+                CollectClips(state.motion, 1f, values, clips);
+
+                // レイヤー順に適用（後のレイヤーが優先される Animator の挙動に合わせる）
+                ApplyLayerAtStart(target, clips, movedObjects, keepSceneBlendShapes);
+                bakedCount += clips.Count;
             }
 
-            // レイヤー順に適用（後のレイヤーが優先される Animator の挙動に合わせる）
-            foreach (AnimationClip clip in clips)
-            {
-                ApplyClipAtStart(target, clip, movedObjects);
-            }
-
-            return clips.Count;
+            return bakedCount;
         }
 
         /// <summary>
-        /// クリップの 0 秒時点の値のうち、見た目の ON/OFF に関わるものだけを適用する。
+        /// 1 レイヤー分のクリップの 0 秒時点の値を重みで混ぜ、見た目の ON/OFF に関わるものだけを適用する。
         /// SampleAnimation は Humanoid のマッスルを既定ポーズへ戻し、Constraint 前提の Transform 値も
         /// 書き込んでしまうため使わない。Transform・マッスル・マテリアルプロパティは対象外。
         /// </summary>
-        private static void ApplyClipAtStart(
-            GameObject root, AnimationClip clip, IReadOnlyDictionary<string, Transform> movedObjects)
+        private static void ApplyLayerAtStart(
+            GameObject root,
+            List<WeightedClip> clips,
+            IReadOnlyDictionary<string, Transform> movedObjects,
+            bool keepSceneBlendShapes)
         {
-            // 数値カーブ: GameObject 有効状態 / Renderer 有効状態 / BlendShape
-            foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(clip))
+            var floats = new Dictionary<(Object, string), FloatSample>();
+            var materials = new Dictionary<(Object, string), (Material material, float weight)>();
+
+            foreach (WeightedClip weighted in clips)
             {
-                AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
-                if (curve == null)
+                // 数値カーブ: GameObject 有効状態 / Renderer 有効状態 / BlendShape
+                foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(weighted.Clip))
                 {
-                    continue;
+                    // シーンの値を優先する指定なら BlendShape は触らない
+                    if (keepSceneBlendShapes && IsBlendShapeProperty(binding.propertyName))
+                    {
+                        continue;
+                    }
+
+                    AnimationCurve curve = AnimationUtility.GetEditorCurve(weighted.Clip, binding);
+                    Object animated = ResolveAnimatedObject(root, binding, movedObjects);
+                    if (curve == null || animated == null)
+                    {
+                        continue;
+                    }
+
+                    // 同じプロパティへの値を重み付きで足し込む
+                    var key = (animated, binding.propertyName);
+                    floats.TryGetValue(key, out FloatSample sample);
+                    sample.WeightedSum += weighted.Weight * curve.Evaluate(0f);
+                    sample.TotalWeight += weighted.Weight;
+                    floats[key] = sample;
                 }
 
-                ApplyFloat(ResolveAnimatedObject(root, binding, movedObjects), binding.propertyName, curve.Evaluate(0f));
-            }
-
-            // 参照カーブ: マテリアル差し替え
-            foreach (EditorCurveBinding binding in AnimationUtility.GetObjectReferenceCurveBindings(clip))
-            {
-                ObjectReferenceKeyframe[] keys = AnimationUtility.GetObjectReferenceCurve(clip, binding);
-                if (keys == null || keys.Length == 0)
+                // 参照カーブ: マテリアル差し替え（混ぜられないため最も重いクリップの値を採用）
+                foreach (EditorCurveBinding binding in AnimationUtility.GetObjectReferenceCurveBindings(weighted.Clip))
                 {
-                    continue;
-                }
+                    ObjectReferenceKeyframe[] keys = AnimationUtility.GetObjectReferenceCurve(weighted.Clip, binding);
+                    Object animated = ResolveAnimatedObject(root, binding, movedObjects);
+                    if (keys == null || keys.Length == 0 || !(keys[0].value is Material material) || animated == null)
+                    {
+                        continue;
+                    }
 
-                ApplyMaterial(ResolveAnimatedObject(root, binding, movedObjects), binding.propertyName, keys[0].value as Material);
+                    var key = (animated, binding.propertyName);
+                    if (!materials.TryGetValue(key, out var current) || weighted.Weight > current.weight)
+                    {
+                        materials[key] = (material, weighted.Weight);
+                    }
+                }
             }
+
+            foreach (KeyValuePair<(Object, string), FloatSample> pair in floats)
+            {
+                (Object animated, string propertyName) = pair.Key;
+                FloatSample sample = pair.Value;
+
+                // 重みの合計が 1 未満なら、足りない分は現在の値（既定値の近似）で埋める
+                float value = sample.TotalWeight >= 1f
+                    ? sample.WeightedSum / sample.TotalWeight
+                    : sample.WeightedSum + (1f - sample.TotalWeight) * ReadFloat(animated, propertyName);
+                ApplyFloat(animated, propertyName, value);
+            }
+
+            foreach (KeyValuePair<(Object, string), (Material material, float weight)> pair in materials)
+            {
+                ApplyMaterial(pair.Key.Item1, pair.Key.Item2, pair.Value.material);
+            }
+        }
+
+        private static bool IsBlendShapeProperty(string propertyName)
+        {
+            return propertyName.StartsWith(BlendShapePrefix, System.StringComparison.Ordinal);
         }
 
         private static Object ResolveAnimatedObject(
@@ -164,15 +232,39 @@ namespace VRCast.Converter.Editor
             }
 
             // BlendShape の重み（"blendShape.<名前>"）
-            if (animated is SkinnedMeshRenderer skinned && skinned.sharedMesh != null
-                && propertyName.StartsWith(BlendShapePrefix, System.StringComparison.Ordinal))
+            if (TryGetBlendShape(animated, propertyName, out SkinnedMeshRenderer skinned, out int index))
             {
-                int index = skinned.sharedMesh.GetBlendShapeIndex(propertyName.Substring(BlendShapePrefix.Length));
-                if (index >= 0)
-                {
-                    skinned.SetBlendShapeWeight(index, value);
-                }
+                skinned.SetBlendShapeWeight(index, value);
             }
+        }
+
+        private static float ReadFloat(Object animated, string propertyName)
+        {
+            // ApplyFloat と同じ対象について、焼き込み前の値を数値で返す
+            if (animated is GameObject go && propertyName == ActivePropertyName)
+            {
+                return go.activeSelf ? 1f : 0f;
+            }
+
+            if (animated is Renderer renderer && propertyName == EnabledPropertyName)
+            {
+                return renderer.enabled ? 1f : 0f;
+            }
+
+            return TryGetBlendShape(animated, propertyName, out SkinnedMeshRenderer skinned, out int index)
+                ? skinned.GetBlendShapeWeight(index)
+                : 0f;
+        }
+
+        private static bool TryGetBlendShape(
+            Object animated, string propertyName, out SkinnedMeshRenderer skinned, out int index)
+        {
+            // "blendShape.<名前>" を SkinnedMeshRenderer のメッシュ上の添字に解決
+            skinned = animated as SkinnedMeshRenderer;
+            index = skinned != null && skinned.sharedMesh != null && IsBlendShapeProperty(propertyName)
+                ? skinned.sharedMesh.GetBlendShapeIndex(propertyName.Substring(BlendShapePrefix.Length))
+                : -1;
+            return index >= 0;
         }
 
         private static void ApplyMaterial(Object animated, string propertyName, Material material)
@@ -320,12 +412,19 @@ namespace VRCast.Converter.Editor
             }
         }
 
-        private static void CollectClips(Motion motion, Dictionary<string, float> values, List<AnimationClip> clips)
+        private static void CollectClips(
+            Motion motion, float weight, Dictionary<string, float> values, List<WeightedClip> clips)
         {
-            // クリップはそのまま追加
+            // 重みが無いモーションは結果に影響しない
+            if (weight <= 0f)
+            {
+                return;
+            }
+
+            // クリップは親から掛け合わせた重みで追加
             if (motion is AnimationClip clip)
             {
-                clips.Add(clip);
+                clips.Add(new WeightedClip(clip, weight));
                 return;
             }
 
@@ -339,45 +438,63 @@ namespace VRCast.Converter.Editor
             switch (tree.blendType)
             {
                 case BlendTreeType.Direct:
-                    // Direct は重みパラメーターが有効な子をすべて適用（WD Off トグル手法に対応）
+                    // Direct は各子を重みパラメーターの値で適用（WD Off トグル手法に対応）
                     foreach (ChildMotion child in children)
                     {
-                        values.TryGetValue(child.directBlendParameter, out float weight);
-                        if (weight >= DirectWeightThreshold)
-                        {
-                            CollectClips(child.motion, values, clips);
-                        }
+                        values.TryGetValue(child.directBlendParameter, out float childWeight);
+                        CollectClips(child.motion, weight * Mathf.Clamp01(childWeight), values, clips);
                     }
 
                     break;
                 case BlendTreeType.Simple1D:
-                    // 1D はパラメーター値に最も近い閾値の子を採用
+                    // 1D はパラメーター値を挟む 2 つの子を線形補間（ラジアルメニューのスライダー等）
                     values.TryGetValue(tree.blendParameter, out float blendValue);
-                    CollectClips(FindNearestChild(children, blendValue).motion, values, clips);
+                    CollectSimple1D(children, blendValue, weight, values, clips);
                     break;
                 default:
                     // 2D 系は近似として先頭の子を採用
-                    CollectClips(children[0].motion, values, clips);
+                    CollectClips(children[0].motion, weight, values, clips);
                     break;
             }
         }
 
-        private static ChildMotion FindNearestChild(ChildMotion[] children, float value)
+        private static void CollectSimple1D(
+            ChildMotion[] children, float value, float weight, Dictionary<string, float> values, List<WeightedClip> clips)
         {
-            // 閾値との差が最小の子を線形探索
-            ChildMotion nearest = children[0];
-            float bestDistance = Mathf.Abs(children[0].threshold - value);
-            for (int i = 1; i < children.Length; i++)
+            // 閾値の昇順に並べ替える（元の配列は変更しない）
+            var sorted = (ChildMotion[])children.Clone();
+            System.Array.Sort(sorted, (a, b) => a.threshold.CompareTo(b.threshold));
+
+            // 範囲外は端の子だけを採用（Animator と同じくクランプ）
+            if (value <= sorted[0].threshold)
             {
-                float distance = Mathf.Abs(children[i].threshold - value);
-                if (distance < bestDistance)
-                {
-                    nearest = children[i];
-                    bestDistance = distance;
-                }
+                CollectClips(sorted[0].motion, weight, values, clips);
+                return;
             }
 
-            return nearest;
+            int last = sorted.Length - 1;
+            if (value >= sorted[last].threshold)
+            {
+                CollectClips(sorted[last].motion, weight, values, clips);
+                return;
+            }
+
+            // 値を挟む区間を探し、区間内の位置で 2 つの子へ重みを配分
+            for (int i = 0; i < last; i++)
+            {
+                float lower = sorted[i].threshold;
+                float upper = sorted[i + 1].threshold;
+                if (value > upper)
+                {
+                    continue;
+                }
+
+                // 同じ閾値が並ぶ区間は上側だけを採用（0 除算の回避）
+                float t = upper > lower ? (value - lower) / (upper - lower) : 1f;
+                CollectClips(sorted[i].motion, weight * (1f - t), values, clips);
+                CollectClips(sorted[i + 1].motion, weight * t, values, clips);
+                return;
+            }
         }
     }
 }

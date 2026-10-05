@@ -84,6 +84,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
   VRCast がボーン名の対応でアバターのボーンの子へ付け替えて追従させる（付け替えで変わったパスは FX の焼き込み時に読み替える）。
 - 除去前に、FX レイヤーの初期状態（Expression Parameters の既定値で到達するステート）から、
   小物の表示 ON/OFF・BlendShape・マテリアル差し替えを焼き込む（ポーズと Transform は変更しない。近似処理のため完全一致ではない）。
+  BlendShape は既定ではシーン上の値を優先し、書き出し画面の「シーンのブレンドシェイプの値を優先する」を OFF にしたときだけ FX の値を焼き込む。
 - FX 内の BlendShape だけを動かすクリップ（表情クリップ）を表情プリセットとして `metadata/expressions.json` に書き出す。
 - Avatar Descriptor の Lip Sync（Viseme / JawFlap BlendShape）と Eyelids（BlendShape）設定を `metadata/descriptor.json` に書き出す。
   Eyelids 未設定の場合は顔メッシュの `まばたき` / `blink` / `eyeBlinkLeft`+`eyeBlinkRight` 等をまばたき用として推定する。

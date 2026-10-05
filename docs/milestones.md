@@ -62,10 +62,12 @@ VRChat SDK を参照せず、リフレクションで `VRCAvatarDescriptor` の 
 到達ステートのモーションの 0 秒時点の値を複製に適用する。
 
 - 適用するのは GameObject 有効状態（`m_IsActive`）、Renderer 有効状態（`m_Enabled`）、BlendShape、マテリアル差し替えのみ
+- BlendShape は書き出し画面の「シーンのブレンドシェイプの値を優先する」（既定 ON、EditorPrefs に保存）が OFF のときだけ適用する
 - `SampleAnimation` は使わない（Humanoid のマッスルが既定ポーズに戻る、Constraint 前提の Transform 値で小物がずれるため）
 - Transform・マッスル・マテリアルプロパティ（色等）のカーブは対象外
 
-- BlendTree: Direct は重みパラメーター ≥ 0.5 の子をすべて、1D は最も近い閾値の子、2D は先頭の子を採用
+- BlendTree: Direct は重みパラメーターの値、1D は値を挟む 2 つの子を線形補間した重みで、2D は先頭の子を採用。
+  レイヤー内で同じプロパティの値を重みで混ぜ、重みの合計が 1 未満なら残りを焼き込み前の値で埋める（マテリアルは最も重い子）
 - VRChat 組み込みパラメーター（`IsLocal` 等）は 0 とみなす
 - Write Defaults の差や、時間経過で変化するステートは再現しない
 
