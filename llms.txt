@@ -1,0 +1,35 @@
+# VRCast
+
+> VRCast is a free, open-source (Apache License 2.0) Windows app that shows a VRChat 3D avatar on its own and sends it to OBS, Discord and Zoom without opening Unity or VRChat. 日本語: VRChat のアバターを、Unity・VRChat を開かずにそのまま配信へ。
+
+The avatar is exported once from the Unity project that contains it (Unity 2022.3.22f1, VCC projects are fine) to a `.vrcaster` file. After that, VRCast.exe loads the file by drag and drop; Unity, VCC and VRChat do not need to run. VRCast is not an official VRChat Inc. tool.
+
+Key facts:
+
+- Platform: Windows 10 / 11 (x64). Price: free.
+- Output: transparent background for OBS Game Capture ("Allow Transparency"), and the "VRCast Camera" virtual camera for Discord, Zoom and similar apps.
+- Tracking: bundled MediaPipe tracker for head, blink, mouth, gaze, arms, hands and fingers, plus facial expressions (smile, surprise, anger, sadness); OpenSeeFace is also supported. A webcam is optional.
+- Face: A-I-U-E-O lip sync from the microphone and auto blink.
+- Keeps the VRChat setup: expressions, default toggles, PhysBones (approximated) and constraints. The original avatar is not modified.
+- UI languages: Japanese, English, Korean, Simplified Chinese, Traditional Chinese.
+- The avatar shown in the screenshots is "Marycia マリシア" by BeroarN (https://brn.booth.pm/items/6305948), not part of VRCast.
+
+## Docs
+
+- [Overview](https://coffin299.github.io/VRCast/): features, three steps, requirements and FAQ
+- [Help](https://coffin299.github.io/VRCast/help/): full usage guide
+- [Export your avatar](https://coffin299.github.io/VRCast/help/#export)
+- [Show in OBS](https://coffin299.github.io/VRCast/help/#obs)
+- [Virtual camera](https://coffin299.github.io/VRCast/help/#vcam)
+- [Tracking](https://coffin299.github.io/VRCast/help/#tracking)
+- [Troubleshooting](https://coffin299.github.io/VRCast/help/#trouble)
+
+## Download
+
+- [GitHub Releases](https://github.com/coffin299/VRCast/releases)
+- [BOOTH](https://coffin299.booth.pm/items/8933317)
+
+## Source
+
+- [GitHub repository](https://github.com/coffin299/VRCast)
+- [Changelog](https://github.com/coffin299/VRCast/blob/main/CHANGELOG.txt)
