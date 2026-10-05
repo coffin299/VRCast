@@ -99,6 +99,12 @@ main { flex: 1; padding: 24px; min-width: 0; }
 .flow { display: flex; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; }
 .flow span.box { background: var(--surface); border-radius: 8px; padding: 8px 14px; }
 .flow span.arrow { color: var(--dim); }
+/* デモ動画・スクリーンショット（width / height 属性で縦横比を確保し、読み込み中のずれを防ぐ） */
+.shot { margin: 0 0 20px; }
+.shot img, .shot video { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--border); }
+.shot figcaption { color: var(--dim); font-size: 14px; text-align: center; margin-top: 8px; }
+section .shot { margin-bottom: 0; }
+.faq h3 { margin-top: 18px; }
 
 @media (max-width: 800px) {
   nav.toc, header .links { display: none; }

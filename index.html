@@ -3,9 +3,73 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>VRCast</title>
-<meta name="description" content="VRCast - VRChat avatars for OBS and streaming, without opening Unity.">
+<title>VRCast - Stream your VRChat avatar in OBS without Unity or VRChat | VRChat アバターを配信へ</title>
+<meta name="description" content="VRCast is a free Windows app that puts your VRChat avatar into OBS, Discord and Zoom without opening Unity or VRChat. Webcam tracking, lip sync and a transparent background. VRChat のアバターを、Unity・VRChat を開かずにそのまま配信へ。">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#e6dbc7">
+<link rel="canonical" href="https://coffin299.github.io/VRCast/">
 <link rel="icon" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="sitemap" type="application/xml" href="sitemap.xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="VRCast">
+<meta property="og:title" content="VRCast - Stream your VRChat avatar without Unity or VRChat">
+<meta property="og:description" content="A free Windows app that puts your VRChat avatar into OBS, Discord and Zoom. VRChat のアバターを、Unity・VRChat を開かずにそのまま配信へ。">
+<meta property="og:url" content="https://coffin299.github.io/VRCast/">
+<meta property="og:image" content="https://coffin299.github.io/VRCast/assets/screenshot.png">
+<meta property="og:image:width" content="1388">
+<meta property="og:image:height" content="794">
+<meta property="og:image:alt" content="VRCast window showing a VRChat avatar (Marycia by BeroarN) with the tracking panel">
+<meta property="og:locale" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VRCast - Stream your VRChat avatar without Unity or VRChat">
+<meta name="twitter:description" content="A free Windows app that puts your VRChat avatar into OBS, Discord and Zoom.">
+<meta name="twitter:image" content="https://coffin299.github.io/VRCast/assets/screenshot.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "VRCast",
+  "url": "https://coffin299.github.io/VRCast/",
+  "description": "A Windows app that shows a VRChat 3D avatar on its own and sends it to OBS, Discord and Zoom without opening Unity or VRChat. Export the avatar once to a .vrcaster file in Unity, then use webcam tracking (MediaPipe / OpenSeeFace), A-I-U-E-O lip sync, facial expressions, a transparent background for OBS Game Capture and the VRCast Camera virtual camera.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Windows 10, Windows 11 (x64)",
+  "inLanguage": ["ja", "en", "ko", "zh-Hans", "zh-Hant"],
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+  "license": "https://www.apache.org/licenses/LICENSE-2.0",
+  "downloadUrl": "https://github.com/coffin299/VRCast/releases",
+  "image": "https://coffin299.github.io/VRCast/assets/icon.png",
+  "screenshot": "https://coffin299.github.io/VRCast/assets/screenshot.png",
+  "softwareHelp": "https://coffin299.github.io/VRCast/help/",
+  "featureList": [
+    "Show a VRChat avatar without Unity or VRChat running",
+    "Transparent background for OBS Game Capture",
+    "Virtual camera (VRCast Camera) for Discord and Zoom",
+    "Webcam tracking of head, eyes, mouth, arms, hands and fingers (MediaPipe / OpenSeeFace)",
+    "Facial expressions from the webcam",
+    "A-I-U-E-O lip sync from the microphone and auto blink",
+    "Keeps expressions, default toggles, PhysBones (approximated) and constraints"
+  ],
+  "author": { "@type": "Person", "name": "coffin299", "url": "https://github.com/coffin299" },
+  "sameAs": ["https://github.com/coffin299/VRCast", "https://coffin299.booth.pm/items/8933317"]
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "VideoObject",
+  "name": "VRCast demo - VRChat avatar with webcam tracking",
+  "description": "A VRChat avatar (Marycia by BeroarN) driven by webcam tracking in VRCast, without Unity or VRChat running.",
+  "contentUrl": "https://coffin299.github.io/VRCast/assets/preview.mp4",
+  "thumbnailUrl": "https://coffin299.github.io/VRCast/assets/screenshot.png",
+  "uploadDate": "2026-10-05"
+}
+</script>
 <link rel="stylesheet" href="assets/style.css">
 <script src="assets/site.js"></script>
 </head>
@@ -37,11 +101,11 @@
 <div class="hero">
   <img src="assets/icon.png" alt="VRCast">
   <h1>VRCast</h1>
-  <p class="lead ja">VRChat のアバターを、Unity を開かずにそのまま配信へ。</p>
-  <p class="lead en">Your VRChat avatar on stream, without opening Unity.</p>
-  <p class="lead ko">VRChat 아바타를 Unity를 열지 않고 그대로 방송에.</p>
-  <p class="lead zh-hans">无需打开 Unity，直接用 VRChat 虚拟形象直播。</p>
-  <p class="lead zh-hant">無需開啟 Unity，直接用 VRChat 虛擬形象直播。</p>
+  <p class="lead ja">VRChat のアバターを、Unity・VRChat を開かずにそのまま配信へ。</p>
+  <p class="lead en">Your VRChat avatar on stream, without opening Unity or VRChat.</p>
+  <p class="lead ko">VRChat 아바타를 Unity·VRChat을 열지 않고 그대로 방송에.</p>
+  <p class="lead zh-hans">无需打开 Unity 或 VRChat，直接用 VRChat 虚拟形象直播。</p>
+  <p class="lead zh-hant">無需開啟 Unity 或 VRChat，直接用 VRChat 虛擬形象直播。</p>
   <div class="buttons">
     <a class="button primary" href="https://github.com/coffin299/VRCast/releases">
       <span class="ja">ダウンロード</span><span class="en">Download</span><span class="ko">다운로드</span><span class="zh-hans">下载</span><span class="zh-hant">下載</span></a>
@@ -49,6 +113,19 @@
     <a class="button" href="https://github.com/coffin299/VRCast">GitHub</a>
   </div>
 </div>
+
+<figure class="shot">
+  <video src="assets/preview.mp4" width="1392" height="768" poster="assets/screenshot.png"
+    autoplay muted loop playsinline preload="auto"
+    aria-label="VRCast demo: a VRChat avatar (Marycia by BeroarN) following webcam tracking, shown without Unity or VRChat">
+    <a href="assets/preview.mp4">VRCast demo video</a>
+  </video>
+  <figcaption>
+    <span class="ja">Web カメラのトラッキングで動かしている様子。</span><span class="en">Driven by webcam tracking.</span><span class="ko">웹캠 트래킹으로 움직이는 모습.</span><span class="zh-hans">通过摄像头追踪驱动。</span><span class="zh-hant">透過網路攝影機追蹤驅動。</span>
+    <span class="ja">使用アバター:</span><span class="en">Avatar:</span><span class="ko">사용 아바타:</span><span class="zh-hans">使用的虚拟形象：</span><span class="zh-hant">使用的虛擬形象：</span>
+    <a href="https://brn.booth.pm/items/6305948">Marycia マリシア</a> (BeroarN)
+  </figcaption>
+</figure>
 
 <section>
   <h2><span class="ja">VRCast とは</span><span class="en">What is VRCast?</span><span class="ko">VRCast란?</span><span class="zh-hans">什么是 VRCast？</span><span class="zh-hant">什麼是 VRCast？</span></h2>
@@ -133,6 +210,23 @@
 </div>
 
 <section>
+  <h2><span class="ja">画面</span><span class="en">Screenshot</span><span class="ko">화면</span><span class="zh-hans">界面</span><span class="zh-hant">畫面</span></h2>
+  <figure class="shot">
+    <img src="assets/screenshot.png" width="1388" height="794" loading="lazy"
+      alt="VRCast window: the settings panel on the left and a VRChat avatar (Marycia by BeroarN) smiling from webcam expression tracking">
+    <figcaption>
+      <span class="ja">左のパネルで設定し、右にアバターを表示します（カメラで笑顔を検出して表情を切り替え中）。</span>
+      <span class="en">Settings on the left, your avatar on the right (here a smile is detected by the webcam and the expression switches).</span>
+      <span class="ko">왼쪽 패널에서 설정하고 오른쪽에 아바타를 표시합니다 (카메라로 웃음을 감지해 표정 전환 중).</span>
+      <span class="zh-hans">在左侧面板设置，右侧显示虚拟形象（此处摄像头检测到笑脸并切换表情）。</span>
+      <span class="zh-hant">在左側面板設定，右側顯示虛擬形象（此處攝影機偵測到笑臉並切換表情）。</span>
+      <span class="ja">使用アバター:</span><span class="en">Avatar:</span><span class="ko">사용 아바타:</span><span class="zh-hans">使用的虚拟形象：</span><span class="zh-hant">使用的虛擬形象：</span>
+      <a href="https://brn.booth.pm/items/6305948">Marycia マリシア</a> (BeroarN)
+    </figcaption>
+  </figure>
+</section>
+
+<section>
   <h2><span class="ja">かんたん 3 ステップ</span><span class="en">Three easy steps</span><span class="ko">간단 3단계</span><span class="zh-hans">简单 3 步</span><span class="zh-hant">簡單 3 步</span></h2>
   <ol class="steps">
     <li><span class="ja">Unity でアバターを <code>.vrcaster</code> に書き出す（<a href="help/#export">手順</a>）</span>
@@ -166,6 +260,34 @@
   </ul>
 </section>
 
+<section class="faq">
+  <h2><span class="ja">よくある質問</span><span class="en">FAQ</span><span class="ko">자주 묻는 질문</span><span class="zh-hans">常见问题</span><span class="zh-hant">常見問題</span></h2>
+  <h3><span class="ja">Unity や VRChat は必要ですか？</span><span class="en">Do I need Unity or VRChat?</span><span class="ko">Unity나 VRChat이 필요한가요?</span><span class="zh-hans">需要 Unity 或 VRChat 吗？</span><span class="zh-hant">需要 Unity 或 VRChat 嗎？</span></h3>
+  <p class="ja">アバターを <code>.vrcaster</code> に書き出すときだけ、アバターの入った Unity プロジェクトを使います。配信中は Unity も VRChat も起動しません。</p>
+  <p class="en">Only once, to export your avatar to <code>.vrcaster</code> from the Unity project that contains it. While streaming, neither Unity nor VRChat runs.</p>
+  <p class="ko">아바타를 <code>.vrcaster</code>로 내보낼 때만 아바타가 들어 있는 Unity 프로젝트를 사용합니다. 방송 중에는 Unity도 VRChat도 실행하지 않습니다.</p>
+  <p class="zh-hans">只有将虚拟形象导出为 <code>.vrcaster</code> 时需要使用包含该虚拟形象的 Unity 项目。直播时无需启动 Unity 或 VRChat。</p>
+  <p class="zh-hant">只有將虛擬形象匯出為 <code>.vrcaster</code> 時需要使用包含該虛擬形象的 Unity 專案。直播時無需啟動 Unity 或 VRChat。</p>
+  <h3><span class="ja">料金はかかりますか？</span><span class="en">Is it free?</span><span class="ko">요금이 드나요?</span><span class="zh-hans">收费吗？</span><span class="zh-hant">需要付費嗎？</span></h3>
+  <p class="ja">無料です。Apache License 2.0 のオープンソースで、<a href="https://github.com/coffin299/VRCast/releases">GitHub</a> と <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a> からダウンロードできます。</p>
+  <p class="en">Yes. It is open source under the Apache License 2.0 and can be downloaded from <a href="https://github.com/coffin299/VRCast/releases">GitHub</a> or <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a>.</p>
+  <p class="ko">무료입니다. Apache License 2.0 오픈 소스이며 <a href="https://github.com/coffin299/VRCast/releases">GitHub</a>와 <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a>에서 다운로드할 수 있습니다.</p>
+  <p class="zh-hans">免费。基于 Apache License 2.0 开源，可从 <a href="https://github.com/coffin299/VRCast/releases">GitHub</a> 或 <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a> 下载。</p>
+  <p class="zh-hant">免費。基於 Apache License 2.0 開源，可從 <a href="https://github.com/coffin299/VRCast/releases">GitHub</a> 或 <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a> 下載。</p>
+  <h3><span class="ja">どのアプリに映せますか？</span><span class="en">Which apps can show the avatar?</span><span class="ko">어떤 앱에 표시할 수 있나요?</span><span class="zh-hans">可以显示在哪些应用中？</span><span class="zh-hant">可以顯示在哪些應用程式中？</span></h3>
+  <p class="ja">OBS ではゲームキャプチャで背景を透過して重ねられます。Discord や Zoom などでは仮想カメラ <span class="ui">VRCast Camera</span> をカメラとして選べます。</p>
+  <p class="en">In OBS, use Game Capture with a transparent background. In Discord, Zoom and similar apps, pick the <span class="ui">VRCast Camera</span> virtual camera.</p>
+  <p class="ko">OBS에서는 게임 캡처로 배경을 투명하게 해 겹칠 수 있습니다. Discord나 Zoom 등에서는 가상 카메라 <span class="ui">VRCast Camera</span>를 카메라로 선택할 수 있습니다.</p>
+  <p class="zh-hans">在 OBS 中可通过游戏采集以透明背景叠加。在 Discord、Zoom 等应用中可将虚拟摄像头 <span class="ui">VRCast Camera</span> 选为摄像头。</p>
+  <p class="zh-hant">在 OBS 中可透過遊戲擷取以透明背景疊加。在 Discord、Zoom 等應用程式中可將虛擬攝影機 <span class="ui">VRCast Camera</span> 選為攝影機。</p>
+  <h3><span class="ja">元のアバターは変更されますか？</span><span class="en">Does it change my original avatar?</span><span class="ko">원본 아바타가 변경되나요?</span><span class="zh-hans">会修改原始虚拟形象吗？</span><span class="zh-hant">會修改原始虛擬形象嗎？</span></h3>
+  <p class="ja">いいえ。書き出しは元のアバターを変更しません。</p>
+  <p class="en">No. Exporting does not modify your original avatar.</p>
+  <p class="ko">아니요. 내보내기는 원본 아바타를 변경하지 않습니다.</p>
+  <p class="zh-hans">不会。导出不会修改原始虚拟形象。</p>
+  <p class="zh-hant">不會。匯出不會修改原始虛擬形象。</p>
+</section>
+
 </div>
 
 <footer>
@@ -175,6 +297,9 @@
   <span class="zh-hans">VRCast 并非 VRChat Inc. 的官方工具。</span>
   <span class="zh-hant">VRCast 並非 VRChat Inc. 的官方工具。</span>
   &middot; Apache License 2.0 &middot; <a href="https://github.com/coffin299/VRCast">github.com/coffin299/VRCast</a>
+  <br>
+  <span class="ja">ページ内で使用しているアバター:</span><span class="en">Avatar shown on this page:</span><span class="ko">페이지에서 사용한 아바타:</span><span class="zh-hans">本页使用的虚拟形象：</span><span class="zh-hant">本頁使用的虛擬形象：</span>
+  <a href="https://brn.booth.pm/items/6305948">Marycia マリシア</a> &copy; BeroarN
 </footer>
 
 </body>
