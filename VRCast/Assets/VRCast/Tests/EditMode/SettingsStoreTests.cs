@@ -155,6 +155,88 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void AvatarCamera_SaveThenLoad_RoundTripsPose()
+        {
+            var saved = new AppSettings();
+            var pose = new CameraPose
+            {
+                target = new Vector3(0.1f, 1.3f, -0.2f), distance = 1.8f, yaw = 160f, pitch = 10f, fieldOfView = 25f,
+            };
+            saved.SetAvatarCamera("C:/Avatars/A.vrcaster", pose);
+            _store.Save(saved);
+
+            // 再読込しても同じ視点が、パスの大文字・小文字に関係なく取り出せること
+            AppSettings loaded = _store.Load();
+            Assert.That(loaded.TryGetAvatarCamera("c:/avatars/a.VRCASTER", out CameraPose result), Is.True);
+            Assert.That(result.SameAs(pose), Is.True);
+            Assert.That(loaded.TryGetAvatarCamera("C:/Avatars/B.vrcaster", out _), Is.False);
+        }
+
+        [Test]
+        public void AvatarCamera_OverLimit_DropsLeastRecentlyUsed()
+        {
+            var settings = new AppSettings();
+            var pose = new CameraPose { distance = 2f, fieldOfView = 30f };
+
+            // 上限ちょうどまで記録し、最初のものを使い直してから 1 件追加する
+            for (int i = 0; i < AppSettings.MaxAvatarCameras; i++)
+            {
+                settings.SetAvatarCamera($"C:/Avatars/{i}.vrcaster", pose);
+            }
+
+            settings.SetAvatarCamera("C:/Avatars/0.vrcaster", pose);
+            settings.SetAvatarCamera("C:/Avatars/new.vrcaster", pose);
+
+            // 件数は上限のまま、使い直した 0 は残り、最も長く使っていない 1 が捨てられること
+            Assert.That(settings.avatarCameras.Count, Is.EqualTo(AppSettings.MaxAvatarCameras));
+            Assert.That(settings.TryGetAvatarCamera("C:/Avatars/0.vrcaster", out _), Is.True);
+            Assert.That(settings.TryGetAvatarCamera("C:/Avatars/1.vrcaster", out _), Is.False);
+        }
+
+        [Test]
+        public void AvatarCamera_InvalidPose_IsNotRecorded()
+        {
+            var settings = new AppSettings();
+
+            // 壊れた値（NaN）や空のパスは記録しないこと
+            settings.SetAvatarCamera("C:/Avatars/A.vrcaster", new CameraPose { distance = float.NaN });
+            settings.SetAvatarCamera(string.Empty, new CameraPose { distance = 2f });
+            Assert.That(settings.avatarCameras, Is.Empty);
+        }
+
+        [Test]
+        public void ResetToDefaults_KeepsAvatarCameras()
+        {
+            var settings = new AppSettings();
+            settings.SetAvatarCamera("C:/Avatars/A.vrcaster", new CameraPose { distance = 2f, fieldOfView = 30f });
+
+            // 全設定のリセット後もアバターごとのカメラは残ること
+            settings.ResetToDefaults();
+            Assert.That(settings.TryGetAvatarCamera("C:/Avatars/A.vrcaster", out _), Is.True);
+        }
+
+        [Test]
+        public void Load_UnknownProcessPriority_FallsBackToNormal()
+        {
+            _store.Save(new AppSettings { processPriority = (ProcessPriority)99 });
+
+            // 未知の優先度（リアルタイム等の手編集）は通常へ補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.processPriority, Is.EqualTo(ProcessPriority.Normal));
+        }
+
+        [Test]
+        public void Load_UnknownGpuPreference_FallsBackToAuto()
+        {
+            _store.Save(new AppSettings { gpuPreference = (GpuPreference)99, gpuAdapter = null });
+
+            // 未知の GPU の優先設定は自動へ、null の GPU 名は空文字へ補正されること
+            AppSettings settings = _store.Load();
+            Assert.That(settings.gpuPreference, Is.EqualTo(GpuPreference.Auto));
+            Assert.That(settings.gpuAdapter, Is.Empty);
+        }
+
+        [Test]
         public void Load_UnknownUiLanguage_FallsBackToAuto()
         {
             _store.Save(new AppSettings { uiLanguage = (UiLanguage)99 });

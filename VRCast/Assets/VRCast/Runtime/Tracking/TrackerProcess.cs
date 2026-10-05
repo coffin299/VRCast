@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using UnityEngine;
 using VRCast.Core;
 using VRCast.Output;
+using VRCast.Platform;
 
 namespace VRCast.Tracking
 {
@@ -93,6 +94,7 @@ namespace VRCast.Tracking
         private TrackingSource _startedSource;
         private bool _startedHands;
         private bool _startedLowLoad;
+        private ProcessPriority _appliedPriority;
         private float _nextStartTime;
 
         // 一覧を取得済み（または取得中）の入力元。null なら未取得
@@ -354,6 +356,23 @@ namespace VRCast.Tracking
             {
                 VRCastLog.Info(LogCategory, "Tracking settings changed; restarting tracker");
                 Restart();
+                return;
+            }
+
+            // 優先度は再起動せずに変更できる
+            if (_appliedPriority != _settings.processPriority)
+            {
+                ApplyPriority();
+            }
+        }
+
+        private void ApplyPriority()
+        {
+            // 失敗しても同じ値で毎フレーム再試行しないよう、試した値を記録する
+            _appliedPriority = _settings.processPriority;
+            if (!ProcessTuning.SetPriority(_process.Handle, _appliedPriority))
+            {
+                VRCastLog.Warning(LogCategory, $"Could not set the tracker priority to {_appliedPriority}");
             }
         }
 
@@ -475,6 +494,15 @@ namespace VRCast.Tracking
                 _process = process;
                 _startTime = Time.unscaledTime;
                 _lastWarnedStatus = null;
+
+                // VRCast が背面にある間に Windows がトラッカーの CPU 速度を落とし、推定が遅れて手を見失わないようにする
+                if (!ProcessTuning.DisablePowerThrottling(process.Handle))
+                {
+                    VRCastLog.Info(LogCategory, "Could not opt the tracker out of Windows power throttling");
+                }
+
+                // 設定の優先度にする（以降の変更は Monitor が再起動せずに反映）
+                ApplyPriority();
 
                 // 起動したコマンドライン全体と PID を残す（手動で同じ引数を試せるように）
                 Status = $"Running: {_startedCamera}";

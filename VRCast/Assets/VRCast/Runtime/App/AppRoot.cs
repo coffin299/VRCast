@@ -32,11 +32,15 @@ namespace VRCast.App
         private RenderingController _rendering;
         private string _initialAvatarPath;
 
+        // カメラの視点を記録する対象のアバターのパスと、最後に記録した視点
+        private string _cameraAvatarPath;
+        private CameraPose _recordedPose;
+
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
         {
-            // 既に存在すれば二重生成しない
-            if (FindObjectOfType<AppRoot>() != null)
+            // 既に存在する、または別の GPU で起動し直して終了する途中なら生成しない（トラッカー・カメラを二重に開かない）
+            if (FindObjectOfType<AppRoot>() != null || GpuSelection.IsRelaunching)
             {
                 return;
             }
@@ -77,6 +81,9 @@ namespace VRCast.App
             _settings = AppBootstrap.Settings ?? new AppSettings();
             _rendering = gameObject.AddComponent<RenderingController>();
             _rendering.Initialize(mainCamera, _settings);
+
+            // 本体のプロセスの優先度・電力調整（トラッカーは TrackerProcess が同じ設定で扱う）
+            gameObject.AddComponent<ProcessTuner>().Initialize(_settings);
 
             // 仮想カメラ出力（描画結果を受け取るためカメラに付ける）
             var virtualCamera = mainCamera.gameObject.AddComponent<VirtualCameraOutput>();
@@ -119,6 +126,26 @@ namespace VRCast.App
             {
                 _session.Load(_initialAvatarPath);
             }
+        }
+
+        private void LateUpdate()
+        {
+            // 表示中のアバターの視点として記録できる状態か（読込中・アンロード後は前のアバターのまま記録しない）
+            LoadedAvatar current = _session.Current;
+            if (_cameraAvatarPath == null || current == null || current.SourcePath != _cameraAvatarPath)
+            {
+                return;
+            }
+
+            // 視点が変わったときだけ記録する（保存は終了時）
+            CameraPose pose = _orbit.Pose;
+            if (pose.SameAs(_recordedPose))
+            {
+                return;
+            }
+
+            _recordedPose = pose;
+            _settings.SetAvatarCamera(_cameraAvatarPath, pose);
         }
 
         private void OnDestroy()
@@ -164,8 +191,24 @@ namespace VRCast.App
             // アバターの明るさ（マテリアルの色の倍率）を反映
             _rendering.SetAvatar(avatar.Instance);
 
-            // アバター本体（Humanoid は骨格基準）が映るようにカメラを合わせる
+            // 前回の視点があれば画角を先に戻す（Reset の戻り先の距離を同じ画角で求めるため）
+            bool saved = _settings.TryGetAvatarCamera(avatar.SourcePath, out CameraPose pose);
+            if (saved)
+            {
+                _orbit.FieldOfView = pose.fieldOfView;
+            }
+
+            // アバター本体（Humanoid は骨格基準）が映るようにカメラを合わせ、前回の視点があればそこへ戻す
             _orbit.Frame(avatar.CalculateFramingBounds());
+            if (saved)
+            {
+                _orbit.SetPose(pose);
+            }
+
+            // 以降の視点の変化をこのアバターの分として記録する
+            _cameraAvatarPath = avatar.SourcePath;
+            _recordedPose = _orbit.Pose;
+            _settings.SetAvatarCamera(_cameraAvatarPath, _recordedPose);
 
             // 次回起動時に自動で読み込めるよう記録（保存は終了時）
             _settings.lastAvatarPath = avatar.SourcePath;

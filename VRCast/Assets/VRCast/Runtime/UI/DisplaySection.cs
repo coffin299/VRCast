@@ -51,6 +51,12 @@ namespace VRCast.UI
                 "오른쪽 드래그: 회전 / 가운데 드래그: 이동 / 휠: 확대·축소",
                 "右键拖动：旋转 / 中键拖动：平移 / 滚轮：缩放",
                 "右鍵拖曳：旋轉 / 中鍵拖曳：平移 / 滾輪：縮放"));
+            GuiControls.Hint(Loc.T(
+                "The camera position and field of view are remembered for each avatar, also after restarting.",
+                "カメラの位置と画角はアバターごとに記憶され、再起動後も戻ります。",
+                "카메라 위치와 화각은 아바타마다 기억되며, 다시 시작한 후에도 유지됩니다.",
+                "相机位置和视野会按虚拟形象分别记住，重启后也会恢复。",
+                "相機位置和視野會依虛擬形象分別記住，重新啟動後也會恢復。"));
             _orbit.FieldOfView = GuiControls.Slider(
                 Loc.T("Field of view", "画角", "화각", "视野", "視野"), _orbit.FieldOfView, MinFov, MaxFov);
 

@@ -151,13 +151,16 @@ namespace VRCast.UI
 
         private void ResetAllSettings()
         {
-            // 設定値を既定に戻す（ウィンドウサイズ・最後のアバターは保持）
+            // 設定値を既定に戻す（ウィンドウサイズ・最後のアバター・アバターごとのカメラは保持）
             _settings.ResetToDefaults();
 
             // 設定変更時にしか反映しない機能へ反映し直す（他は毎フレーム設定を読む）
             _rendering.ApplyAll();
             _virtualCamera.Enabled = _settings.virtualCameraEnabled;
             _trackingSection.SyncFromSettings();
+
+            // GPU の優先設定は Windows 側にも書く（反映は次回起動から）
+            GpuSelection.ApplyPreference(_settings);
 
             // 表示中アバターの向き・待機ポーズ（GetComponent は Unity の null 判定が必要なため明示的に比較）
             PoseController pose = _session.Current != null

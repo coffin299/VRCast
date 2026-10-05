@@ -4,6 +4,20 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- VRCast が背面にある間（他のウィンドウを操作中）、MediaPipe のトラッキングで手を見失いやすくなる問題を修正
+- 設定タブに「プロセスの優先度」を追加（VRCast 本体と同梱トラッカーに同じ優先度を設定、すぐ反映）
+- 設定タブに「描画に使う GPU」を追加（自動 / 省電力 / 高パフォーマンス、または GPU を一覧から直接指定。再起動で反映）
+- カメラの位置と画角をアバターごとに記憶し、次にそのアバターを開いたとき（再起動後も含む）に戻すように変更
+
+[English]
+- Fixed MediaPipe tracking often losing your hands while VRCast was in the background (while using another window)
+- Added "Process priority" to the Settings tab (sets the same priority for VRCast and the bundled tracker, applied right away)
+- Added "GPU for drawing" to the Settings tab (Auto / Power saving / High performance, or pick a GPU from the list; applied after a restart)
+- The camera position and field of view are now remembered for each avatar and restored the next time you open it, including after a restart
+
 ■ 1.3.0 (2026-10-05)
 
 [日本語]
