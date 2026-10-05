@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 1.3.0 (2026-10-05)
 
 [日本語]
 - Modular Avatar で付けた衣装や小物が体に追従せず、その場に残ってしまうことがある問題を修正
