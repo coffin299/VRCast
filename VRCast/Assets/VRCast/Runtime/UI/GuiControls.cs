@@ -90,6 +90,16 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// 状態の 1 行（ok なら緑の太字、そうでなければ控えめな文字）。
+        /// </summary>
+        public static void Status(string text, bool ok)
+        {
+            UiTheme theme = UiTheme.Current;
+            GUIStyle style = theme == null ? GUI.skin.label : ok ? theme.Success : theme.Hint;
+            GUILayout.Label(text, style);
+        }
+
+        /// <summary>
         /// ラベル + ボタンの 1 行を描画し、ボタンが押されたら true。
         /// </summary>
         public static bool LabeledButton(string label, string text)

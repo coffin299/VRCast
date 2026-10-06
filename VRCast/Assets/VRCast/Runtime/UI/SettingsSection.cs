@@ -250,11 +250,12 @@ namespace VRCast.UI
 
         private static void DrawCpuSupport(string target, bool supported)
         {
-            // 対象の CPU と、この PC が対象かどうか
-            GuiControls.Hint(target + " " + (supported
-                ? Loc.T("This PC: supported.", "この PC: 対象です。", "이 PC: 대상입니다.", "本机：支持。", "本機：支援。")
-                : Loc.T("This PC: not supported (no effect).", "この PC: 対象外です（効果はありません）。",
-                    "이 PC: 대상이 아닙니다(효과 없음).", "本机：不支持（无效果）。", "本機：不支援（無效果）。")));
+            // 対象の CPU の説明と、その下にこの PC が対象かどうかを別の行で
+            GuiControls.Hint(target);
+            GuiControls.Status(supported
+                ? Loc.T("This PC: supported", "この PC: 対象です", "이 PC: 대상입니다", "本机：支持", "本機：支援")
+                : Loc.T("This PC: not supported (no effect)", "この PC: 対象外です（効果はありません）",
+                    "이 PC: 대상이 아닙니다 (효과 없음)", "本机：不支持（无效果）", "本機：不支援（無效果）"), supported);
         }
 
         private void DrawGpu()
