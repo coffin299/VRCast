@@ -125,14 +125,21 @@ namespace VRCast.Tracking
         public int PerfectSyncShapeCount => _perfectSync != null ? _perfectSync.MatchedCount : 0;
 
         /// <summary>
-        /// アバターがパーフェクトシンクに対応していれば true。
+        /// アバターがパーフェクトシンクを有効にする条件（設定の種類数）を満たしていれば true。
         /// </summary>
-        public bool SupportsPerfectSync => _perfectSync != null && _perfectSync.IsAvailable;
+        public bool SupportsPerfectSync => _perfectSync != null && _settings != null
+            && _perfectSync.IsAvailableFor(_settings.trackingPerfectSyncAnyShape);
 
         /// <summary>
         /// パーフェクトシンクで顔を動かしている最中なら true（MediaPipe で受信中、設定 ON、対応アバター）。
         /// </summary>
         public bool IsPerfectSyncActive { get; private set; }
+
+        /// <summary>
+        /// パーフェクトシンクが表情プリセットを止めているなら true
+        /// （ARKit 名が MinMatchedShapes 種類未満のアバターは顔全体を動かせないので、表情プリセットを併用する）。
+        /// </summary>
+        public bool PausesExpressions => IsPerfectSyncActive && _perfectSync.IsAvailable;
 
         /// <summary>
         /// トラッキング値を受信して適用中なら true。
@@ -299,7 +306,7 @@ namespace VRCast.Tracking
         {
             // MediaPipe で受信中・設定 ON・表情データありのときだけ判定する
             // （パーフェクトシンク中は顔の動きで表情が出るため、表情プリセットを重ねない）
-            IsDetectingExpression = received && _settings.trackingExpressions && !IsPerfectSyncActive
+            IsDetectingExpression = received && _settings.trackingExpressions && !PausesExpressions
                 && _settings.trackingSource == TrackingSource.MediaPipe && _lastFrame.HasExpression
                 && _expressions != null && _expressions.Names.Count > 0;
             if (!IsDetectingExpression)

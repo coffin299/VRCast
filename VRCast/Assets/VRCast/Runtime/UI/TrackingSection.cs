@@ -128,9 +128,26 @@ namespace VRCast.UI
                 _settings.trackingPerfectSync,
                 Loc.T("Perfect sync", "パーフェクトシンク", "퍼펙트 싱크", "完美同步", "完美同步"));
 
-            // アバター未表示・無効時は状態を出さない
+            // 無効時は条件・状態を出さない
+            if (!_settings.trackingPerfectSync)
+            {
+                return;
+            }
+
+            // 有効にする条件（ARKit 名が規定数以上 / 1 種類でも）。排他で選ぶ
+            int min = PerfectSyncBlendShapes.MinMatchedShapes;
+            string[] labels =
+            {
+                Loc.T($"{min}+ shapes", $"{min} 種類以上", $"{min}종 이상", $"{min} 种以上", $"{min} 種以上"),
+                Loc.T("Any shape", "1 種類でも", "1종이라도", "有 1 种即可", "有 1 種即可"),
+            };
+            _settings.trackingPerfectSyncAnyShape = GuiControls.EnumSelector(
+                Loc.T("Enable when", "有効にする条件", "활성화 조건", "启用条件", "啟用條件"),
+                labels, _settings.trackingPerfectSyncAnyShape ? 1 : 0) == 1;
+
+            // アバター未表示なら状態を出さない
             var driver = _avatar.Get<FaceTrackingDriver>();
-            if (!_settings.trackingPerfectSync || driver == null)
+            if (driver == null)
             {
                 return;
             }
@@ -138,17 +155,29 @@ namespace VRCast.UI
             // 対応状況（見つかった ARKit 名の数）
             int count = driver.PerfectSyncShapeCount;
             int total = MediaPipePacket.BlendShapeNames.Length;
+            int required = _settings.trackingPerfectSyncAnyShape ? 1 : min;
             GuiControls.Hint(driver.SupportsPerfectSync
                 ? Loc.T($"Supported ({count}/{total} ARKit blend shapes)",
                     $"対応アバター（ARKit 名の BlendShape {count}/{total} 個）",
                     $"지원 아바타 (ARKit 이름의 BlendShape {count}/{total}개)",
                     $"支持的虚拟形象（ARKit 名称的 BlendShape {count}/{total} 个）",
                     $"支援的虛擬形象（ARKit 名稱的 BlendShape {count}/{total} 個）")
-                : Loc.T($"This avatar does not support it ({count}/{total} ARKit blend shapes, needs {PerfectSyncBlendShapes.MinMatchedShapes}+)",
-                    $"このアバターは非対応です（ARKit 名の BlendShape {count}/{total} 個、{PerfectSyncBlendShapes.MinMatchedShapes} 個以上で対応）",
-                    $"이 아바타는 지원하지 않습니다 (ARKit 이름의 BlendShape {count}/{total}개, {PerfectSyncBlendShapes.MinMatchedShapes}개 이상 필요)",
-                    $"此虚拟形象不支持（ARKit 名称的 BlendShape {count}/{total} 个，需要 {PerfectSyncBlendShapes.MinMatchedShapes} 个以上）",
-                    $"此虛擬形象不支援（ARKit 名稱的 BlendShape {count}/{total} 個，需要 {PerfectSyncBlendShapes.MinMatchedShapes} 個以上）"));
+                : Loc.T($"This avatar does not support it ({count}/{total} ARKit blend shapes, needs {required}+)",
+                    $"このアバターは非対応です（ARKit 名の BlendShape {count}/{total} 個、{required} 個以上で対応）",
+                    $"이 아바타는 지원하지 않습니다 (ARKit 이름의 BlendShape {count}/{total}개, {required}개 이상 필요)",
+                    $"此虚拟形象不支持（ARKit 名称的 BlendShape {count}/{total} 个，需要 {required} 个以上）",
+                    $"此虛擬形象不支援（ARKit 名稱的 BlendShape {count}/{total} 個，需要 {required} 個以上）"));
+
+            // 規定数未満で動かしている間は、表情プリセットも併用されることを伝える
+            if (driver.SupportsPerfectSync && count < min)
+            {
+                GuiControls.Hint(Loc.T(
+                    $"Fewer than {min}: only the found shapes move, and expressions stay on",
+                    $"{min} 個未満のため、見つかった BlendShape だけを動かし、表情の反映も併用します",
+                    $"{min}개 미만이므로 찾은 BlendShape만 움직이고 표정 반영도 함께 사용합니다",
+                    $"少于 {min} 个，只驱动找到的 BlendShape，并同时使用表情反映",
+                    $"少於 {min} 個，只驅動找到的 BlendShape，並同時使用表情反映"));
+            }
         }
 
         private void DrawExpressions()
@@ -166,7 +195,7 @@ namespace VRCast.UI
 
             // パーフェクトシンク中は表情プリセットへ切り替えない（顔の動きで表情が出るため）
             var face = _avatar.Get<FaceTrackingDriver>();
-            if (face != null && face.IsPerfectSyncActive)
+            if (face != null && face.PausesExpressions)
             {
                 GuiControls.Hint(Loc.T("Paused during perfect sync", "パーフェクトシンク中は止まります",
                     "퍼펙트 싱크 중에는 멈춥니다", "完美同步期间暂停", "完美同步期間暫停"));

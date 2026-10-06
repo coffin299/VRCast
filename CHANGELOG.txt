@@ -14,7 +14,7 @@ Newest first. Each version is written in Japanese, then English.
 - 腕を体の前で交差したときなどに、手首が人には無理な向きへ折れ曲がる問題を軽減（手首の曲がる角度に上限を追加）
 - アバタータブに「最近使ったアバター」を追加（最大 10 件。クリックで切り替え、× で一覧から外す）
 - ライト・アバターの明るさ・待機ポーズ・体の向きもアバターごとに記憶し、切り替え時に戻すように変更
-- パーフェクトシンク対応を追加（ARKit 名の BlendShape を持つアバターで、眉・頬・口の形まで顔の動きどおりに動く。MediaPipe のみ）
+- パーフェクトシンク対応を追加（ARKit 名の BlendShape を持つアバターで、眉・頬・口の形まで顔の動きどおりに動く。MediaPipe のみ。有効にする条件は「20 種類以上」か「1 種類でも」から選べる）
 - 出力タブに Spout2 出力を追加（OBS へ GPU 上で映像を渡すため、キャプチャより軽く透過もそのまま）
 - GPU 変更時のボタンを「VRCast を今すぐ起動し直す」に変更し、PC の再起動は不要であることが分かるように
 
@@ -26,7 +26,7 @@ Newest first. Each version is written in Japanese, then English.
 - Reduced wrists bending into impossible angles, for example when crossing your arms in front of you (wrist rotation is now limited)
 - Added "Recent avatars" to the Avatar tab (up to 10; click to switch, × to remove from the list)
 - Light, avatar brightness, idle pose and body direction are now also remembered for each avatar and restored when you switch
-- Added perfect sync support (avatars with ARKit-named blend shapes follow your brows, cheeks and mouth shapes; MediaPipe only)
+- Added perfect sync support (avatars with ARKit-named blend shapes follow your brows, cheeks and mouth shapes; MediaPipe only; choose whether it needs 20+ shapes or any shape)
 - Added Spout2 output to the Output tab (shares the image with OBS on the GPU, lighter than capturing and keeps transparency)
 - The GPU change button now reads "Restart VRCast now" so it is clear the PC does not need restarting
 

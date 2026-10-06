@@ -93,6 +93,33 @@ namespace VRCast.Tests
             }
         }
 
+        [Test]
+        public void IsAvailableFor_SwitchesRequiredShapeCount()
+        {
+            // まばたきの 2 種類だけを持つ顔メッシュを用意
+            var root = new GameObject("Avatar");
+            var renderer = root.AddComponent<SkinnedMeshRenderer>();
+            var mesh = new Mesh { vertices = new[] { Vector3.zero, Vector3.right, Vector3.up } };
+            var deltas = new Vector3[3];
+            mesh.AddBlendShapeFrame("eyeBlinkLeft", 100f, deltas, null, null);
+            mesh.AddBlendShapeFrame("eyeBlinkRight", 100f, deltas, null, null);
+            renderer.sharedMesh = mesh;
+            try
+            {
+                // 規定数の条件では非対応、1 種類でもの条件では対応と判定すること
+                PerfectSyncBlendShapes sync = PerfectSyncBlendShapes.Create(root.transform);
+                Assert.That(sync.MatchedCount, Is.EqualTo(2));
+                Assert.That(sync.IsAvailable, Is.False);
+                Assert.That(sync.IsAvailableFor(false), Is.False);
+                Assert.That(sync.IsAvailableFor(true), Is.True);
+            }
+            finally
+            {
+                UnityEngine.Object.DestroyImmediate(root);
+                UnityEngine.Object.DestroyImmediate(mesh);
+            }
+        }
+
         private static float Weight(SkinnedMeshRenderer renderer, string name)
         {
             // 名前で BlendShape の現在値を読む
