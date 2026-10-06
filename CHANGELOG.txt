@@ -7,9 +7,11 @@ Newest first. Each version is written in Japanese, then English.
 ■ 1.5.1 (2026-10-06)
 
 [日本語]
+- 1.5.0 の配布物に Spout2 出力に必要なファイルが入っておらず、Spout2 出力が使えなかった問題を修正
 - クレジットタブに開発者の Twitch チャンネルへのリンクを追加
 
 [English]
+- Fixed the Spout2 output not working in 1.5.0 because a required file was missing from the download
 - Added a link to the developer's Twitch channel in the Credits tab
 
 ■ 1.5.0 (2026-10-06)

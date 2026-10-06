@@ -381,7 +381,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Spout\fetch.ps1
 ```
 
 - `KlakSpout.dll`（Spout SDK を含む）とライセンス表記は `VRCast/Assets/Plugins/KlakSpout/` に置かれる（取得元のコミットは固定）。
-- 見つからない場合もビルドは続行し、警告ログを出す（Spout2 出力は使えない）。
+- 見つからない場合も Unity のビルドは続行し、警告ログを出す（Spout2 出力は使えない）。配布 zip の作成（`package.bat`）は中止する。
 
 ### OpenSeeFace の同梱（任意）
 
@@ -430,8 +430,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - 配布 zip を公開したら、`webpage` ブランチの `version.json` の `version`（と必要なら `url`）を新しいバージョンにして公開する。
   アプリは起動時にこれを読んで更新を通知する（先に更新すると、まだダウンロードできないバージョンを通知してしまう）。
   Unity が出力する配布不要のフォルダ（`*_BurstDebugInformation_DoNotShip` 等）は除く。
-- `VRCast.exe` が無ければ中止。同梱トラッカー・仮想カメラのドライバー・Spout2 のプラグインが無い場合は警告を出して続行する
-  （仮想カメラ・Spout2 入りで配布するなら `Tools\UnityCapture\fetch.ps1`・`Tools\Spout\fetch.ps1` の後にビルドし直す）。
+- `VRCast.exe` か Spout2 のプラグイン（`KlakSpout.dll`）が無ければ中止。同梱トラッカー・仮想カメラのドライバーが無い場合は警告を出して続行する
+  （`Tools\Spout\fetch.ps1` と、仮想カメラ入りで配布するなら `Tools\UnityCapture\fetch.ps1` を実行してからビルドし直す）。
 - 作業フォルダは `%LOCALAPPDATA%\VRCast\package-build` に作り、完了後に削除する。
 
 ## 設定・キャッシュ

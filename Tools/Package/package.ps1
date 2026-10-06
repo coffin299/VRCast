@@ -39,12 +39,16 @@ $streaming = Join-Path $BuildPath "VRCast_Data\StreamingAssets"
 $optional = [ordered]@{
     "MediaPipeTracker\vrcast_tracker.exe" = "MediaPipe tracker (run Tools\MediaPipeTracker\build.bat, then rebuild in Unity)"
     "UnityCapture\UnityCaptureFilter64.dll" = "Virtual camera driver (run Tools\UnityCapture\fetch.ps1, then rebuild in Unity)"
-    "..\Plugins\x86_64\KlakSpout.dll" = "Spout2 output plugin (run Tools\Spout\fetch.ps1, then rebuild in Unity)"
 }
 foreach ($path in $optional.Keys) {
     if (-not (Test-Path (Join-Path $streaming $path))) {
         Write-Warning "Missing: $($optional[$path])"
     }
+}
+
+# Spout2 の送信プラグインは Unity のビルド時にしか入らないので、欠けていれば中止（Spout2 出力が使えない zip を配らない）
+if (-not (Test-Path (Join-Path $BuildPath "VRCast_Data\Plugins\x86_64\KlakSpout.dll"))) {
+    throw "KlakSpout.dll was not found in the build. Run Tools\Spout\fetch.ps1, then rebuild in Unity (VRCast > Build > Windows x64)."
 }
 
 # 書き出しツールのバージョン（ファイル名に入れる）: package.json の version
