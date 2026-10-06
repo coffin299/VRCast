@@ -55,6 +55,12 @@ namespace VRCast.Platform
         [DllImport("advapi32.dll")]
         private static extern int RegCloseKey(IntPtr key);
 
+        [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
+        private static extern int GetModuleFileNameW(IntPtr module, StringBuilder fileName, int size);
+
+        // 実行ファイルのパスの最大長（文字。長いパスにも対応）
+        private const int MaxPathLength = 32768;
+
         /// <summary>
         /// 起動直後に別の GPU で起動し直すため、この起動では何も始めない（AppRoot は生成しない）。
         /// </summary>
@@ -284,19 +290,10 @@ namespace VRCast.Platform
 
         private static string ExecutablePath()
         {
-            // 取得できない環境では null
-            try
-            {
-                using (Process current = Process.GetCurrentProcess())
-                {
-                    return current.MainModule?.FileName;
-                }
-            }
-            catch (Exception e) when (e is InvalidOperationException || e is System.ComponentModel.Win32Exception
-                || e is NotSupportedException)
-            {
-                return null;
-            }
+            // IL2CPP では Process.MainModule が使えないため、Windows から直接取得する（失敗・切り詰めは null）
+            var path = new StringBuilder(MaxPathLength);
+            int length = GetModuleFileNameW(IntPtr.Zero, path, path.Capacity);
+            return length > 0 && length < path.Capacity ? path.ToString() : null;
         }
     }
 }

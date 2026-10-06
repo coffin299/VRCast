@@ -370,7 +370,7 @@ namespace VRCast.Tracking
         {
             // 失敗しても同じ値で毎フレーム再試行しないよう、試した値を記録する
             _appliedPriority = _settings.processPriority;
-            if (!ProcessTuning.SetPriority(_process.Handle, _appliedPriority))
+            if (!ProcessTuning.SetPriority(_process.Id, _appliedPriority))
             {
                 VRCastLog.Warning(LogCategory, $"Could not set the tracker priority to {_appliedPriority}");
             }
@@ -496,7 +496,7 @@ namespace VRCast.Tracking
                 _lastWarnedStatus = null;
 
                 // VRCast が背面にある間に Windows がトラッカーの CPU 速度を落とし、推定が遅れて手を見失わないようにする
-                if (!ProcessTuning.DisablePowerThrottling(process.Handle))
+                if (!ProcessTuning.DisablePowerThrottling(process.Id))
                 {
                     VRCastLog.Info(LogCategory, "Could not opt the tracker out of Windows power throttling");
                 }
@@ -655,6 +655,9 @@ namespace VRCast.Tracking
 
         private static ProcessStartInfo CreateStartInfo(string path, string arguments, bool utf8)
         {
+            // IL2CPP の Process.Start は "/" 混じりのパスで起動に失敗するため、"\" 区切りの絶対パスにそろえる
+            path = Path.GetFullPath(path);
+
             // モデル等を相対パスで読むため作業ディレクトリは exe の場所。コンソールは出さない
             var info = new ProcessStartInfo(path, arguments)
             {
