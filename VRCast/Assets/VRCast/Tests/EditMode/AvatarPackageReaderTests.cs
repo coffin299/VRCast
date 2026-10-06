@@ -42,6 +42,16 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void IsSameUnityLine_ComparesYearAndMinorOnly()
+        {
+            // 同じ系列のパッチ版の差は互換、系列が違えば非互換とみなすこと
+            Assert.That(AvatarPackageReader.IsSameUnityLine("2022.3.22f1", "2022.3.62f3"), Is.True);
+            Assert.That(AvatarPackageReader.IsSameUnityLine("2022.3.22f1", "6000.0.30f1"), Is.False);
+            Assert.That(AvatarPackageReader.IsSameUnityLine("2022.3.22f1", "2022.2.0f1"), Is.False);
+            Assert.That(AvatarPackageReader.IsSameUnityLine(null, "2022.3.22f1"), Is.False);
+        }
+
+        [Test]
         public void Extract_ValidPackage_ExtractsBundle()
         {
             string path = WritePackage(CreateManifest(DummyBundle), DummyBundle);

@@ -4,33 +4,45 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.5.0 (2026-10-06)
+
+[日本語]
+- 一部の環境で起動直後（ウィンドウが出る前）に落ちる問題への対策として、実行方式を変更（CPU 負荷も軽減）
+- VRCast 本体の Unity を 2022.3.22f1 から 2022.3.62f3 に更新（書き出しツールは従来どおり Unity 2022.3.22f1 で使え、書き出し済みのアバターもそのまま読み込める）
+- アバター読み込み時の「Unity のバージョンが違う」警告を、系列（2022.3 など）が違うときだけ出すように変更
+- MediaPipe のトラッキングで、腕と手だけがミラー設定と逆向きに動いていた問題を修正（顔の向きとそろうように）
+- 腕を体の前で交差したときなどに、手首が人には無理な向きへ折れ曲がる問題を軽減（手首の曲がる角度に上限を追加）
+- アバタータブに「最近使ったアバター」を追加（最大 10 件。クリックで切り替え、× で一覧から外す）
+- ライト・アバターの明るさ・待機ポーズ・体の向きもアバターごとに記憶し、切り替え時に戻すように変更
+
+[English]
+- Changed how VRCast runs to address crashes right after launch (before the window appears) on some PCs; this also lowers CPU load
+- Updated VRCast from Unity 2022.3.22f1 to 2022.3.62f3 (the exporter still works in Unity 2022.3.22f1, and avatars you already exported load as before)
+- The "different Unity version" warning when loading an avatar now appears only when the Unity series (such as 2022.3) differs
+- Fixed MediaPipe tracking moving the arms and hands opposite to the mirror setting (they now match the head)
+- Reduced wrists bending into impossible angles, for example when crossing your arms in front of you (wrist rotation is now limited)
+- Added "Recent avatars" to the Avatar tab (up to 10; click to switch, × to remove from the list)
+- Light, avatar brightness, idle pose and body direction are now also remembered for each avatar and restored when you switch
+
 ■ 1.4.0 (2026-10-05)
 
 [日本語]
 - VRCast が背面にある間（他のウィンドウを操作中）、MediaPipe のトラッキングで手を見失いやすくなる問題を修正
-- MediaPipe のトラッキングで、腕と手だけがミラー設定と逆向きに動いていた問題を修正（顔の向きとそろうように）
-- 腕を体の前で交差したときなどに、手首が人には無理な向きへ折れ曲がる問題を修正（手首の曲がる角度に上限を追加）
 - Unity で設定したブレンドシェイプの値が、書き出し時に FX レイヤーの値で上書きされてしまう問題を修正
 - ラジアルメニューのスライダーなどの初期値が、書き出し時に中間の値にならず 0 か最大になってしまう問題を修正
 - 設定タブに「プロセスの優先度」を追加（VRCast 本体と同梱トラッカーに同じ優先度を設定、すぐ反映）
 - 設定タブに「描画に使う GPU」を追加（自動 / 省電力 / 高パフォーマンス、または GPU を一覧から直接指定。再起動で反映）
 - 書き出しツールに「シーンのブレンドシェイプの値を優先する」を追加（既定 ON。OFF にすると従来どおり FX の初期状態の値を使う）
 - カメラの位置と画角をアバターごとに記憶し、次にそのアバターを開いたとき（再起動後も含む）に戻すように変更
-- アバタータブに「最近使ったアバター」を追加（最大 10 件。クリックで切り替え、× で一覧から外す）
-- ライト・アバターの明るさ・待機ポーズ・体の向きもアバターごとに記憶し、切り替え時に戻すように変更
 
 [English]
 - Fixed MediaPipe tracking often losing your hands while VRCast was in the background (while using another window)
-- Fixed MediaPipe tracking moving the arms and hands opposite to the mirror setting (they now match the head)
-- Fixed wrists bending into impossible angles, for example when crossing your arms in front of you (wrist rotation is now limited)
 - Fixed blend shape values set in Unity being overwritten by FX layer values on export
 - Fixed default values of radial menu sliders and similar controls being exported as 0 or the maximum instead of the in-between value
 - Added "Process priority" to the Settings tab (sets the same priority for VRCast and the bundled tracker, applied right away)
 - Added "GPU for drawing" to the Settings tab (Auto / Power saving / High performance, or pick a GPU from the list; applied after a restart)
 - Added "Keep blend shape values from the scene" to the exporter (on by default; turn it off to use the FX default-state values as before)
 - The camera position and field of view are now remembered for each avatar and restored the next time you open it, including after a restart
-- Added "Recent avatars" to the Avatar tab (up to 10; click to switch, × to remove from the list)
-- Light, avatar brightness, idle pose and body direction are now also remembered for each avatar and restored when you switch
 
 ■ 1.3.0 (2026-10-05)
 
