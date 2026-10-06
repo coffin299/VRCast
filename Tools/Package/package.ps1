@@ -46,7 +46,7 @@ foreach ($path in $optional.Keys) {
     }
 }
 
-# Spout2 の送信プラグインは Unity のビルド時にしか入らないので、欠けていれば中止（Spout2 出力が使えない zip を配らない）
+# Stop when the Spout2 plugin is missing (it only gets in through the Unity build; never ship a zip without it)
 if (-not (Test-Path (Join-Path $BuildPath "VRCast_Data\Plugins\x86_64\KlakSpout.dll"))) {
     throw "KlakSpout.dll was not found in the build. Run Tools\Spout\fetch.ps1, then rebuild in Unity (VRCast > Build > Windows x64)."
 }
