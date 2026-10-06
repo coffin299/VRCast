@@ -9,7 +9,7 @@ namespace VRCast.UI
 {
     /// <summary>
     /// Settings タブ（表示言語、UI の大きさ、テーマ（ライト / ダーク）、軽量モード・プロセスの優先度・描画に使う GPU、
-    /// アップデートの確認、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
+    /// NVIDIA ShadowPlay に検知させない設定（NVIDIA の PC のみ）、アップデートの確認、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
     /// </summary>
     public class SettingsSection
     {
@@ -31,6 +31,11 @@ namespace VRCast.UI
         private bool _confirmingReset;
         private bool _resetDone;
 
+        // NVIDIA オーバーレイの除外状態（ドライバー設定の読み込みは重いので初回と変更後だけ調べる）、直前の失敗理由、再起動待ちか
+        private NvidiaOverlayExclusion.State? _overlayState;
+        private string _overlayError;
+        private bool _overlayRestartPending;
+
         /// <param name="resetAll">全設定を既定値に戻して各機能へ反映する処理</param>
         public SettingsSection(AppSettings settings, RenderingController rendering, UpdateChecker updates, Action resetAll)
         {
@@ -46,6 +51,7 @@ namespace VRCast.UI
             DrawScale();
             DrawTheme();
             DrawPerformance();
+            DrawNvidiaOverlay();
             DrawUpdates();
             DrawHelp();
             DrawReset();
@@ -142,6 +148,8 @@ namespace VRCast.UI
                 $"（通常為 {RenderingController.NormalFrameRate}fps），並減輕內建追蹤器的處理。追蹤的流暢度會略有下降。"));
 
             DrawPriority();
+            DrawCacheCcd();
+            DrawHybridCores();
             DrawGpu();
             GuiControls.EndCard();
         }
@@ -168,6 +176,74 @@ namespace VRCast.UI
                 "(「높음」으로 하면 다른 앱이 느려질 수 있습니다).",
                 "立即应用于 VRCast 本体和内置追踪器。游戏时追踪卡顿可调高（设为“高”可能使其他应用变慢）。",
                 "立即套用於 VRCast 本體和內建追蹤器。遊戲時追蹤卡頓可調高（設為「高」可能使其他應用程式變慢）。"));
+        }
+
+        private void DrawCacheCcd()
+        {
+            // 全ての PC に出し、効果があるのは 2 CCD の X3D だけと示す（ProcessTuner / TrackerProcess が変化を見て反映する）
+            _settings.avoidCacheCcd = GUILayout.Toggle(_settings.avoidCacheCcd, Loc.T(
+                "Run on the cores without 3D V-Cache (X3D)", "3D V-Cache の無い側のコアで動かす（X3D）",
+                "3D V-Cache가 없는 쪽 코어에서 실행 (X3D)", "在没有 3D V-Cache 的核心上运行（X3D）",
+                "在沒有 3D V-Cache 的核心上執行（X3D）"));
+            GuiControls.Hint(Loc.T(
+                "While a game runs, Windows moves apps onto the same cores as the game. This keeps VRCast and the bundled " +
+                "tracker on the other cores so they do not compete with the game. Applies right away.",
+                "ゲーム中は Windows がアプリをゲームと同じコアに寄せます。VRCast 本体と同梱トラッカーを反対側のコアで動かし、" +
+                "ゲームとコアを取り合わないようにします。すぐに反映されます。",
+                "게임 중에는 Windows가 앱을 게임과 같은 코어로 모읍니다. VRCast 본체와 내장 트래커를 반대쪽 코어에서 실행해 " +
+                "게임과 코어를 다투지 않게 합니다. 바로 적용됩니다.",
+                "游戏运行时，Windows 会把应用集中到与游戏相同的核心上。此选项让 VRCast 本体和内置追踪器在另一侧核心上运行，" +
+                "避免与游戏争抢核心。立即生效。",
+                "遊戲執行時，Windows 會把應用程式集中到與遊戲相同的核心上。此選項讓 VRCast 本體和內建追蹤器在另一側核心上執行，" +
+                "避免與遊戲爭搶核心。立即生效。"));
+            DrawCpuSupport(Loc.T(
+                "Only takes effect on AMD X3D CPUs with 3D V-Cache on just one CCD (7950X3D / 9950X3D, etc.).",
+                "3D V-Cache が片方の CCD にだけある AMD の X3D（7950X3D / 9950X3D など）でのみ効果があります。",
+                "3D V-Cache가 한쪽 CCD에만 있는 AMD X3D(7950X3D / 9950X3D 등)에서만 효과가 있습니다.",
+                "仅对 3D V-Cache 只位于一个 CCD 的 AMD X3D（7950X3D / 9950X3D 等）有效。",
+                "僅對 3D V-Cache 只位於一個 CCD 的 AMD X3D（7950X3D / 9950X3D 等）有效。"),
+                CpuTopology.HasAsymmetricCache);
+        }
+
+        private void DrawHybridCores()
+        {
+            // 全ての PC に出し、効果があるのは P コア / E コアのある CPU だけと示す。並びは HybridCoreSelection と同じ
+            string[] labels =
+            {
+                Loc.T("Auto", "自動", "자동", "自动", "自動"),
+                Loc.T("E-cores only", "E コアのみ", "E 코어만", "仅 E 核", "僅 E 核"),
+                Loc.T("P-cores only", "P コアのみ", "P 코어만", "仅 P 核", "僅 P 核"),
+            };
+            _settings.hybridCores = (HybridCoreSelection)GuiControls.EnumSelector(
+                Loc.T("Cores to use (Intel)", "使うコア（Intel）", "사용할 코어 (Intel)", "使用的核心（Intel）", "使用的核心（Intel）"),
+                labels, (int)_settings.hybridCores);
+            GuiControls.Hint(Loc.T(
+                "Which cores VRCast and the bundled tracker run on. E-cores only leaves the P-cores to the game but may " +
+                "make tracking and drawing slower. P-cores only is faster but competes with the game. Applies right away.",
+                "VRCast 本体と同梱トラッカーを動かすコアを選びます。「E コアのみ」は P コアをゲームに譲りますが、" +
+                "トラッキングや描画が遅くなることがあります。「P コアのみ」は速く動きますがゲームとコアを取り合います。すぐに反映されます。",
+                "VRCast 본체와 내장 트래커를 실행할 코어를 고릅니다. 「E 코어만」은 P 코어를 게임에 양보하지만 트래킹과 렌더링이 " +
+                "느려질 수 있습니다. 「P 코어만」은 빠르지만 게임과 코어를 다툽니다. 바로 적용됩니다.",
+                "选择运行 VRCast 本体和内置追踪器的核心。“仅 E 核”把 P 核让给游戏，但追踪和渲染可能变慢。" +
+                "“仅 P 核”速度快，但会与游戏争抢核心。立即生效。",
+                "選擇執行 VRCast 本體和內建追蹤器的核心。「僅 E 核」把 P 核讓給遊戲，但追蹤和繪製可能變慢。" +
+                "「僅 P 核」速度快，但會與遊戲爭搶核心。立即生效。"));
+            DrawCpuSupport(Loc.T(
+                "Only takes effect on Intel CPUs with P-cores and E-cores (12th gen or later, Core Ultra).",
+                "P コアと E コアがある Intel の CPU（第 12 世代以降・Core Ultra）でのみ効果があります。",
+                "P 코어와 E 코어가 있는 Intel CPU(12세대 이후, Core Ultra)에서만 효과가 있습니다.",
+                "仅对具有 P 核和 E 核的 Intel CPU（第 12 代及以后、Core Ultra）有效。",
+                "僅對具有 P 核和 E 核的 Intel CPU（第 12 代及以後、Core Ultra）有效。"),
+                CpuTopology.IsHybrid);
+        }
+
+        private static void DrawCpuSupport(string target, bool supported)
+        {
+            // 対象の CPU と、この PC が対象かどうか
+            GuiControls.Hint(target + " " + (supported
+                ? Loc.T("This PC: supported.", "この PC: 対象です。", "이 PC: 대상입니다.", "本机：支持。", "本機：支援。")
+                : Loc.T("This PC: not supported (no effect).", "この PC: 対象外です（効果はありません）。",
+                    "이 PC: 대상이 아닙니다(효과 없음).", "本机：不支持（无效果）。", "本機：不支援（無效果）。")));
         }
 
         private void DrawGpu()
@@ -242,13 +318,7 @@ namespace VRCast.UI
                     "GPU 변경은 VRCast를 다시 시작하면 적용됩니다(PC 재시작은 필요 없습니다).",
                     "重新启动 VRCast 后 GPU 更改生效（无需重启电脑）。",
                     "重新啟動 VRCast 後 GPU 變更生效（不需要重新啟動電腦）。"));
-                if (GUILayout.Button(Loc.T("Restart VRCast now", "VRCast を今すぐ起動し直す", "VRCast 지금 다시 시작",
-                        "立即重新启动 VRCast", "立即重新啟動 VRCast")))
-                {
-                    // 新しい起動が古い設定を読まないよう先に保存する
-                    AppBootstrap.Save();
-                    GpuSelection.Restart();
-                }
+                DrawRestartButton();
             }
 
             GuiControls.Hint(Loc.T(
@@ -259,6 +329,92 @@ namespace VRCast.UI
                 "GPU는 렌더링에만 사용됩니다(내장 트래커는 CPU로 동작). OBS 캡처나 가상 카메라를 쓸 때는 OBS와 같은 GPU가 가장 가볍습니다.",
                 "只有渲染使用 GPU（内置追踪器在 CPU 上运行）。使用 OBS 捕获或虚拟摄像头时，与 OBS 使用同一 GPU 最省资源。",
                 "只有繪製使用 GPU（內建追蹤器在 CPU 上執行）。使用 OBS 擷取或虛擬攝影機時，與 OBS 使用同一 GPU 最省資源。"));
+        }
+
+        private void DrawNvidiaOverlay()
+        {
+            // NVIDIA の GPU・ドライバーが無い PC では出さない
+            _overlayState ??= NvidiaOverlayExclusion.Query();
+            if (_overlayState == NvidiaOverlayExclusion.State.Unavailable)
+            {
+                return;
+            }
+
+            GuiControls.BeginCard(Loc.T("NVIDIA Instant Replay", "NVIDIA インスタントリプレイ", "NVIDIA 인스턴트 리플레이",
+                "NVIDIA 即时重放", "NVIDIA 即時重播"));
+            GuiControls.Hint(Loc.T(
+                "Keeps NVIDIA Instant Replay (ShadowPlay) from detecting VRCast as a game. It writes a VRCast profile " +
+                "into the NVIDIA driver settings. This uses an unofficial setting and may not work on some drivers.",
+                "VRCast が NVIDIA のインスタントリプレイ（ShadowPlay）にゲームとして検知されないようにします。" +
+                "NVIDIA のドライバー設定に VRCast 用のプロファイルを書きます。非公式の設定のため、ドライバーによっては効きません。",
+                "VRCast가 NVIDIA 인스턴트 리플레이(ShadowPlay)에 게임으로 감지되지 않도록 합니다. " +
+                "NVIDIA 드라이버 설정에 VRCast용 프로필을 씁니다. 비공식 설정이라 드라이버에 따라 효과가 없을 수 있습니다.",
+                "使 VRCast 不被 NVIDIA 即时重放（ShadowPlay）识别为游戏。会在 NVIDIA 驱动设置中写入 VRCast 专用配置文件。" +
+                "这是非官方设置，部分驱动可能无效。",
+                "使 VRCast 不被 NVIDIA 即時重播（ShadowPlay）視為遊戲。會在 NVIDIA 驅動程式設定中寫入 VRCast 專用設定檔。" +
+                "這是非官方設定，部分驅動程式可能無效。"));
+
+            // 現在の状態
+            bool excluded = _overlayState == NvidiaOverlayExclusion.State.Excluded;
+            GuiControls.Hint(excluded
+                ? Loc.T("Status: excluded", "状態: 検知させない設定済み", "상태: 감지 제외됨", "状态：已排除", "狀態：已排除")
+                : Loc.T("Status: not excluded", "状態: 未設定", "상태: 설정 안 됨", "状态：未设置", "狀態：未設定"));
+
+            // エディターでは Unity.exe を登録してしまうので押せない
+            if (Application.isEditor)
+            {
+                GuiControls.Hint(Loc.T("Only available in the built app.", "ビルドした VRCast でのみ使えます。",
+                    "빌드한 VRCast에서만 사용할 수 있습니다.", "仅在构建后的 VRCast 中可用。", "僅在建置後的 VRCast 中可用。"));
+                GuiControls.EndCard();
+                return;
+            }
+
+            // 押したときだけドライバー設定を書く / 消す
+            bool pressed = excluded
+                ? GUILayout.Button(Loc.T("Let NVIDIA Instant Replay detect VRCast again",
+                    "NVIDIA のインスタントリプレイの検知を元に戻す", "NVIDIA 인스턴트 리플레이 감지 되돌리기",
+                    "恢复 NVIDIA 即时重放的检测", "還原 NVIDIA 即時重播的偵測"))
+                : GUILayout.Button(Loc.T("Hide VRCast from NVIDIA Instant Replay",
+                    "NVIDIA のインスタントリプレイに検知させない", "NVIDIA 인스턴트 리플레이가 감지하지 않게 하기",
+                    "不让 NVIDIA 即时重放检测", "不讓 NVIDIA 即時重播偵測"));
+            if (pressed)
+            {
+                _overlayError = excluded ? NvidiaOverlayExclusion.Restore() : NvidiaOverlayExclusion.Exclude();
+                _overlayRestartPending |= _overlayError == null;
+                _overlayState = NvidiaOverlayExclusion.Query();
+            }
+
+            // 失敗したら理由と、管理者として実行する案内
+            if (_overlayError != null)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Could not change the driver settings. Try running VRCast as administrator.",
+                    "ドライバー設定を変更できませんでした。VRCast を管理者として実行してお試しください。",
+                    "드라이버 설정을 변경하지 못했습니다. VRCast를 관리자 권한으로 실행해 보세요.",
+                    "无法更改驱动设置。请尝试以管理员身份运行 VRCast。",
+                    "無法變更驅動程式設定。請嘗試以系統管理員身分執行 VRCast。") + $" ({_overlayError})");
+            }
+
+            // 設定は起動時にしか読まれないので再起動を促す
+            if (_overlayRestartPending)
+            {
+                GuiControls.Hint(Loc.T("Restart VRCast to apply the change.", "VRCast を起動し直すと反映されます。",
+                    "VRCast를 다시 시작하면 적용됩니다.", "重新启动 VRCast 后生效。", "重新啟動 VRCast 後生效。"));
+                DrawRestartButton();
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private static void DrawRestartButton()
+        {
+            if (GUILayout.Button(Loc.T("Restart VRCast now", "VRCast を今すぐ起動し直す", "VRCast 지금 다시 시작",
+                    "立即重新启动 VRCast", "立即重新啟動 VRCast")))
+            {
+                // 新しい起動が古い設定を読まないよう先に保存する
+                AppBootstrap.Save();
+                GpuSelection.Restart();
+            }
         }
 
         private void DrawUpdates()

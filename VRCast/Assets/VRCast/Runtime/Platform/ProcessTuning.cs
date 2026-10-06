@@ -5,7 +5,7 @@ using VRCast.Core;
 namespace VRCast.Platform
 {
     /// <summary>
-    /// プロセスの優先度と Windows の電力調整（EcoQoS）の設定。VRCast 本体とトラッカーの両方に使う。
+    /// プロセスの優先度・Windows の電力調整（EcoQoS）・使うコア（2 CCD の X3D でキャッシュの無い側、P コア / E コア）の設定。VRCast 本体とトラッカーの両方に使う。
     /// Windows 11 は前面にないアプリやウィンドウを持たないプロセス（トラッカー）の CPU 速度・タイマー精度を落とすことがあり、
     /// VRCast が背面にある間だけトラッカーの推定が遅れて手を見失う原因になる。
     /// </summary>
@@ -44,6 +44,12 @@ namespace VRCast.Platform
 
         [DllImport("kernel32.dll")]
         private static extern IntPtr GetCurrentProcess();
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool SetProcessAffinityMask(IntPtr process, UIntPtr mask);
+
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool GetProcessAffinityMask(IntPtr process, out UIntPtr processMask, out UIntPtr systemMask);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr OpenProcess(uint desiredAccess, bool inheritHandle, int processId);
@@ -113,6 +119,37 @@ namespace VRCast.Platform
         {
             // 無効なハンドルは対象外
             return process != IntPtr.Zero && SetPriorityClass(process, ToPriorityClass(priority));
+        }
+
+        /// <summary>
+        /// 別プロセス（トラッカー）を PID で開いて、使うコアを設定する。失敗時は false。
+        /// </summary>
+        public static bool SetCoreMask(int processId, ulong mask)
+        {
+            return WithProcess(processId, process => SetCoreMask(process, mask));
+        }
+
+        /// <summary>
+        /// 使うコアを mask（CpuTopology.CoreMaskFor の値）に制限する。0 なら全コアに戻す。失敗したら false。
+        /// </summary>
+        public static bool SetCoreMask(IntPtr process, ulong mask)
+        {
+            // 無効なハンドルは対象外
+            if (process == IntPtr.Zero)
+            {
+                return false;
+            }
+
+            // 戻すときは全コア（起動し直した VRCast は前の制限を引き継ぐので、自分の値ではなくシステムの値）
+            if (!GetProcessAffinityMask(GetCurrentProcess(), out _, out UIntPtr systemMask))
+            {
+                return false;
+            }
+
+            // システムに無いコアは外す（何も残らなければ全コア）
+            ulong all = systemMask.ToUInt64();
+            ulong applied = mask & all;
+            return SetProcessAffinityMask(process, new UIntPtr(applied != 0 ? applied : all));
         }
 
         private static bool WithProcess(int processId, Func<IntPtr, bool> action)

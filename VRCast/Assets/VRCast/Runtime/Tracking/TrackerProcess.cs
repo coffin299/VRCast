@@ -95,6 +95,7 @@ namespace VRCast.Tracking
         private bool _startedHands;
         private bool _startedLowLoad;
         private ProcessPriority _appliedPriority;
+        private ulong _appliedCoreMask;
         private float _nextStartTime;
 
         // 一覧を取得済み（または取得中）の入力元。null なら未取得
@@ -359,10 +360,25 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 優先度は再起動せずに変更できる
+            // 優先度・使うコアは再起動せずに変更できる
             if (_appliedPriority != _settings.processPriority)
             {
                 ApplyPriority();
+            }
+
+            if (_appliedCoreMask != CpuTopology.CoreMaskFor(_settings))
+            {
+                ApplyCoreMask();
+            }
+        }
+
+        private void ApplyCoreMask()
+        {
+            // 試した値は記録して毎フレーム再試行しない（起動時は VRCast から引き継いだ制限に関係なく設定の値にする）
+            _appliedCoreMask = CpuTopology.CoreMaskFor(_settings);
+            if (!ProcessTuning.SetCoreMask(_process.Id, _appliedCoreMask))
+            {
+                VRCastLog.Warning(LogCategory, "Could not change the CPU cores the tracker runs on");
             }
         }
 
@@ -495,8 +511,9 @@ namespace VRCast.Tracking
                     VRCastLog.Info(LogCategory, "Could not opt the tracker out of Windows power throttling");
                 }
 
-                // 設定の優先度にする（以降の変更は Monitor が再起動せずに反映）
+                // 設定の優先度・使うコアにする（以降の変更は Monitor が再起動せずに反映）
                 ApplyPriority();
+                ApplyCoreMask();
 
                 // 起動したコマンドライン全体と PID を残す（手動で同じ引数を試せるように）
                 Status = $"Running: {_startedCamera}";

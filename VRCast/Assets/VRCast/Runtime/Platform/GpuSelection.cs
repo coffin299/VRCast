@@ -288,7 +288,10 @@ namespace VRCast.Platform
             return string.Join(" ", parts);
         }
 
-        private static string ExecutablePath()
+        /// <summary>
+        /// 実行中の exe のフルパス（エディターでは Unity.exe）。取得できなければ null。
+        /// </summary>
+        public static string ExecutablePath()
         {
             // IL2CPP では Process.MainModule が使えないため、Windows から直接取得する（失敗・切り詰めは null）
             var path = new StringBuilder(MaxPathLength);

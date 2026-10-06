@@ -94,6 +94,12 @@ namespace VRCast.Core
         // VRCast 本体と同梱トラッカーのプロセスの優先度（両方に同じ値を使う）
         public ProcessPriority processPriority = ProcessPriority.Normal;
 
+        // 2 CCD の X3D（片方だけ 3D V-Cache）で、VRCast 本体と同梱トラッカーをキャッシュの無い側のコアで動かす（ゲームとコアを取り合わない）
+        public bool avoidCacheCcd = true;
+
+        // P コアと E コアがある CPU で、VRCast 本体と同梱トラッカーに使わせるコア
+        public HybridCoreSelection hybridCores = HybridCoreSelection.Auto;
+
         // 描画に使う GPU（次回起動から反映）。gpuAdapter に GPU 名があれば直接指定し、gpuPreference より優先する
         public GpuPreference gpuPreference = GpuPreference.Auto;
         public string gpuAdapter = string.Empty;
@@ -399,6 +405,12 @@ namespace VRCast.Core
             if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))
             {
                 processPriority = ProcessPriority.Normal;
+            }
+
+            // 未知のコアの選択は Windows に任せる
+            if (!Enum.IsDefined(typeof(HybridCoreSelection), hybridCores))
+            {
+                hybridCores = HybridCoreSelection.Auto;
             }
 
             // 未知の GPU の優先設定は Windows に任せる
