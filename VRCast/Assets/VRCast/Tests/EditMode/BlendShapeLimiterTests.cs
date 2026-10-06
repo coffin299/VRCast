@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
 using VRCast.Animations;
-using VRCast.AvatarFormat;
 using VRCast.Core;
 
 namespace VRCast.Tests
@@ -37,28 +36,36 @@ namespace VRCast.Tests
 
         private BlendShapeLimiter CreateLimiter(List<BlendShapeLimit> limits)
         {
-            // まぶたのメッシュを "Body" にした設定で初期化
-            var descriptor = new AvatarDescriptorData();
-            descriptor.eyelids.meshPath = "Body";
             BlendShapeLimiter limiter = _root.AddComponent<BlendShapeLimiter>();
-            limiter.Initialize(_root.transform, descriptor, limits);
+            limiter.Initialize(_root.transform, limits);
             return limiter;
         }
 
         [Test]
         public void Initialize_ListsShapesAndAppliesSavedLimits()
         {
-            // 顔のメッシュとして全 BlendShape を列挙し、記録済みの上限を当てること
+            // 全 BlendShape を列挙し、記録済みの上限を当てること（見つからない名前は無視）
             BlendShapeLimiter limiter = CreateLimiter(new List<BlendShapeLimit>
             {
                 new BlendShapeLimit { path = "Body", blendShape = "Blink", max = 70f },
                 new BlendShapeLimit { path = "Body", blendShape = "Missing", max = 10f },
             });
             Assert.That(limiter.Shapes.Count, Is.EqualTo(2));
-            Assert.That(limiter.HasFaceMesh, Is.True);
-            Assert.That(limiter.Shapes[0].IsFace, Is.True);
             Assert.That(limiter.LimitedCount, Is.EqualTo(1));
             Assert.That(limiter.Shapes[0].Max, Is.EqualTo(70f));
+        }
+
+        [Test]
+        public void Overlay_MarksShapeAsFace()
+        {
+            // 初期化直後はどれも顔ではなく、上乗せを作った BlendShape だけが顔になること
+            BlendShapeLimiter limiter = CreateLimiter(new List<BlendShapeLimit>());
+            Assert.That(limiter.FaceCount, Is.EqualTo(0));
+            BlendShapeOverlay.Create(_face, 0);
+            BlendShapeOverlay.Create(_face, 0);
+            Assert.That(limiter.FaceCount, Is.EqualTo(1));
+            Assert.That(limiter.Shapes[0].IsFace, Is.True);
+            Assert.That(limiter.Shapes[1].IsFace, Is.False);
         }
 
         [Test]

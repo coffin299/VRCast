@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using UnityEngine;
-using VRCast.AvatarFormat;
 using VRCast.Core;
 
 namespace VRCast.Animations
@@ -46,7 +45,7 @@ namespace VRCast.Animations
             new Dictionary<(SkinnedMeshRenderer, int), Shape>();
 
         /// <summary>
-        /// アバター内の全 BlendShape（顔のメッシュ → その他の順）。
+        /// アバター内の全 BlendShape（メッシュ順）。
         /// </summary>
         public IReadOnlyList<Shape> Shapes => _shapes;
 
@@ -56,9 +55,25 @@ namespace VRCast.Animations
         public int LimitedCount => _limited.Count;
 
         /// <summary>
-        /// 顔のメッシュ（まぶた・リップシンクの対象）に BlendShape があれば true。
+        /// 顔として動かす BlendShape（まばたき・口・表情・パーフェクトシンク）の数。
         /// </summary>
-        public bool HasFaceMesh { get; private set; }
+        public int FaceCount { get; private set; }
+
+        /// <summary>
+        /// 顔として動かす BlendShape として登録する（まばたき・口パク・パーフェクトシンクの上乗せと、表情プリセットの対象）。
+        /// 一覧の「顔」に出すための区別で、上限の効き方は変わらない。
+        /// </summary>
+        public static void MarkFace(SkinnedMeshRenderer renderer, int index)
+        {
+            // アバター未表示・一覧に無い BlendShape・登録済みは何もしない
+            if (_active == null || !_active._lookup.TryGetValue((renderer, index), out Shape shape) || shape.IsFace)
+            {
+                return;
+            }
+
+            shape.IsFace = true;
+            _active.FaceCount++;
+        }
 
         /// <summary>
         /// 書き込む値を上限で切る（上限の無い BlendShape・アバター未表示ならそのまま返す）。
@@ -94,19 +109,13 @@ namespace VRCast.Animations
 
         /// <summary>
         /// アバター内の BlendShape を列挙し、記録済みの上限を当てる。
-        /// 顔のメッシュはまぶた・リップシンクに設定されたメッシュ。
+        /// 表情・まばたき等より先に初期化する（それらが MarkFace で顔の BlendShape を登録するため）。
         /// </summary>
-        public void Initialize(Transform root, AvatarDescriptorData descriptor, List<BlendShapeLimit> limits)
+        public void Initialize(Transform root, List<BlendShapeLimit> limits)
         {
             _active = this;
 
-            // 顔のメッシュ（まぶた・リップシンクの対象。未設定なら無し）
-            var faces = new HashSet<string>();
-            AddFacePath(faces, descriptor?.eyelids?.meshPath);
-            AddFacePath(faces, descriptor?.lipSync?.meshPath);
-
-            // 全メッシュの BlendShape を列挙（顔のメッシュを先に並べる）
-            var others = new List<Shape>();
+            // 全メッシュの BlendShape を列挙
             foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
                 // メッシュの無いレンダラーは対象外
@@ -117,21 +126,13 @@ namespace VRCast.Animations
                 }
 
                 string path = PathOf(renderer.transform, root);
-                bool isFace = faces.Contains(path);
                 for (int index = 0; index < mesh.blendShapeCount; index++)
                 {
-                    var shape = new Shape
-                    {
-                        Renderer = renderer, Index = index, Path = path, Name = mesh.GetBlendShapeName(index), IsFace = isFace,
-                    };
-                    (isFace ? _shapes : others).Add(shape);
+                    var shape = new Shape { Renderer = renderer, Index = index, Path = path, Name = mesh.GetBlendShapeName(index) };
+                    _shapes.Add(shape);
                     _lookup[(renderer, index)] = shape;
                 }
             }
-
-            // 先に並べた分が顔のメッシュの BlendShape
-            HasFaceMesh = _shapes.Count > 0;
-            _shapes.AddRange(others);
 
             // 記録済みの上限を当てる（見つからない BlendShape は無視）
             foreach (BlendShapeLimit limit in limits)
@@ -226,15 +227,6 @@ namespace VRCast.Animations
             if (_active == this)
             {
                 _active = null;
-            }
-        }
-
-        private static void AddFacePath(HashSet<string> faces, string path)
-        {
-            // 未設定（空）は顔のメッシュ無し
-            if (!string.IsNullOrEmpty(path))
-            {
-                faces.Add(path);
             }
         }
 

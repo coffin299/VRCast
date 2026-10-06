@@ -26,7 +26,7 @@ namespace VRCast.UI
         private readonly MicrophoneInput _microphone;
         private readonly AppSettings _settings;
 
-        // BlendShape の上限の一覧の表示条件（0 = 顔のメッシュ、1 = その他のメッシュ・検索文字列・上限付きだけ）
+        // BlendShape の上限の一覧の表示条件（0 = 顔、1 = その他・検索文字列・上限付きだけ）
         private int _limitGroup;
         private string _limitSearch = string.Empty;
         private bool _limitedOnly;
@@ -175,13 +175,14 @@ namespace VRCast.UI
                 "每个 BlendShape 可动到的最大值（100 = 不限制）。例如眨眼时眼睛消失时调低。按虚拟形象分别保存。",
                 "每個 BlendShape 可動到的最大值（100 = 不限制）。例如眨眼時眼睛消失時調低。依虛擬形象分別儲存。"));
 
-            // 顔のメッシュ（まぶた・リップシンクの対象）か、その他のメッシュか
+            // 顔（まばたき・口・表情・パーフェクトシンクで動くもの）か、その他か
             string[] groups =
             {
-                Loc.T("Face mesh", "顔のメッシュ", "얼굴 메시", "面部网格", "臉部網格"),
-                Loc.T("Other meshes", "その他のメッシュ", "기타 메시", "其他网格", "其他網格"),
+                Loc.T("Face (blink, mouth, expressions)", "顔（まばたき・口・表情）", "얼굴 (눈 깜빡임·입·표정)",
+                    "面部（眨眼、嘴、表情）", "臉部（眨眼、嘴、表情）"),
+                Loc.T("Others", "その他", "기타", "其他", "其他"),
             };
-            _limitGroup = GuiControls.EnumSelector(Loc.T("Meshes", "対象", "대상", "对象", "對象"), groups, _limitGroup);
+            _limitGroup = GuiControls.EnumSelector(Loc.T("Show", "対象", "대상", "对象", "對象"), groups, _limitGroup);
 
             // 名前で絞り込み（大文字・小文字は区別しない）
             GUILayout.BeginHorizontal();
@@ -214,9 +215,9 @@ namespace VRCast.UI
                     continue;
                 }
 
-                // その他のメッシュはどのメッシュの BlendShape か分かるようにメッシュ名を付ける
+                // 同じ名前が複数のメッシュにあっても分かるようメッシュ名を付ける（欄が狭いときに名前が残るよう後ろに）
                 shown++;
-                string label = face ? shape.Name : $"{shape.Renderer.name} / {shape.Name}";
+                string label = $"{shape.Name} ({shape.Renderer.name})";
                 float max = GuiControls.Slider(label, shape.Max, BlendShapeLimit.MinWeight, BlendShapeLimit.MaxWeight, "F0");
                 if (!Mathf.Approximately(max, shape.Max))
                 {
@@ -228,11 +229,12 @@ namespace VRCast.UI
             // 1 件も無ければ理由を出す
             if (shown == 0)
             {
-                GuiControls.Hint(face && !limiter.HasFaceMesh
-                    ? Loc.T("No face mesh is set on this avatar (see Other meshes)",
-                        "このアバターには顔のメッシュの設定がありません（その他のメッシュを見てください）",
-                        "이 아바타에는 얼굴 메시 설정이 없습니다 (기타 메시를 확인하세요)",
-                        "此虚拟形象未设置面部网格（请查看其他网格）", "此虛擬形象未設定臉部網格（請查看其他網格）")
+                GuiControls.Hint(face && limiter.FaceCount == 0
+                    ? Loc.T("This avatar has no blend shapes moved by blink, mouth or expressions (see Others)",
+                        "このアバターには、まばたき・口・表情で動く BlendShape がありません（その他を見てください）",
+                        "이 아바타에는 눈 깜빡임·입·표정으로 움직이는 BlendShape가 없습니다 (기타를 확인하세요)",
+                        "此虚拟形象没有由眨眼、嘴、表情驱动的 BlendShape（请查看其他）",
+                        "此虛擬形象沒有由眨眼、嘴、表情驅動的 BlendShape（請查看其他）")
                     : Loc.T("No matching blend shapes", "該当する BlendShape がありません", "해당하는 BlendShape가 없습니다",
                         "没有符合的 BlendShape", "沒有符合的 BlendShape"));
             }

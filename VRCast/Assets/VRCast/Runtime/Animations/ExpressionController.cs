@@ -112,6 +112,8 @@ namespace VRCast.Animations
                 _slotIndex[(renderer, index)] = slot;
             }
 
+            // 表情で動かす BlendShape として、上限の一覧の「顔」に出す
+            BlendShapeLimiter.MarkFace(renderer, index);
             target = new Target { Slot = slot, Weight = value.weight };
             return true;
         }

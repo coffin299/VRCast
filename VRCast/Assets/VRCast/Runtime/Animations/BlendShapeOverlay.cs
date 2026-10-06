@@ -18,6 +18,9 @@ namespace VRCast.Animations
         {
             _renderer = renderer;
             _index = index;
+
+            // まばたき・口パク・パーフェクトシンクで動かす BlendShape として、上限の一覧の「顔」に出す
+            BlendShapeLimiter.MarkFace(renderer, index);
         }
 
         /// <summary>

@@ -7,10 +7,10 @@ Newest first. Each version is written in Japanese, then English.
 ■ 未リリース / Unreleased
 
 [日本語]
-- フェイスタブに BlendShape ごとの上限を設定できる機能を追加（まばたきで目が消える等の対策に。顔のメッシュとその他のメッシュを選べ、アバターごとに保存）
+- フェイスタブに BlendShape ごとの上限を設定できる機能を追加（まばたきで目が消える等の対策に。まばたき・口・表情で動く「顔」とそれ以外の「その他」に分けて表示し、アバターごとに保存）
 
 [English]
-- Added per-blend-shape limits to the Face tab (for example, to stop the eyes disappearing when blinking; choose the face mesh or other meshes, saved per avatar)
+- Added per-blend-shape limits to the Face tab (for example, to stop the eyes disappearing when blinking; listed as "Face" for those moved by blink, mouth and expressions and "Others" for the rest, saved per avatar)
 
 ■ 1.5.1 (2026-10-06)
 

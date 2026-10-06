@@ -182,9 +182,10 @@ namespace VRCast.App
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
 
-            // BlendShape の上限（このアバターで前回付けたもの。表情・まばたき等は書き込む前にこれを通す）
+            // BlendShape の上限（このアバターで前回付けたもの）。表情・まばたき等は書き込む前にこれを通し、
+            // 初期化時に自分の BlendShape を「顔」として登録するので、それらより先に作る
             avatar.Instance.AddComponent<BlendShapeLimiter>().Initialize(
-                root, avatar.Descriptor, _settings.GetBlendShapeLimits(avatar.SourcePath));
+                root, _settings.GetBlendShapeLimits(avatar.SourcePath));
             var expressions = avatar.Instance.AddComponent<ExpressionController>();
             expressions.Initialize(root, avatar.Expressions);
             var blink = avatar.Instance.AddComponent<BlinkController>();
