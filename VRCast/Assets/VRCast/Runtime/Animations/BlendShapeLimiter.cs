@@ -1,0 +1,254 @@
+using System.Collections.Generic;
+using UnityEngine;
+using VRCast.AvatarFormat;
+using VRCast.Core;
+
+namespace VRCast.Animations
+{
+    /// <summary>
+    /// アバターごとの BlendShape の上限（まばたきで目が消える等、100 まで動かすと破綻する形の対策）。
+    /// まばたき・口パク・表情・パーフェクトシンクは書き込む前に Limit を通す。
+    /// どの処理も書かない固定の値は、全ての処理の後（LateUpdate の最後）に上限で切り、上限を緩めたら元の値へ戻す。
+    /// </summary>
+    [DefaultExecutionOrder(ExecutionOrder)]
+    public sealed class BlendShapeLimiter : MonoBehaviour
+    {
+        // まばたき・トラッキング等の LateUpdate より後に動かす
+        private const int ExecutionOrder = 10000;
+
+        /// <summary>
+        /// アバター内の 1 つの BlendShape と、その上限。
+        /// </summary>
+        public sealed class Shape
+        {
+            public SkinnedMeshRenderer Renderer;
+            public int Index;
+            public string Path;
+            public string Name;
+            public bool IsFace;
+            public float Max = BlendShapeLimit.MaxWeight;
+
+            // 上限で切る前の固定の値（切っていなければ NaN。上限を緩めたときに戻す）
+            public float Original = float.NaN;
+
+            /// <summary>
+            /// 上限を付けているなら true。
+            /// </summary>
+            public bool IsLimited => Max < BlendShapeLimit.MaxWeight;
+        }
+
+        // 表示中のアバターの上限（同時に表示するアバターは 1 体だけ）
+        private static BlendShapeLimiter _active;
+
+        private readonly List<Shape> _shapes = new List<Shape>();
+        private readonly List<Shape> _limited = new List<Shape>();
+        private readonly Dictionary<(SkinnedMeshRenderer, int), Shape> _lookup =
+            new Dictionary<(SkinnedMeshRenderer, int), Shape>();
+
+        /// <summary>
+        /// アバター内の全 BlendShape（顔のメッシュ → その他の順）。
+        /// </summary>
+        public IReadOnlyList<Shape> Shapes => _shapes;
+
+        /// <summary>
+        /// 上限を付けている BlendShape の数。
+        /// </summary>
+        public int LimitedCount => _limited.Count;
+
+        /// <summary>
+        /// 顔のメッシュ（まぶた・リップシンクの対象）に BlendShape があれば true。
+        /// </summary>
+        public bool HasFaceMesh { get; private set; }
+
+        /// <summary>
+        /// 書き込む値を上限で切る（上限の無い BlendShape・アバター未表示ならそのまま返す）。
+        /// </summary>
+        public static float Limit(SkinnedMeshRenderer renderer, int index, float weight)
+        {
+            // 上限の無い BlendShape はそのまま
+            if (_active == null || !_active._lookup.TryGetValue((renderer, index), out Shape shape))
+            {
+                return weight;
+            }
+
+            // 書き込む処理がある BlendShape は、その処理の値が正なので固定の値として戻さない
+            shape.Original = float.NaN;
+            return Mathf.Min(weight, shape.Max);
+        }
+
+        /// <summary>
+        /// 今の値を読む。固定の値を上限で切っている間は切る前の値を返す
+        /// （BlendShapeOverlay が上限で切った値を「元の値」と取り違えないため）。
+        /// </summary>
+        public static float Read(SkinnedMeshRenderer renderer, int index)
+        {
+            float weight = renderer.GetBlendShapeWeight(index);
+            if (_active != null && _active._lookup.TryGetValue((renderer, index), out Shape shape)
+                && !float.IsNaN(shape.Original) && Mathf.Approximately(weight, shape.Max))
+            {
+                return shape.Original;
+            }
+
+            return weight;
+        }
+
+        /// <summary>
+        /// アバター内の BlendShape を列挙し、記録済みの上限を当てる。
+        /// 顔のメッシュはまぶた・リップシンクに設定されたメッシュ。
+        /// </summary>
+        public void Initialize(Transform root, AvatarDescriptorData descriptor, List<BlendShapeLimit> limits)
+        {
+            _active = this;
+
+            // 顔のメッシュ（まぶた・リップシンクの対象。未設定なら無し）
+            var faces = new HashSet<string>();
+            AddFacePath(faces, descriptor?.eyelids?.meshPath);
+            AddFacePath(faces, descriptor?.lipSync?.meshPath);
+
+            // 全メッシュの BlendShape を列挙（顔のメッシュを先に並べる）
+            var others = new List<Shape>();
+            foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                // メッシュの無いレンダラーは対象外
+                Mesh mesh = renderer.sharedMesh;
+                if (mesh == null)
+                {
+                    continue;
+                }
+
+                string path = PathOf(renderer.transform, root);
+                bool isFace = faces.Contains(path);
+                for (int index = 0; index < mesh.blendShapeCount; index++)
+                {
+                    var shape = new Shape
+                    {
+                        Renderer = renderer, Index = index, Path = path, Name = mesh.GetBlendShapeName(index), IsFace = isFace,
+                    };
+                    (isFace ? _shapes : others).Add(shape);
+                    _lookup[(renderer, index)] = shape;
+                }
+            }
+
+            // 先に並べた分が顔のメッシュの BlendShape
+            HasFaceMesh = _shapes.Count > 0;
+            _shapes.AddRange(others);
+
+            // 記録済みの上限を当てる（見つからない BlendShape は無視）
+            foreach (BlendShapeLimit limit in limits)
+            {
+                Shape shape = _shapes.Find(s => s.Path == limit.path && s.Name == limit.blendShape);
+                if (shape != null)
+                {
+                    SetMax(shape, limit.max);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 上限を変える（100 で制限なし）。固定の値を切っていたら元へ戻し、次の LateUpdate で新しい上限で切り直す。
+        /// </summary>
+        public void SetMax(Shape shape, float max)
+        {
+            // 範囲内に制限し、変わらなければ何もしない
+            max = Mathf.Clamp(max, BlendShapeLimit.MinWeight, BlendShapeLimit.MaxWeight);
+            if (Mathf.Approximately(shape.Max, max))
+            {
+                return;
+            }
+
+            // 上限で切っていた固定の値を戻す
+            if (!float.IsNaN(shape.Original) && shape.Renderer != null)
+            {
+                shape.Renderer.SetBlendShapeWeight(shape.Index, shape.Original);
+            }
+
+            shape.Original = float.NaN;
+            shape.Max = max;
+
+            // 上限を付けているものだけを毎フレーム確認する
+            _limited.Remove(shape);
+            if (shape.IsLimited)
+            {
+                _limited.Add(shape);
+            }
+        }
+
+        /// <summary>
+        /// 全ての上限を外す。
+        /// </summary>
+        public void ClearAll()
+        {
+            // SetMax が一覧から外すので複製を回す
+            foreach (Shape shape in _limited.ToArray())
+            {
+                SetMax(shape, BlendShapeLimit.MaxWeight);
+            }
+        }
+
+        /// <summary>
+        /// 保存用に、上限を付けている BlendShape を書き出す。
+        /// </summary>
+        public List<BlendShapeLimit> Export()
+        {
+            return _limited.ConvertAll(shape => new BlendShapeLimit
+            {
+                path = shape.Path, blendShape = shape.Name, max = shape.Max,
+            });
+        }
+
+        private void LateUpdate()
+        {
+            foreach (Shape shape in _limited)
+            {
+                // 破棄済みのメッシュは飛ばす
+                if (shape.Renderer == null)
+                {
+                    continue;
+                }
+
+                // 上限を超えていれば（どの処理も書かない固定の値）、元の値を覚えて上限で切る
+                float weight = shape.Renderer.GetBlendShapeWeight(shape.Index);
+                if (weight > shape.Max)
+                {
+                    if (float.IsNaN(shape.Original))
+                    {
+                        shape.Original = weight;
+                    }
+
+                    shape.Renderer.SetBlendShapeWeight(shape.Index, shape.Max);
+                }
+            }
+        }
+
+        private void OnDestroy()
+        {
+            // 次のアバターの上限と取り違えない
+            if (_active == this)
+            {
+                _active = null;
+            }
+        }
+
+        private static void AddFacePath(HashSet<string> faces, string path)
+        {
+            // 未設定（空）は顔のメッシュ無し
+            if (!string.IsNullOrEmpty(path))
+            {
+                faces.Add(path);
+            }
+        }
+
+        private static string PathOf(Transform target, Transform root)
+        {
+            // ルートからの相対パス（"Body" や "Armature/Hips/Hair"。ルート自身は空）
+            var names = new List<string>();
+            for (Transform node = target; node != null && node != root; node = node.parent)
+            {
+                names.Add(node.name);
+            }
+
+            names.Reverse();
+            return string.Join("/", names);
+        }
+    }
+}

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace VRCast.Core
@@ -38,7 +39,8 @@ namespace VRCast.Core
     }
 
     /// <summary>
-    /// アバター（.vrcaster のパス）ごとの記録。カメラの視点と見た目の設定（hasLook が false なら未記録）。
+    /// アバター（.vrcaster のパス）ごとの記録。カメラの視点と見た目の設定（hasLook が false なら未記録）、
+    /// BlendShape の上限（制限しているものだけ）。
     /// </summary>
     [Serializable]
     public class AvatarEntry
@@ -47,5 +49,6 @@ namespace VRCast.Core
         public CameraPose pose;
         public bool hasLook;
         public AvatarLook look;
+        public List<BlendShapeLimit> blendShapeLimits = new List<BlendShapeLimit>();
     }
 }

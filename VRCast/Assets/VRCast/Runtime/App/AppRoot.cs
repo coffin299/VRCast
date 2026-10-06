@@ -181,6 +181,10 @@ namespace VRCast.App
             // 待機ポーズ・表情・まばたき・リップシンク・トラッキング・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
+
+            // BlendShape の上限（このアバターで前回付けたもの。表情・まばたき等は書き込む前にこれを通す）
+            avatar.Instance.AddComponent<BlendShapeLimiter>().Initialize(
+                root, avatar.Descriptor, _settings.GetBlendShapeLimits(avatar.SourcePath));
             var expressions = avatar.Instance.AddComponent<ExpressionController>();
             expressions.Initialize(root, avatar.Expressions);
             var blink = avatar.Instance.AddComponent<BlinkController>();

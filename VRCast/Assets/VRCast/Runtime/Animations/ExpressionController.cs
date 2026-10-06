@@ -198,9 +198,9 @@ namespace VRCast.Animations
                     continue;
                 }
 
-                // 目標へ近づけて書き込み、まだ着かなければ次のフレームも続ける
+                // 目標へ近づけて（アバターごとの上限で切って）書き込み、まだ着かなければ次のフレームも続ける
                 slot.Weight = Mathf.MoveTowards(slot.Weight, slot.Goal, step);
-                slot.Renderer.SetBlendShapeWeight(slot.Index, slot.Weight);
+                slot.Renderer.SetBlendShapeWeight(slot.Index, BlendShapeLimiter.Limit(slot.Renderer, slot.Index, slot.Weight));
                 _fading |= !Mathf.Approximately(slot.Weight, slot.Goal);
             }
         }

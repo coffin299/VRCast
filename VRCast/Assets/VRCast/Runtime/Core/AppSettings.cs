@@ -249,6 +249,33 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// アバターの BlendShape の上限を返す（未記録なら空。一覧は複製なので増減しても記録は変わらない）。
+        /// </summary>
+        public List<BlendShapeLimit> GetBlendShapeLimits(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0
+                ? new List<BlendShapeLimit>(avatarCameras[index].blendShapeLimits)
+                : new List<BlendShapeLimit>();
+        }
+
+        /// <summary>
+        /// アバターの BlendShape の上限を記録する。カメラの視点を記録済みのアバターだけが対象（読込時に記録される）。
+        /// </summary>
+        public void SetBlendShapeLimits(string avatarPath, List<BlendShapeLimit> limits)
+        {
+            // 記録の無いアバターは対象外（視点の無い記録を作らない）
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0)
+            {
+                return;
+            }
+
+            // 壊れた値は除いて複製を持つ（呼び出し側の一覧と共有しない）
+            avatarCameras[index].blendShapeLimits = limits.FindAll(limit => limit != null && limit.IsValid);
+        }
+
+        /// <summary>
         /// 最近使ったアバターのパスを新しい順に返す（最大 MaxRecentAvatars 件）。
         /// </summary>
         public List<string> RecentAvatars()
@@ -348,6 +375,14 @@ namespace VRCast.Core
             foreach (AvatarEntry entry in avatarCameras)
             {
                 entry.hasLook &= entry.look.IsFinite;
+                // BlendShape の上限は壊れたものを捨て、範囲内に制限する（旧版の設定には無いので空の一覧にする）
+                entry.blendShapeLimits ??= new List<BlendShapeLimit>();
+                entry.blendShapeLimits.RemoveAll(limit => limit == null || !limit.IsValid);
+                foreach (BlendShapeLimit limit in entry.blendShapeLimits)
+                {
+                    limit.path ??= string.Empty;
+                    limit.max = Mathf.Clamp(limit.max, BlendShapeLimit.MinWeight, BlendShapeLimit.MaxWeight);
+                }
             }
 
             // 未知の表示言語は OS 準拠へ
