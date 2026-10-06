@@ -8,7 +8,7 @@ namespace VRCast.Tracking
     /// 同梱の MediaPipe トラッカー（Tools/MediaPipeTracker/vrcast_tracker.py）が送る JSON（UTF-8、1 パケット 1 フレーム）を解析する。
     /// 座標変換:
     /// - 頭の変換行列は MediaPipe の右手系（x = 映像の右、y = 上、z = カメラ側、単位 cm）。
-    ///   回転は z 反転（カメラ基準の Unity 座標）とアバター正面への 180° 回転をまとめて (x, -y, -z, w)、位置は (x, y, -z)。
+    ///   回転は行列の四元数 (x, y, z, w) をそのまま使う（z 反転とアバター正面への 180° 回転の左右反転が打ち消し合う）、位置は (x, y, -z)。
     /// - 腕・手の点は MediaPipe の world 座標（x = 映像の右、y = 下、z = 奥）→ カメラ基準の Unity 座標 (x, -y, z)。
     /// </summary>
     public static class MediaPipePacket
@@ -192,9 +192,10 @@ namespace VRCast.Tracking
                 return false;
             }
 
-            // 行列の回転（右手系のまま四元数へ）を Unity のアバター基準へ変換
+            // 行列の回転（右手系のまま四元数へ）がそのままアバター基準になる
+            // （z 反転と 180° 回転で左右が 2 回反転し打ち消し合う。腕・手と同じく本人の右 = アバターの右）
             Quaternion q = Quaternion.LookRotation(forward, up);
-            face.HeadRotation = Quaternion.Normalize(new Quaternion(q.x, -q.y, -q.z, q.w));
+            face.HeadRotation = Quaternion.Normalize(q);
 
             // 平行移動（cm）をカメラ基準の Unity 座標（dm）へ
             face.HeadPosition = new Vector3(m[3], m[7], -m[11]) * PositionScale;
