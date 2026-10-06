@@ -167,7 +167,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `AnimationSection` | Pose タブ（向き・待機ポーズ、表情。表情ごとに 1 行で「表情ボタン・キーの割り当てボタン（押すと割り当て待ち、Esc でやめる）・リセット」。割り当てはアバターごとに `AppSettings.SetExpressionHotkeys` へ記録）。表情ボタンは固定中の表情を押し直すと自動検出へ戻し、固定中は「自動検出に戻す」を出す |
 | `ExpressionHotkey` | アバターごとの表情のショートカットキー（プリセット名・Windows の仮想キー番号・Ctrl / Alt / Shift。ニュートラルは `<neutral>`） |
 | `RemoteControl` | 外部操作（設定で ON のときだけ）。OSC（UDP）と HTTP を `127.0.0.1` にのみ bind し、スレッドを使わず Update でポーリングして表示中のアバターの `ExpressionController` を操作。HTTP は `Origin` / 別サイトの `Sec-Fetch-Site` 付き（Web ページからの送信）を 403 で拒否し、CORS ヘッダーは付けない。bind 失敗は 3 秒ごとに再試行 |
-| `RemoteSection` | OSC / HTTP タブ（Output と Settings の間）。外部操作の ON/OFF・ポート（`GuiControls.PortField`）・待ち受けの状態、共通のコマンド（/auto・/status）、表示中のアバターの表情から自動で並べる表情ごとのコマンド（toggle 付き / 無しを切替、行ごとに `GUIUtility.systemCopyBuffer` へコピー） |
+| `RemoteSection` | OSC / HTTP タブ（Output と Settings の間）。外部操作の ON/OFF・ポート（`GuiControls.PortField`）・待ち受けの状態・OSC の送信先と HTTP の接続先 URL（コピー可）・`/status` をブラウザで開くボタン（`Application.OpenURL`。アドレス欄から開いた扱いで拒否されない）、共通のコマンド（/auto・/status）、表示中のアバターの表情から自動で並べる表情ごとのコマンド（toggle 付き / 無しを切替、行ごとに `GUIUtility.systemCopyBuffer` へコピー） |
 | `RemoteCommandText` | 一覧に出すコマンドの書き方（HTTP は名前を URL エンコード、OSC は名前がアドレスに使える ASCII ならアドレス末尾、それ以外は `/vrcast/expression` + 文字列の引数）。`RemoteCommand` が読める形と一致することをテストで確認 |
 | `OscPacket` / `HttpRequest` / `RemoteCommand` | OSC 1.0 のメッセージ・バンドルの読み取り（最初の引数のみ）、HTTP のリクエスト行・クエリ・Web ページ判定、両者から共通の操作（表情を名前か番号で選ぶ / toggle / 自動検出へ戻す / 状態）への変換と実行。OSC のボタンを離した値（0.0 / false）は無視 |
 | `VirtualKeys` | 仮想キー番号の分類（割り当て可否: Esc / Tab / マウス左右中 / 左右を区別しない修飾キー / 半角全角は不可、左右の修飾キーの種類）と配列に依らない表示名 |
