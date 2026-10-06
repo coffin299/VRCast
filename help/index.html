@@ -380,11 +380,31 @@
             畫面偏暗時，請點擊 <span class="ui">晴天</span> 預設或調高環境光。<span class="ui">陽光顏色</span> 越低越偏暖色。
             <span class="ui">方向</span> 為 0 時從正面照射。燈光無法變亮時，請調高 <span class="ui">虛擬形象亮度</span>。燈光和虛擬形象亮度會依虛擬形象分別記住。</span></td></tr>
   </table>
-  <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情（数字キー 1〜9、0 でニュートラル）を変更できます。</p>
-  <p class="en">In the <span class="ui">Pose</span> tab you can change the avatar's direction, arm pose and expressions (number keys 1-9, 0 for neutral).</p>
-  <p class="ko"><span class="ui">포즈·표정</span> 탭에서는 아바타의 방향·팔 내리는 정도·표정 (숫자 키 1~9, 0으로 무표정)을 변경할 수 있습니다.</p>
-  <p class="zh-hans">在 <span class="ui">姿势·表情</span> 标签页中可以更改虚拟形象的朝向、手臂姿势和表情（数字键 1-9，0 为无表情）。</p>
-  <p class="zh-hant">在 <span class="ui">姿勢·表情</span> 分頁中可以變更虛擬形象的朝向、手臂姿勢和表情（數字鍵 1-9，0 為無表情）。</p>
+  <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情を変更できます。
+    表情ごとにショートカットキーを割り当てられます（既定はすべて未割り当て）。キーのボタンを押してから割り当てたいキーを押し（<code>Ctrl+Alt+N</code> のような同時押し、テンキー（NumLock ON で数字キーと区別）、記号キー、右 Ctrl などの単独（押して離す）、マウスのサイドボタンも可）、<span class="ui">Esc</span> でやめられます（Tab は使えません）。隣の <span class="ui">リセット</span> で割り当てを外します（アバターごとに保存）。
+    <span class="ui">VRCast が背面にあるときも使う</span>（既定 ON）なら、OBS などを操作中でも切り替えられます。ほかのアプリで文字を入力している間も反応するため、Ctrl や Alt との組み合わせがおすすめです。
+    ボタン・キーで選んだ表情は固定され、トラッキングの自動検出では変わりません。同じ表情をもう一度選ぶか <span class="ui">自動検出に戻す</span> で元に戻ります。
+    <span class="ui">OSC / HTTP</span> タブ（出力と設定の間）で <span class="ui">外部から操作（OSC / HTTP）</span> を ON にすると、表示中のアバターの表情ごとのコマンドが一覧に並び（<span class="ui">コピー</span> でコピー）、ポートの下に OSC の送信先と HTTP の URL が表示されます（<span class="ui">ブラウザで状態を開く</span> で動作確認。Stream Deck では「Web サイト」の「バックグラウンドで GET」に URL 全体を設定）。Stream Deck や OSC アプリから表情を切り替えられます（この PC からのみ。例: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。番号は 0 = ニュートラル、1 以降 = 表情の並び順）。</p>
+  <p class="en">In the <span class="ui">Pose</span> tab you can change the avatar's direction, arm pose and expressions.
+    You can assign a shortcut key to each expression (all unassigned by default): press its key button, then the key you want (combinations such as <code>Ctrl+Alt+N</code>, the numeric keypad (told apart from the number row with NumLock on), symbol keys, keys such as Right Ctrl alone (press and release) and mouse side buttons all work); <span class="ui">Esc</span> cancels (Tab cannot be used). <span class="ui">Reset</span> next to it removes the key (saved per avatar).
+    With <span class="ui">Also work when VRCast is in the background</span> (on by default), keys work even while you use OBS or other apps. They also react while you type in other apps, so combinations with Ctrl or Alt are recommended.
+    An expression chosen with a button or key stays locked and is not changed by expression detection; choose it again or press <span class="ui">Back to auto</span> to return.
+    In the <span class="ui">OSC / HTTP</span> tab (between Output and Settings), which lists a command for each expression of the loaded avatar (<span class="ui">Copy</span> copies it) and shows the OSC destination and the HTTP URL under the ports (<span class="ui">Open status in browser</span> checks that it works; in Stream Deck, put the full URL in "Website" with "GET request in background"), turn on <span class="ui">External control (OSC / HTTP)</span> to switch expressions from Stream Deck or OSC apps (this PC only; for example <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code> or OSC <code>/vrcast/expression "Smile"</code>; numbers are 0 = neutral, 1 and up = the expression order).</p>
+  <p class="ko"><span class="ui">포즈·표정</span> 탭에서는 아바타의 방향·팔 내리는 정도·표정을 변경할 수 있습니다.
+    표정마다 단축키를 할당할 수 있습니다 (기본은 모두 미할당). 키 버튼을 누른 뒤 할당할 키를 누르고 (<code>Ctrl+Alt+N</code> 같은 동시 입력, 숫자 키패드 (NumLock 켜짐에서 숫자 키와 구별), 기호 키, 오른쪽 Ctrl 등의 단독 키 (눌렀다 떼기), 마우스 사이드 버튼도 가능), <span class="ui">Esc</span>로 취소합니다 (Tab은 사용할 수 없습니다). 옆의 <span class="ui">초기화</span>로 할당을 해제합니다 (아바타별로 저장).
+    <span class="ui">VRCast가 뒤에 있을 때도 사용</span>(기본 켜짐)이면 OBS 등을 조작하는 중에도 전환할 수 있습니다. 다른 앱에서 입력하는 동안에도 반응하므로 Ctrl이나 Alt와의 조합을 권장합니다.
+    버튼·키로 고른 표정은 고정되어 자동 감지로 바뀌지 않습니다. 같은 표정을 다시 고르거나 <span class="ui">자동 감지로 복귀</span>를 누르면 돌아갑니다.
+    <span class="ui">OSC / HTTP</span> 탭 (출력과 설정 사이)에는 불러온 아바타의 표정별 명령이 나열되며 (<span class="ui">복사</span>로 복사), 포트 아래에 OSC 대상과 HTTP URL이 표시됩니다 (<span class="ui">브라우저에서 상태 열기</span>로 동작 확인. Stream Deck에서는 "웹사이트"의 "백그라운드에서 GET"에 URL 전체를 설정). <span class="ui">외부 조작 (OSC / HTTP)</span>을 켜면 Stream Deck이나 OSC 앱에서 표정을 전환할 수 있습니다 (이 PC에서만. 예: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>, OSC <code>/vrcast/expression "Smile"</code>. 번호는 0 = 무표정, 1 이후 = 표정 순서).</p>
+  <p class="zh-hans">在 <span class="ui">姿势·表情</span> 标签页中可以更改虚拟形象的朝向、手臂姿势和表情。
+    可为每种表情分配快捷键（默认全部未分配）。点击按键按钮后按下要分配的键（也可使用 <code>Ctrl+Alt+N</code> 等组合键、小键盘（NumLock 开启时与数字键区分）、符号键、右 Ctrl 等单独按键（按下后松开）以及鼠标侧键），按 <span class="ui">Esc</span> 取消（不能使用 Tab）。旁边的 <span class="ui">重置</span> 可取消分配（按虚拟形象分别保存）。
+    开启 <span class="ui">VRCast 在后台时也可使用</span>（默认开启）后，操作 OBS 等时也能切换。在其他应用中输入时也会响应，建议与 Ctrl 或 Alt 组合使用。
+    通过按钮或快捷键选择的表情会被固定，不会被自动检测改变。再次选择同一表情或点击 <span class="ui">恢复自动检测</span> 即可恢复。
+    <span class="ui">OSC / HTTP</span> 标签页（输出与设置之间）会列出当前虚拟形象每个表情的命令（点击 <span class="ui">复制</span> 复制），端口下方显示 OSC 目标和 HTTP URL（点击 <span class="ui">在浏览器中打开状态</span> 测试；在 Stream Deck 中将完整 URL 设置到“网站”的“在后台发送 GET 请求”）。开启 <span class="ui">外部操作（OSC / HTTP）</span> 后，可从 Stream Deck 或 OSC 应用切换表情（仅限本机。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。编号 0 = 无表情，1 起 = 表情顺序）。</p>
+  <p class="zh-hant">在 <span class="ui">姿勢·表情</span> 分頁中可以變更虛擬形象的朝向、手臂姿勢和表情。
+    可為每種表情分配快捷鍵（預設全部未分配）。點擊按鍵按鈕後按下要分配的鍵（也可使用 <code>Ctrl+Alt+N</code> 等組合鍵、數字鍵台（NumLock 開啟時與數字鍵區分）、符號鍵、右 Ctrl 等單獨按鍵（按下後放開）以及滑鼠側鍵），按 <span class="ui">Esc</span> 取消（不能使用 Tab）。旁邊的 <span class="ui">重設</span> 可取消分配（依虛擬形象分別儲存）。
+    開啟 <span class="ui">VRCast 在背景時也可使用</span>（預設開啟）後，操作 OBS 等時也能切換。在其他應用程式中輸入時也會回應，建議與 Ctrl 或 Alt 組合使用。
+    透過按鈕或快捷鍵選擇的表情會被固定，不會被自動偵測改變。再次選擇同一表情或點擊 <span class="ui">恢復自動偵測</span> 即可恢復。
+    <span class="ui">OSC / HTTP</span> 分頁（輸出與設定之間）會列出目前虛擬形象每個表情的命令（點擊 <span class="ui">複製</span> 複製），連接埠下方顯示 OSC 目標和 HTTP URL（點擊 <span class="ui">在瀏覽器中開啟狀態</span> 測試；在 Stream Deck 中將完整 URL 設定到「網站」的「在背景傳送 GET 請求」）。開啟 <span class="ui">外部操作（OSC / HTTP）</span> 後，可從 Stream Deck 或 OSC 應用程式切換表情（僅限本機。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。編號 0 = 無表情，1 起 = 表情順序）。</p>
 </section>
 
 <section id="face">
