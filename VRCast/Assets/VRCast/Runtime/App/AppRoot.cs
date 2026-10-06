@@ -32,9 +32,10 @@ namespace VRCast.App
         private RenderingController _rendering;
         private string _initialAvatarPath;
 
-        // カメラの視点を記録する対象のアバターのパスと、最後に記録した視点
+        // カメラの視点・見た目を記録する対象のアバターのパスと、最後に記録した視点・見た目
         private string _cameraAvatarPath;
         private CameraPose _recordedPose;
+        private AvatarLook _recordedLook;
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
         private static void Create()
@@ -139,13 +140,19 @@ namespace VRCast.App
 
             // 視点が変わったときだけ記録する（保存は終了時）
             CameraPose pose = _orbit.Pose;
-            if (pose.SameAs(_recordedPose))
+            if (!pose.SameAs(_recordedPose))
             {
-                return;
+                _recordedPose = pose;
+                _settings.SetAvatarCamera(_cameraAvatarPath, pose);
             }
 
-            _recordedPose = pose;
-            _settings.SetAvatarCamera(_cameraAvatarPath, pose);
+            // ライト・待機ポーズ等も変わったときだけ記録する
+            AvatarLook look = AvatarLook.From(_settings);
+            if (!look.SameAs(_recordedLook))
+            {
+                _recordedLook = look;
+                _settings.SetAvatarLook(_cameraAvatarPath, look);
+            }
         }
 
         private void OnDestroy()
@@ -159,6 +166,14 @@ namespace VRCast.App
 
         private void OnAvatarLoaded(LoadedAvatar avatar)
         {
+            // このアバターで前回使ったライト・待機ポーズ・向きに戻す（待機ポーズは次の PoseController が読む）。
+            // 未記録のアバターは今の設定のまま使い、以降の記録で覚える
+            if (_settings.TryGetAvatarLook(avatar.SourcePath, out AvatarLook look))
+            {
+                look.ApplyTo(_settings);
+                _rendering.ApplyAll();
+            }
+
             // 待機ポーズ・表情・まばたき・リップシンク・トラッキング・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
@@ -205,10 +220,12 @@ namespace VRCast.App
                 _orbit.SetPose(pose);
             }
 
-            // 以降の視点の変化をこのアバターの分として記録する
+            // 以降の視点・見た目の変化をこのアバターの分として記録する（最近使ったアバターの先頭にもなる）
             _cameraAvatarPath = avatar.SourcePath;
             _recordedPose = _orbit.Pose;
             _settings.SetAvatarCamera(_cameraAvatarPath, _recordedPose);
+            _recordedLook = AvatarLook.From(_settings);
+            _settings.SetAvatarLook(_cameraAvatarPath, _recordedLook);
 
             // 次回起動時に自動で読み込めるよう記録（保存は終了時）
             _settings.lastAvatarPath = avatar.SourcePath;

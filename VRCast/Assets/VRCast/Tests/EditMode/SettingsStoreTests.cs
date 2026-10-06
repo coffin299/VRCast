@@ -205,6 +205,88 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void AvatarLook_SaveThenLoad_RoundTripsAndKeepsCamera()
+        {
+            var saved = new AppSettings();
+            var pose = new CameraPose { distance = 2f, fieldOfView = 30f };
+            var look = new AvatarLook
+            {
+                lightIntensity = 2f, lightYaw = 10f, lightPitch = 20f, lightTemperature = 5000f, ambientIntensity = 1.5f,
+                avatarBrightness = 2f, poseArmDown = 0.5f, poseElbowBend = 0.3f, avatarYaw = 15f,
+            };
+            saved.SetAvatarCamera("C:/Avatars/A.vrcaster", pose);
+            saved.SetAvatarLook("C:/Avatars/A.vrcaster", look);
+            saved.SetAvatarCamera("C:/Avatars/A.vrcaster", new CameraPose { distance = 3f, fieldOfView = 30f });
+            _store.Save(saved);
+
+            // 視点を記録し直しても見た目は残り、再読込後も同じ値で取り出せること
+            AppSettings loaded = _store.Load();
+            Assert.That(loaded.TryGetAvatarLook("c:/avatars/a.vrcaster", out AvatarLook result), Is.True);
+            Assert.That(result.SameAs(look), Is.True);
+            Assert.That(loaded.TryGetAvatarCamera("C:/Avatars/A.vrcaster", out CameraPose camera), Is.True);
+            Assert.That(camera.distance, Is.EqualTo(3f));
+        }
+
+        [Test]
+        public void AvatarLook_WithoutCamera_IsNotRecorded()
+        {
+            var settings = new AppSettings();
+
+            // 視点の記録が無いアバター・壊れた値は見た目を記録しないこと
+            settings.SetAvatarLook("C:/Avatars/A.vrcaster", AvatarLook.From(settings));
+            settings.SetAvatarCamera("C:/Avatars/B.vrcaster", new CameraPose { distance = 2f });
+            settings.SetAvatarLook("C:/Avatars/B.vrcaster", new AvatarLook { lightIntensity = float.NaN });
+            Assert.That(settings.TryGetAvatarLook("C:/Avatars/A.vrcaster", out _), Is.False);
+            Assert.That(settings.TryGetAvatarLook("C:/Avatars/B.vrcaster", out _), Is.False);
+        }
+
+        [Test]
+        public void AvatarLook_ApplyTo_ClampsValues()
+        {
+            var settings = new AppSettings();
+
+            // 範囲外の値は書き戻すときに補正されること
+            new AvatarLook { lightIntensity = 100f, avatarBrightness = 0f, poseArmDown = 2f }.ApplyTo(settings);
+            Assert.That(settings.lightIntensity, Is.EqualTo(AppSettings.MaxLightIntensity));
+            Assert.That(settings.avatarBrightness, Is.EqualTo(AppSettings.MinAvatarBrightness));
+            Assert.That(settings.poseArmDown, Is.EqualTo(1f));
+        }
+
+        [Test]
+        public void RecentAvatars_ReturnsNewestFirstUpToLimit()
+        {
+            var settings = new AppSettings();
+            var pose = new CameraPose { distance = 2f };
+
+            // 上限より多く記録し、最初のものを使い直す
+            for (int i = 0; i < AppSettings.MaxRecentAvatars + 2; i++)
+            {
+                settings.SetAvatarCamera($"C:/Avatars/{i}.vrcaster", pose);
+            }
+
+            settings.SetAvatarCamera("C:/Avatars/0.vrcaster", pose);
+
+            // 新しい順に上限件数だけ返り、使い直した 0 が先頭になること
+            var recent = settings.RecentAvatars();
+            Assert.That(recent.Count, Is.EqualTo(AppSettings.MaxRecentAvatars));
+            Assert.That(recent[0], Is.EqualTo("C:/Avatars/0.vrcaster"));
+            Assert.That(recent[1], Is.EqualTo($"C:/Avatars/{AppSettings.MaxRecentAvatars + 1}.vrcaster"));
+        }
+
+        [Test]
+        public void ForgetAvatar_RemovesFromRecentAndForgetsCamera()
+        {
+            var settings = new AppSettings();
+            settings.SetAvatarCamera("C:/Avatars/A.vrcaster", new CameraPose { distance = 2f });
+            settings.SetAvatarCamera("C:/Avatars/B.vrcaster", new CameraPose { distance = 2f });
+
+            // 外したアバターは一覧にも視点の記録にも残らないこと
+            settings.ForgetAvatar("c:/avatars/a.vrcaster");
+            Assert.That(settings.RecentAvatars(), Is.EqualTo(new[] { "C:/Avatars/B.vrcaster" }));
+            Assert.That(settings.TryGetAvatarCamera("C:/Avatars/A.vrcaster", out _), Is.False);
+        }
+
+        [Test]
         public void ResetToDefaults_KeepsAvatarCameras()
         {
             var settings = new AppSettings();

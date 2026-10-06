@@ -16,6 +16,8 @@ Newest first. Each version is written in Japanese, then English.
 - 設定タブに「描画に使う GPU」を追加（自動 / 省電力 / 高パフォーマンス、または GPU を一覧から直接指定。再起動で反映）
 - 書き出しツールに「シーンのブレンドシェイプの値を優先する」を追加（既定 ON。OFF にすると従来どおり FX の初期状態の値を使う）
 - カメラの位置と画角をアバターごとに記憶し、次にそのアバターを開いたとき（再起動後も含む）に戻すように変更
+- アバタータブに「最近使ったアバター」を追加（最大 10 件。クリックで切り替え、× で一覧から外す）
+- ライト・アバターの明るさ・待機ポーズ・体の向きもアバターごとに記憶し、切り替え時に戻すように変更
 
 [English]
 - Fixed MediaPipe tracking often losing your hands while VRCast was in the background (while using another window)
@@ -27,6 +29,8 @@ Newest first. Each version is written in Japanese, then English.
 - Added "GPU for drawing" to the Settings tab (Auto / Power saving / High performance, or pick a GPU from the list; applied after a restart)
 - Added "Keep blend shape values from the scene" to the exporter (on by default; turn it off to use the FX default-state values as before)
 - The camera position and field of view are now remembered for each avatar and restored the next time you open it, including after a restart
+- Added "Recent avatars" to the Avatar tab (up to 10; click to switch, × to remove from the list)
+- Light, avatar brightness, idle pose and body direction are now also remembered for each avatar and restored when you switch
 
 ■ 1.3.0 (2026-10-05)
 

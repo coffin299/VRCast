@@ -148,6 +148,11 @@ namespace VRCast.UI
                 "태양광은 한 방향에서 비추는 빛, 환경광은 아바타 전체를 고르게 밝히는 빛입니다",
                 "阳光从一个方向照射，环境光会均匀照亮整个虚拟形象",
                 "陽光從一個方向照射，環境光會均勻照亮整個虛擬形象"));
+            GuiControls.Hint(Loc.T("Light and avatar brightness are remembered for each avatar.",
+                "ライトとアバターの明るさはアバターごとに記憶されます。",
+                "조명과 아바타 밝기는 아바타마다 기억됩니다.",
+                "灯光和虚拟形象亮度会按虚拟形象分别记住。",
+                "燈光和虛擬形象亮度會依虛擬形象分別記住。"));
 
             // プリセット（太陽光と環境光をまとめて設定）
             GUILayout.BeginHorizontal();

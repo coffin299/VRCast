@@ -38,12 +38,14 @@ namespace VRCast.Core
     }
 
     /// <summary>
-    /// アバター（.vrcaster のパス）ごとのカメラの視点。
+    /// アバター（.vrcaster のパス）ごとの記録。カメラの視点と見た目の設定（hasLook が false なら未記録）。
     /// </summary>
     [Serializable]
-    public class AvatarCameraEntry
+    public class AvatarEntry
     {
         public string avatarPath = string.Empty;
         public CameraPose pose;
+        public bool hasLook;
+        public AvatarLook look;
     }
 }

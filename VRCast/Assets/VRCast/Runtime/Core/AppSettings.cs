@@ -57,8 +57,11 @@ namespace VRCast.Core
         public const float MinUiScale = 0.75f;
         public const float MaxUiScale = 2f;
 
-        // カメラの視点を覚えておくアバターの数の上限（設定ファイルが際限なく大きくならないように）
+        // カメラの視点・見た目を覚えておくアバターの数の上限（設定ファイルが際限なく大きくならないように）
         public const int MaxAvatarCameras = 50;
+
+        // アバタータブに並べる最近使ったアバターの数
+        public const int MaxRecentAvatars = 10;
 
         // テーマごとの背景色の既定値（ライト = 目に優しいベージュ、ダーク = パネルより少し明るい暗い茶系の灰色）
         public static readonly Color LightBackgroundColor = new Color(0.90f, 0.86f, 0.78f, 1f);
@@ -69,8 +72,9 @@ namespace VRCast.Core
         public int windowHeight = 720;
         public string lastAvatarPath = string.Empty;
 
-        // アバターごとのカメラの視点（古い順。上限を超えたら最も長く使っていないものから捨てる）
-        public List<AvatarCameraEntry> avatarCameras = new List<AvatarCameraEntry>();
+        // アバターごとのカメラの視点と見た目（使った順で古いものが先頭。上限を超えたら最も長く使っていないものから捨てる）。
+        // 最近使ったアバターの一覧もここから作る。名前は以前の設定ファイルとの互換のため据え置き
+        public List<AvatarEntry> avatarCameras = new List<AvatarEntry>();
 
         // 操作パネルの表示言語と拡大率
         public UiLanguage uiLanguage = UiLanguage.Auto;
@@ -193,15 +197,83 @@ namespace VRCast.Core
                 return;
             }
 
-            // 既存の記録を外して末尾に追加
+            // 既存の記録（見た目を含む）を末尾へ移し、無ければ新しく作る
+            AvatarEntry entry = TakeAvatarEntry(avatarPath) ?? new AvatarEntry { avatarPath = avatarPath };
+            entry.pose = pose;
+            avatarCameras.Add(entry);
+            TrimAvatarCameras();
+        }
+
+        /// <summary>
+        /// アバターの見た目（ライト・待機ポーズ等）を探す。未記録なら false。
+        /// </summary>
+        public bool TryGetAvatarLook(string avatarPath, out AvatarLook look)
+        {
             int index = FindAvatarCamera(avatarPath);
-            if (index >= 0)
+            bool found = index >= 0 && avatarCameras[index].hasLook;
+            look = found ? avatarCameras[index].look : default;
+            return found;
+        }
+
+        /// <summary>
+        /// アバターの見た目を記録する。カメラの視点を記録済みのアバターだけが対象（先に SetAvatarCamera を呼ぶ）。
+        /// </summary>
+        public void SetAvatarLook(string avatarPath, AvatarLook look)
+        {
+            // 壊れた値は記録しない
+            if (!look.IsFinite)
             {
-                avatarCameras.RemoveAt(index);
+                return;
             }
 
-            avatarCameras.Add(new AvatarCameraEntry { avatarPath = avatarPath, pose = pose });
-            TrimAvatarCameras();
+            // 記録の無いアバターは対象外（視点の無い記録を作らない）
+            AvatarEntry entry = TakeAvatarEntry(avatarPath);
+            if (entry == null)
+            {
+                return;
+            }
+
+            // 最新として末尾へ戻す
+            entry.hasLook = true;
+            entry.look = look;
+            avatarCameras.Add(entry);
+        }
+
+        /// <summary>
+        /// 最近使ったアバターのパスを新しい順に返す（最大 MaxRecentAvatars 件）。
+        /// </summary>
+        public List<string> RecentAvatars()
+        {
+            var paths = new List<string>(MaxRecentAvatars);
+            // 末尾ほど新しいため後ろから取る
+            for (int i = avatarCameras.Count - 1; i >= 0 && paths.Count < MaxRecentAvatars; i--)
+            {
+                paths.Add(avatarCameras[i].avatarPath);
+            }
+
+            return paths;
+        }
+
+        /// <summary>
+        /// アバターの記録（カメラの視点・見た目）を消し、最近使ったアバターの一覧からも外す。
+        /// </summary>
+        public void ForgetAvatar(string avatarPath)
+        {
+            TakeAvatarEntry(avatarPath);
+        }
+
+        private AvatarEntry TakeAvatarEntry(string avatarPath)
+        {
+            // 見つかれば一覧から外して返す（呼び出し側が末尾へ戻す）
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0)
+            {
+                return null;
+            }
+
+            AvatarEntry entry = avatarCameras[index];
+            avatarCameras.RemoveAt(index);
+            return entry;
         }
 
         private void TrimAvatarCameras()
@@ -227,7 +299,7 @@ namespace VRCast.Core
         }
 
         /// <summary>
-        /// 全ての設定を既定値に戻す（ウィンドウサイズ・最後に開いたアバター・アバターごとのカメラの視点は保持）。
+        /// 全ての設定を既定値に戻す（ウィンドウサイズ・最後に開いたアバター・アバターごとの記録は保持）。
         /// 各機能が同じインスタンスを参照しているため、置き換えずに中身を上書きする。
         /// </summary>
         public void ResetToDefaults()
@@ -236,7 +308,7 @@ namespace VRCast.Core
             int width = windowWidth;
             int height = windowHeight;
             string avatarPath = lastAvatarPath;
-            List<AvatarCameraEntry> cameras = avatarCameras;
+            List<AvatarEntry> cameras = avatarCameras;
 
             // 既定値で上書き
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(new AppSettings()), this);
@@ -260,9 +332,14 @@ namespace VRCast.Core
             // JSON に null が入っていた場合に備えて空文字へ正規化
             lastAvatarPath ??= string.Empty;
             // カメラの視点は、パスの無いもの・壊れた値を捨て、上限を超えた古いものも捨てる
-            avatarCameras ??= new List<AvatarCameraEntry>();
+            avatarCameras ??= new List<AvatarEntry>();
             avatarCameras.RemoveAll(entry => entry == null || string.IsNullOrEmpty(entry.avatarPath) || !entry.pose.IsFinite);
             TrimAvatarCameras();
+            // 壊れた見た目は未記録扱いにする（視点は残す）
+            foreach (AvatarEntry entry in avatarCameras)
+            {
+                entry.hasLook &= entry.look.IsFinite;
+            }
 
             // 未知の表示言語は OS 準拠へ
             if (!Enum.IsDefined(typeof(UiLanguage), uiLanguage))

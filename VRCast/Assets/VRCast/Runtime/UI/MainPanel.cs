@@ -103,7 +103,7 @@ namespace VRCast.UI
             _settings = settings;
             _rendering = rendering;
             _virtualCamera = virtualCamera;
-            _avatarSection = new AvatarSection(session, initialPath);
+            _avatarSection = new AvatarSection(session, settings, initialPath);
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
             _animationSection = new AnimationSection(session);
             _faceSection = new FaceSection(session, microphone, settings);
@@ -151,7 +151,7 @@ namespace VRCast.UI
 
         private void ResetAllSettings()
         {
-            // 設定値を既定に戻す（ウィンドウサイズ・最後のアバター・アバターごとのカメラは保持）
+            // 設定値を既定に戻す（ウィンドウサイズ・最後のアバター・アバターごとの記録は保持）
             _settings.ResetToDefaults();
 
             // 設定変更時にしか反映しない機能へ反映し直す（他は毎フレーム設定を読む）
