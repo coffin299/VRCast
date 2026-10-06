@@ -27,6 +27,10 @@ namespace VRCast.Tracking
         // 表情の強さ（0〜1）と、その有無（MediaPipe のみ。OpenSeeFace は常に無し）
         public ExpressionScores Expression;
         public bool HasExpression;
+
+        // ARKit 互換の BlendShape の値（MediaPipePacket.BlendShapeNames 順、0〜1、左右は映像基準）。
+        // パーフェクトシンク用。MediaPipe のみで、無ければ null（書き換えない）
+        public float[] BlendShapes;
     }
 
     /// <summary>

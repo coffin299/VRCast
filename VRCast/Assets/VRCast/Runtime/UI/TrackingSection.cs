@@ -117,7 +117,38 @@ namespace VRCast.UI
                         "팔·손: 보이지 않음 (대기 포즈)", "手臂 / 手：未拍到（待机姿势）", "手臂 / 手：未拍到（待機姿勢）"));
             }
 
+            DrawPerfectSync();
             DrawExpressions();
+        }
+
+        private void DrawPerfectSync()
+        {
+            // パーフェクトシンクの ON/OFF（MediaPipe のみ。対応していないアバターでは何も起きない）
+            _settings.trackingPerfectSync = GUILayout.Toggle(
+                _settings.trackingPerfectSync,
+                Loc.T("Perfect sync", "パーフェクトシンク", "퍼펙트 싱크", "完美同步", "完美同步"));
+
+            // アバター未表示・無効時は状態を出さない
+            var driver = _avatar.Get<FaceTrackingDriver>();
+            if (!_settings.trackingPerfectSync || driver == null)
+            {
+                return;
+            }
+
+            // 対応状況（見つかった ARKit 名の数）
+            int count = driver.PerfectSyncShapeCount;
+            int total = MediaPipePacket.BlendShapeNames.Length;
+            GuiControls.Hint(driver.SupportsPerfectSync
+                ? Loc.T($"Supported ({count}/{total} ARKit blend shapes)",
+                    $"対応アバター（ARKit 名の BlendShape {count}/{total} 個）",
+                    $"지원 아바타 (ARKit 이름의 BlendShape {count}/{total}개)",
+                    $"支持的虚拟形象（ARKit 名称的 BlendShape {count}/{total} 个）",
+                    $"支援的虛擬形象（ARKit 名稱的 BlendShape {count}/{total} 個）")
+                : Loc.T($"This avatar does not support it ({count}/{total} ARKit blend shapes, needs {PerfectSyncBlendShapes.MinMatchedShapes}+)",
+                    $"このアバターは非対応です（ARKit 名の BlendShape {count}/{total} 個、{PerfectSyncBlendShapes.MinMatchedShapes} 個以上で対応）",
+                    $"이 아바타는 지원하지 않습니다 (ARKit 이름의 BlendShape {count}/{total}개, {PerfectSyncBlendShapes.MinMatchedShapes}개 이상 필요)",
+                    $"此虚拟形象不支持（ARKit 名称的 BlendShape {count}/{total} 个，需要 {PerfectSyncBlendShapes.MinMatchedShapes} 个以上）",
+                    $"此虛擬形象不支援（ARKit 名稱的 BlendShape {count}/{total} 個，需要 {PerfectSyncBlendShapes.MinMatchedShapes} 個以上）"));
         }
 
         private void DrawExpressions()
@@ -131,6 +162,14 @@ namespace VRCast.UI
             if (!_settings.trackingExpressions)
             {
                 return;
+            }
+
+            // パーフェクトシンク中は表情プリセットへ切り替えない（顔の動きで表情が出るため）
+            var face = _avatar.Get<FaceTrackingDriver>();
+            if (face != null && face.IsPerfectSyncActive)
+            {
+                GuiControls.Hint(Loc.T("Paused during perfect sync", "パーフェクトシンク中は止まります",
+                    "퍼펙트 싱크 중에는 멈춥니다", "完美同步期间暂停", "完美同步期間暫停"));
             }
 
             // 表情データが無いアバターは割り当てできない

@@ -106,6 +106,9 @@ namespace VRCast.Core
         // 仮想カメラ（VRCast Camera）への出力
         public bool virtualCameraEnabled;
 
+        // Spout2 への出力（OBS 等へ GPU 上で映像を渡す）
+        public bool spoutEnabled;
+
         // 太陽光（ディレクショナルライト）。向きはカメラ正面からの角度（0 = 正面から当たる）
         public float lightIntensity = 1.2f;
         public float lightYaw = -30f;
@@ -152,6 +155,9 @@ namespace VRCast.Core
 
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
+
+        // パーフェクトシンク（MediaPipe のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
+        public bool trackingPerfectSync = true;
 
         // 表情反映（MediaPipe のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;

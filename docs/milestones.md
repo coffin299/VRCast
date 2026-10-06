@@ -280,6 +280,19 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 確認結果: 同梱 MediaPipe トラッカー（`build.bat` で exe 化）の自動起動・顔・腕・手の追従を確認（良好）。
 視線（左右・上下）・左右別ウインク・両目を閉じたときの視線の保持を、Mirror ON/OFF の両方で確認。
 
+### 追加: パーフェクトシンク（1.5.0）
+
+- `PerfectSyncBlendShapes`: MediaPipe が送る ARKit 互換 51 種の値を、アバターの同名 BlendShape（全メッシュ）へ直接書く。
+  名前は正規化して照合し（大文字小文字・区切り記号・FBX の接頭辞を無視、末尾 L / R も可）、20 種類以上あるアバターだけを対象にする。
+  左右は映像基準のため Mirror OFF で入れ替える。eyeBlink は閉じ切るよう 0.15〜0.65 を 0〜1 へ広げ、全体を軽く平滑化する
+- `FaceTrackingDriver`: パーフェクトシンク中は表情反映を止め、ARKit 名で目・口を動かせるなら通常のまばたき・カメラの口の開きを重ねない
+- UI: Tracking タブの Perfect sync（既定 ON）と、見つかった ARKit 名の件数
+
+確認項目:
+
+- 対応アバターで眉・頬・口の形（笑顔・口すぼめ・頬ふくらまし等）が追従すること、片目を閉じたとき正しい側が閉じること（Mirror ON/OFF の両方）
+- 非対応アバターでは従来どおり（まばたき・口・表情プリセット）に動くこと、OFF にすると元の表情へ戻ること
+
 ## Milestone 6 — OSC
 
 OSC 受信・送信、Parameter Mapping（Milestone 3 から移した Animator Parameter を含む）。OSC 無効でも基本表示は動作すること。
@@ -337,6 +350,19 @@ Descriptor（Milestone 3）・PhysBone（Milestone 4）は対応済みのため�
 - アバターが映り、操作パネルが映らないこと。ウィンドウサイズを変えても映ること（拡大縮小）
 - OBS で映像フォーマットを ARGB にすると透過背景のまま取り込めること
 - OFF・アプリ終了で受け取る側の映像が停止表示になること、Uninstall driver で一覧から消えること
+
+### 8b. Spout2（1.5.0）
+
+- 方式: [KlakSpout](https://github.com/keijiro/KlakSpout)（Unlicense、Spout SDK は BSD 2-Clause）のネイティブプラグイン `KlakSpout.dll` だけを
+  `Tools/Spout/fetch.ps1` でコミット固定で取得し、`Plugins/KlakSpout/x86_64/` に置く（C# のパッケージ・シェーダーは使わない）
+- Runtime `SpoutOutput`: メインカメラの `OnRenderImage` で描画結果を ARGB32 のテクスチャへ写し、送信元「VRCast」として共有。
+  無効時はコンポーネントを止める。Direct3D 11 / 12 以外・DLL 無しは状態表示のみ
+- UI: Output タブの Spout2 カード（ON/OFF、状態）
+
+確認項目:
+
+- OBS の Spout2 Capture で「VRCast」を選ぶと映り、背景が透過のまま重なること。操作パネルが映らないこと
+- ウィンドウの大きさを変えても送り続けること（送信元の作り直し）、OFF で OBS 側の一覧から消えること
 
 ## 操作パネルの刷新
 

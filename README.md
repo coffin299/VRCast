@@ -12,7 +12,7 @@ MyAvatar.vrcaster
         ↓
 VRCast.exe (Runtime)
         ↓
-OBS (Window Capture / Game Capture) / 仮想カメラ (Discord / Zoom など)
+OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom など)
 ```
 
 利用者は Unity Editor・VCC・VRChat 用プロジェクトを常時起動しておく必要がない設計とする。
@@ -45,10 +45,12 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 視線（目ボーン）・左右別ウインク | 済 |
 | MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 済 |
 | 表情反映（MediaPipe のみ。笑顔・驚き・怒り・悲しみ → 表情プリセット） | 済 |
+| パーフェクトシンク（MediaPipe のみ。ARKit 名の BlendShape を直接動かす） | 済 |
 | 表示言語（英語 / 日本語 / 韓国語 / 中国語 簡体字・繁体字）・クレジットタブ | 済 |
 | デバッグログタブ（重要度・カテゴリ・文字列の絞り込み、環境の要約、コピー） | 済 |
 | Constraint（VRC / Unity 標準の Position・Rotation・Scale・Parent・Aim・LookAt） | 済 |
 | 仮想カメラ出力（VRCast Camera、Discord / Zoom 等） | 済 |
+| Spout2 出力（OBS へ GPU 上で共有、透過のまま） | 済 |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
 
@@ -227,6 +229,12 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
   - **Expression threshold**（表情のしきい値、0.1〜0.8、既定 0.3）: 表情の強さがこの値を超えると切り替える（下げると弱い表情でも反応する）。Raw view 中は各表情の強さが同じ目盛りの数値で出るので、それを見て合わせる。
   - ちらつき防止のため、0.3 秒続いた表情だけに切り替え、抜けるときは入るときより低いしきい値を使う。口を大きく開けている間（発話中）は笑顔を出にくくする。
   - 判定結果が変わったときだけ切り替えるので、数字キーなどで手動で選んだ表情は次の変化まで残る。OFF にする・トラッキングが途絶すると、自動で当てた表情だけニュートラルに戻る。
+  - パーフェクトシンク中は止まる（顔の動きそのもので表情が出るため）。
+- **Perfect sync**（パーフェクトシンク、MediaPipe のみ、既定 ON）: ARKit 名（`eyeBlinkLeft` / `jawOpen` / `mouthSmileLeft` など 51 種）の BlendShape を
+  持つアバターでは、トラッカーが送る値をそのまま書き込み、眉・頬・口の形まで顔の動きに追従させる。
+  - 名前は大文字小文字・区切り記号・FBX の接頭辞（`blendShape1.` 等）を無視し、`eyeBlink_L` のような L / R 表記も受け付ける。同名の BlendShape が顔・歯・舌などに分かれていれば全部動かす。
+  - 20 種類以上見つかったアバターだけを対象にする（まばたき用の `eyeBlinkLeft` / `Right` だけを持つアバターは従来どおり）。対応状況はトグルの下に件数で出る。
+  - まばたき・口の BlendShape も ARKit 名で動かせる場合、通常のまばたき・カメラによる口の開きは重ねない（マイクの口パクはそのまま）。左右は Mirror に従う。
 
 **Display** タブで、カメラの画角（Field of view）・リセット、背景（透過 / 単色）、ウィンドウ解像度（1280x720 / 1920x1080 / 縦長 720x1280 / 1080x1920）、ライトを変更できる。
 
@@ -269,6 +277,16 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 - DirectShow 方式の仮想カメラ（[UnityCapture](https://github.com/schellingb/UnityCapture)）のため、DirectShow のカメラを
   一覧に出すアプリで使える。他のアプリが同じ UnityCapture を登録している場合は、後から登録した方の名前・場所になる。
 
+### 5. Spout2 で OBS に取り込む
+
+1. OBS に [Spout2 プラグイン（obs-spout2-plugin）](https://github.com/Off-World-Live/obs-spout2-plugin) を入れる。
+2. **Output** タブの **Spout2** で **Output (VRCast)** を ON にする。
+3. OBS で **Spout2 Capture** ソースを追加し、送信元に **VRCast** を選ぶ。
+
+- GPU 上で映像を共有するため、ゲームキャプチャや仮想カメラより軽く、透過（アルファ）もそのまま渡る。操作パネルは映らない。
+- 解像度は VRCast のウィンドウの描画サイズのまま。Direct3D 11 / 12 が必要（既定の設定のままでよい）。
+- 送信は [KlakSpout](https://github.com/keijiro/KlakSpout)（Unlicense）のネイティブプラグインを使う。
+
 ## リポジトリ構成
 
 ```text
@@ -287,6 +305,7 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 ├── Tools/
 │   ├── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
 │   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (一括 release.bat / package.bat / unitypackage.bat、同梱 README.txt)
+│   ├── Spout/                    Spout2 送信プラグインの取得スクリプト (fetch.ps1)
 │   └── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
@@ -353,6 +372,17 @@ powershell -ExecutionPolicy Bypass -File .\Tools\UnityCapture\fetch.ps1
   送信プラグインは `VRCast/Assets/Plugins/UnityCapture/x86_64/` に置かれる（取得元のコミットは固定）。
 - 見つからない場合もビルドは続行し、警告ログを出す（仮想カメラは使えない）。
 
+### Spout2（KlakSpout）の同梱
+
+Spout2 の送信プラグインもリポジトリに含めない（`.gitignore` 済み）。ビルド前に一度、リポジトリ直下から実行する:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Tools\Spout\fetch.ps1
+```
+
+- `KlakSpout.dll`（Spout SDK を含む）とライセンス表記は `VRCast/Assets/Plugins/KlakSpout/` に置かれる（取得元のコミットは固定）。
+- 見つからない場合もビルドは続行し、警告ログを出す（Spout2 出力は使えない）。
+
 ### OpenSeeFace の同梱（任意）
 
 代替の入力元 OpenSeeFace はリポジトリに含めない（サイズが大きいため `.gitignore` 済み）。使う場合はビルド前に
@@ -400,8 +430,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - 配布 zip を公開したら、`webpage` ブランチの `version.json` の `version`（と必要なら `url`）を新しいバージョンにして公開する。
   アプリは起動時にこれを読んで更新を通知する（先に更新すると、まだダウンロードできないバージョンを通知してしまう）。
   Unity が出力する配布不要のフォルダ（`*_BurstDebugInformation_DoNotShip` 等）は除く。
-- `VRCast.exe` が無ければ中止。同梱トラッカーや仮想カメラのドライバーが無い場合は警告を出して続行する
-  （仮想カメラ入りで配布するなら `Tools\UnityCapture\fetch.ps1` の後にビルドし直す）。
+- `VRCast.exe` が無ければ中止。同梱トラッカー・仮想カメラのドライバー・Spout2 のプラグインが無い場合は警告を出して続行する
+  （仮想カメラ・Spout2 入りで配布するなら `Tools\UnityCapture\fetch.ps1`・`Tools\Spout\fetch.ps1` の後にビルドし直す）。
 - 作業フォルダは `%LOCALAPPDATA%\VRCast\package-build` に作り、完了後に削除する。
 
 ## 設定・キャッシュ

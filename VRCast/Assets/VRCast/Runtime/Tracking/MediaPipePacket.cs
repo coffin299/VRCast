@@ -224,6 +224,9 @@ namespace VRCast.Tracking
                 Sad = Mathf.Clamp01(Average(scores, FrownShapes) + Mathf.Max(0f, browInner - browOuter)),
             };
             face.HasExpression = true;
+
+            // パーフェクトシンク用に生の値も渡す（受信ごとに新しい配列のため複製しない）
+            face.BlendShapes = scores;
             return true;
         }
 
