@@ -51,6 +51,7 @@
   <a href="#load"><span class="ja">2. 読み込み</span><span class="en">2. Load</span><span class="ko">2. 불러오기</span><span class="zh-hans">2. 加载</span><span class="zh-hant">2. 載入</span></a>
   <a href="#obs"><span class="ja">3. OBS に映す</span><span class="en">3. Show in OBS</span><span class="ko">3. OBS에 표시</span><span class="zh-hans">3. 在 OBS 中显示</span><span class="zh-hant">3. 在 OBS 中顯示</span></a>
   <a href="#vcam"><span class="ja">仮想カメラ</span><span class="en">Virtual camera</span><span class="ko">가상 카메라</span><span class="zh-hans">虚拟摄像头</span><span class="zh-hant">虛擬攝影機</span></a>
+  <a href="#spout"><span class="ja">Spout2</span><span class="en">Spout2</span><span class="ko">Spout2</span><span class="zh-hans">Spout2</span><span class="zh-hant">Spout2</span></a>
   <a href="#look"><span class="ja">見た目・ライト</span><span class="en">Look &amp; lighting</span><span class="ko">외형·조명</span><span class="zh-hans">外观与灯光</span><span class="zh-hant">外觀與燈光</span></a>
   <a href="#face"><span class="ja">口パク・まばたき</span><span class="en">Lip sync &amp; blink</span><span class="ko">립싱크·눈 깜빡임</span><span class="zh-hans">口型同步与眨眼</span><span class="zh-hant">口型同步與眨眼</span></a>
   <a href="#tracking"><span class="ja">トラッキング</span><span class="en">Tracking</span><span class="ko">트래킹</span><span class="zh-hans">追踪</span><span class="zh-hant">追蹤</span></a>
@@ -208,6 +209,16 @@
         <span class="ko">마지막으로 불러온 아바타는 다음 실행 시 자동으로 불러옵니다.</span>
         <span class="zh-hans">上次加载的虚拟形象会在下次启动时自动加载。</span>
         <span class="zh-hant">上次載入的虛擬形象會在下次啟動時自動載入。</span></li>
+    <li><span class="ja"><span class="ui">アバター</span> タブの <span class="ui">最近使ったアバター</span> に直前に使ったアバターが最大 10 件並び、クリックで切り替えられます（<span class="ui">×</span> で一覧から外します）。
+          カメラ・ライト・アバターの明るさ・待機ポーズ・体の向きはアバターごとに記憶され、切り替えると戻ります。</span>
+        <span class="en">Up to 10 recently used avatars are listed under <span class="ui">Recent avatars</span> in the <span class="ui">Avatar</span> tab; click one to switch (<span class="ui">×</span> removes it from the list).
+          Camera, light, avatar brightness, idle pose and body direction are remembered for each avatar and restored when you switch.</span>
+        <span class="ko"><span class="ui">아바타</span> 탭의 <span class="ui">최근 사용한 아바타</span>에 최근 사용한 아바타가 최대 10개 표시되며, 클릭하여 전환할 수 있습니다 (<span class="ui">×</span>로 목록에서 제거).
+          카메라·조명·아바타 밝기·대기 포즈·몸 방향은 아바타마다 기억되어 전환하면 복원됩니다.</span>
+        <span class="zh-hans"><span class="ui">虚拟形象</span> 标签页的 <span class="ui">最近使用的虚拟形象</span> 中最多列出 10 个最近使用的虚拟形象，点击即可切换（点击 <span class="ui">×</span> 从列表移除）。
+          相机、灯光、虚拟形象亮度、待机姿势和身体朝向会按虚拟形象分别记住，切换时恢复。</span>
+        <span class="zh-hant"><span class="ui">虛擬形象</span> 分頁的 <span class="ui">最近使用的虛擬形象</span> 中最多列出 10 個最近使用的虛擬形象，點擊即可切換（點擊 <span class="ui">×</span> 從清單移除）。
+          相機、燈光、虛擬形象亮度、待機姿勢和身體朝向會依虛擬形象分別記住，切換時恢復。</span></li>
   </ul>
   <p class="note warn ja"><code>.vrcaster</code> 以外のファイル（画像や unitypackage など）は読み込めません。エラーが表示された場合は書き出し直してください。</p>
   <p class="note warn en">Only <code>.vrcaster</code> files can be loaded (not images, unitypackages, etc.). If you see an error, export the avatar again.</p>
@@ -288,6 +299,32 @@
     移動或刪除 VRCast 資料夾前，請先點擊 <span class="ui">解除安裝驅動程式</span>。</p>
 </section>
 
+<section id="spout">
+  <h2><span class="ja">Spout2（OBS へ軽く・透過のまま）</span><span class="en">Spout2 (light, transparent output to OBS)</span><span class="ko">Spout2 (OBS로 가볍게·투명 그대로)</span><span class="zh-hans">Spout2（轻量、保留透明地输出到 OBS）</span><span class="zh-hant">Spout2（輕量、保留透明地輸出到 OBS）</span></h2>
+  <ol class="steps">
+    <li><span class="ja">OBS に <a href="https://github.com/Off-World-Live/obs-spout2-plugin">Spout2 プラグイン</a> を入れます。</span>
+        <span class="en">Install the <a href="https://github.com/Off-World-Live/obs-spout2-plugin">Spout2 plugin</a> for OBS.</span>
+        <span class="ko">OBS에 <a href="https://github.com/Off-World-Live/obs-spout2-plugin">Spout2 플러그인</a>을 설치합니다.</span>
+        <span class="zh-hans">为 OBS 安装 <a href="https://github.com/Off-World-Live/obs-spout2-plugin">Spout2 插件</a>。</span>
+        <span class="zh-hant">為 OBS 安裝 <a href="https://github.com/Off-World-Live/obs-spout2-plugin">Spout2 外掛</a>。</span></li>
+    <li><span class="ja"><span class="ui">出力</span> タブの <span class="ui">Spout2</span> で <span class="ui">出力する (VRCast)</span> を ON にします。</span>
+        <span class="en">In the <span class="ui">Output</span> tab, turn on <span class="ui">Output (VRCast)</span> under <span class="ui">Spout2</span>.</span>
+        <span class="ko"><span class="ui">출력</span> 탭의 <span class="ui">Spout2</span>에서 <span class="ui">출력하기 (VRCast)</span>를 켭니다.</span>
+        <span class="zh-hans">在 <span class="ui">输出</span> 标签页的 <span class="ui">Spout2</span> 中打开 <span class="ui">输出 (VRCast)</span>。</span>
+        <span class="zh-hant">在 <span class="ui">輸出</span> 分頁的 <span class="ui">Spout2</span> 中開啟 <span class="ui">輸出 (VRCast)</span>。</span></li>
+    <li><span class="ja">OBS で <span class="ui">Spout2 Capture</span> ソースを追加し、送信元に <span class="ui">VRCast</span> を選びます。</span>
+        <span class="en">In OBS, add a <span class="ui">Spout2 Capture</span> source and choose <span class="ui">VRCast</span> as the sender.</span>
+        <span class="ko">OBS에서 <span class="ui">Spout2 Capture</span> 소스를 추가하고 송신원으로 <span class="ui">VRCast</span>를 선택합니다.</span>
+        <span class="zh-hans">在 OBS 中添加 <span class="ui">Spout2 Capture</span> 来源，并选择 <span class="ui">VRCast</span> 作为发送端。</span>
+        <span class="zh-hant">在 OBS 中新增 <span class="ui">Spout2 Capture</span> 來源，並選擇 <span class="ui">VRCast</span> 作為傳送端。</span></li>
+  </ol>
+  <p class="note ja">GPU 上で映像を渡すので、ゲームキャプチャや仮想カメラより軽く、背景の透過もそのまま届きます。操作パネルは映りません。解像度は VRCast のウィンドウの大きさです。</p>
+  <p class="note en">The image is shared on the GPU, so it is lighter than Game Capture or the virtual camera, and the transparent background comes through as is. The control panel is not sent. The resolution follows the VRCast window size.</p>
+  <p class="note ko">GPU에서 영상을 전달하므로 게임 캡처나 가상 카메라보다 가볍고, 배경 투명도 그대로 전달됩니다. 조작 패널은 표시되지 않습니다. 해상도는 VRCast 창 크기입니다.</p>
+  <p class="note zh-hans">画面在 GPU 上传递，因此比游戏捕获或虚拟摄像头更轻，透明背景也会原样传递。操作面板不会输出。分辨率与 VRCast 窗口大小相同。</p>
+  <p class="note zh-hant">畫面在 GPU 上傳遞，因此比遊戲擷取或虛擬攝影機更輕，透明背景也會原樣傳遞。操作面板不會輸出。解析度與 VRCast 視窗大小相同。</p>
+</section>
+
 <section id="look">
   <h2><span class="ja">見た目・ライト（表示タブ）</span><span class="en">Look &amp; lighting (Display tab)</span><span class="ko">외형·조명 (표시 탭)</span><span class="zh-hans">外观与灯光（显示标签页）</span><span class="zh-hant">外觀與燈光（顯示分頁）</span></h2>
   <table>
@@ -314,19 +351,19 @@
     <tr><td><span class="ja">ライト</span><span class="en">Light</span><span class="ko">조명</span><span class="zh-hans">灯光</span><span class="zh-hant">燈光</span></td>
         <td><span class="ja"><span class="ui">環境光</span> はアバター全体を均一に明るく、<span class="ui">太陽光</span> は一方向から照らします。
             暗いときは <span class="ui">晴れ</span> プリセットを押すか環境光を上げてください。<span class="ui">太陽光の色</span> は低いほど暖色。
-            <span class="ui">向き</span> 0 で正面から当たります。ライトで明るくならないときは <span class="ui">アバターの明るさ</span> を上げます。</span>
+            <span class="ui">向き</span> 0 で正面から当たります。ライトで明るくならないときは <span class="ui">アバターの明るさ</span> を上げます。ライトとアバターの明るさはアバターごとに記憶されます。</span>
             <span class="en"><span class="ui">Ambient</span> lights the whole avatar evenly; <span class="ui">Sunlight</span> shines from one direction.
             If the avatar looks dark, press the <span class="ui">Sunny</span> preset or raise Ambient. Lower <span class="ui">Sun color</span> is warmer.
-            <span class="ui">Direction</span> 0 lights the avatar from the front. If lights do not help, raise <span class="ui">Avatar brightness</span>.</span>
+            <span class="ui">Direction</span> 0 lights the avatar from the front. If lights do not help, raise <span class="ui">Avatar brightness</span>. Light and avatar brightness are remembered for each avatar.</span>
             <span class="ko"><span class="ui">환경광</span>은 아바타 전체를 고르게 밝히고, <span class="ui">태양광</span>은 한 방향에서 비춥니다.
             어두울 때는 <span class="ui">맑음</span> 프리셋을 누르거나 환경광을 올리세요. <span class="ui">태양광 색</span>은 낮을수록 따뜻한 색입니다.
-            <span class="ui">방향</span> 0이면 정면에서 비춥니다. 조명으로 밝아지지 않으면 <span class="ui">아바타 밝기</span>를 올립니다.</span>
+            <span class="ui">방향</span> 0이면 정면에서 비춥니다. 조명으로 밝아지지 않으면 <span class="ui">아바타 밝기</span>를 올립니다. 조명과 아바타 밝기는 아바타마다 기억됩니다.</span>
             <span class="zh-hans"><span class="ui">环境光</span> 会均匀照亮整个虚拟形象，<span class="ui">阳光</span> 从一个方向照射。
             画面偏暗时，请点击 <span class="ui">晴天</span> 预设或调高环境光。<span class="ui">阳光颜色</span> 越低越偏暖色。
-            <span class="ui">方向</span> 为 0 时从正面照射。灯光无法变亮时，请调高 <span class="ui">虚拟形象亮度</span>。</span>
+            <span class="ui">方向</span> 为 0 时从正面照射。灯光无法变亮时，请调高 <span class="ui">虚拟形象亮度</span>。灯光和虚拟形象亮度会按虚拟形象分别记住。</span>
             <span class="zh-hant"><span class="ui">環境光</span> 會均勻照亮整個虛擬形象，<span class="ui">陽光</span> 從一個方向照射。
             畫面偏暗時，請點擊 <span class="ui">晴天</span> 預設或調高環境光。<span class="ui">陽光顏色</span> 越低越偏暖色。
-            <span class="ui">方向</span> 為 0 時從正面照射。燈光無法變亮時，請調高 <span class="ui">虛擬形象亮度</span>。</span></td></tr>
+            <span class="ui">方向</span> 為 0 時從正面照射。燈光無法變亮時，請調高 <span class="ui">虛擬形象亮度</span>。燈光和虛擬形象亮度會依虛擬形象分別記住。</span></td></tr>
   </table>
   <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情（数字キー 1〜9、0 でニュートラル）を変更できます。</p>
   <p class="en">In the <span class="ui">Pose</span> tab you can change the avatar's direction, arm pose and expressions (number keys 1-9, 0 for neutral).</p>
@@ -384,6 +421,16 @@
         可用 <span class="ui">表情阈值</span> 调整反应程度（越低越容易反应，可参考 <span class="ui">原始数据显示</span> 中的表情数值），并为每种表情选择要使用的表情（<span class="ui">自动</span> 会根据表情名称推测）。</span>
         <span class="zh-hant">使用 MediaPipe 時，開啟 <span class="ui">反映表情</span>（預設開啟）後，會偵測笑臉、驚訝、生氣、悲傷並切換虛擬形象的表情。
         可用 <span class="ui">表情閾值</span> 調整反應程度（越低越容易反應，可參考 <span class="ui">原始資料顯示</span> 中的表情數值），並為每種表情選擇要使用的表情（<span class="ui">自動</span> 會依表情名稱推測）。</span></li>
+    <li><span class="ja">MediaPipe では <span class="ui">パーフェクトシンク</span>（既定は ON）にも対応しています。ARKit 名の BlendShape（<code>eyeBlinkLeft</code>・<code>jawOpen</code>・<code>mouthSmileLeft</code> など）を持つアバターなら、眉・頬・口の形まで顔の動きどおりに動きます。
+        <span class="ui">有効にする条件</span> で <span class="ui">20 種類以上</span>（既定）か <span class="ui">1 種類でも</span> を選べ、対応しているかはその下に件数で表示されます。パーフェクトシンク中は <span class="ui">表情を反映</span> の自動切り替えは止まります（20 種類未満で動かしているときは併用します）。</span>
+        <span class="en">With MediaPipe, <span class="ui">Perfect sync</span> (on by default) is also supported. If the avatar has ARKit-named blend shapes (<code>eyeBlinkLeft</code>, <code>jawOpen</code>, <code>mouthSmileLeft</code>, etc.), brows, cheeks and mouth shapes follow your face directly.
+        Under <span class="ui">Enable when</span>, choose <span class="ui">20+ shapes</span> (default) or <span class="ui">Any shape</span>; the number found is shown below it. While perfect sync is active, the automatic switching of <span class="ui">Facial expressions</span> pauses (it stays on when fewer than 20 shapes are driven).</span>
+        <span class="ko">MediaPipe에서는 <span class="ui">퍼펙트 싱크</span>(기본은 켜짐)도 지원합니다. ARKit 이름의 BlendShape(<code>eyeBlinkLeft</code>·<code>jawOpen</code>·<code>mouthSmileLeft</code> 등)가 있는 아바타라면 눈썹·볼·입 모양까지 얼굴 움직임대로 움직입니다.
+        <span class="ui">활성화 조건</span>에서 <span class="ui">20종 이상</span>(기본) 또는 <span class="ui">1종이라도</span>를 선택할 수 있으며, 지원 여부는 그 아래에 개수로 표시됩니다. 퍼펙트 싱크 중에는 <span class="ui">표정 반영</span>의 자동 전환이 멈춥니다(20종 미만으로 움직일 때는 함께 사용합니다).</span>
+        <span class="zh-hans">使用 MediaPipe 时还支持 <span class="ui">完美同步</span>（默认开启）。如果虚拟形象带有 ARKit 名称的 BlendShape（<code>eyeBlinkLeft</code>、<code>jawOpen</code>、<code>mouthSmileLeft</code> 等），眉毛、脸颊和嘴形都会跟随面部动作。
+        可在 <span class="ui">启用条件</span> 中选择 <span class="ui">20 种以上</span>（默认）或 <span class="ui">有 1 种即可</span>，下方会显示找到的数量。完美同步期间，<span class="ui">反映表情</span> 的自动切换会暂停（少于 20 种时会同时使用）。</span>
+        <span class="zh-hant">使用 MediaPipe 時還支援 <span class="ui">完美同步</span>（預設開啟）。如果虛擬形象帶有 ARKit 名稱的 BlendShape（<code>eyeBlinkLeft</code>、<code>jawOpen</code>、<code>mouthSmileLeft</code> 等），眉毛、臉頰和嘴形都會跟隨臉部動作。
+        可在 <span class="ui">啟用條件</span> 中選擇 <span class="ui">20 種以上</span>（預設）或 <span class="ui">有 1 種即可</span>，下方會顯示找到的數量。完美同步期間，<span class="ui">反映表情</span> 的自動切換會暫停（少於 20 種時會同時使用）。</span></li>
     <li><span class="ja">カメラは <span class="ui">&lt;</span> <span class="ui">&gt;</span> で選びます。動かないときは <span class="ui">トラッカーを再起動</span>。</span>
         <span class="en">Choose the camera with <span class="ui">&lt;</span> <span class="ui">&gt;</span>. If nothing moves, press <span class="ui">Restart tracker</span>.</span>
         <span class="ko">카메라는 <span class="ui">&lt;</span> <span class="ui">&gt;</span>로 선택합니다. 움직이지 않으면 <span class="ui">트래커 다시 시작</span>.</span>
@@ -440,11 +487,11 @@
         <span class="ko"><span class="ui">프로세스 우선순위</span> (기본은 「보통」): VRCast 본체와 내장 트래커의 우선순위를 함께 바꿉니다 (바로 적용). 게임 중에 트래킹이 끊기면 올려 주세요. 「높음」으로 하면 다른 앱이 느려질 수 있습니다.</span>
         <span class="zh-hans"><span class="ui">进程优先级</span>（默认“正常”）：同时更改 VRCast 本体和内置追踪器的优先级（立即生效）。游戏时追踪卡顿可调高。设为“高”可能使其他应用变慢。</span>
         <span class="zh-hant"><span class="ui">處理程序優先順序</span>（預設「正常」）：同時變更 VRCast 本體和內建追蹤器的優先順序（立即生效）。遊戲時追蹤卡頓可調高。設為「高」可能使其他應用程式變慢。</span></li>
-    <li><span class="ja"><span class="ui">描画に使う GPU</span>（既定は「自動」）: 自動 / 省電力 / 高パフォーマンス、または GPU を一覧から直接選べます。再起動すると反映されます（<span class="ui">今すぐ再起動</span> ボタン）。OBS のキャプチャや仮想カメラを使うときは、OBS と同じ GPU にすると最も軽くなります。同梱トラッカーは CPU で動くので、この設定は関係しません。</span>
-        <span class="en"><span class="ui">GPU for drawing</span> (Auto by default): choose Auto / Power saving / High performance, or pick a GPU from the list. It applies after a restart (<span class="ui">Restart now</span> button). For OBS capture or the virtual camera, using the same GPU as OBS is lightest. The bundled trackers run on the CPU and are not affected.</span>
-        <span class="ko"><span class="ui">렌더링에 사용할 GPU</span> (기본은 「자동」): 자동 / 절전 / 고성능을 고르거나 목록에서 GPU를 직접 고를 수 있습니다. 다시 시작하면 적용됩니다 (<span class="ui">지금 다시 시작</span> 버튼). OBS 캡처나 가상 카메라를 쓸 때는 OBS와 같은 GPU가 가장 가볍습니다. 내장 트래커는 CPU로 동작하므로 이 설정과 관계없습니다.</span>
-        <span class="zh-hans"><span class="ui">渲染使用的 GPU</span>（默认“自动”）：可选择自动 / 节能 / 高性能，或从列表中直接选择 GPU。重启后生效（<span class="ui">立即重启</span> 按钮）。使用 OBS 捕获或虚拟摄像头时，与 OBS 使用同一 GPU 最省资源。内置追踪器在 CPU 上运行，不受此设置影响。</span>
-        <span class="zh-hant"><span class="ui">繪製使用的 GPU</span>（預設「自動」）：可選擇自動 / 省電 / 高效能，或從清單中直接選擇 GPU。重新啟動後生效（<span class="ui">立即重新啟動</span> 按鈕）。使用 OBS 擷取或虛擬攝影機時，與 OBS 使用同一 GPU 最省資源。內建追蹤器在 CPU 上執行，不受此設定影響。</span></li>
+    <li><span class="ja"><span class="ui">描画に使う GPU</span>（既定は「自動」）: 自動 / 省電力 / 高パフォーマンス、または GPU を一覧から直接選べます。VRCast を起動し直すと反映されます（<span class="ui">VRCast を今すぐ起動し直す</span> ボタン。PC の再起動は不要です）。OBS のキャプチャや仮想カメラを使うときは、OBS と同じ GPU にすると最も軽くなります。同梱トラッカーは CPU で動くので、この設定は関係しません。</span>
+        <span class="en"><span class="ui">GPU for drawing</span> (Auto by default): choose Auto / Power saving / High performance, or pick a GPU from the list. It applies after restarting VRCast (<span class="ui">Restart VRCast now</span> button; no need to restart your PC). For OBS capture or the virtual camera, using the same GPU as OBS is lightest. The bundled trackers run on the CPU and are not affected.</span>
+        <span class="ko"><span class="ui">렌더링에 사용할 GPU</span> (기본은 「자동」): 자동 / 절전 / 고성능을 고르거나 목록에서 GPU를 직접 고를 수 있습니다. VRCast를 다시 시작하면 적용됩니다 (<span class="ui">VRCast 지금 다시 시작</span> 버튼. PC 재시작은 필요 없습니다). OBS 캡처나 가상 카메라를 쓸 때는 OBS와 같은 GPU가 가장 가볍습니다. 내장 트래커는 CPU로 동작하므로 이 설정과 관계없습니다.</span>
+        <span class="zh-hans"><span class="ui">渲染使用的 GPU</span>（默认“自动”）：可选择自动 / 节能 / 高性能，或从列表中直接选择 GPU。重新启动 VRCast 后生效（<span class="ui">立即重新启动 VRCast</span> 按钮，无需重启电脑）。使用 OBS 捕获或虚拟摄像头时，与 OBS 使用同一 GPU 最省资源。内置追踪器在 CPU 上运行，不受此设置影响。</span>
+        <span class="zh-hant"><span class="ui">繪製使用的 GPU</span>（預設「自動」）：可選擇自動 / 省電 / 高效能，或從清單中直接選擇 GPU。重新啟動 VRCast 後生效（<span class="ui">立即重新啟動 VRCast</span> 按鈕，不需要重新啟動電腦）。使用 OBS 擷取或虛擬攝影機時，與 OBS 使用同一 GPU 最省資源。內建追蹤器在 CPU 上執行，不受此設定影響。</span></li>
     <li><span class="ja"><span class="ui">アップデート</span>: 起動時に新しいバージョンがあるかを確認し、あればパネル上部に通知します（<span class="ui">GitHub からダウンロード</span> / <span class="ui">BOOTH からダウンロード</span> / <span class="ui">このバージョンは通知しない</span>）。
         確認は最新のバージョン番号を読むためだけに Web サイト（coffin299.github.io）へ接続します。OFF にもできます。</span>
         <span class="en"><span class="ui">Updates</span>: checks for a new version at startup and shows a notice at the top of the panel if there is one (<span class="ui">Download from GitHub</span> / <span class="ui">Download from BOOTH</span> / <span class="ui">Skip this version</span>).
