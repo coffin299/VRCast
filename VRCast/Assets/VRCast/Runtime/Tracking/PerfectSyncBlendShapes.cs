@@ -64,6 +64,15 @@ namespace VRCast.Tracking
         public bool IsAvailable => MatchedCount >= MinMatchedShapes;
 
         /// <summary>
+        /// 有効にする条件を満たすなら true（anyShape なら 1 種類でもあれば、そうでなければ IsAvailable と同じ）。
+        /// </summary>
+        public bool IsAvailableFor(bool anyShape)
+        {
+            // 条件に応じて必要な種類数を切り替える
+            return MatchedCount >= (anyShape ? 1 : MinMatchedShapes);
+        }
+
+        /// <summary>
         /// まばたき（eyeBlinkLeft / Right の両方）を動かせるなら true（その間は既存のまばたきを開いたままにする）。
         /// </summary>
         public bool DrivesBlink => _targets[EyeBlinkLeft] != null && _targets[EyeBlinkRight] != null;

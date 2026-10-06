@@ -159,6 +159,9 @@ namespace VRCast.Core
         // パーフェクトシンク（MediaPipe のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
         public bool trackingPerfectSync = true;
 
+        // パーフェクトシンクを有効にする条件（false = ARKit 名が MinMatchedShapes 種類以上、true = 1 種類でもあれば）
+        public bool trackingPerfectSyncAnyShape;
+
         // 表情反映（MediaPipe のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;
         public float trackingExpressionThreshold = 0.3f;
