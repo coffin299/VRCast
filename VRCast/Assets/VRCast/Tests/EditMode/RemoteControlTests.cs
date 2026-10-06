@@ -127,6 +127,47 @@ namespace VRCast.Tests
             Assert.That(RemoteCommand.SelectIndex(4, false).ResolvePreset(Names), Is.EqualTo(RemoteCommand.NotFound));
         }
 
+        [Test]
+        public void CommandText_OscAddressSafety()
+        {
+            // ASCII の名前はアドレスに入れられ、日本語・空白・予約文字を含む名前は入れられないこと
+            Assert.That(RemoteCommandText.IsOscAddressSafe("Smile_2"), Is.True);
+            Assert.That(RemoteCommandText.IsOscAddressSafe("にっこり"), Is.False);
+            Assert.That(RemoteCommandText.IsOscAddressSafe("Big Smile"), Is.False);
+            Assert.That(RemoteCommandText.IsOscAddressSafe("a/b"), Is.False);
+        }
+
+        [Test]
+        public void CommandText_HttpRoundTrips()
+        {
+            // 一覧に出す URL を読み直すと、同じ表情を toggle 付きで指すこと（日本語の名前も）
+            foreach (string name in Names)
+            {
+                string url = RemoteCommandText.HttpExpression(39571, name, true);
+                string target = url.Substring("http://127.0.0.1:39571".Length);
+                Assert.That(HttpRequest.TryParse($"GET {target} HTTP/1.1", out HttpRequest request), Is.True);
+                Assert.That(RemoteCommand.TryParseHttp(request, out RemoteCommand command), Is.True);
+                Assert.That(command.Toggle, Is.True);
+                Assert.That(command.ResolvePreset(Names), Is.EqualTo(Array.IndexOf(Names, name)));
+            }
+
+            Assert.That(RemoteCommandText.HttpNeutral(39571, true), Is.EqualTo("http://127.0.0.1:39571/neutral?toggle=1"));
+        }
+
+        [Test]
+        public void CommandText_OscRoundTrips()
+        {
+            // アドレス末尾の形と、文字列の引数の形のどちらも、読み直すと同じ表情を指すこと
+            RemoteCommandText.OscText ascii = RemoteCommandText.OscExpression("Angry", true);
+            Assert.That(ascii.Address, Is.EqualTo("/vrcast/toggle/Angry"));
+            Assert.That(ascii.Argument, Is.Null);
+            Assert.That(OscCommand(Message(ascii.Address, ",", new byte[0])).ResolvePreset(Names), Is.EqualTo(1));
+
+            RemoteCommandText.OscText japanese = RemoteCommandText.OscExpression("にっこり", false);
+            Assert.That(japanese.Address, Is.EqualTo("/vrcast/expression"));
+            Assert.That(OscCommand(Message(japanese.Address, ",s", Str("にっこり"))).ResolvePreset(Names), Is.EqualTo(2));
+        }
+
         private static OscMessage ParseSingle(byte[] packet)
         {
             // 1 つだけメッセージが読めること

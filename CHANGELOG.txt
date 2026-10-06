@@ -13,7 +13,7 @@ Newest first. Each version is written in Japanese, then English.
 - 表情ごとにショートカットキーを割り当てられる機能を追加（ポーズタブでキーのボタンを押してからキーを押す。Ctrl+Alt+N のような同時押し、テンキー、記号キー、右 Ctrl などの単独、マウスのサイドボタンも可。Esc でやめる、リセットで外す。アバターごとに保存。既定で OBS などを操作中でも反応）
 - 出力タブの仮想カメラの状態を表示言語で表示し、「準備できました。Discord などで VRCast Camera を選ぶと映ります」のように次の操作まで案内するよう変更
 - ボタン・ショートカットキーで選んだ表情を、トラッキングの表情の反映で上書きしないよう固定するように変更（同じ表情をもう一度選ぶか「自動検出に戻す」で元に戻ります）
-- Stream Deck や OSC アプリなどから表情を切り替えられる「外部から操作（OSC / HTTP）」を追加（ポーズタブで ON。この PC からのみ接続できます）
+- Stream Deck や OSC アプリなどから表情を切り替えられる「外部から操作（OSC / HTTP）」を追加（新しい「OSC / HTTP」タブで ON。表示中のアバターの表情ごとのコマンドが一覧に並び、コピーできます。この PC からのみ接続できます）
 
 [English]
 - Added "Additional expressions" to the exporter (drag expression animation clips or folders that are not in the FX layer to export them as expressions; you can check which clips can be used, and why not, before exporting; saved per avatar)
@@ -22,7 +22,7 @@ Newest first. Each version is written in Japanese, then English.
 - Added shortcut keys for each expression (in the Pose tab, press the key button and then a key; combinations such as Ctrl+Alt+N, the numeric keypad, symbol keys, keys such as Right Ctrl alone and mouse side buttons work; Esc cancels and Reset removes it; saved per avatar; by default they also work while you use OBS or other apps)
 - Changed the virtual camera status in the Output tab to show in your language and tell you what to do next (for example, "Ready. Choose VRCast Camera in Discord, etc. to show the avatar")
 - Changed expressions chosen with a button or shortcut key to stay locked instead of being overridden by facial expression detection (choose the same expression again or press "Back to auto" to return)
-- Added "External control (OSC / HTTP)" to switch expressions from Stream Deck, OSC apps, etc. (turn it on in the Pose tab; only this PC can connect)
+- Added "External control (OSC / HTTP)" to switch expressions from Stream Deck, OSC apps, etc. (turn it on in the new OSC / HTTP tab, which lists a command for each expression of the loaded avatar with a copy button; only this PC can connect)
 
 ■ 1.6.1 (2026-10-06)
 
