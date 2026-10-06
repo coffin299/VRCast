@@ -65,6 +65,7 @@ namespace VRCast.UI
         private AppSettings _settings;
         private RenderingController _rendering;
         private VirtualCameraOutput _virtualCamera;
+        private SpoutOutput _spout;
         private StartSection _startSection;
         private AvatarSection _avatarSection;
         private AnimationSection _animationSection;
@@ -92,8 +93,8 @@ namespace VRCast.UI
         public void Initialize(
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
             MicrophoneInput microphone, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
-            TrackingSkeletonView skeleton, VirtualCameraOutput virtualCamera, FileDropReceiver fileDrop,
-            UpdateChecker updates, AppSettings settings, string initialPath)
+            TrackingSkeletonView skeleton, VirtualCameraOutput virtualCamera, SpoutOutput spout,
+            FileDropReceiver fileDrop, UpdateChecker updates, AppSettings settings, string initialPath)
         {
             // 依存の受け取りと各タブの作成
             _session = session;
@@ -103,13 +104,14 @@ namespace VRCast.UI
             _settings = settings;
             _rendering = rendering;
             _virtualCamera = virtualCamera;
+            _spout = spout;
             _avatarSection = new AvatarSection(session, settings, initialPath);
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
             _animationSection = new AnimationSection(session);
             _faceSection = new FaceSection(session, microphone, settings);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering);
-            _outputSection = new OutputSection(virtualCamera);
+            _outputSection = new OutputSection(virtualCamera, spout);
             _settingsSection = new SettingsSection(settings, rendering, updates, ResetAllSettings);
             _logSection = new LogSection(trackerProcess, tracker, settings);
             _creditsSection = new CreditsSection();
@@ -157,6 +159,7 @@ namespace VRCast.UI
             // 設定変更時にしか反映しない機能へ反映し直す（他は毎フレーム設定を読む）
             _rendering.ApplyAll();
             _virtualCamera.Enabled = _settings.virtualCameraEnabled;
+            _spout.Enabled = _settings.spoutEnabled;
             _trackingSection.SyncFromSettings();
 
             // GPU の優先設定は Windows 側にも書く（反映は次回起動から）

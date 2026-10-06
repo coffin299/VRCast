@@ -5,11 +5,12 @@ using VRCast.Output;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Output タブ（仮想カメラの ON/OFF、ドライバーの登録・解除と状態）。
+    /// Output タブ（仮想カメラの ON/OFF、ドライバーの登録・解除と状態、Spout2 の ON/OFF と状態）。
     /// </summary>
     public class OutputSection
     {
         private readonly VirtualCameraOutput _output;
+        private readonly SpoutOutput _spout;
 
         // 現在の登録状態（表示時に毎回レジストリを読まないよう、開始時と登録・解除の後に更新）
         private VirtualCameraRegistration _registration;
@@ -19,9 +20,10 @@ namespace VRCast.UI
         private bool _hasResult;
         private string _error;
 
-        public OutputSection(VirtualCameraOutput output)
+        public OutputSection(VirtualCameraOutput output, SpoutOutput spout)
         {
             _output = output;
+            _spout = spout;
             _registration = output.GetRegistration();
         }
 
@@ -44,6 +46,34 @@ namespace VRCast.UI
             {
                 DrawDriver();
                 GuiControls.Hint(_output.Status);
+            }
+
+            GuiControls.EndCard();
+            DrawSpout();
+        }
+
+        private void DrawSpout()
+        {
+            GuiControls.BeginCard("Spout2");
+            GuiControls.Hint(Loc.T(
+                "Share the image with OBS on the GPU (lighter than the virtual camera, keeps transparency). " +
+                "In OBS, add a \"Spout2 Capture\" source (needs the Spout2 plugin for OBS)",
+                "OBS へ GPU 上で映像を渡します（仮想カメラより軽く、透過もそのまま）。" +
+                "OBS では「Spout2 Capture」ソースを追加してください（OBS 用 Spout2 プラグインが必要）",
+                "OBS에 GPU에서 영상을 전달합니다 (가상 카메라보다 가볍고 투명도 유지). " +
+                "OBS에서 「Spout2 Capture」 소스를 추가하세요 (OBS용 Spout2 플러그인 필요)",
+                "在 GPU 上将画面传给 OBS（比虚拟摄像头更轻，并保留透明）。" +
+                "请在 OBS 中添加“Spout2 Capture”来源（需要 OBS 的 Spout2 插件）",
+                "在 GPU 上將畫面傳給 OBS（比虛擬攝影機更輕，並保留透明）。" +
+                "請在 OBS 中新增「Spout2 Capture」來源（需要 OBS 的 Spout2 外掛）"));
+            _spout.Enabled = GUILayout.Toggle(
+                _spout.Enabled,
+                Loc.T("Output", "出力する", "출력하기", "输出", "輸出") + $" ({SpoutOutput.SenderName})");
+
+            // 有効時のみ状態を出す
+            if (_spout.Enabled)
+            {
+                GuiControls.Hint(_spout.Status);
             }
 
             GuiControls.EndCard();

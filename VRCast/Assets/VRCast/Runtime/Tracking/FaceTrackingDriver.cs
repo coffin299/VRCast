@@ -116,6 +116,24 @@ namespace VRCast.Tracking
         private float _eyesClosed;
         private FaceTrackingFrame _lastFrame;
 
+        // パーフェクトシンクの書き込み先（ARKit 名の BlendShape）
+        private PerfectSyncBlendShapes _perfectSync;
+
+        /// <summary>
+        /// アバターで見つかった ARKit 名の BlendShape の種類数（パーフェクトシンクの対応状況の表示用）。
+        /// </summary>
+        public int PerfectSyncShapeCount => _perfectSync != null ? _perfectSync.MatchedCount : 0;
+
+        /// <summary>
+        /// アバターがパーフェクトシンクに対応していれば true。
+        /// </summary>
+        public bool SupportsPerfectSync => _perfectSync != null && _perfectSync.IsAvailable;
+
+        /// <summary>
+        /// パーフェクトシンクで顔を動かしている最中なら true（MediaPipe で受信中、設定 ON、対応アバター）。
+        /// </summary>
+        public bool IsPerfectSyncActive { get; private set; }
+
         /// <summary>
         /// トラッキング値を受信して適用中なら true。
         /// </summary>
@@ -145,6 +163,9 @@ namespace VRCast.Tracking
             _lipSync = lipSync;
             _expressions = expressions;
             _settings = settings;
+
+            // ARKit 名の BlendShape を探しておく（Humanoid でなくても顔は動かせる）
+            _perfectSync = PerfectSyncBlendShapes.Create(transform);
 
             // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口だけ）
             if (animator == null || !animator.isHuman)
@@ -236,7 +257,13 @@ namespace VRCast.Tracking
                 TryAutoCalibrate();
             }
 
+            // パーフェクトシンクは MediaPipe で受信中・設定 ON・対応アバターのときだけ
+            IsPerfectSyncActive = received && _settings.trackingPerfectSync
+                && _settings.trackingSource == TrackingSource.MediaPipe && _lastFrame.BlendShapes != null
+                && SupportsPerfectSync;
+
             ApplyFace(received);
+            ApplyPerfectSync();
             ApplyExpression(received);
             ApplyBody(received);
             ApplyEyes(received);
@@ -271,7 +298,8 @@ namespace VRCast.Tracking
         private void ApplyExpression(bool received)
         {
             // MediaPipe で受信中・設定 ON・表情データありのときだけ判定する
-            IsDetectingExpression = received && _settings.trackingExpressions
+            // （パーフェクトシンク中は顔の動きで表情が出るため、表情プリセットを重ねない）
+            IsDetectingExpression = received && _settings.trackingExpressions && !IsPerfectSyncActive
                 && _settings.trackingSource == TrackingSource.MediaPipe && _lastFrame.HasExpression
                 && _expressions != null && _expressions.Names.Count > 0;
             if (!IsDetectingExpression)
@@ -341,10 +369,39 @@ namespace VRCast.Tracking
                 personRight = _eyesClosed;
             }
 
-            // 鏡像モードでは本人の右目がアバターの左目
-            bool mirror = _settings.trackingMirror;
-            SetBlink(mirror ? personRight : personLeft, mirror ? personLeft : personRight);
-            SetMouth(_lastFrame.MouthOpen);
+            // パーフェクトシンクで目・口を動かす間は、まばたき・口パク用の BlendShape を重ねて閉じ過ぎ・開き過ぎにしない
+            // （まばたきは開いたままの外部入力にして自動まばたきも止める）
+            if (IsPerfectSyncActive && _perfectSync.DrivesBlink)
+            {
+                SetBlink(0f, 0f);
+            }
+            else
+            {
+                // 鏡像モードでは本人の右目がアバターの左目
+                bool mirror = _settings.trackingMirror;
+                SetBlink(mirror ? personRight : personLeft, mirror ? personLeft : personRight);
+            }
+
+            SetMouth(IsPerfectSyncActive && _perfectSync.DrivesJaw ? 0f : _lastFrame.MouthOpen);
+        }
+
+        private void ApplyPerfectSync()
+        {
+            // 未初期化なら何もしない
+            if (_perfectSync == null)
+            {
+                return;
+            }
+
+            // 動作中は毎フレーム書き、使わない間は元の値へ戻す（一度だけ）
+            if (IsPerfectSyncActive)
+            {
+                _perfectSync.Apply(_lastFrame.BlendShapes, _settings.trackingMirror, Time.deltaTime);
+            }
+            else
+            {
+                _perfectSync.Release();
+            }
         }
 
         private void SetBlink(float left, float right)
@@ -577,6 +634,7 @@ namespace VRCast.Tracking
             // アバター破棄時に外部入力を残さない
             ClearBlink();
             SetMouth(0f);
+            _perfectSync?.Release();
         }
     }
 }

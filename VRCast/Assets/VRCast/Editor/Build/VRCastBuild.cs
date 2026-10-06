@@ -22,6 +22,9 @@ namespace VRCast.Editor.Build
         // 仮想カメラの送信プラグインのパス（Tools/UnityCapture/fetch.ps1 で配置）
         private const string VirtualCameraPluginPath = "Assets/Plugins/UnityCapture/x86_64/UnityCapturePlugin.dll";
 
+        // Spout2 の送信プラグインのパス（Tools/Spout/fetch.ps1 で配置）
+        private const string SpoutPluginPath = "Assets/Plugins/KlakSpout/x86_64/KlakSpout.dll";
+
         // アプリアイコン（exe・タスクバー・タイトルバー）。透過付きの正方形 PNG
         private const string AppIconPath = "Assets/VRCast/Branding/AppIcon.png";
 
@@ -57,6 +60,12 @@ namespace VRCast.Editor.Build
 
             // 仮想カメラの同梱ファイルの有無を確認（無くてもビルドは続行し、仮想カメラは使えない）
             WarnIfVirtualCameraMissing();
+
+            // Spout2 の送信プラグインの有無を確認（無くてもビルドは続行し、Spout2 出力は使えない）
+            if (!File.Exists(SpoutPluginPath))
+            {
+                Debug.LogWarning("[VRCast][Build] KlakSpout.dll not found. Run Tools/Spout/fetch.ps1 to enable the Spout2 output.");
+            }
 
             // 設定ファイルの保存先 (LocalLow/VRCast/VRCast) を固定する
             PlayerSettings.companyName = CompanyName;

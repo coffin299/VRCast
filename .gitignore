@@ -23,6 +23,10 @@
 /VRCast/Assets/Plugins/UnityCapture/
 /VRCast/Assets/Plugins/UnityCapture.meta
 
+# Spout2 output (KlakSpout native plugin; fetched by Tools/Spout/fetch.ps1, shipped in builds)
+/VRCast/Assets/Plugins/KlakSpout/
+/VRCast/Assets/Plugins/KlakSpout.meta
+
 # Distribution zips (Tools/Package/package.bat)
 /dist/
 

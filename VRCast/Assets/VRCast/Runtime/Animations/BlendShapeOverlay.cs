@@ -59,6 +59,14 @@ namespace VRCast.Animations
         }
 
         /// <summary>
+        /// 見つけ済みの BlendShape の上乗せ用オブジェクトを作る。
+        /// </summary>
+        public static BlendShapeOverlay Create(SkinnedMeshRenderer renderer, int index)
+        {
+            return new BlendShapeOverlay(renderer, index);
+        }
+
+        /// <summary>
         /// 上乗せ値（0〜100）を書き込む。0 なら元の値に戻る。
         /// </summary>
         public void Write(float overlay)
