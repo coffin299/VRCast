@@ -38,6 +38,15 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// カード内の項目のまとまりを区切る小見出し。
+        /// </summary>
+        public static void SubHeading(string text)
+        {
+            UiTheme theme = UiTheme.Current;
+            GUILayout.Label(text, theme != null ? theme.SubTitle : GUI.skin.label);
+        }
+
+        /// <summary>
         /// 手順のカードを開始する（「1. 見出し」と、右端に完了 / 未完了の表示。EndCard で閉じる）。
         /// done が null の手順（アプリ側で確認できない操作）は状態を出さない。
         /// </summary>

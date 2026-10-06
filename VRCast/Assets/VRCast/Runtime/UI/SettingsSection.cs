@@ -122,7 +122,8 @@ namespace VRCast.UI
 
         private void DrawPerformance()
         {
-            GuiControls.BeginCard(Loc.T("Performance", "動作の軽さ", "성능", "性能", "效能"));
+            GuiControls.BeginCard(Loc.T("Performance optimization", "動作最適化設定", "동작 최적화 설정", "运行优化设置",
+                "執行最佳化設定"));
 
             // 値が変わったときだけ反映（トラッカーは TrackerProcess が設定の変化を見て再起動する）
             bool lowLoad = GUILayout.Toggle(_rendering.LowLoadMode, Loc.T(
@@ -148,8 +149,18 @@ namespace VRCast.UI
                 $"（通常為 {RenderingController.NormalFrameRate}fps），並減輕內建追蹤器的處理。追蹤的流暢度會略有下降。"));
 
             DrawPriority();
+            GuiControls.EndCard();
+
+            // CPU はメーカーごとに小見出しで分ける
+            GuiControls.BeginCard(Loc.T("CPU settings", "CPU 設定", "CPU 설정", "CPU 设置", "CPU 設定"));
+            GuiControls.SubHeading("AMD (X3D)");
             DrawCacheCcd();
+            GuiControls.SubHeading(Loc.T("Intel (P-cores / E-cores)", "Intel（P コア / E コア）", "Intel (P 코어 / E 코어)",
+                "Intel（P 核 / E 核）", "Intel（P 核 / E 核）"));
             DrawHybridCores();
+            GuiControls.EndCard();
+
+            GuiControls.BeginCard(Loc.T("GPU settings", "GPU 設定", "GPU 설정", "GPU 设置", "GPU 設定"));
             DrawGpu();
             GuiControls.EndCard();
         }
@@ -182,9 +193,9 @@ namespace VRCast.UI
         {
             // 全ての PC に出し、効果があるのは 2 CCD の X3D だけと示す（ProcessTuner / TrackerProcess が変化を見て反映する）
             _settings.avoidCacheCcd = GUILayout.Toggle(_settings.avoidCacheCcd, Loc.T(
-                "Run on the cores without 3D V-Cache (X3D)", "3D V-Cache の無い側のコアで動かす（X3D）",
-                "3D V-Cache가 없는 쪽 코어에서 실행 (X3D)", "在没有 3D V-Cache 的核心上运行（X3D）",
-                "在沒有 3D V-Cache 的核心上執行（X3D）"));
+                "Run on the cores without 3D V-Cache", "3D V-Cache の無い側のコアで動かす",
+                "3D V-Cache가 없는 쪽 코어에서 실행", "在没有 3D V-Cache 的核心上运行",
+                "在沒有 3D V-Cache 的核心上執行"));
             GuiControls.Hint(Loc.T(
                 "While a game runs, Windows moves apps onto the same cores as the game. This keeps VRCast and the bundled " +
                 "tracker on the other cores so they do not compete with the game. Applies right away.",
@@ -215,7 +226,7 @@ namespace VRCast.UI
                 Loc.T("P-cores only", "P コアのみ", "P 코어만", "仅 P 核", "僅 P 核"),
             };
             _settings.hybridCores = (HybridCoreSelection)GuiControls.EnumSelector(
-                Loc.T("Cores to use (Intel)", "使うコア（Intel）", "사용할 코어 (Intel)", "使用的核心（Intel）", "使用的核心（Intel）"),
+                Loc.T("Cores to use", "使うコア", "사용할 코어", "使用的核心", "使用的核心"),
                 labels, (int)_settings.hybridCores);
             GuiControls.Hint(Loc.T(
                 "Which cores VRCast and the bundled tracker run on. E-cores only leaves the P-cores to the game but may " +

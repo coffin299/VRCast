@@ -160,6 +160,9 @@ namespace VRCast.UI
         public GUISkin Skin { get; private set; }
         public GUIStyle Title { get; private set; }
         public GUIStyle SectionTitle { get; private set; }
+
+        // カード内の小見出し（アクセント色の太字、上に余白）
+        public GUIStyle SubTitle { get; private set; }
         public GUIStyle Hint { get; private set; }
         public GUIStyle KeyHint { get; private set; }
         public GUIStyle Value { get; private set; }
@@ -271,6 +274,9 @@ namespace VRCast.UI
             Title = new GUIStyle(Skin.label) { fontSize = 17, fontStyle = FontStyle.Bold, wordWrap = false };
             SectionTitle = new GUIStyle(Skin.label) { fontSize = 14, fontStyle = FontStyle.Bold };
             SectionTitle.margin.bottom = 6;
+            SubTitle = new GUIStyle(Skin.label) { fontSize = 13, fontStyle = FontStyle.Bold };
+            SubTitle.margin.top = 10;
+            SubTitle.normal.textColor = Accent;
             Hint = new GUIStyle(Skin.label) { fontSize = 12 };
             Hint.normal.textColor = TextDim;
 
