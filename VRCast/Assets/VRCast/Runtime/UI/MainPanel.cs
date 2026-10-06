@@ -8,6 +8,7 @@ using VRCast.Cameras;
 using VRCast.Core;
 using VRCast.Output;
 using VRCast.Platform;
+using VRCast.Remote;
 using VRCast.Rendering;
 using VRCast.Tracking;
 
@@ -96,7 +97,7 @@ namespace VRCast.UI
             AvatarSession session, OrbitCameraController orbit, RenderingController rendering,
             MicrophoneInput microphone, IFaceTrackingProvider tracker, TrackerProcess trackerProcess,
             TrackingSkeletonView skeleton, VirtualCameraOutput virtualCamera, SpoutOutput spout,
-            FileDropReceiver fileDrop, UpdateChecker updates, AppSettings settings, string initialPath)
+            FileDropReceiver fileDrop, UpdateChecker updates, RemoteControl remote, AppSettings settings, string initialPath)
         {
             // 依存の受け取りと各タブの作成
             _session = session;
@@ -109,7 +110,7 @@ namespace VRCast.UI
             _spout = spout;
             _avatarSection = new AvatarSection(session, settings, initialPath);
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
-            _animationSection = new AnimationSection(session);
+            _animationSection = new AnimationSection(session, remote, settings);
             _faceSection = new FaceSection(session, microphone, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
@@ -164,6 +165,7 @@ namespace VRCast.UI
             _virtualCamera.Enabled = _settings.virtualCameraEnabled;
             _spout.Enabled = _settings.spoutEnabled;
             _trackingSection.SyncFromSettings();
+            _animationSection.SyncFromSettings();
 
             // GPU の優先設定は Windows 側にも書く（反映は次回起動から）
             GpuSelection.ApplyPreference(_settings);
@@ -189,8 +191,8 @@ namespace VRCast.UI
             // 詳細ログの ON/OFF を反映（設定のリセットにも追従するよう毎フレーム）
             LogBuffer.DetailEnabled = _settings.detailedLogging;
 
-            // 表示切替（隠すと背景も透過）
-            if (Input.GetKeyDown(ToggleKey))
+            // 表示切替（隠すと背景も透過）。表情のキーの割り当て中は、押したキーでパネルを消さない
+            if (Input.GetKeyDown(ToggleKey) && !ExpressionController.HotkeysSuspended)
             {
                 SetVisible(!_visible);
             }

@@ -10,13 +10,19 @@ Newest first. Each version is written in Japanese, then English.
 - 書き出しツールに「追加の表情」を追加（FX レイヤーに入っていない表情のアニメーションクリップやフォルダをドラッグして、表情として書き出せます。書き出す前に取り込めるかどうかと理由を一覧で確認できます。指定はアバターごとに保存）
 - 表情の反映で、ウインク・ジト目・ふくれっ面も検出できるように追加（割り当て先の表情が無いものは検出せず、ほかの表情の邪魔をしません）
 - 表情の反映のしきい値を表情ごとに設定できるように変更（トラッキングタブの各表情の割り当ての下にスライダー。これまでの共通の値は、動かすまでそのまま使われます）
+- 表情ごとにショートカットキーを割り当てられる機能を追加（ポーズタブでキーのボタンを押してからキーを押す。Ctrl+Alt+N のような同時押し、テンキー、記号キー、右 Ctrl などの単独、マウスのサイドボタンも可。Esc でやめる、リセットで外す。アバターごとに保存。既定で OBS などを操作中でも反応）
 - 出力タブの仮想カメラの状態を表示言語で表示し、「準備できました。Discord などで VRCast Camera を選ぶと映ります」のように次の操作まで案内するよう変更
+- ボタン・ショートカットキーで選んだ表情を、トラッキングの表情の反映で上書きしないよう固定するように変更（同じ表情をもう一度選ぶか「自動検出に戻す」で元に戻ります）
+- Stream Deck や OSC アプリなどから表情を切り替えられる「外部から操作（OSC / HTTP）」を追加（ポーズタブで ON。この PC からのみ接続できます）
 
 [English]
 - Added "Additional expressions" to the exporter (drag expression animation clips or folders that are not in the FX layer to export them as expressions; you can check which clips can be used, and why not, before exporting; saved per avatar)
 - Added wink, half-closed eyes and pout to facial expression detection (expressions with nothing assigned are not detected, so they do not get in the way of the others)
 - Changed the facial expression threshold to be set per expression (a slider under each expression's assignment in the Tracking tab; your previous shared value is kept until you move a slider)
+- Added shortcut keys for each expression (in the Pose tab, press the key button and then a key; combinations such as Ctrl+Alt+N, the numeric keypad, symbol keys, keys such as Right Ctrl alone and mouse side buttons work; Esc cancels and Reset removes it; saved per avatar; by default they also work while you use OBS or other apps)
 - Changed the virtual camera status in the Output tab to show in your language and tell you what to do next (for example, "Ready. Choose VRCast Camera in Discord, etc. to show the avatar")
+- Changed expressions chosen with a button or shortcut key to stay locked instead of being overridden by facial expression detection (choose the same expression again or press "Back to auto" to return)
+- Added "External control (OSC / HTTP)" to switch expressions from Stream Deck, OSC apps, etc. (turn it on in the Pose tab; only this PC can connect)
 
 ■ 1.6.1 (2026-10-06)
 

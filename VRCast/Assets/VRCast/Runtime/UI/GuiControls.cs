@@ -112,6 +112,21 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// ラベル + ポート番号の入力欄の 1 行を描画する。input は入力途中の文字列（呼び出し側で保持）。
+        /// 範囲内の数値になったときだけその値を、それ以外は current を返す。
+        /// </summary>
+        public static int PortField(string label, ref string input, int current, int min, int max)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, GUILayout.Width(LabelWidth));
+            input = GUILayout.TextField(input, 5);
+            GUILayout.EndHorizontal();
+
+            // 入力途中（空・範囲外）は今の値のまま
+            return int.TryParse(input, out int port) && port >= min && port <= max ? port : current;
+        }
+
+        /// <summary>
         /// ラベル + スライダー + 数値（format の書式）の 1 行を描画し、操作後の値を返す。
         /// </summary>
         public static float Slider(string label, float value, float min, float max, string format = "F2")

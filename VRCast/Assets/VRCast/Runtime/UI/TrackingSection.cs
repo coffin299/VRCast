@@ -406,18 +406,10 @@ namespace VRCast.UI
 
         private void DrawPort()
         {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"), GUILayout.Width(130f));
-            _portInput = GUILayout.TextField(_portInput, 5);
-
             // 範囲内の数値になったときだけ反映（受信側・起動中のトラッカーがポート変更に追従する）
-            if (int.TryParse(_portInput, out int port)
-                && port >= AppSettings.MinTrackingPort && port <= AppSettings.MaxTrackingPort)
-            {
-                _settings.trackingPort = port;
-            }
-
-            GUILayout.EndHorizontal();
+            _settings.trackingPort = GuiControls.PortField(
+                Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"), ref _portInput,
+                _settings.trackingPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
         }
 
         private void DrawMotion()

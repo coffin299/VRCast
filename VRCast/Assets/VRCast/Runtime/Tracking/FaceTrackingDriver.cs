@@ -66,6 +66,9 @@ namespace VRCast.Tracking
         private FaceExpression _resolvedExpression = FaceExpression.Neutral;
         private string _resolvedSaved;
 
+        // 手動の固定で当てるのを止めていたら true（固定が外れたら判定結果をすぐ当て直す）
+        private bool _manualHeld;
+
         // 割り当て先がある表情のビット列と、それを求めたときの割り当ての設定値（FaceExpression の値で引く）
         private int _candidates;
         private readonly string[] _candidateSaved = new string[(int)FaceExpressions.Last + 1];
@@ -336,13 +339,22 @@ namespace VRCast.Tracking
             FaceExpression detected = _detector.Update(
                 _lastFrame.Expression, _lastFrame.MouthOpen, _thresholds, Time.deltaTime, GetCandidates());
 
-            // 判定結果か割り当ての設定が変わったときだけ切り替える（手動で選んだ表情を毎フレーム上書きしない）
+            // 手動で固定中は当てない（判定は続け、固定を外したら今の判定結果をすぐ当て直す）
+            if (_expressions.IsManual)
+            {
+                _autoPreset = -1;
+                _manualHeld = true;
+                return;
+            }
+
+            // 判定結果か割り当ての設定が変わったとき、固定が外れた直後だけ切り替える
             string saved = ExpressionMapping.GetSaved(_settings, detected);
-            if (detected == _resolvedExpression && saved == _resolvedSaved)
+            if (!_manualHeld && detected == _resolvedExpression && saved == _resolvedSaved)
             {
                 return;
             }
 
+            _manualHeld = false;
             _resolvedExpression = detected;
             _resolvedSaved = saved;
 
@@ -385,8 +397,8 @@ namespace VRCast.Tracking
 
         private void ReleaseAutoExpression()
         {
-            // 自動で当てた表情が残っているときだけニュートラルへ（手動で選び直した表情は残す）
-            if (_expressions != null && _autoPreset >= 0 && _expressions.Current == _autoPreset)
+            // 自動で当てた表情が残っているときだけニュートラルへ（手動で選び直した・固定中の表情は残す）
+            if (_expressions != null && !_expressions.IsManual && _autoPreset >= 0 && _expressions.Current == _autoPreset)
             {
                 _expressions.ResetToNeutral();
             }
