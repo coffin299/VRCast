@@ -88,7 +88,7 @@ namespace VRCast.Tracking
 
         private AppSettings _settings;
         private int _ownProcessId;
-        private Process _process;
+        private NativeProcess _process;
         private int _startedPort;
         private string _startedCamera;
         private TrackingSource _startedSource;
@@ -483,14 +483,8 @@ namespace VRCast.Tracking
                     arguments += ParentPidArgument + _ownProcessId;
                 }
 
-                var process = new Process { StartInfo = CreateStartInfo(path, arguments, mediaPipe) };
-
                 // 出力を読み続けないとバッファが詰まって停止するため、最後の行だけ保持する
-                process.OutputDataReceived += OnOutput;
-                process.ErrorDataReceived += OnOutput;
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
+                NativeProcess process = StartProcess(path, arguments, mediaPipe, OnOutput);
                 _process = process;
                 _startTime = Time.unscaledTime;
                 _lastWarnedStatus = null;
@@ -573,17 +567,27 @@ namespace VRCast.Tracking
             Stopwatch watch = Stopwatch.StartNew();
             try
             {
-                using (Process process = Process.Start(CreateStartInfo(path, "-l 1", utf8)))
+                // 標準出力・エラー出力をまとめて読み切る（読まないと詰まって終了しない）
+                var output = new StringBuilder();
+                using (NativeProcess process = StartProcess(path, "-l 1", utf8, line =>
+                       {
+                           lock (output)
+                           {
+                               output.Append(line).Append('\n');
+                           }
+                       }))
                 {
-                    // 標準出力・エラー出力の両方を読み切る（片方が詰まると終了しない）
-                    Task<string> output = process.StandardOutput.ReadToEndAsync();
-                    Task<string> errors = process.StandardError.ReadToEndAsync();
-                    if (process.WaitForExit(ListTimeoutMilliseconds))
+                    if (process.WaitForExit(ListTimeoutMilliseconds) && process.WaitForOutput(ListTimeoutMilliseconds))
                     {
-                        // 0 件なら原因調査用に出力内容（エラー出力優先）を添える
-                        cameras = ParseCameraList(output.Result);
-                        string detail = string.IsNullOrWhiteSpace(errors.Result) ? output.Result : errors.Result;
-                        error = cameras.Count == 0 ? "No camera found: " + detail.Trim() : null;
+                        // 0 件なら原因調査用に出力内容を添える
+                        string text;
+                        lock (output)
+                        {
+                            text = output.ToString();
+                        }
+
+                        cameras = ParseCameraList(text);
+                        error = cameras.Count == 0 ? "No camera found: " + text.Trim() : null;
                     }
                     else
                     {
@@ -653,40 +657,25 @@ namespace VRCast.Tracking
             }
         }
 
-        private static ProcessStartInfo CreateStartInfo(string path, string arguments, bool utf8)
+        private static NativeProcess StartProcess(string path, string arguments, bool utf8, Action<string> onLine)
         {
-            // IL2CPP の Process.Start は "/" 混じりのパスで起動に失敗するため、"\" 区切りの絶対パスにそろえる
+            // "/" 混じりのパスを "\" 区切りの絶対パスにそろえる
             path = Path.GetFullPath(path);
 
-            // モデル等を相対パスで読むため作業ディレクトリは exe の場所。コンソールは出さない
-            var info = new ProcessStartInfo(path, arguments)
-            {
-                WorkingDirectory = Path.GetDirectoryName(path) ?? string.Empty,
-                UseShellExecute = false,
-                CreateNoWindow = true,
-                RedirectStandardOutput = true,
-                RedirectStandardError = true,
-            };
-
-            // MediaPipe 版は UTF-8 で出力する（日本語のカメラ名を化けさせない）
-            if (utf8)
-            {
-                info.StandardOutputEncoding = Encoding.UTF8;
-                info.StandardErrorEncoding = Encoding.UTF8;
-            }
-
-            return info;
+            // モデル等を相対パスで読むため作業ディレクトリは exe の場所。MediaPipe 版は UTF-8 で出力する（日本語のカメラ名を化けさせない）
+            return NativeProcess.Start(path, arguments, Path.GetDirectoryName(path),
+                utf8 ? Encoding.UTF8 : Encoding.Default, onLine);
         }
 
-        private void OnOutput(object sender, DataReceivedEventArgs e)
+        private void OnOutput(string data)
         {
             // 空行は無視し、最後の行をエラー表示用に保持（別スレッドから呼ばれる）
-            if (string.IsNullOrWhiteSpace(e.Data))
+            if (string.IsNullOrWhiteSpace(data))
             {
                 return;
             }
 
-            string line = e.Data.Trim();
+            string line = data.Trim();
             LogLevel level = ClassifyOutput(line);
 
             // 定期統計は終了理由の表示に使わず、詳細ログ OFF なら排他も取らずに捨てる

@@ -236,9 +236,14 @@ namespace VRCast.UI
             // 変更は次回起動から（エディターでは再起動できない）
             if (GpuSelection.RestartPending(_settings) && !Application.isEditor)
             {
-                GuiControls.Hint(Loc.T("Restart VRCast to apply the GPU change.", "GPU の変更は再起動すると反映されます。",
-                    "GPU 변경은 다시 시작하면 적용됩니다.", "重启 VRCast 后 GPU 更改生效。", "重新啟動 VRCast 後 GPU 變更生效。"));
-                if (GUILayout.Button(Loc.T("Restart now", "今すぐ再起動", "지금 다시 시작", "立即重启", "立即重新啟動")))
+                GuiControls.Hint(Loc.T(
+                    "Restart VRCast to apply the GPU change (no need to restart your PC).",
+                    "GPU の変更は VRCast を起動し直すと反映されます（PC の再起動は不要です）。",
+                    "GPU 변경은 VRCast를 다시 시작하면 적용됩니다(PC 재시작은 필요 없습니다).",
+                    "重新启动 VRCast 后 GPU 更改生效（无需重启电脑）。",
+                    "重新啟動 VRCast 後 GPU 變更生效（不需要重新啟動電腦）。"));
+                if (GUILayout.Button(Loc.T("Restart VRCast now", "VRCast を今すぐ起動し直す", "VRCast 지금 다시 시작",
+                        "立即重新启动 VRCast", "立即重新啟動 VRCast")))
                 {
                     // 新しい起動が古い設定を読まないよう先に保存する
                     AppBootstrap.Save();
