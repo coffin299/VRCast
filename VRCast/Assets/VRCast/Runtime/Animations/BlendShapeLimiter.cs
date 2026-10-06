@@ -24,6 +24,9 @@ namespace VRCast.Animations
             public int Index;
             public string Path;
             public string Name;
+
+            // 一覧の表示名（同じ名前が複数のメッシュにあっても分かるようメッシュ名付き。毎フレーム作らないよう列挙時に作る）
+            public string Label;
             public bool IsFace;
             public float Max = BlendShapeLimit.MaxWeight;
 
@@ -126,9 +129,14 @@ namespace VRCast.Animations
                 }
 
                 string path = PathOf(renderer.transform, root);
+                string meshName = renderer.name;
                 for (int index = 0; index < mesh.blendShapeCount; index++)
                 {
-                    var shape = new Shape { Renderer = renderer, Index = index, Path = path, Name = mesh.GetBlendShapeName(index) };
+                    string name = mesh.GetBlendShapeName(index);
+                    var shape = new Shape
+                    {
+                        Renderer = renderer, Index = index, Path = path, Name = name, Label = $"{name} ({meshName})",
+                    };
                     _shapes.Add(shape);
                     _lookup[(renderer, index)] = shape;
                 }
