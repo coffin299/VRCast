@@ -32,13 +32,14 @@ namespace VRCast.Tests
         [Test]
         public void TryParse_Face_ConvertsRotationAxes()
         {
-            // MediaPipe の回転 (x, y, z, w) はそのままアバター基準の回転になること（首振り・かしげの左右が腕・手と一致）
+            // MediaPipe の回転 (x, y, z, w) は Unity の (x, -y, -z, w) になること
             Quaternion source = Quaternion.Normalize(new Quaternion(0.1f, 0.2f, 0.3f, 0.927f));
             MediaPipePacket.Message message = CreateMessage();
             message.matrix = RowMajor(Matrix4x4.Rotate(source));
 
             Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
-            Assert.That(Quaternion.Angle(face.HeadRotation, source), Is.LessThan(0.01f));
+            Quaternion expected = new Quaternion(source.x, -source.y, -source.z, source.w);
+            Assert.That(Quaternion.Angle(face.HeadRotation, expected), Is.LessThan(0.01f));
         }
 
         [Test]
@@ -111,7 +112,7 @@ namespace VRCast.Tests
         }
 
         [Test]
-        public void TryParse_Arms_SwapsSidesFlipsXYAndChecksVisibility()
+        public void TryParse_Arms_KeepsSidesFlipsYAndChecksVisibility()
         {
             // MediaPipe ラベルの左腕は全点が見え、右腕は手首が見えていない
             MediaPipePacket.Message message = CreateMessage();
@@ -120,11 +121,11 @@ namespace VRCast.Tests
             message.visibility = new[] { 1f, 1f, 1f, 1f, 1f, 0.1f };
             WritePoint(message.arms, MediaPipePacket.LeftElbow, new Vector3(0.1f, 0.2f, 0.3f));
 
-            // ラベルの左は本人の右腕として使え、x は映像の右向き・y は上向きに反転していること
+            // ラベルの左は本人の左腕として使え、x はそのまま・y は上向きに反転していること
             Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
-            Assert.That(body.Right.HasArm, Is.True);
-            Assert.That(body.Left.HasArm, Is.False);
-            Assert.That(Vector3.Distance(body.Right.Elbow, new Vector3(-0.1f, -0.2f, 0.3f)), Is.LessThan(1e-5f));
+            Assert.That(body.Left.HasArm, Is.True);
+            Assert.That(body.Right.HasArm, Is.False);
+            Assert.That(Vector3.Distance(body.Left.Elbow, new Vector3(0.1f, -0.2f, 0.3f)), Is.LessThan(1e-5f));
         }
 
         [Test]
@@ -136,12 +137,12 @@ namespace VRCast.Tests
             message.rightHand = new float[0];
             WritePoint(message.leftHand, 20, new Vector3(0.01f, 0.02f, 0.03f));
 
-            // 本人の右手として 21 点（x・y 反転）、左手は無しになること
+            // 本人の左手として 21 点（y 反転）、右手は無しになること
             Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
-            Assert.That(body.Right.HasHand, Is.True);
-            Assert.That(body.Right.Hand.Length, Is.EqualTo(MediaPipePacket.HandPointCount));
-            Assert.That(Vector3.Distance(body.Right.Hand[20], new Vector3(-0.01f, -0.02f, 0.03f)), Is.LessThan(1e-5f));
-            Assert.That(body.Left.HasHand, Is.False);
+            Assert.That(body.Left.HasHand, Is.True);
+            Assert.That(body.Left.Hand.Length, Is.EqualTo(MediaPipePacket.HandPointCount));
+            Assert.That(Vector3.Distance(body.Left.Hand[20], new Vector3(0.01f, -0.02f, 0.03f)), Is.LessThan(1e-5f));
+            Assert.That(body.Right.HasHand, Is.False);
         }
 
         [Test]

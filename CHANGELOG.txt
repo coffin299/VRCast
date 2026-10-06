@@ -8,7 +8,7 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - VRCast が背面にある間（他のウィンドウを操作中）、MediaPipe のトラッキングで手を見失いやすくなる問題を修正
-- MediaPipe のトラッキングで、首を振る・かしげる向きだけがミラー設定と逆になっていた問題を修正
+- MediaPipe のトラッキングで、腕と手だけがミラー設定と逆向きに動いていた問題を修正（顔の向きとそろうように）
 - Unity で設定したブレンドシェイプの値が、書き出し時に FX レイヤーの値で上書きされてしまう問題を修正
 - ラジアルメニューのスライダーなどの初期値が、書き出し時に中間の値にならず 0 か最大になってしまう問題を修正
 - 設定タブに「プロセスの優先度」を追加（VRCast 本体と同梱トラッカーに同じ優先度を設定、すぐ反映）
@@ -18,7 +18,7 @@ Newest first. Each version is written in Japanese, then English.
 
 [English]
 - Fixed MediaPipe tracking often losing your hands while VRCast was in the background (while using another window)
-- Fixed MediaPipe tracking turning and tilting the head the opposite way from the mirror setting
+- Fixed MediaPipe tracking moving the arms and hands opposite to the mirror setting (they now match the head)
 - Fixed blend shape values set in Unity being overwritten by FX layer values on export
 - Fixed default values of radial menu sliders and similar controls being exported as 0 or the maximum instead of the in-between value
 - Added "Process priority" to the Settings tab (sets the same priority for VRCast and the bundled tracker, applied right away)

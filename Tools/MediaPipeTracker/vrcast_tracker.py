@@ -15,7 +15,7 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     leftHand    左手 21 点の world 座標（映っていなければ空）
     rightHand   右手 21 点の world 座標（映っていなければ空）
 
-左右と world 座標の x は MediaPipe の出力どおり（本人の左右とは逆の鏡像基準）。
+左右は MediaPipe の体のラベル（本人基準）、world 座標の x は MediaPipe の出力どおり（映像の右向き）。
 本人基準への変換は VRCast 側で行う。
 
 頭の行列・腕・手・可視度は One Euro フィルターで平滑化してから送る
@@ -583,10 +583,13 @@ def distance(a, b):
 def side_from_label(handedness):
     """手の左右ラベルから送信キーを返す。
 
-    手のラベルも体のラベルと同じ鏡像基準のため、そのまま対応させる。
+    手のラベルは鏡像の入力を前提とする（反転していない映像では本人と逆）ため、
+    本人基準の体のラベルに合わせて入れ替える。
     """
+    # ラベルが無ければ "Left"（= 本人の右手）とみなす
     label = handedness[0].category_name if handedness else "Left"
-    return "leftHand" if label == "Left" else "rightHand"
+    # 鏡像基準の "Left" は本人の右手
+    return "rightHand" if label == "Left" else "leftHand"
 
 
 def assign_hands(hand_result, pose_result):
