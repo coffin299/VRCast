@@ -87,6 +87,9 @@ namespace VRCast.Editor.Build
             // アプリアイコンを設定
             ApplyAppIcon();
 
+            // 前回の出力を消してから出す（Mono でビルドした出力が残っていると IL2CPP のビルドが拒否される）
+            CleanOutputFolder();
+
             // ビルド設定を組み立てる
             var options = new BuildPlayerOptions
             {
@@ -112,6 +115,17 @@ namespace VRCast.Editor.Build
             if (Application.isBatchMode)
             {
                 EditorApplication.Exit(1);
+            }
+        }
+
+        private static void CleanOutputFolder()
+        {
+            // 同梱トラッカーはビルド後に BundledTrackerCopier がコピーし直すため、フォルダごと消してよい
+            string folder = Path.GetDirectoryName(WindowsOutputPath);
+            if (Directory.Exists(folder))
+            {
+                Directory.Delete(folder, true);
+                Debug.Log($"[VRCast][Build] Cleaned previous build: {folder}");
             }
         }
 
