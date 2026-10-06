@@ -10,6 +10,10 @@ namespace VRCast.UI
         // GitHub 上のライセンス・NOTICE
         private const string RepositoryUrl = "https://github.com/coffin299/VRCast/blob/main/";
 
+        // 開発者の Twitch チャンネル
+        private const string TwitchName = "coffinnoob299";
+        private const string TwitchUrl = "https://www.twitch.tv/" + TwitchName;
+
         // 開発者・協力者（役割の 5 言語表記、名前、リンク先）
         private static readonly Person[] People =
         {
@@ -59,7 +63,27 @@ namespace VRCast.UI
         public void Draw()
         {
             DrawPeople();
+            DrawSupport();
             DrawLicenses();
+        }
+
+        private static void DrawSupport()
+        {
+            GuiControls.BeginCard(Loc.T("Support the developer", "開発者を応援", "개발자 응원하기", "支持开发者", "支持開發者"));
+            GuiControls.Hint(Loc.T(
+                "Following or a Prime sub on Twitch really keeps development going.",
+                "Twitch でフォローや Prime サブスクをしてくれると開発の励みになります。",
+                "Twitch에서 팔로우나 Prime 구독을 해 주시면 개발에 큰 힘이 됩니다.",
+                "在 Twitch 上关注或使用 Prime 订阅，会成为开发的动力。",
+                "在 Twitch 上追隨或使用 Prime 訂閱，會成為開發的動力。"));
+
+            // 押すと Twitch のチャンネルを開く
+            if (GuiControls.LabeledButton("Twitch", TwitchName))
+            {
+                Application.OpenURL(TwitchUrl);
+            }
+
+            GuiControls.EndCard();
         }
 
         private static void DrawPeople()
