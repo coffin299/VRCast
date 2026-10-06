@@ -119,7 +119,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | Tab | 操作パネルの表示切替（隠している間は OBS で背景も透過） |
 | 1〜9 / 0 | 表情プリセット切替 / ニュートラル |
 
-操作パネルは左のタブ（Start / Avatar / Pose / Face / Tracking / Display / Output / Settings / Debug log / Credits）で項目を切り替え、内容は縦にスクロールする。
+操作パネルは左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / Settings / Debug log / Credits）で項目を切り替え、内容は縦にスクロールする。
 配色は背景のベージュに合わせた濃いめのベージュ（焦げ茶の文字、キャラメル色のアクセント）。
 パネル下部には、どのタブでも押せるリセットボタン（**Head** 顔の向き / **Gaze** 視線 / **Expression** 表情をニュートラルへ / **Camera** カメラ）を常に表示する。
 パネルは見出し部分をドラッグして移動でき、高さは画面に収まるよう自動で調整される。
@@ -173,7 +173,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 **Face** タブで揺れもの（PhysBone 近似）、自動まばたき、マイクによる口パク（リップシンク）を ON/OFF できる。マイクは `<` `>` で選択し、
 Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
 
-**Blend shape limits**（BlendShape の上限）では、BlendShape ごとに動く最大値（0〜100、100 = 制限なし）を決められる。
+**Shape keys**（シェイプキー）タブの **Blend shape limits**（BlendShape の上限）では、BlendShape ごとに動く最大値（0〜100、100 = 制限なし）を決められる。
 まばたきで目が消える・口を開くと顔が崩れる等、100 まで動かすと破綻する BlendShape を下げて使う。
 対象は「顔」（まばたき・口パク・表情・パーフェクトシンクで動く BlendShape）と「その他」（どれにも使われないもの。体型・服など）から選び、
 名前で検索・上限を付けたものだけの表示ができる（顔と体が 1 つのメッシュでも役割で分かれる）。
