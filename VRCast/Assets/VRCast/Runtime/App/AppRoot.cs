@@ -178,7 +178,7 @@ namespace VRCast.App
                 _rendering.ApplyAll();
             }
 
-            // 待機ポーズ・表情・まばたき・リップシンク・トラッキング・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
+            // 待機ポーズ・表情・まばたき・リップシンク・トラッキング・待機モーション・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
             var expressions = avatar.Instance.AddComponent<ExpressionController>();
@@ -189,11 +189,15 @@ namespace VRCast.App
             lipSync.Initialize(root, avatar.Descriptor.lipSync, _microphone, _settings);
 
             // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
-            avatar.Instance.AddComponent<FaceTrackingDriver>().Initialize(
-                avatar.Animator, _tracker, blink, lipSync, expressions, _settings);
+            var face = avatar.Instance.AddComponent<FaceTrackingDriver>();
+            face.Initialize(avatar.Animator, _tracker, blink, lipSync, expressions, _settings);
 
             // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);
+
+            // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）。顔のトラッキング中は頭のゆらぎを止めて本人の動きに任せる
+            avatar.Instance.AddComponent<IdleMotionController>().Initialize(
+                avatar.Animator, _settings, () => face != null && face.IsTracking);
 
             // Constraint（揺れものの静止姿勢に反映されるよう先に初期化）
             avatar.Instance.AddComponent<ConstraintSolver>().Initialize(avatar.Animator, avatar.Constraints);
