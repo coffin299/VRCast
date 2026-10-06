@@ -42,6 +42,9 @@ namespace VRCast.Tracking
         public float Surprise;
         public float Angry;
         public float Sad;
+        public float Wink;
+        public float Squint;
+        public float Pout;
 
         /// <summary>
         /// 表情の種類で値を取り出す（ニュートラルは 0）。
@@ -59,6 +62,12 @@ namespace VRCast.Tracking
                     return Angry;
                 case FaceExpression.Sad:
                     return Sad;
+                case FaceExpression.Wink:
+                    return Wink;
+                case FaceExpression.Squint:
+                    return Squint;
+                case FaceExpression.Pout:
+                    return Pout;
                 default:
                     return 0f;
             }
@@ -66,7 +75,7 @@ namespace VRCast.Tracking
     }
 
     /// <summary>
-    /// 検出する表情の種類（Neutral 以外は ExpressionScores の項目と対応）。
+    /// 検出する表情の種類（Neutral 以外は ExpressionScores の項目と対応。設定・判定で数値を使うため並びを変えない）。
     /// </summary>
     public enum FaceExpression
     {
@@ -75,5 +84,38 @@ namespace VRCast.Tracking
         Surprise = 2,
         Angry = 3,
         Sad = 4,
+        Wink = 5,
+        Squint = 6,
+        Pout = 7,
+    }
+
+    /// <summary>
+    /// ニュートラル以外の表情の範囲と、表情の組を表すビット列。
+    /// </summary>
+    public static class FaceExpressions
+    {
+        public const FaceExpression First = FaceExpression.Smile;
+        public const FaceExpression Last = FaceExpression.Pout;
+
+        /// <summary>
+        /// すべての表情を含むビット列。
+        /// </summary>
+        public const int All = ~0;
+
+        /// <summary>
+        /// ビット列に表情が含まれていれば true。
+        /// </summary>
+        public static bool Contains(int mask, FaceExpression expression)
+        {
+            return (mask & Bit(expression)) != 0;
+        }
+
+        /// <summary>
+        /// 表情 1 つ分のビット。
+        /// </summary>
+        public static int Bit(FaceExpression expression)
+        {
+            return 1 << (int)expression;
+        }
     }
 }

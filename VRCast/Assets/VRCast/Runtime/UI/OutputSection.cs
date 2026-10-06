@@ -45,7 +45,7 @@ namespace VRCast.UI
             if (_output.Enabled)
             {
                 DrawDriver();
-                GuiControls.Hint(_output.Status);
+                GuiControls.Hint(DescribeState(_output));
             }
 
             GuiControls.EndCard();
@@ -154,6 +154,37 @@ namespace VRCast.UI
             _hasResult = true;
             _registration = _output.GetRegistration();
             _pending = null;
+        }
+
+        private static string DescribeState(VirtualCameraOutput output)
+        {
+            // 送信状態と、次に何をすればよいかを表示言語で伝える（エラーの原因は英語のまま添える）
+            switch (output.State)
+            {
+                case VirtualCameraState.Sending:
+                    return Loc.T("Sending to the app showing VRCast Camera",
+                        "VRCast Camera を開いているアプリへ送信中",
+                        "VRCast Camera를 연 앱으로 전송 중",
+                        "正在发送到打开 VRCast Camera 的应用",
+                        "正在傳送到開啟 VRCast Camera 的應用程式");
+                case VirtualCameraState.WaitingForApp:
+                    return Loc.T(
+                        "Ready. Choose \"VRCast Camera\" as the camera in Discord, Zoom, OBS, etc. to show the avatar " +
+                        "(restart that app if it is not listed)",
+                        "準備できました。Discord・Zoom・OBS などのカメラで「VRCast Camera」を選ぶと映ります" +
+                        "（一覧に無ければそのアプリを再起動）",
+                        "준비되었습니다. Discord·Zoom·OBS 등의 카메라에서 「VRCast Camera」를 선택하면 표시됩니다" +
+                        " (목록에 없으면 그 앱을 다시 시작)",
+                        "已就绪。在 Discord、Zoom、OBS 等的摄像头中选择“VRCast Camera”即可显示（若未列出，请重启该应用）",
+                        "已就緒。在 Discord、Zoom、OBS 等的攝影機中選擇「VRCast Camera」即可顯示（若未列出，請重新啟動該應用程式）");
+                case VirtualCameraState.Error:
+                    return Loc.T("Cannot send: ", "送信できません: ", "전송할 수 없습니다: ", "无法发送：", "無法傳送：")
+                        + output.Status;
+                case VirtualCameraState.Starting:
+                    return Loc.T("Starting...", "開始しています...", "시작하는 중...", "正在启动...", "正在啟動...");
+                default:
+                    return Loc.T("Off", "停止中", "꺼짐", "已停止", "已停止");
+            }
         }
 
         private static string DescribeRegistration(VirtualCameraRegistration registration)

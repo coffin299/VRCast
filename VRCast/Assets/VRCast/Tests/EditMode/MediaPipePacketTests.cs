@@ -101,6 +101,35 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void TryParse_Face_PoutFromPucker()
+        {
+            // 口を強くとがらせた顔はふくれっ面が 1 になること
+            MediaPipePacket.Message message = CreateMessage();
+            SetScore(message, "mouthPucker", 0.9f);
+            Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
+            Assert.That(face.Expression.Pout, Is.EqualTo(1f).Within(1e-5f));
+        }
+
+        [Test]
+        public void WinkScore_OneEyeClosed()
+        {
+            // 片目だけ閉じれば強く、両目を閉じた（まばたき）・両目を開けたままなら 0 になること
+            Assert.That(MediaPipePacket.WinkScore(0.9f, 0.05f), Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(MediaPipePacket.WinkScore(0.9f, 0.9f), Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(MediaPipePacket.WinkScore(0.05f, 0.05f), Is.EqualTo(0f).Within(1e-5f));
+        }
+
+        [Test]
+        public void SquintScore_HalfClosedBothEyes()
+        {
+            // 両目を半分閉じれば強く、閉じきり・片目だけ・下向きの視線では 0 になること
+            Assert.That(MediaPipePacket.SquintScore(0.5f, 0.5f, 0f), Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(MediaPipePacket.SquintScore(0.9f, 0.9f, 0f), Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(MediaPipePacket.SquintScore(0.9f, 0.1f, 0f), Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(MediaPipePacket.SquintScore(0.5f, 0.5f, 0.7f), Is.EqualTo(0f).Within(1e-5f));
+        }
+
+        [Test]
         public void TryParse_BrokenFace_KeepsPacketWithoutFace()
         {
             // 行列の要素数が足りない顔は「顔なし」で、パケット自体は使えること

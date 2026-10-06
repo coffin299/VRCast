@@ -6,6 +6,18 @@ using VRCast.Core;
 namespace VRCast.Output
 {
     /// <summary>
+    /// 仮想カメラへの送信状態（UI で表示言語の文言にする）。
+    /// </summary>
+    public enum VirtualCameraState
+    {
+        Off,
+        Starting,
+        Sending,
+        WaitingForApp,
+        Error,
+    }
+
+    /// <summary>
     /// カメラの描画結果を仮想カメラ（UnityCapture）へ送る。メインカメラに付け、有効な間だけ毎フレーム送る。
     /// 送るのはカメラの描画結果のみで、IMGUI の操作パネルは映らない。解像度は受け取る側に合わせて拡大縮小する。
     /// </summary>
@@ -71,7 +83,12 @@ namespace VRCast.Output
         /// </summary>
         public string BundledFolder { get; private set; }
 
+        /// <summary>
+        /// 状態の英語の説明（ログ用。エラーのときは原因を含む）。
+        /// </summary>
         public string Status { get; private set; } = "Off";
+
+        public VirtualCameraState State { get; private set; } = VirtualCameraState.Off;
 
         /// <summary>
         /// 仮想カメラへ送るなら true（設定に保存する）。
@@ -110,10 +127,26 @@ namespace VRCast.Output
             return VirtualCameraInstaller.GetRegistration(BundledFolder);
         }
 
+        private void OnEnable()
+        {
+            // プラグインが無いと分かっていればエラーのまま（送信しないため結果が出ない）
+            if (_pluginMissing)
+            {
+                State = VirtualCameraState.Error;
+                Status = "Error: UnityCapturePlugin.dll not found";
+                return;
+            }
+
+            // 最初の送信結果が出るまでは開始中として表示する
+            State = VirtualCameraState.Starting;
+            Status = "Starting";
+        }
+
         private void OnDisable()
         {
             // 送信を止めて受け取る側へ停止を伝える
             Close();
+            State = VirtualCameraState.Off;
             Status = "Off";
         }
 
@@ -150,6 +183,7 @@ namespace VRCast.Output
             {
                 // 同梱されていない（開発環境で取得していない等）
                 _pluginMissing = true;
+                State = VirtualCameraState.Error;
                 Status = "Error: UnityCapturePlugin.dll not found";
                 VRCastLog.Warning(LogCategory, Status);
             }
@@ -164,12 +198,28 @@ namespace VRCast.Output
             }
 
             _lastResult = result;
+            State = StateOf(result);
             Status = Describe(result);
 
             // エラーだけログに残す（受け取るアプリが無い・フレーム落ちは通常の状態）
             if ((int)result >= (int)SendResult.ErrorUnsupportedGraphicsDevice)
             {
                 VRCastLog.Warning(LogCategory, Status);
+            }
+        }
+
+        private static VirtualCameraState StateOf(SendResult result)
+        {
+            // 送れた・間引いただけなら送信中、受け取る側が無ければ待機、それ以外はエラー
+            switch (result)
+            {
+                case SendResult.Success:
+                case SendResult.WarningFrameSkip:
+                    return VirtualCameraState.Sending;
+                case SendResult.WarningCaptureInactive:
+                    return VirtualCameraState.WaitingForApp;
+                default:
+                    return VirtualCameraState.Error;
             }
         }
 

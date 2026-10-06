@@ -121,12 +121,12 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `CameraPose` / `AvatarLook` / `AvatarEntry` / `BlendShapeLimit` | アバターごとのカメラの視点と見た目（ライト・アバターの明るさ・待機ポーズ・体の向き）、BlendShape の上限（上限を付けたものだけ、パス + 名前 + 最大値）。`AppSettings.avatarCameras`（以前の設定ファイルとの互換のため名前据え置き）に `.vrcaster` のパス（大文字・小文字を区別しない）をキーとして保存し、使うたびに末尾へ移して最近使った 50 体分まで保持。新しい順の先頭 10 件を Avatar タブの「最近使ったアバター」に表示（× で記録ごと削除）。`AppRoot` がアバター読込時に、見た目 → 画角 → フレーミング → 保存済みの視点の順に戻し、以降は変わったときだけ記録（読込中・アンロード後は記録しない）。見た目が未記録のアバターは読込時の設定をそのまま使う。全設定のリセットでは消さない |
 | `RenderingController` | 描画のフレームレート（VSync を止めて上限を明示。通常 60fps / 軽量モード 30fps）、ダークモードの切り替え（背景色が切り替え前のテーマの既定色のときだけ新しいテーマの既定色へ）、背景（非透過 = 背景色、透過 = 背景色 + alpha 0。ウィンドウ表示は alpha を無視し、ゲームキャプチャは alpha で抜くため OBS には映らない）、パネルを隠している間は設定に関係なく透過（`ForceTransparent`、保存しない）、ウィンドウ解像度、太陽光（ディレクショナルライトの強さ・色温度・向き。向きはカメラ正面基準）、環境光（ライティングデータを焼かないため `RenderSettings` の単色環境光と SH を直接設定）、ライティングのプリセット（`LightingPreset`）、アバターの明るさ（`AvatarMaterials` 経由）を設定値に従って適用 |
 | `AvatarMaterials` | 表示中アバターのマテリアルの主色（`_Color` / `_BaseColor`）に Linear で倍率を掛ける（lilToon 等の明るさ上限を超えて明るくする）。読み込み時にシェーダーごとのマテリアル数と lilToon の明るさ関連の値をログに出す |
-| `VirtualCameraOutput` | メインカメラの描画結果（操作パネルは含まない）を `UnityCapturePlugin.dll` 経由で仮想カメラ「VRCast Camera」へ送る。無効時はコンポーネントごと止めて描画コストを増やさない。送信結果を状態表示に変換し、エラーのみログ |
+| `VirtualCameraOutput` | メインカメラの描画結果（操作パネルは含まない）を `UnityCapturePlugin.dll` 経由で仮想カメラ「VRCast Camera」へ送る。無効時はコンポーネントごと止めて描画コストを増やさない。送信結果を状態（`VirtualCameraState`: 停止・開始中・送信中・受け取る側待ち・エラー）と英語の説明に変換し、エラーのみログ |
 | `SpoutOutput` | メインカメラの描画結果を Spout2 の送信元「VRCast」として共有する（OBS の Spout2 Capture 等で受信）。KlakSpout（Unlicense）のネイティブプラグイン `KlakSpout.dll` を直接呼び（`CreateSender` と描画イベント `UpdateSender` / `CloseSender`）、C# 側のパッケージは使わない。描画結果を同じ大きさの ARGB32 テクスチャへ写して送る（大きさが変わったら送信元を作り直す）。イベントデータはネイティブメモリに置き、閉じた後は数フレーム待ってから解放。Direct3D 11 / 12 以外・DLL 無しは状態表示とログを出して停止 |
 | `VirtualCameraInstaller` | 同梱ドライバー（`StreamingAssets/UnityCapture` の 32 / 64 bit フィルター）の検出、レジストリ（64 bit フィルターの CLSID）からの登録状態の判定、`regsvr32` の管理者実行による登録（デバイス名指定）・解除 |
 | `PoseController` | アバターの向き（Body yaw）と、Humanoid の待機ポーズ。読込時姿勢の筋肉値から肘の曲げだけを補間し、腕は上腕ボーンを真下（外側へ 12°）へ向けて回す。既定は気を付け（0 / 0 で元の姿勢を復元）。`Reapply` で設定値から反映し直す |
 | `ExpressionController` | 表情プリセットを BlendShape に適用。切替時は前の表情から次の表情へ 0.2 秒かけてモーフィング（プリセットに無い BlendShape は読込時の値へ。変化中のフレームだけ書き込むので、まばたき・口パクの上乗せと両立）。数字キー 1〜9 / 0 |
-| `ExpressionMapping` | 検出した表情（笑顔・驚き・怒り・悲しみ）→ 表情プリセットの対応付け。設定に保存したプリセット名（空欄 = 自動、`<none>` = 割り当てなし）で解決し、無ければプリセット名のキーワードで推定 |
+| `ExpressionMapping` | 検出した表情（笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面）→ 表情プリセットの対応付け。設定に保存したプリセット名（空欄 = 自動、`<none>` = 割り当てなし）で解決し、無ければプリセット名のキーワードで推定。割り当て先がある表情のビット列（`Candidates`）も求める。表情ごとのしきい値の読み書き（未設定なら共通の `trackingExpressionThreshold`） |
 | `BlendShapeOverlay` | BlendShape の検索と、元の値（表情等）を保ったままの上乗せ書き込み（`BlendShapeLimiter` の上限で切って書き、上限で切った固定の値は切る前の値を元の値として読む） |
 | `BlendShapeLimiter` | アバターごとの BlendShape の上限。読込時に全 `SkinnedMeshRenderer` の BlendShape を列挙し、記録済みの上限（パス + 名前）を当てる。表情・まばたき等より先に初期化し、`BlendShapeOverlay` の生成（まばたき・口パク・パーフェクトシンク）と `ExpressionController` の対象解決が `MarkFace` で「顔」として登録する（一覧の区分だけで、上限の効き方は同じ）。`BlendShapeOverlay` と `ExpressionController` は書き込む前に `Limit` を通す。どの処理も書かない固定の値は LateUpdate の最後（実行順 10000）に上限で切り、上限を緩めると切る前の値へ戻す。表示中のアバターの分だけを静的に参照する |
 | `BlinkController` | ランダム間隔の自動まばたき（ON/OFF 可）。外部入力（トラッキング、左右別）があればそちらを優先。両目用とウインク用 BlendShape の振り分け |
@@ -139,10 +139,10 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ConstraintSolver` | アバターの全 Constraint をトラッキング適用後・揺れもの計算前（実行順 -50）に毎フレーム評価。参照関係で評価順を並べ替え。Humanoid ボーンと腰の親（Armature 等）を動かすものは対象外 |
 | `ConstraintEvaluator` | 1 Constraint（Position / Rotation / Scale / Parent / Aim / LookAt）の評価。重み付き平均・オフセット・静止値・軸マスク・ローカル空間 |
 | `IFaceTrackingProvider` / `FaceTrackingFrame` | フェイストラッキング入力元の共通インターフェースと 1 フレーム分の値（表情の強さ `ExpressionScores` は MediaPipe のみ） |
-| `ExpressionDetector` | 表情の強さから今の表情を 1 つに決める（入る / 抜けるしきい値のヒステリシス、0.3 秒の保持、口を開けている間は笑顔のしきい値を上げる。入るしきい値は設定値（0.1〜0.8、表情の強さと同じ目盛り）、抜けるしきい値はその 0.65 倍） |
+| `ExpressionDetector` | 表情の強さから今の表情を 1 つに決める（割り当て先がある表情だけを候補にする、入る / 抜けるしきい値のヒステリシス、0.3 秒の保持、口を開けている間は笑顔のしきい値を上げる。入るしきい値は表情ごとの設定値（0.1〜0.8、表情の強さと同じ目盛り）、抜けるしきい値はその 0.65 倍） |
 | `IBodyTrackingProvider` / `BodyTrackingFrame` / `ArmTrackingData` | 腕・手のトラッキング入力元の共通インターフェースと 1 フレーム分の値（本人の左右、肩・肘・手首と手の 21 点、カメラ基準の Unity 座標） |
 | `OpenSeeFacePacket` | OpenSeeFace UDP パケット（1 顔 1785 バイト）の解析と座標変換 |
-| `MediaPipePacket` | 同梱 MediaPipe トラッカーの JSON の解析（頭の変換行列・BlendShape 51 種 → 頭・目・口・視線・表情の強さ（笑顔 = 口角、怒り = 眉下げ、驚き = 眉全体の上げ、悲しみ = 口角下げ + 眉の内側だけの上げ）、腕 6 点と可視度、左右の手 21 点）と座標変換 |
+| `MediaPipePacket` | 同梱 MediaPipe トラッカーの JSON の解析（頭の変換行列・BlendShape 51 種 → 頭・目・口・視線・表情の強さ（笑顔 = 口角、怒り = 眉下げ、驚き = 眉全体の上げ、悲しみ = 口角下げ + 眉の内側だけの上げ、ウインク = 左右のまばたきの差、ジト目 = 両目の半閉じ（下向きの視線で弱める）、ふくれっ面 = mouthPucker）、腕 6 点と可視度、左右の手 21 点）と座標変換 |
 | `TrackingMath` | パケット解析共通の非有限値チェック、カメラ基準 → アバタールート基準の変換と回転の左右反転（Driver・確認表示で共通） |
 | `TrackingSkeletonView` | Raw view: 受信値を VRCast 側で平滑化せず GL の線で描く確認表示（MediaPipe トラッカーが送信前に One Euro フィルターで平滑化した値）（腕・手の点、頭の向き、視線、目・口の開き）。表示中はカメラの cullingMask を 0 にしてアバターを映さず、アバターの腰の位置・向き・鏡像設定に合わせて描く |
 | `TrackingReceiver` | `127.0.0.1` のみで UDP を受信する Provider（顔・腕手）。入力元に合わせて解析を切替。途絶検出・再 bind・受信 fps。診断ログ: 最初のパケットの送信元、途絶（3 秒）・待ち受けから 15 秒無受信の警告、不正パケットの原因推定（入力元の設定違い・プロトコル版の不一致。10 秒に 1 回）、詳細ログ ON 時は 5 秒ごとの受信統計と顔の検出 / 見失い（集計は整数の加算のみ） |
@@ -169,7 +169,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ShapeKeySection` | Shape keys タブ（BlendShape の上限。顔（まばたき・口・表情・パーフェクトシンクで動くもの）/ その他の切り替え・検索・上限付きだけの表示。全件を専用のスクロール欄に出し、見えている行だけを描く（行の高さ固定、上下は空白で高さだけ確保）。絞り込み結果は条件・上限付きの数・顔の数が変わったときだけ作り直し、表示名は `BlendShapeLimiter` が列挙時に作る。変えたらアバターごとに記録。口パク中に揺れる Face タブの母音表示と分けるため別タブ） |
 | `TrackingSection` | Tracking タブ（ON/OFF、入力元の切替、腕と手の ON/OFF と状態、表情反映の ON/OFF・しきい値・表情ごとの割り当て（Auto / None / プリセット）と判定中の表情、カメラ選択・一覧更新・再起動、同梱版が無いときのトラッカーのパス、ポート、受信状態 / Mirror、体の動かし方と強さ、視線 / キャリブレーションの案内と頭の移動量 / Raw view と顔の数値） |
 | `DisplaySection` | Display タブ（カメラの FOV・リセット、背景・背景色（ベージュに戻すボタン）、解像度プリセット、ライトのプリセット・環境光・太陽光の強さ・色温度・向き） |
-| `OutputSection` | Output タブ（仮想カメラの ON/OFF、ドライバーの登録状態・Install / Reinstall / Uninstall、送信状態） |
+| `OutputSection` | Output タブ（仮想カメラの ON/OFF、ドライバーの登録状態・Install / Reinstall / Uninstall、送信状態を表示言語で次の操作まで案内） |
 | `ProcessTuning` | プロセスの優先度（`SetPriorityClass`。通常以下 / 通常 / 通常以上 / 高、リアルタイムは扱わない）と Windows の電力調整（`SetProcessInformation` の ProcessPowerThrottling）の解除、使うコアの制限（`SetCoreMask`。`CpuTopology.CoreMaskFor` の値を `SetProcessAffinityMask` で設定、0 ならシステムの全コアに戻す）。VRCast 本体（`ProcessTuner`）とトラッカー（`TrackerProcess`。PID から `OpenProcess` で開き直す）で共用 |
 | `NativeProcess` | `CreateProcessW` による外部プログラムの起動（IL2CPP の `Process.Start` は `UseShellExecute = false` で起動に失敗するため）。出力を受け取る場合は標準出力・標準エラー出力を 1 本のパイプにまとめ、別スレッドで行ごとに通知。トラッカーの起動・カメラ一覧の取得（`TrackerProcess`）と VRCast の起動し直し（`GpuSelection`）で使う |
 | `ProcessTuner` | VRCast 本体を電力調整から外し、`processPriority` と使うコアのマスク（`CpuTopology.CoreMaskFor`）の変化を見て反映（起動時は前の VRCast から引き継いだ制限も解く）（エディターでは何もしない） |
@@ -202,7 +202,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `NdmfProcessor` | NDMF（Modular Avatar 等）の `AvatarProcessor.ProcessAvatar` をリフレクションで複製に適用。書き出し中に `Assets/ZZZ_GeneratedAssets` へ増えた生成アセットだけを後始末 |
 | `ExporterLoc` | エクスポーターの表示言語（英日韓・中国語簡体/繁体）。アプリの `Loc` と同じく 5 言語の組で書く `T(...)`。選択は EditorPrefs に保存し、既定は OS の言語。変換パッケージはアプリのアセンブリを参照できないため別実装 |
 | `ModularAvatarFallback` | NDMF 実行前に MA Merge Armature / Bone Proxy の統合元・統合先を控え、実行後もアバターのボーンの子になっていない衣装・小物を MA と同じ規則（prefix/suffix 付きボーン名の対応、Bone Proxy の配置モード）で付け替える。MA の処理はエラーを投げずに失敗し得るため、その保険。移動したオブジェクトの元パスを返し、`FxDefaultStateBaker` が古いパスのカーブを読み替える |
-| `ExpressionExtractor` | FX コントローラーから BlendShape のみのクリップを表情プリセットとして抽出 |
+| `ExpressionExtractor` | FX コントローラーと追加指定のクリップから BlendShape のみのクリップを表情プリセットとして抽出（FX と同じクリップは除き、名前の重複には番号を付ける） |
+| `ExtraExpressionClips` | 書き出し画面の「追加の表情」の指定（AnimationClip / フォルダ）。アバターの GlobalObjectId ごとに GUID を EditorPrefs へ保存し、フォルダはサブフォルダ内のクリップまで展開 |
 | `VrcDescriptorReader` | VRChat SDK 非依存（リフレクション）で `VRCAvatarDescriptor` の FX コントローラー、Expression Parameters 既定値、Lip Sync・Eyelids 設定を取得 |
 | `FxDefaultStateBaker` | FX の各レイヤーで既定値により到達するステートのモーション（BlendTree は重み付き、1D は補間）から、表示 ON/OFF・BlendShape・マテリアル差し替えの 0 秒時点の値を複製へ適用。BlendShape はシーンの値を優先する設定（既定）では適用しない |
 | `ComponentStripper` | 許可リスト外コンポーネント・Missing Script・EditorOnly オブジェクト・Animator Controller の除去 |

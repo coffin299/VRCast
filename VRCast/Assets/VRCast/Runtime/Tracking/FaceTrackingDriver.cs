@@ -66,6 +66,14 @@ namespace VRCast.Tracking
         private FaceExpression _resolvedExpression = FaceExpression.Neutral;
         private string _resolvedSaved;
 
+        // 割り当て先がある表情のビット列と、それを求めたときの割り当ての設定値（FaceExpression の値で引く）
+        private int _candidates;
+        private readonly string[] _candidateSaved = new string[(int)FaceExpressions.Last + 1];
+        private bool _candidatesValid;
+
+        // 表情ごとのしきい値（FaceExpression の値で引く。毎フレーム設定から詰め直す）
+        private readonly float[] _thresholds = new float[(int)FaceExpressions.Last + 1];
+
         // 腰ボーンと読込時の位置（体全体の移動用）、前フレームに動かしたかどうか
         private Transform _hips;
         private Vector3 _hipsRest;
@@ -318,8 +326,15 @@ namespace VRCast.Tracking
                 return;
             }
 
+            // 表情ごとのしきい値を詰める（スライダーの変更をすぐ反映する）
+            for (var expression = FaceExpressions.First; expression <= FaceExpressions.Last; expression++)
+            {
+                _thresholds[(int)expression] = ExpressionMapping.GetThreshold(_settings, expression);
+            }
+
+            // 割り当て先の無い表情は選ばない（強く出ても、割り当てのある表情を押しのけてニュートラルにしない）
             FaceExpression detected = _detector.Update(
-                _lastFrame.Expression, _lastFrame.MouthOpen, _settings.trackingExpressionThreshold, Time.deltaTime);
+                _lastFrame.Expression, _lastFrame.MouthOpen, _thresholds, Time.deltaTime, GetCandidates());
 
             // 判定結果か割り当ての設定が変わったときだけ切り替える（手動で選んだ表情を毎フレーム上書きしない）
             string saved = ExpressionMapping.GetSaved(_settings, detected);
@@ -341,6 +356,31 @@ namespace VRCast.Tracking
 
             _expressions.Apply(preset);
             _autoPreset = preset;
+        }
+
+        private int GetCandidates()
+        {
+            // 割り当ての設定が前回から変わっていなければ前回の結果を使う（名前の推定を毎フレーム行わない）
+            bool same = _candidatesValid;
+            for (var expression = FaceExpressions.First; same && expression <= FaceExpressions.Last; expression++)
+            {
+                same = _candidateSaved[(int)expression] == ExpressionMapping.GetSaved(_settings, expression);
+            }
+
+            if (same)
+            {
+                return _candidates;
+            }
+
+            // 設定値を控えて求め直す
+            for (var expression = FaceExpressions.First; expression <= FaceExpressions.Last; expression++)
+            {
+                _candidateSaved[(int)expression] = ExpressionMapping.GetSaved(_settings, expression);
+            }
+
+            _candidates = ExpressionMapping.Candidates(_expressions.Names, _settings);
+            _candidatesValid = true;
+            return _candidates;
         }
 
         private void ReleaseAutoExpression()
