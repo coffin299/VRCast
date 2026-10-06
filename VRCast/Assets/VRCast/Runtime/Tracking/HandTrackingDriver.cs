@@ -17,6 +17,11 @@ namespace VRCast.Tracking
         // 映った・消えたときに待機ポーズとの間を切り替える秒数
         private const float FadeSeconds = 0.3f;
 
+        // 手首の可動域（前腕に沿って伸ばした向きからの角度）。曲げ・反らし・横振りと、前腕まわりのひねり
+        // 腕の交差などで手の推定が崩れたときに、手首が人には無理な向きへ折れるのを防ぐ
+        private const float MaxWristBend = 80f;
+        private const float MaxWristTwist = 100f;
+
         // 手の点の番号（MediaPipe Hand Landmarker）: 手首・人差し指・中指・小指の付け根
         private const int WristPoint = 0;
         private const int IndexBasePoint = 5;
@@ -374,9 +379,43 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 現在の向きを目標の向きへ回す回転を、混ぜ具合だけ加える
-            Quaternion delta = target * Quaternion.Inverse(current);
+            // 現在の向き（前腕に沿って伸ばした手首）を目標の向きへ回す回転を可動域に収め、混ぜ具合だけ加える
+            Quaternion delta = LimitWrist(target * Quaternion.Inverse(current), ForearmAxis(rig, hand, middle));
             hand.rotation = Quaternion.Slerp(Quaternion.identity, delta, rig.HandWeight) * hand.rotation;
+        }
+
+        private static Vector3 ForearmAxis(ArmRig rig, Transform hand, Transform middle)
+        {
+            // 前腕の向き（前腕 → 手首、ワールド）。求められなければ手首 → 中指の付け根で代用
+            Transform lower = rig.Bones[LowerArm];
+            Vector3 axis = lower != null && rig.Axes[LowerArm] != Vector3.zero
+                ? lower.rotation * rig.Axes[LowerArm]
+                : middle.position - hand.position;
+            return axis.normalized;
+        }
+
+        private static Quaternion LimitWrist(Quaternion delta, Vector3 forearm)
+        {
+            // 向きが求められなければ角度だけ制限
+            if (forearm == Vector3.zero)
+            {
+                return Quaternion.RotateTowards(Quaternion.identity, delta, MaxWristBend);
+            }
+
+            // 前腕まわりのひねりと、それ以外の曲げに分ける（スイング・ツイスト分解）
+            Vector3 vector = new Vector3(delta.x, delta.y, delta.z);
+            Vector3 projected = Vector3.Project(vector, forearm);
+            var twist = new Quaternion(projected.x, projected.y, projected.z, delta.w);
+            float length = Mathf.Sqrt(twist.x * twist.x + twist.y * twist.y + twist.z * twist.z + twist.w * twist.w);
+
+            // ちょうど 180° 曲げた回転はひねりが定まらないため、ひねり無しとみなす
+            twist = length > 1e-6f ? Quaternion.Normalize(twist) : Quaternion.identity;
+            Quaternion bend = delta * Quaternion.Inverse(twist);
+
+            // それぞれを可動域に収めて組み直す
+            twist = Quaternion.RotateTowards(Quaternion.identity, twist, MaxWristTwist);
+            bend = Quaternion.RotateTowards(Quaternion.identity, bend, MaxWristBend);
+            return bend * twist;
         }
 
         private static bool TryHandFrame(Vector3 forward, Vector3 side, out Quaternion frame)
