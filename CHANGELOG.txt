@@ -4,6 +4,20 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- 書き出しツールに「追加の表情」を追加（FX レイヤーに入っていない表情のアニメーションクリップやフォルダをドラッグして、表情として書き出せます。書き出す前に取り込めるかどうかと理由を一覧で確認できます。指定はアバターごとに保存）
+- 表情の反映で、ウインク・ジト目・ふくれっ面も検出できるように追加（割り当て先の表情が無いものは検出せず、ほかの表情の邪魔をしません）
+- 表情の反映のしきい値を表情ごとに設定できるように変更（トラッキングタブの各表情の割り当ての下にスライダー。これまでの共通の値は、動かすまでそのまま使われます）
+- 出力タブの仮想カメラの状態を表示言語で表示し、「準備できました。Discord などで VRCast Camera を選ぶと映ります」のように次の操作まで案内するよう変更
+
+[English]
+- Added "Additional expressions" to the exporter (drag expression animation clips or folders that are not in the FX layer to export them as expressions; you can check which clips can be used, and why not, before exporting; saved per avatar)
+- Added wink, half-closed eyes and pout to facial expression detection (expressions with nothing assigned are not detected, so they do not get in the way of the others)
+- Changed the facial expression threshold to be set per expression (a slider under each expression's assignment in the Tracking tab; your previous shared value is kept until you move a slider)
+- Changed the virtual camera status in the Output tab to show in your language and tell you what to do next (for example, "Ready. Choose VRCast Camera in Discord, etc. to show the avatar")
+
 ■ 1.6.1 (2026-10-06)
 
 [日本語]

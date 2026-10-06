@@ -33,6 +33,8 @@ namespace VRCast.Converter.Editor
             public int BakedFxClips;
             public bool KeptSceneBlendShapes;
             public int ExpressionCount;
+            public int ExtraExpressionClips;
+            public int ExtraExpressionCount;
             public string LipSyncMode;
             public bool HasBlink;
             public bool HasWink;
@@ -88,8 +90,10 @@ namespace VRCast.Converter.Editor
 
         /// <summary>
         /// keepSceneBlendShapes が true なら、FX の初期状態ではなくシーン上の BlendShape の値を書き出す。
+        /// extraExpressionClips は FX に無い表情として追加するクリップ（BlendShape だけを動かすものを取り込む）。
         /// </summary>
-        public static Report Export(GameObject source, string outputPath, bool keepSceneBlendShapes = true)
+        public static Report Export(GameObject source, string outputPath, bool keepSceneBlendShapes = true,
+            IReadOnlyList<AnimationClip> extraExpressionClips = null)
         {
             // 事前検証に失敗したら例外で中断
             string error = Validate(source);
@@ -157,9 +161,12 @@ namespace VRCast.Converter.Editor
                         keepSceneBlendShapes);
                 }
 
-                // FX から表情プリセットを抽出
-                ExpressionSet expressions = fx != null ? ExpressionExtractor.Extract(fx) : new ExpressionSet();
+                // FX と追加指定のクリップから表情プリセットを抽出
+                ExpressionExtractor.Result extracted = ExpressionExtractor.Extract(fx, extraExpressionClips);
+                ExpressionSet expressions = extracted.Set;
                 report.ExpressionCount = expressions.presets.Length;
+                report.ExtraExpressionClips = extraExpressionClips?.Count ?? 0;
+                report.ExtraExpressionCount = extracted.ExtraAdded;
 
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);

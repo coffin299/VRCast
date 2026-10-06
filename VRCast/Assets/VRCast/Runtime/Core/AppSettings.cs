@@ -53,6 +53,9 @@ namespace VRCast.Core
         public const float MinExpressionThreshold = 0.1f;
         public const float MaxExpressionThreshold = 0.8f;
 
+        // 表情ごとのしきい値が未設定であることを表す値（範囲外の負の値）
+        public const float UseCommonThreshold = -1f;
+
         // 操作パネルの拡大率の範囲
         public const float MinUiScale = 0.75f;
         public const float MaxUiScale = 2f;
@@ -175,6 +178,18 @@ namespace VRCast.Core
         public string expressionSurprise = string.Empty;
         public string expressionAngry = string.Empty;
         public string expressionSad = string.Empty;
+        public string expressionWink = string.Empty;
+        public string expressionSquint = string.Empty;
+        public string expressionPout = string.Empty;
+
+        // 表情ごとのしきい値（UseCommonThreshold = 未設定で trackingExpressionThreshold を使う。旧版の共通値を引き継ぐため）
+        public float thresholdSmile = UseCommonThreshold;
+        public float thresholdSurprise = UseCommonThreshold;
+        public float thresholdAngry = UseCommonThreshold;
+        public float thresholdSad = UseCommonThreshold;
+        public float thresholdWink = UseCommonThreshold;
+        public float thresholdSquint = UseCommonThreshold;
+        public float thresholdPout = UseCommonThreshold;
 
         // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
@@ -477,10 +492,44 @@ namespace VRCast.Core
             expressionAngry ??= string.Empty;
             // 悲しみも同様
             expressionSad ??= string.Empty;
+            // ウインクも同様
+            expressionWink ??= string.Empty;
+            // ジト目も同様
+            expressionSquint ??= string.Empty;
+            // ふくれっ面も同様
+            expressionPout ??= string.Empty;
+            // 表情ごとのしきい値は、未設定（負）のまま残し、設定済みなら範囲内に制限
+            thresholdSmile = SanitizeThreshold(thresholdSmile);
+            // 驚きも同様
+            thresholdSurprise = SanitizeThreshold(thresholdSurprise);
+            // 怒りも同様
+            thresholdAngry = SanitizeThreshold(thresholdAngry);
+            // 悲しみも同様
+            thresholdSad = SanitizeThreshold(thresholdSad);
+            // ウインクも同様
+            thresholdWink = SanitizeThreshold(thresholdWink);
+            // ジト目も同様
+            thresholdSquint = SanitizeThreshold(thresholdSquint);
+            // ふくれっ面も同様
+            thresholdPout = SanitizeThreshold(thresholdPout);
             // null のパス・カメラ名は未設定扱いの空文字へ
             trackerPath ??= string.Empty;
             // カメラ名も同様
             trackerCamera ??= string.Empty;
+        }
+
+        /// <summary>
+        /// 表情ごとのしきい値を補正する（未設定・壊れた値は未設定に、設定済みは範囲内に）。
+        /// </summary>
+        public static float SanitizeThreshold(float value)
+        {
+            // NaN・負の値は未設定扱い、それ以外は範囲内へ
+            if (float.IsNaN(value) || value < 0f)
+            {
+                return UseCommonThreshold;
+            }
+
+            return Mathf.Clamp(value, MinExpressionThreshold, MaxExpressionThreshold);
         }
     }
 }
