@@ -15,7 +15,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / Settings / Log / Credits）で
+    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンを常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
@@ -53,6 +53,7 @@ namespace VRCast.UI
             Tracking,
             Display,
             Output,
+            Remote,
             Settings,
             Log,
             Credits,
@@ -76,6 +77,7 @@ namespace VRCast.UI
         private TrackingSection _trackingSection;
         private DisplaySection _displaySection;
         private OutputSection _outputSection;
+        private RemoteSection _remoteSection;
         private SettingsSection _settingsSection;
         private LogSection _logSection;
         private CreditsSection _creditsSection;
@@ -110,12 +112,13 @@ namespace VRCast.UI
             _spout = spout;
             _avatarSection = new AvatarSection(session, settings, initialPath);
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
-            _animationSection = new AnimationSection(session, remote, settings);
+            _animationSection = new AnimationSection(session, settings);
             _faceSection = new FaceSection(session, microphone, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering);
             _outputSection = new OutputSection(virtualCamera, spout);
+            _remoteSection = new RemoteSection(session, remote, settings);
             _settingsSection = new SettingsSection(settings, rendering, updates, ResetAllSettings);
             _logSection = new LogSection(trackerProcess, tracker, settings);
             _creditsSection = new CreditsSection();
@@ -165,7 +168,7 @@ namespace VRCast.UI
             _virtualCamera.Enabled = _settings.virtualCameraEnabled;
             _spout.Enabled = _settings.spoutEnabled;
             _trackingSection.SyncFromSettings();
-            _animationSection.SyncFromSettings();
+            _remoteSection.SyncFromSettings();
 
             // GPU の優先設定は Windows 側にも書く（反映は次回起動から）
             GpuSelection.ApplyPreference(_settings);
@@ -416,6 +419,9 @@ namespace VRCast.UI
                 case Tab.Output:
                     _outputSection.Draw();
                     break;
+                case Tab.Remote:
+                    _remoteSection.Draw();
+                    break;
                 case Tab.Log:
                     _logSection.Draw();
                     break;
@@ -449,6 +455,8 @@ namespace VRCast.UI
                     return Loc.T("Display", "表示", "표시", "显示", "顯示");
                 case Tab.Output:
                     return Loc.T("Output", "出力", "출력", "输出", "輸出");
+                case Tab.Remote:
+                    return "OSC / HTTP";
                 case Tab.Log:
                     return Loc.T("Debug log", "デバッグログ", "디버그 로그", "调试日志", "偵錯日誌");
                 case Tab.Credits:

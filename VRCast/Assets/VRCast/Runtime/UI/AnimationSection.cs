@@ -4,7 +4,6 @@ using VRCast.Animations;
 using VRCast.Avatars;
 using VRCast.Core;
 using VRCast.Platform;
-using VRCast.Remote;
 
 namespace VRCast.UI
 {
@@ -33,11 +32,6 @@ namespace VRCast.UI
         private PoseController _pose;
         private ExpressionController _expressions;
 
-        // 外部操作の待ち受け（状態の表示用）と、入力途中のポート番号
-        private readonly RemoteControl _remote;
-        private string _oscPortInput;
-        private string _httpPortInput;
-
         // 仮想キーの押下と表示名（描画のたびにデリゲートを作り直さないように控える）
         private static readonly System.Func<int, bool> IsKeyDown = GlobalKeyboard.IsDown;
         private static readonly System.Func<int, string> KeyName = GlobalKeyboard.KeyName;
@@ -49,40 +43,27 @@ namespace VRCast.UI
         private int _lastPollFrame = -1;
         private KeyCapture _keyCapture = new KeyCapture();
 
-        public AnimationSection(AvatarSession session, RemoteControl remote, AppSettings settings)
+        public AnimationSection(AvatarSession session, AppSettings settings)
         {
             _session = session;
             _avatar = new AvatarComponentCache(session);
-            _remote = remote;
             _settings = settings;
-            SyncFromSettings();
-        }
-
-        /// <summary>
-        /// 設定値を直接書き換えた後（全設定のリセット等）に、入力途中の値を設定に合わせ直す。
-        /// </summary>
-        public void SyncFromSettings()
-        {
-            _oscPortInput = _settings.remoteOscPort.ToString();
-            _httpPortInput = _settings.remoteHttpPort.ToString();
         }
 
         public void Draw()
         {
-            // アバター未表示なら案内と外部操作の設定だけ
+            // アバター未表示なら案内だけ
             if (!RefreshControllers())
             {
                 GuiControls.BeginCard(Loc.T("Pose", "ポーズ", "포즈", "姿势", "姿勢"));
                 GuiControls.Hint(Loc.T("Load an avatar first.", "先にアバターを読み込んでください。", "먼저 아바타를 불러오세요.",
                     "请先加载虚拟形象。", "請先載入虛擬形象。"));
                 GuiControls.EndCard();
-                DrawRemote();
                 return;
             }
 
             DrawPose();
             DrawExpressions();
-            DrawRemote();
         }
 
         private bool RefreshControllers()
@@ -277,47 +258,6 @@ namespace VRCast.UI
 
             GUI.enabled = true;
             GUILayout.EndHorizontal();
-        }
-
-        private void DrawRemote()
-        {
-            GuiControls.BeginCard(Loc.T("External control (OSC / HTTP)", "外部から操作（OSC / HTTP）", "외부 조작 (OSC / HTTP)",
-                "外部操作（OSC / HTTP）", "外部操作（OSC / HTTP）"));
-            _settings.remoteControlEnabled = GUILayout.Toggle(
-                _settings.remoteControlEnabled,
-                Loc.T("Allow expression control from Stream Deck, OSC apps, etc.",
-                    "Stream Deck や OSC アプリなどから表情を操作できるようにする",
-                    "Stream Deck·OSC 앱 등에서 표정을 조작할 수 있게 하기",
-                    "允许从 Stream Deck、OSC 应用等操作表情",
-                    "允許從 Stream Deck、OSC 應用程式等操作表情"));
-
-            // 無効時は ON/OFF だけ
-            if (!_settings.remoteControlEnabled)
-            {
-                GuiControls.EndCard();
-                return;
-            }
-
-            // 待ち受けポート（範囲内の数値になったときだけ反映し、待ち受けが開き直す）と状態
-            _settings.remoteOscPort = GuiControls.PortField(
-                Loc.T("OSC port (UDP)", "OSC ポート（UDP）", "OSC 포트 (UDP)", "OSC 端口（UDP）", "OSC 連接埠（UDP）"),
-                ref _oscPortInput, _settings.remoteOscPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
-            GuiControls.Hint(_remote != null ? _remote.OscStatus : string.Empty);
-            _settings.remoteHttpPort = GuiControls.PortField(
-                Loc.T("HTTP port", "HTTP ポート", "HTTP 포트", "HTTP 端口", "HTTP 連接埠"),
-                ref _httpPortInput, _settings.remoteHttpPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
-            GuiControls.Hint(_remote != null ? _remote.HttpStatus : string.Empty);
-
-            // 使い方（コマンドは言語に依らない）
-            GuiControls.Hint(Loc.T(
-                "Only this PC can connect. Expressions are given by name or number (0 = neutral, 1 and up = the order above). Add toggle to return to auto detection when the same expression is chosen again.",
-                "この PC からだけ接続できます。表情は名前か番号（0 = ニュートラル、1 以降 = 上の並び順）で指定します。toggle を付けると、同じ表情をもう一度選んだときに自動検出へ戻ります。",
-                "이 PC에서만 연결할 수 있습니다. 표정은 이름이나 번호 (0 = 무표정, 1 이후 = 위의 순서)로 지정합니다. toggle을 붙이면 같은 표정을 다시 고를 때 자동 감지로 돌아갑니다.",
-                "仅限本机连接。表情可用名称或编号指定（0 = 无表情，1 起 = 上方的顺序）。加上 toggle 后，再次选择同一表情会恢复自动检测。",
-                "僅限本機連線。表情可用名稱或編號指定（0 = 無表情，1 起 = 上方的順序）。加上 toggle 後，再次選擇同一表情會恢復自動偵測。"));
-            GuiControls.Hint($"HTTP: http://127.0.0.1:{_settings.remoteHttpPort}/expression?name=Smile&toggle=1  /expression?index=1  /neutral  /auto  /status");
-            GuiControls.Hint("OSC: /vrcast/expression \"Smile\" | 1   /vrcast/toggle/Smile   /vrcast/neutral   /vrcast/auto");
-            GuiControls.EndCard();
         }
 
         private void HandleCapture()
