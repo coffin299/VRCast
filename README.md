@@ -55,7 +55,9 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 ## 動作環境
 
 - Windows 10 / 11 (x64)
-- 開発時: Unity **2022.3.22f1**（VRChat SDK と同一バージョン。AssetBundle 互換性のため固定）
+- アバターの書き出し: Unity **2022.3.22f1**（VRChat SDK と同一バージョン）
+- VRCast 本体の開発: Unity **2022.3 LTS の最新版**（2022.3.62f3 以降。AssetBundle を読めるよう 2022.3 系列にとどめる。Unity 6 は不可）
+  - ビルドは IL2CPP。Unity Hub で「Windows Build Support (IL2CPP)」モジュールと、Visual Studio の「C++ によるデスクトップ開発」ワークロードを入れておく
 - Render Pipeline: Built-in
 
 ## 使い方
@@ -297,13 +299,14 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 ## ビルド・テスト
 
 Unity Hub で `VRCast/` フォルダを開くか、以下をコマンドラインで実行する（リポジトリ直下で実行し、Editor は閉じておく）。
+Editor のパスのバージョンは `VRCast/ProjectSettings/ProjectVersion.txt` に合わせる。
 
 ```powershell
 # EditMode テスト
-& "C:\Program Files\Unity\Hub\Editor\2022.3.22f1\Editor\Unity.exe" -batchmode -projectPath .\VRCast -runTests -testPlatform EditMode -testResults .\VRCast\Logs\editmode.xml -logFile .\VRCast\Logs\test.log
+& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -projectPath .\VRCast -runTests -testPlatform EditMode -testResults .\VRCast\Logs\editmode.xml -logFile .\VRCast\Logs\test.log
 
-# Windows ビルド (出力: VRCast/Builds/Windows/VRCast.exe)
-& "C:\Program Files\Unity\Hub\Editor\2022.3.22f1\Editor\Unity.exe" -batchmode -quit -projectPath .\VRCast -executeMethod VRCast.Editor.Build.VRCastBuild.BuildWindows -logFile .\VRCast\Logs\build.log
+# Windows ビルド (出力: VRCast/Builds/Windows/VRCast.exe、IL2CPP のため数分かかる)
+& "C:\Program Files\Unity\Hub\Editor\2022.3.62f3\Editor\Unity.exe" -batchmode -quit -projectPath .\VRCast -executeMethod VRCast.Editor.Build.VRCastBuild.BuildWindows -logFile .\VRCast\Logs\build.log
 ```
 
 Editor 上ではメニュー `VRCast > Build > Windows x64` からもビルドできる。

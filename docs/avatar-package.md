@@ -245,6 +245,6 @@ Converter が除外する。Freeze To World は対象外（通常の Constraint 
 
 ## AssetBundle を使う場合の既知の問題
 
-- Unity バージョン間で互換性がない（書き出し・Runtime とも 2022.3.22f1 に固定）。
+- 別系列の Unity との互換性はない（書き出しは 2022.3.22f1、Runtime は同じ 2022.3 系列の最新 LTS。系列が違えば読込時に警告）。
 - シェーダーバリアントが bundle ビルド時に削られるとマゼンタ表示になる。
 - bundle の中身は Unity 依存のため、将来別フォーマット（glTF/VRM 等）へ移行する可能性がある。

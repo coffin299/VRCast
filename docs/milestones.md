@@ -16,7 +16,7 @@
 
 ## Milestone 0 — プロジェクト基盤
 
-- Unity 2022.3.22f1 プロジェクト（`VRCast/`）
+- Unity 2022.3 LTS プロジェクト（`VRCast/`。当初は 2022.3.22f1、1.5.0 から 2022.3 系列の最新 LTS + IL2CPP）
 - Assembly 分離: `VRCast.Runtime` / `VRCast.Editor` / `VRCast.Tests.EditMode`
 - `VRCastLog`、`AppSettings` / `SettingsStore`、`AppBootstrap`
 - `VRCastBuild`（Windows x64）

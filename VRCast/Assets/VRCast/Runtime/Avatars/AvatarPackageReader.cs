@@ -64,8 +64,8 @@ namespace VRCast.Avatars
                     // bundle をキャッシュへ展開（ハッシュ検証込み）
                     string bundlePath = ExtractBundle(zip, manifest, cacheRoot);
 
-                    // Unity バージョン差は読めない可能性があるため警告
-                    if (manifest.unityVersion != Application.unityVersion)
+                    // 系列（2022.3 等）が違うと読めない可能性があるため警告（同じ系列内のパッチ版の差は互換）
+                    if (!IsSameUnityLine(manifest.unityVersion, Application.unityVersion))
                     {
                         VRCastLog.Warning(LogCategory,
                             $"Unity version mismatch: package {manifest.unityVersion}, runtime {Application.unityVersion}.");
@@ -79,6 +79,23 @@ namespace VRCast.Avatars
                 // ZIP として壊れている
                 throw new AvatarPackageException("Not a valid package (corrupt ZIP).", e);
             }
+        }
+
+        /// <summary>
+        /// Unity のバージョンが同じ系列（"2022.3.22f1" と "2022.3.62f3" のように先頭 2 つの数字が同じ）なら true。
+        /// </summary>
+        public static bool IsSameUnityLine(string a, string b)
+        {
+            return string.Equals(UnityLineOf(a), UnityLineOf(b), StringComparison.Ordinal);
+        }
+
+        private static string UnityLineOf(string version)
+        {
+            // 「年.マイナー」までを取り出す（形式が違えば全体で比べる）
+            string value = version ?? string.Empty;
+            int first = value.IndexOf('.');
+            int second = first >= 0 ? value.IndexOf('.', first + 1) : -1;
+            return second > 0 ? value.Substring(0, second) : value;
         }
 
         private static void ValidateEntries(ZipArchive zip)

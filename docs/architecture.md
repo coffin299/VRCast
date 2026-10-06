@@ -12,7 +12,8 @@
 
 | 項目 | 選定 | 理由 |
 | :--- | :--- | :--- |
-| Unity | 2022.3.22f1 | VRChat SDK と同一。AssetBundle は作成・読込で同一バージョンが必要 |
+| Unity（書き出し側） | 2022.3.22f1 | VRChat SDK と同一（アバターのプロジェクトで使う） |
+| Unity（VRCast 本体） | 2022.3 LTS の最新版（2022.3.62f3 以降） | AssetBundle は同じ系列（2022.3）なら読める。Unity 6 などの別系列はシェーダーの互換が保証されないため使わない。スクリプトは IL2CPP（CPU 負荷を下げ、Mono のランタイムを同梱しない） |
 | Render Pipeline | Built-in | lilToon / Poiyomi 等 VRChat 向けシェーダーが Built-in 前提 |
 | UI | IMGUI (標準モジュール) | 追加パッケージ不要。UI 作り込みは後回し |
 | 入力 | Input Manager (旧) | 追加パッケージ不要 |

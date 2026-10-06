@@ -33,7 +33,7 @@ namespace VRCast.Editor.Build
         private const string ProductName = "VRCast";
 
         // アプリのバージョン（CHANGELOG.txt と converter の package.json の version に合わせる）
-        private const string AppVersion = "1.4.0";
+        private const string AppVersion = "1.5.0";
 
         // 初回起動時のウィンドウサイズ（以降は settings.json の値を使う）
         private const int DefaultWidth = 1280;
@@ -76,6 +76,13 @@ namespace VRCast.Editor.Build
 
             // VRChat / VCC プロジェクトと同じ Linear にする（Gamma だとアバターの陰影が VRChat より暗くなる）
             PlayerSettings.colorSpace = ColorSpace.Linear;
+
+            // C# を C++ に変換して実行する IL2CPP にする（揺れもの・トラッキング等の CPU 負荷を下げ、Mono のランタイムを同梱しない）。
+            // ビルドには Unity の「Windows Build Support (IL2CPP)」と Visual Studio の C++ ツールが必要。
+            // ランタイムはリフレクションを使わないため、コードの削減は Low（使っていない部分だけ除く）で足りる
+            PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone, ScriptingImplementation.IL2CPP);
+            PlayerSettings.SetIl2CppCompilerConfiguration(NamedBuildTarget.Standalone, Il2CppCompilerConfiguration.Release);
+            PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Standalone, ManagedStrippingLevel.Low);
 
             // アプリアイコンを設定
             ApplyAppIcon();
