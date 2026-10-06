@@ -18,12 +18,22 @@ namespace VRCast.UI
         private static readonly string[] VowelLabelsJapanese = { "あ", "い", "う", "え", "お" };
         private static readonly string[] VowelLabelsKorean = { "아", "이", "우", "에", "오" };
 
+        // BlendShape の上限の一覧に一度に出す行数（多いと操作パネルが重くなるため、超えたら検索で絞り込んでもらう）
+        private const int MaxLimitRows = 40;
+
+        private readonly AvatarSession _session;
         private readonly AvatarComponentCache _avatar;
         private readonly MicrophoneInput _microphone;
         private readonly AppSettings _settings;
 
+        // BlendShape の上限の一覧の表示条件（0 = 顔のメッシュ、1 = その他のメッシュ・検索文字列・上限付きだけ）
+        private int _limitGroup;
+        private string _limitSearch = string.Empty;
+        private bool _limitedOnly;
+
         public FaceSection(AvatarSession session, MicrophoneInput microphone, AppSettings settings)
         {
+            _session = session;
             _avatar = new AvatarComponentCache(session);
             _microphone = microphone;
             _settings = settings;
@@ -34,6 +44,7 @@ namespace VRCast.UI
             _avatar.Refresh();
             DrawPhysicsAndBlink();
             DrawLipSync();
+            DrawBlendShapeLimits();
         }
 
         private void DrawPhysicsAndBlink()
@@ -144,6 +155,112 @@ namespace VRCast.UI
                 GuiControls.Hint(Loc.T("Vowel", "母音", "모음", "元音", "母音") + $": {vowel}"
                     + $"    F1 {formants.x:F0} Hz / F2 {formants.y:F0} Hz");
             }
+        }
+
+        private void DrawBlendShapeLimits()
+        {
+            // アバター未表示なら出さない
+            var limiter = _avatar.Get<BlendShapeLimiter>();
+            if (limiter == null)
+            {
+                return;
+            }
+
+            GuiControls.BeginCard(Loc.T("Blend shape limits", "BlendShape の上限", "BlendShape 상한", "BlendShape 上限",
+                "BlendShape 上限"));
+            GuiControls.Hint(Loc.T(
+                "Caps how far each blend shape moves (100 = no limit). Lower it when, for example, the eyes disappear while blinking. Saved per avatar.",
+                "各 BlendShape が動く最大値です（100 = 制限なし）。まばたきで目が消える等のときに下げます。アバターごとに保存されます。",
+                "각 BlendShape가 움직이는 최대값입니다 (100 = 제한 없음). 눈을 깜빡일 때 눈이 사라지는 경우 등에 낮춥니다. 아바타별로 저장됩니다.",
+                "每个 BlendShape 可动到的最大值（100 = 不限制）。例如眨眼时眼睛消失时调低。按虚拟形象分别保存。",
+                "每個 BlendShape 可動到的最大值（100 = 不限制）。例如眨眼時眼睛消失時調低。依虛擬形象分別儲存。"));
+
+            // 顔のメッシュ（まぶた・リップシンクの対象）か、その他のメッシュか
+            string[] groups =
+            {
+                Loc.T("Face mesh", "顔のメッシュ", "얼굴 메시", "面部网格", "臉部網格"),
+                Loc.T("Other meshes", "その他のメッシュ", "기타 메시", "其他网格", "其他網格"),
+            };
+            _limitGroup = GuiControls.EnumSelector(Loc.T("Meshes", "対象", "대상", "对象", "對象"), groups, _limitGroup);
+
+            // 名前で絞り込み（大文字・小文字は区別しない）
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(Loc.T("Search", "検索", "검색", "搜索", "搜尋"), GUILayout.ExpandWidth(false));
+            _limitSearch = GUILayout.TextField(_limitSearch, GuiControls.Shrinkable);
+            GUILayout.EndHorizontal();
+            _limitedOnly = GUILayout.Toggle(_limitedOnly, Loc.T(
+                $"Limited only ({limiter.LimitedCount})", $"上限を付けたものだけ（{limiter.LimitedCount} 件）",
+                $"상한을 설정한 것만 ({limiter.LimitedCount}개)", $"仅显示已设上限的（{limiter.LimitedCount} 个）",
+                $"僅顯示已設上限的（{limiter.LimitedCount} 個）"));
+
+            // 条件に合う BlendShape をスライダーで並べる（行数の上限を超えた分は件数だけ出す）
+            bool face = _limitGroup == 0;
+            bool changed = false;
+            int shown = 0;
+            int hidden = 0;
+            foreach (BlendShapeLimiter.Shape shape in limiter.Shapes)
+            {
+                // 対象・上限付きだけ・検索文字列で絞り込む
+                if (shape.IsFace != face || (_limitedOnly && !shape.IsLimited)
+                    || (_limitSearch.Length > 0 && shape.Name.IndexOf(_limitSearch, StringComparison.OrdinalIgnoreCase) < 0))
+                {
+                    continue;
+                }
+
+                // 行数の上限を超えた分は数えるだけ
+                if (shown >= MaxLimitRows)
+                {
+                    hidden++;
+                    continue;
+                }
+
+                // その他のメッシュはどのメッシュの BlendShape か分かるようにメッシュ名を付ける
+                shown++;
+                string label = face ? shape.Name : $"{shape.Renderer.name} / {shape.Name}";
+                float max = GuiControls.Slider(label, shape.Max, BlendShapeLimit.MinWeight, BlendShapeLimit.MaxWeight, "F0");
+                if (!Mathf.Approximately(max, shape.Max))
+                {
+                    limiter.SetMax(shape, Mathf.Round(max));
+                    changed = true;
+                }
+            }
+
+            // 1 件も無ければ理由を出す
+            if (shown == 0)
+            {
+                GuiControls.Hint(face && !limiter.HasFaceMesh
+                    ? Loc.T("No face mesh is set on this avatar (see Other meshes)",
+                        "このアバターには顔のメッシュの設定がありません（その他のメッシュを見てください）",
+                        "이 아바타에는 얼굴 메시 설정이 없습니다 (기타 메시를 확인하세요)",
+                        "此虚拟形象未设置面部网格（请查看其他网格）", "此虛擬形象未設定臉部網格（請查看其他網格）")
+                    : Loc.T("No matching blend shapes", "該当する BlendShape がありません", "해당하는 BlendShape가 없습니다",
+                        "没有符合的 BlendShape", "沒有符合的 BlendShape"));
+            }
+
+            // 出し切れなかった分は絞り込みを促す
+            if (hidden > 0)
+            {
+                GuiControls.Hint(Loc.T($"{hidden} more. Narrow down with Search.",
+                    $"ほかに {hidden} 件あります。検索で絞り込んでください。", $"그 외 {hidden}개가 있습니다. 검색으로 좁혀 주세요.",
+                    $"还有 {hidden} 个。请用搜索缩小范围。", $"還有 {hidden} 個。請用搜尋縮小範圍。"));
+            }
+
+            // 上限をすべて外す
+            if (limiter.LimitedCount > 0
+                && GUILayout.Button(Loc.T("Remove all limits", "上限をすべて解除", "상한 모두 해제", "解除全部上限", "解除全部上限"),
+                    GuiControls.Shrinkable))
+            {
+                limiter.ClearAll();
+                changed = true;
+            }
+
+            // 変えたらこのアバターの分として記録する（保存は終了時）
+            if (changed && _session.Current != null)
+            {
+                _settings.SetBlendShapeLimits(_session.Current.SourcePath, limiter.Export());
+            }
+
+            GuiControls.EndCard();
         }
 
         private void DrawDeviceSelector()
