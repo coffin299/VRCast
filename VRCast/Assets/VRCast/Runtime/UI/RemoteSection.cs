@@ -14,7 +14,7 @@ namespace VRCast.UI
     public class RemoteSection
     {
         // コマンド行の種類の列の幅と、コピーボタンの幅
-        private const float KindWidth = 50f;
+        private const float KindWidth = 60f;
         private const float CopyButtonWidth = 80f;
 
         // 「コピーしました」を出しておく秒数
@@ -64,13 +64,15 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("External control (OSC / HTTP)", "外部から操作（OSC / HTTP）", "외부 조작 (OSC / HTTP)",
                 "外部操作（OSC / HTTP）", "外部操作（OSC / HTTP）"));
+            // チェックボックスの文字は折り返さずカードの最小幅になるため短くし、説明は折り返す補足文に出す
             _settings.remoteControlEnabled = GUILayout.Toggle(
                 _settings.remoteControlEnabled,
-                Loc.T("Allow expression control from Stream Deck, OSC apps, etc.",
-                    "Stream Deck や OSC アプリなどから表情を操作できるようにする",
-                    "Stream Deck·OSC 앱 등에서 표정을 조작할 수 있게 하기",
-                    "允许从 Stream Deck、OSC 应用等操作表情",
-                    "允許從 Stream Deck、OSC 應用程式等操作表情"));
+                Loc.T("Enable external control", "外部から操作する", "외부 조작 사용", "启用外部操作", "啟用外部操作"));
+            GuiControls.Hint(Loc.T("Switch expressions from Stream Deck, OSC apps, curl, etc.",
+                "Stream Deck や OSC アプリ、curl などから表情を切り替えられます。",
+                "Stream Deck·OSC 앱·curl 등에서 표정을 전환할 수 있습니다.",
+                "可从 Stream Deck、OSC 应用、curl 等切换表情。",
+                "可從 Stream Deck、OSC 應用程式、curl 等切換表情。"));
 
             // 待ち受けポート（範囲内の数値になったときだけ反映し、待ち受けが開き直す）と状態
             _settings.remoteOscPort = GuiControls.PortField(
@@ -81,6 +83,14 @@ namespace VRCast.UI
                 GuiControls.Hint(_remote.OscStatus);
             }
 
+            // OSC アプリに入力する送信先（ホストとポート）
+            DrawCommand(Loc.T("Send to", "送信先", "대상", "发送到", "傳送到"), $"127.0.0.1:{_settings.remoteOscPort}");
+            GuiControls.Hint(Loc.T("In your OSC app, set the host to 127.0.0.1 and the port to the OSC port above.",
+                "OSC アプリでは、送信先のホストに 127.0.0.1、ポートに上の OSC ポートを設定します。",
+                "OSC 앱에서는 대상 호스트를 127.0.0.1, 포트를 위의 OSC 포트로 설정합니다.",
+                "在 OSC 应用中，将目标主机设为 127.0.0.1，端口设为上方的 OSC 端口。",
+                "在 OSC 應用程式中，將目標主機設為 127.0.0.1，連接埠設為上方的 OSC 連接埠。"));
+
             _settings.remoteHttpPort = GuiControls.PortField(
                 Loc.T("HTTP port", "HTTP ポート", "HTTP 포트", "HTTP 端口", "HTTP 連接埠"),
                 ref _httpPortInput, _settings.remoteHttpPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
@@ -88,6 +98,25 @@ namespace VRCast.UI
             {
                 GuiControls.Hint(_remote.HttpStatus);
             }
+
+            // HTTP の接続先 URL（この後ろに /expression?name=… などのコマンドを付ける）
+            DrawCommand("URL", RemoteCommandText.HttpPath(_settings.remoteHttpPort, "/"));
+            GuiControls.Hint(Loc.T(
+                "Commands are this URL followed by a path such as expression?name=Smile (see the list below). In Stream Deck, put the full URL in an action that opens a URL in the background (for example \"Website\" with \"GET request in background\").",
+                "コマンドはこの URL の後ろに expression?name=Smile のようなパスを付けたものです（下の一覧を参照）。Stream Deck では、URL をバックグラウンドで開くアクション（例:「Web サイト」の「バックグラウンドで GET」）に URL 全体を設定します。",
+                "명령은 이 URL 뒤에 expression?name=Smile 같은 경로를 붙인 것입니다 (아래 목록 참조). Stream Deck에서는 URL을 백그라운드로 여는 액션 (예: \"웹사이트\"의 \"백그라운드에서 GET\")에 URL 전체를 설정합니다.",
+                "命令是在此 URL 后加上 expression?name=Smile 等路径（参见下方列表）。在 Stream Deck 中，将完整 URL 设置到在后台打开 URL 的操作（例如“网站”的“在后台发送 GET 请求”）。",
+                "命令是在此 URL 後加上 expression?name=Smile 等路徑（參見下方列表）。在 Stream Deck 中，將完整 URL 設定到在背景開啟 URL 的動作（例如「網站」的「在背景傳送 GET 請求」）。"));
+
+            // 動作確認用にブラウザで状態を開く（アドレス欄から開いた扱いになるので拒否されない。OFF・待ち受け前は押せない）
+            GUI.enabled = _settings.remoteControlEnabled;
+            if (GUILayout.Button(Loc.T("Open status in browser", "ブラウザで状態を開く（動作確認）", "브라우저에서 상태 열기 (동작 확인)",
+                    "在浏览器中打开状态（测试）", "在瀏覽器中開啟狀態（測試）"), GUILayout.ExpandWidth(false)))
+            {
+                Application.OpenURL(RemoteCommandText.HttpPath(_settings.remoteHttpPort, "/status"));
+            }
+
+            GUI.enabled = true;
 
             // 接続できる範囲と安全上の扱い
             GuiControls.Hint(Loc.T(
@@ -144,18 +173,13 @@ namespace VRCast.UI
             }
 
             // toggle を付けるか（付けると、固定中の同じ表情をもう一度送ったときに自動検出へ戻る）
-            _toggle = GUILayout.Toggle(_toggle, Loc.T(
-                "Add toggle (sending the same expression again returns to auto detection)",
-                "toggle を付ける（同じ表情をもう一度送ると自動検出に戻る）",
-                "toggle 붙이기 (같은 표정을 다시 보내면 자동 감지로 복귀)",
-                "加上 toggle（再次发送同一表情会恢复自动检测）",
-                "加上 toggle（再次傳送同一表情會恢復自動偵測）"));
+            _toggle = GUILayout.Toggle(_toggle, Loc.T("Add toggle", "toggle を付ける", "toggle 붙이기", "加上 toggle", "加上 toggle"));
             GuiControls.Hint(Loc.T(
-                "Commands use the expression name, so they keep working if the order changes. OSC apps send the address, plus the text in quotes as a string argument when shown.",
-                "コマンドは表情の名前で指定するため、並び順が変わっても使えます。OSC アプリにはアドレスを、\"\" 付きの文字があればそれを文字列の引数として設定してください。",
-                "명령은 표정 이름으로 지정하므로 순서가 바뀌어도 사용할 수 있습니다. OSC 앱에는 주소를, \"\" 안의 글자가 있으면 문자열 인수로 설정하세요.",
-                "命令按表情名称指定，顺序改变后仍可使用。在 OSC 应用中设置地址；如有带引号的文字，请将其作为字符串参数。",
-                "命令依表情名稱指定，順序改變後仍可使用。在 OSC 應用程式中設定位址；如有帶引號的文字，請將其作為字串參數。"));
+                "With toggle, sending the same expression again returns to auto detection. Commands use the expression name, so they keep working if the order changes. OSC apps send the address, plus the text in quotes as a string argument when shown.",
+                "toggle 付きは、同じ表情をもう一度送ると自動検出に戻ります。コマンドは表情の名前で指定するため、並び順が変わっても使えます。OSC アプリにはアドレスを、\"\" 付きの文字があればそれを文字列の引数として設定してください。",
+                "toggle을 붙이면 같은 표정을 다시 보낼 때 자동 감지로 돌아갑니다. 명령은 표정 이름으로 지정하므로 순서가 바뀌어도 사용할 수 있습니다. OSC 앱에는 주소를, \"\" 안의 글자가 있으면 문자열 인수로 설정하세요.",
+                "加上 toggle 后，再次发送同一表情会恢复自动检测。命令按表情名称指定，顺序改变后仍可使用。在 OSC 应用中设置地址；如有带引号的文字，请将其作为字符串参数。",
+                "加上 toggle 後，再次傳送同一表情會恢復自動偵測。命令依表情名稱指定，順序改變後仍可使用。在 OSC 應用程式中設定位址；如有帶引號的文字，請將其作為字串參數。"));
 
             // 今の状態（選択中の表情と、固定中か）
             string current = expressions.Current >= 0
