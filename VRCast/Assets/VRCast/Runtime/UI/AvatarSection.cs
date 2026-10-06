@@ -9,7 +9,8 @@ using VRCast.Platform;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Avatar タブ（.vrcaster のドロップ・ファイル選択・パス入力による読み込み、再読み込み・解除と、表示中アバターの情報）。
+    /// Avatar タブ（.vrcaster のドロップ・ファイル選択・パス入力による読み込み、再読み込み・解除、
+    /// 最近使ったアバターへの切り替えと、表示中アバターの情報）。
     /// 読み込む前のファイル確認の失敗は表示言語に合わせて表示する。
     /// </summary>
     public class AvatarSection
@@ -26,22 +27,38 @@ namespace VRCast.UI
         // 参照ボタンの幅
         private const float BrowseWidth = 90f;
 
+        // 最近使ったアバターの「一覧から外す」ボタンの幅
+        private const float ForgetWidth = 28f;
+
+        // 最近使ったアバターのファイルの有無を調べ直す間隔（秒。OnGUI は 1 フレームに複数回呼ばれるため毎回は調べない）
+        private const float ExistsCheckInterval = 2f;
+
         private readonly AvatarSession _session;
+        private readonly AppSettings _settings;
         private string _pathInput;
 
         // 直前の確認結果と、対象のファイル名（表示時に言語へ合わせて文言を作る）
         private InputError _inputError;
         private string _inputName = string.Empty;
 
-        public AvatarSection(AvatarSession session, string initialPath)
+        // ファイルが見つからない最近使ったアバターのパスと、最後に調べた時刻
+        private readonly HashSet<string> _missingRecent = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+        private float _existsCheckedAt = float.NegativeInfinity;
+
+        // 「×」で一覧から外すアバター（レイアウト計算と描画で項目数がずれないよう、次のレイアウト計算時に消す）
+        private string _pendingForget;
+
+        public AvatarSection(AvatarSession session, AppSettings settings, string initialPath)
         {
             _session = session;
+            _settings = settings;
             _pathInput = initialPath ?? string.Empty;
         }
 
         public void Draw()
         {
             DrawLoader();
+            DrawRecent();
             DrawInfo();
         }
 
@@ -113,6 +130,105 @@ namespace VRCast.UI
             GUI.enabled = true;
             GUILayout.EndHorizontal();
             GuiControls.EndCard();
+        }
+
+        private void DrawRecent()
+        {
+            // 前回「×」を押したアバターを、項目数が決まる前（レイアウト計算時）に消す
+            if (_pendingForget != null && Event.current.type == EventType.Layout)
+            {
+                _settings.ForgetAvatar(_pendingForget);
+                _pendingForget = null;
+            }
+
+            // 一度も読み込んでいなければ表示しない
+            List<string> recent = _settings.RecentAvatars();
+            if (recent.Count == 0)
+            {
+                return;
+            }
+
+            GuiControls.BeginCard(Loc.T("Recent avatars", "最近使ったアバター", "최근 사용한 아바타", "最近使用的虚拟形象",
+                "最近使用的虛擬形象"));
+            GuiControls.Hint(Loc.T(
+                "Click to switch. Camera, light and pose are remembered for each avatar.",
+                "クリックで切り替えます。カメラ・ライト・待機ポーズはアバターごとに記憶されます。",
+                "클릭하여 전환합니다. 카메라·조명·대기 포즈는 아바타마다 기억됩니다.",
+                "点击即可切换。相机、灯光和待机姿势会按虚拟形象分别记住。",
+                "點擊即可切換。相機、燈光和待機姿勢會依虛擬形象分別記住。"));
+
+            RefreshMissing(recent);
+            string current = _session.Current?.SourcePath;
+            foreach (string path in recent)
+            {
+                GUILayout.BeginHorizontal();
+
+                // 表示中のアバターには印を付け、ファイルが無いものは押せなくする
+                bool isCurrent = string.Equals(path, current, System.StringComparison.OrdinalIgnoreCase);
+                bool missing = _missingRecent.Contains(path);
+                GUI.enabled = !_session.IsLoading && !isCurrent && !missing;
+                if (GUILayout.Button(DescribeRecent(path, isCurrent, missing), GuiControls.Shrinkable))
+                {
+                    _pathInput = path;
+                    TryLoad(path);
+                }
+
+                // 一覧から外す（記憶したカメラ・ライト等も消える）。表示中のアバターはすぐ記録し直されるため外せない
+                GUI.enabled = !_session.IsLoading && !isCurrent;
+                if (GUILayout.Button("×", GUILayout.Width(ForgetWidth)))
+                {
+                    _pendingForget = path;
+                }
+
+                GUI.enabled = true;
+                GUILayout.EndHorizontal();
+            }
+
+            GuiControls.Hint(Loc.T(
+                "× removes the avatar from this list and forgets its camera, light and pose.",
+                "× で一覧から外します（記憶したカメラ・ライト・待機ポーズも消えます）。",
+                "×로 목록에서 제거합니다 (기억한 카메라·조명·대기 포즈도 지워집니다).",
+                "点击 × 从列表中移除（记住的相机、灯光和待机姿势也会清除）。",
+                "點擊 × 從清單中移除（記住的相機、燈光和待機姿勢也會清除）。"));
+            GuiControls.EndCard();
+        }
+
+        private void RefreshMissing(List<string> recent)
+        {
+            // 一定間隔でだけファイルの有無を調べ直す
+            if (Time.unscaledTime - _existsCheckedAt < ExistsCheckInterval)
+            {
+                return;
+            }
+
+            _existsCheckedAt = Time.unscaledTime;
+            _missingRecent.Clear();
+            foreach (string path in recent)
+            {
+                // 移動・削除されたファイルを記録
+                if (!File.Exists(path))
+                {
+                    _missingRecent.Add(path);
+                }
+            }
+        }
+
+        private static string DescribeRecent(string path, bool isCurrent, bool missing)
+        {
+            // 「名前（フォルダ名）」で同じ名前の別ファイルも見分けられるようにする
+            string name = Path.GetFileNameWithoutExtension(FileNameOf(path));
+            string folder = FileNameOf(Path.GetDirectoryName(path) ?? string.Empty);
+            string label = string.IsNullOrEmpty(folder) ? name : $"{name}  ({folder})";
+
+            // 表示中・見つからない場合は後ろに添える
+            if (isCurrent)
+            {
+                return label + Loc.T(" - showing", " - 表示中", " - 표시 중", " - 显示中", " - 顯示中");
+            }
+
+            return missing
+                ? label + Loc.T(" - not found", " - 見つかりません", " - 찾을 수 없음", " - 找不到", " - 找不到")
+                : label;
         }
 
         /// <summary>

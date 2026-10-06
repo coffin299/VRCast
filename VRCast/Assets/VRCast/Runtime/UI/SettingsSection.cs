@@ -331,11 +331,16 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("Reset", "リセット", "초기화", "重置", "重設"));
             GuiControls.Hint(Loc.T(
-                "Restore every setting to its default (window size, the last avatar and each avatar's camera are kept)",
-                "全ての設定を初期状態に戻します（ウィンドウサイズ・最後に開いたアバター・アバターごとのカメラは残ります）",
-                "모든 설정을 초기 상태로 되돌립니다 (창 크기, 마지막으로 연 아바타, 아바타별 카메라는 유지됩니다)",
-                "将所有设置恢复为默认值（窗口大小、上次打开的虚拟形象和各虚拟形象的相机会保留）",
-                "將所有設定恢復為預設值（視窗大小、上次開啟的虛擬形象和各虛擬形象的相機會保留）"));
+                "Restore every setting to its default (window size, recent avatars, each avatar's camera and " +
+                "other avatars' light and pose are kept)",
+                "全ての設定を初期状態に戻します（ウィンドウサイズ・最近使ったアバター・アバターごとのカメラと、" +
+                "表示中以外のアバターに記憶したライト・待機ポーズは残ります）",
+                "모든 설정을 초기 상태로 되돌립니다 (창 크기, 최근 사용한 아바타, 아바타별 카메라와 " +
+                "표시 중이 아닌 아바타에 기억한 조명·대기 포즈는 유지됩니다)",
+                "将所有设置恢复为默认值（窗口大小、最近使用的虚拟形象、各虚拟形象的相机，" +
+                "以及当前未显示的虚拟形象记住的灯光和待机姿势会保留）",
+                "將所有設定恢復為預設值（視窗大小、最近使用的虛擬形象、各虛擬形象的相機，" +
+                "以及目前未顯示的虛擬形象記住的燈光和待機姿勢會保留）"));
 
             // 1 段階目: リセットを押すと確認を出す
             if (!_confirmingReset)

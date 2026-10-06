@@ -68,7 +68,13 @@ namespace VRCast.UI
                 return;
             }
 
-            // アバターの向き（全アバター共通）
+            GuiControls.Hint(Loc.T("Body yaw and arm pose are remembered for each avatar.",
+                "体の向きと腕のポーズはアバターごとに記憶されます。",
+                "몸 방향과 팔 포즈는 아바타마다 기억됩니다.",
+                "身体朝向和手臂姿势会按虚拟形象分别记住。",
+                "身體朝向和手臂姿勢會依虛擬形象分別記住。"));
+
+            // アバターの向き（非 Humanoid でも有効）
             _pose.BodyYaw = GuiControls.Slider(Loc.T("Body yaw", "体の向き", "몸 방향", "身体朝向", "身體朝向"), _pose.BodyYaw, -180f, 180f);
 
             // 非 Humanoid は腕の操作不可
