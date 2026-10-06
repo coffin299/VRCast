@@ -154,6 +154,16 @@
     如果 FX 层会随服装切换驱动收缩用 BlendShape 等，关闭后会按进入 VRChat 时的初始状态值导出。</p>
   <p class="note zh-hant">BlendShape 會按 Unity 場景中設定的值匯出（<span class="ui">優先使用場景中的 BlendShape 值</span>，預設開啟）。
     如果 FX 層會隨服裝切換驅動收縮用 BlendShape 等，關閉後會按進入 VRChat 時的初始狀態值匯出。</p>
+  <p class="note ja">FX レイヤーにある表情クリップは自動で書き出されます。FX に入っていない表情（昔のアバターに付属していた表情アニメーションなど）は、
+    書き出し画面の <span class="ui">追加の表情</span> にアニメーションクリップかフォルダをドラッグすると表情として書き出せます（ブレンドシェイプだけを動かすクリップが対象。指定はアバターごとに保存）。</p>
+  <p class="note en">Expression clips in the FX layer are exported automatically. To add expressions that are not in the FX layer (such as expression animations bundled with older avatars),
+    drag animation clips or folders onto <span class="ui">Additional expressions</span> in the exporter (only clips that move blend shapes alone are used; saved per avatar).</p>
+  <p class="note ko">FX 레이어에 있는 표정 클립은 자동으로 내보내집니다. FX에 없는 표정(예전 아바타에 포함된 표정 애니메이션 등)은
+    내보내기 화면의 <span class="ui">추가 표정</span>에 애니메이션 클립이나 폴더를 드래그하면 표정으로 내보낼 수 있습니다 (블렌드셰이프만 움직이는 클립이 대상, 아바타별로 저장).</p>
+  <p class="note zh-hans">FX 层中的表情剪辑会自动导出。不在 FX 中的表情（例如旧虚拟形象附带的表情动画），
+    可将动画剪辑或文件夹拖到导出窗口的 <span class="ui">追加表情</span> 中作为表情导出（仅限只驱动 BlendShape 的剪辑，按虚拟形象分别保存）。</p>
+  <p class="note zh-hant">FX 層中的表情剪輯會自動匯出。不在 FX 中的表情（例如舊虛擬形象附帶的表情動畫），
+    可將動畫剪輯或資料夾拖到匯出視窗的 <span class="ui">追加表情</span> 中作為表情匯出（僅限只驅動 BlendShape 的剪輯，按虛擬形象分別儲存）。</p>
   <p class="note ja">【ベータ版】Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
     MA の Merge Armature / Bone Proxy で付けた衣装・小物は、統合されなかった場合でもアバターのボーンに付け替えて体に追従させます。
     暫定対応のため、正しく書き出せない場合があります。</p>
@@ -297,6 +307,11 @@
     移动或删除 VRCast 文件夹前，请先点击 <span class="ui">卸载驱动程序</span>。</p>
   <p class="note zh-hant">操作面板不會輸出到虛擬攝影機。Discord 等無法顯示透明，因此背景會以背景色顯示。
     移動或刪除 VRCast 資料夾前，請先點擊 <span class="ui">解除安裝驅動程式</span>。</p>
+  <p class="note ja">出力タブに「準備できました」と出ている間は、まだどのアプリもカメラを開いていない状態です（エラーではありません）。受け取る側のアプリで <span class="ui">VRCast Camera</span> を選ぶと「送信中」に変わります。</p>
+  <p class="note en">"Ready" in the Output tab means no app has opened the camera yet (it is not an error). It changes to "Sending" once you choose <span class="ui">VRCast Camera</span> in the receiving app.</p>
+  <p class="note ko">출력 탭에 「준비되었습니다」가 표시되는 동안은 아직 어떤 앱도 카메라를 열지 않은 상태입니다 (오류가 아닙니다). 받는 쪽 앱에서 <span class="ui">VRCast Camera</span>를 선택하면 「전송 중」으로 바뀝니다.</p>
+  <p class="note zh-hans">输出标签页显示“已就绪”时，表示还没有应用打开摄像头（不是错误）。在接收端应用中选择 <span class="ui">VRCast Camera</span> 后会变为“正在发送”。</p>
+  <p class="note zh-hant">輸出分頁顯示「已就緒」時，表示還沒有應用程式開啟攝影機（不是錯誤）。在接收端應用程式中選擇 <span class="ui">VRCast Camera</span> 後會變為「正在傳送」。</p>
 </section>
 
 <section id="spout">
@@ -421,16 +436,16 @@
         <span class="ko"><span class="ui">트래킹 사용</span>을 켜면 포함된 트래커가 자동으로 시작되어 머리 방향·눈 깜빡임·입·시선 (MediaPipe에서는 팔·손도)이 움직입니다.</span>
         <span class="zh-hans">打开 <span class="ui">启用追踪</span> 后，内置追踪器会自动启动，驱动头部朝向、眨眼、嘴部和视线（MediaPipe 还包括手臂和手）。</span>
         <span class="zh-hant">開啟 <span class="ui">啟用追蹤</span> 後，內建追蹤器會自動啟動，驅動頭部朝向、眨眼、嘴部和視線（MediaPipe 還包括手臂和手）。</span></li>
-    <li><span class="ja">MediaPipe では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみを検出してアバターの表情に切り替えます。
-        <span class="ui">表情のしきい値</span> で反応のしやすさ（低いほど反応しやすい。<span class="ui">生データ表示</span> 中に出る表情の値が目安）を、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
-        <span class="en">With MediaPipe, <span class="ui">Facial expressions</span> (on by default) detects your smile, surprise, anger and sadness and switches the avatar's expression.
-        <span class="ui">Expression threshold</span> sets how easily it reacts (lower reacts more easily; compare it with the expression values shown in <span class="ui">Raw view</span>), and you can choose which expression to use for each one (<span class="ui">Auto</span> guesses from the expression names).</span>
-        <span class="ko">MediaPipe에서 <span class="ui">표정 반영</span>을 켜면 (기본은 켜짐) 웃음·놀람·화남·슬픔을 감지해 아바타의 표정으로 바꿉니다.
-        <span class="ui">표정 임계값</span>으로 반응 정도를 (낮을수록 쉽게 반응. <span class="ui">원시 데이터 표시</span> 중에 나오는 표정 값이 기준), 표정별 선택으로 사용할 표정을 바꿀 수 있습니다 (<span class="ui">자동</span>은 표정 이름으로 추정).</span>
-        <span class="zh-hans">使用 MediaPipe 时，打开 <span class="ui">反映表情</span>（默认开启）后，会检测笑脸、惊讶、生气、悲伤并切换虚拟形象的表情。
-        可用 <span class="ui">表情阈值</span> 调整反应程度（越低越容易反应，可参考 <span class="ui">原始数据显示</span> 中的表情数值），并为每种表情选择要使用的表情（<span class="ui">自动</span> 会根据表情名称推测）。</span>
-        <span class="zh-hant">使用 MediaPipe 時，開啟 <span class="ui">反映表情</span>（預設開啟）後，會偵測笑臉、驚訝、生氣、悲傷並切換虛擬形象的表情。
-        可用 <span class="ui">表情閾值</span> 調整反應程度（越低越容易反應，可參考 <span class="ui">原始資料顯示</span> 中的表情數值），並為每種表情選擇要使用的表情（<span class="ui">自動</span> 會依表情名稱推測）。</span></li>
+    <li><span class="ja">MediaPipe では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面を検出してアバターの表情に切り替えます（割り当て先の表情が無いものは検出しません）。
+        表情ごとの <span class="ui">しきい値</span> で反応のしやすさ（低いほど反応しやすい。<span class="ui">生データ表示</span> 中に出る表情の値が目安）を、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
+        <span class="en">With MediaPipe, <span class="ui">Facial expressions</span> (on by default) detects your smile, surprise, anger, sadness, wink, half-closed eyes and pout and switches the avatar's expression (expressions with nothing assigned are not detected).
+        The <span class="ui">Threshold</span> of each expression sets how easily it reacts (lower reacts more easily; compare it with the expression values shown in <span class="ui">Raw view</span>), and you can choose which expression to use for each one (<span class="ui">Auto</span> guesses from the expression names).</span>
+        <span class="ko">MediaPipe에서 <span class="ui">표정 반영</span>을 켜면 (기본은 켜짐) 웃음·놀람·화남·슬픔·윙크·실눈·뾰로통을 감지해 아바타의 표정으로 바꿉니다 (할당할 표정이 없는 것은 감지하지 않습니다).
+        표정별 <span class="ui">임계값</span>으로 반응 정도를 (낮을수록 쉽게 반응. <span class="ui">원시 데이터 표시</span> 중에 나오는 표정 값이 기준), 표정별 선택으로 사용할 표정을 바꿀 수 있습니다 (<span class="ui">자동</span>은 표정 이름으로 추정).</span>
+        <span class="zh-hans">使用 MediaPipe 时，打开 <span class="ui">反映表情</span>（默认开启）后，会检测笑脸、惊讶、生气、悲伤、眨单眼、眯眼、嘟嘴并切换虚拟形象的表情（没有可分配表情的不会检测）。
+        可用每种表情的 <span class="ui">阈值</span> 调整反应程度（越低越容易反应，可参考 <span class="ui">原始数据显示</span> 中的表情数值），并为每种表情选择要使用的表情（<span class="ui">自动</span> 会根据表情名称推测）。</span>
+        <span class="zh-hant">使用 MediaPipe 時，開啟 <span class="ui">反映表情</span>（預設開啟）後，會偵測笑臉、驚訝、生氣、悲傷、眨單眼、瞇眼、嘟嘴並切換虛擬形象的表情（沒有可分配表情的不會偵測）。
+        可用每種表情的 <span class="ui">閾值</span> 調整反應程度（越低越容易反應，可參考 <span class="ui">原始資料顯示</span> 中的表情數值），並為每種表情選擇要使用的表情（<span class="ui">自動</span> 會依表情名稱推測）。</span></li>
     <li><span class="ja">MediaPipe では <span class="ui">パーフェクトシンク</span>（既定は ON）にも対応しています。ARKit 名の BlendShape（<code>eyeBlinkLeft</code>・<code>jawOpen</code>・<code>mouthSmileLeft</code> など）を持つアバターなら、眉・頬・口の形まで顔の動きどおりに動きます。
         <span class="ui">有効にする条件</span> で <span class="ui">20 種類以上</span>（既定）か <span class="ui">1 種類でも</span> を選べ、対応しているかはその下に件数で表示されます。パーフェクトシンク中は <span class="ui">表情を反映</span> の自動切り替えは止まります（20 種類未満で動かしているときは併用します）。</span>
         <span class="en">With MediaPipe, <span class="ui">Perfect sync</span> (on by default) is also supported. If the avatar has ARKit-named blend shapes (<code>eyeBlinkLeft</code>, <code>jawOpen</code>, <code>mouthSmileLeft</code>, etc.), brows, cheeks and mouth shapes follow your face directly.
