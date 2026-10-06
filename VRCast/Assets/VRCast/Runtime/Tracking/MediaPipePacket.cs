@@ -8,7 +8,7 @@ namespace VRCast.Tracking
     /// 同梱の MediaPipe トラッカー（Tools/MediaPipeTracker/vrcast_tracker.py）が送る JSON（UTF-8、1 パケット 1 フレーム）を解析する。
     /// 座標変換:
     /// - 頭の変換行列は MediaPipe の右手系（x = 映像の右、y = 上、z = カメラ側、単位 cm）。
-    ///   回転は行列の四元数 (x, y, z, w) をそのまま使う（z 反転とアバター正面への 180° 回転の左右反転が打ち消し合う）、位置は (x, y, -z)。
+    ///   回転は z 反転（カメラ基準の Unity 座標）とアバター正面への 180° 回転をまとめて (x, -y, -z, w)、位置は (x, y, -z)。
     /// - 腕・手の点は MediaPipe の world 座標（x = 映像の右、y = 下、z = 奥）→ カメラ基準の Unity 座標 (x, -y, z)。
     /// </summary>
     public static class MediaPipePacket
@@ -165,9 +165,9 @@ namespace VRCast.Tracking
                 ReadArms(message.arms, message.visibility, ref body);
             }
 
-            // 手の左右は体のラベルに合わせて送られてくるため、腕と同じく入れ替える
-            body.Left.Hand = ReadHand(message.rightHand);
-            body.Right.Hand = ReadHand(message.leftHand);
+            // 手の左右は体のラベル（本人基準）に合わせて送られてくるため、そのまま使う
+            body.Left.Hand = ReadHand(message.leftHand);
+            body.Right.Hand = ReadHand(message.rightHand);
             return true;
         }
 
@@ -192,10 +192,9 @@ namespace VRCast.Tracking
                 return false;
             }
 
-            // 行列の回転（右手系のまま四元数へ）がそのままアバター基準になる
-            // （z 反転と 180° 回転で左右が 2 回反転し打ち消し合う。腕・手と同じく本人の右 = アバターの右）
+            // 行列の回転（右手系のまま四元数へ）を Unity のアバター基準へ変換
             Quaternion q = Quaternion.LookRotation(forward, up);
-            face.HeadRotation = Quaternion.Normalize(q);
+            face.HeadRotation = Quaternion.Normalize(new Quaternion(q.x, -q.y, -q.z, q.w));
 
             // 平行移動（cm）をカメラ基準の Unity 座標（dm）へ
             face.HeadPosition = new Vector3(m[3], m[7], -m[11]) * PositionScale;
@@ -250,9 +249,9 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // MediaPipe の左右ラベルは映像上の左右（本人とは逆）なので、入れ替えて本人の左腕・右腕にする
-            body.Left = ReadArm(points, visibility, RightShoulder, RightElbow, RightWrist);
-            body.Right = ReadArm(points, visibility, LeftShoulder, LeftElbow, LeftWrist);
+            // MediaPipe の体の左右ラベルは本人基準なので、そのまま本人の左腕・右腕にする
+            body.Left = ReadArm(points, visibility, LeftShoulder, LeftElbow, LeftWrist);
+            body.Right = ReadArm(points, visibility, RightShoulder, RightElbow, RightWrist);
         }
 
         private static ArmTrackingData ReadArm(float[] points, float[] visibility, int shoulder, int elbow, int wrist)
@@ -287,9 +286,9 @@ namespace VRCast.Tracking
 
         private static Vector3 ToUnity(float[] values, int point)
         {
-            // MediaPipe の world 座標（x = 映像の左、y = 下）をカメラ基準の Unity 座標（x = 映像の右、y = 上）へ
+            // MediaPipe の world 座標（x = 映像の右、y = 下）をカメラ基準の Unity 座標（x = 映像の右、y = 上）へ
             int index = point * 3;
-            return new Vector3(-values[index], -values[index + 1], values[index + 2]);
+            return new Vector3(values[index], -values[index + 1], values[index + 2]);
         }
 
         private static int IndexOf(string name)
