@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 1.6.1 (2026-10-06)
 
 [日本語]
 - 新しい「シェイプキー」タブに BlendShape ごとの上限を設定できる機能を追加（まばたきで目が消える等の対策に。まばたき・口・表情で動く「顔」とそれ以外の「その他」に分けて表示し、アバターごとに保存）
