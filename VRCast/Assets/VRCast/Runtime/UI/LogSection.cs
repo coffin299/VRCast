@@ -5,6 +5,7 @@ using System.IO;
 using System.Text;
 using UnityEngine;
 using VRCast.Core;
+using VRCast.Platform;
 using VRCast.Tracking;
 
 namespace VRCast.UI
@@ -114,6 +115,8 @@ namespace VRCast.UI
                 $"GPU: {SystemInfo.graphicsDeviceName} ({SystemInfo.graphicsDeviceType}), " +
                     $"setting {(_settings.gpuAdapter.Length > 0 ? _settings.gpuAdapter : _settings.gpuPreference.ToString())}",
                 $"Process priority: {_settings.processPriority}",
+                $"CPU cores: {CpuTopology.Description}, avoid V-Cache CCD {_settings.avoidCacheCcd}, " +
+                    $"hybrid {_settings.hybridCores}, mask 0x{CpuTopology.CoreMaskFor(_settings):X}",
                 $"Tracking: {_settings.trackingSource}, " +
                     (_settings.trackingEnabled ? "enabled" : "disabled") +
                     (_settings.lowLoadMode ? ", low load" : string.Empty),

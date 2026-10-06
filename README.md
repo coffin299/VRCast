@@ -155,10 +155,24 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 - **プロセスの優先度**（既定「通常」）: **Settings** の **Process priority** で 通常以下 / 通常 / 通常以上 / 高 を選べる。
   VRCast 本体と同梱トラッカーに同じ優先度をすぐ反映する（リアルタイムは選べない）。
   VRCast 本体とトラッカーは、背面にある間も Windows の電力調整（EcoQoS）で遅くならないよう常に対象外にしている。
+- **3D V-Cache の無い側のコアで動かす**（既定 ON。表示は全ての PC、効果があるのは 2 CCD の X3D（7950X3D / 9950X3D 等）だけ）:
+  ゲームを検知すると AMD のドライバーがキャッシュの無い側の CCD を休ませ、VRCast もゲームと同じコアに集まる。これを避けるため、
+  L3 の大きさから CCD を判定し、VRCast 本体と同梱トラッカーを L3 の小さい側のコアだけで動かす（プロセスの CPU 割り当て。すぐ反映、OFF で全コアに戻す）。
+  VRCast 自体がゲームと判定される場合は、Game Bar（Win + G）の設定で「これをゲームとして記憶する」を外す。
+- **使うコア（Intel）**（既定「自動」。表示は全ての PC、効果があるのは P コア / E コアのある CPU（Intel 第 12 世代以降・Core Ultra 等）だけ）:
+  **E コアのみ**（P コアをゲームに譲る。トラッキング・描画は遅くなることがある）/ **P コアのみ**（速いがゲームと取り合う）を選べる。
+  コアの種類は Windows の EfficiencyClass で判定する。すぐ反映。
+  どちらの設定も、対象の CPU とこの PC が対象かどうかを設定の下に表示する。
 - **描画に使う GPU**（既定「自動」）: **Settings** の **GPU for drawing** で、Windows の優先設定（自動 / 省電力 / 高パフォーマンス。
   Windows の「グラフィックの設定」と同じ値を VRCast.exe について書く）か、GPU を一覧から直接選べる。反映は VRCast の起動し直し後（**Restart VRCast now** で VRCast だけを起動し直せる。PC の再起動は不要）。
   直接指定では、起動時に指定の GPU でなければ Unity の起動引数（`-force-device-index` / `-adapter`）を付けて自動で起動し直す。
   切り替えられなかったときは画面とデバッグログに表示する。同梱トラッカーは CPU で動くため GPU の設定は関係しない。
+- **NVIDIA のインスタントリプレイに検知させない**（既定 OFF、NVIDIA の GPU がある PC だけ表示）: **Settings** の **Hide VRCast from NVIDIA Instant Replay** を押したときだけ、
+  NVIDIA のドライバー設定にプロファイル「VRCast」（VRCast.exe、非公開の設定 `0x809D5F60 = 0x10000000`）を書き、
+  VRCast がインスタントリプレイ（ShadowPlay）にゲームとして検知されないようにする。
+  **Let NVIDIA Instant Replay detect VRCast again** でプロファイルを消して元に戻す。反映は VRCast の起動し直し後。
+  非公式の設定のためドライバーによっては効かない。VRCast.exe が既に別のプロファイルに入っていれば書き換えない。
+  書き込めないときは NvAPI のエラー番号を表示する（その場合は管理者として実行して試す）。エディターでは押せない。
 - **アップデートの確認**（既定 ON）: 起動時に Web サイトの `https://coffin299.github.io/VRCast/version.json` を 1 回だけ読み、
   新しいバージョンがあればパネル上部に通知する（**GitHub からダウンロード** / **BOOTH からダウンロード** / **このバージョンは通知しない**）。
   通信は最新のバージョン番号を読むためだけで、失敗しても何も表示しない。**Settings** の **Check for updates at startup** で OFF にできる。
