@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
 using UnityEngine;
@@ -260,10 +259,11 @@ namespace VRCast.Platform
                     arguments = arguments.Length > 0 ? arguments + " " + extraArguments : extraArguments;
                 }
 
-                Process.Start(new ProcessStartInfo(exe, arguments) { UseShellExecute = false })?.Dispose();
+                // IL2CPP の Process.Start は起動に失敗するため CreateProcessW で起動する
+                NativeProcess.Start(exe, arguments, System.IO.Path.GetDirectoryName(exe)).Dispose();
                 return true;
             }
-            catch (Exception e) when (e is InvalidOperationException || e is System.ComponentModel.Win32Exception)
+            catch (System.ComponentModel.Win32Exception e)
             {
                 VRCastLog.Warning(LogCategory, "Could not restart VRCast: " + e.Message);
                 return false;
