@@ -32,14 +32,13 @@ namespace VRCast.Tests
         [Test]
         public void TryParse_Face_ConvertsRotationAxes()
         {
-            // MediaPipe の回転 (x, y, z, w) は Unity の (x, -y, -z, w) になること
+            // MediaPipe の回転 (x, y, z, w) はそのままアバター基準の回転になること（首振り・かしげの左右が腕・手と一致）
             Quaternion source = Quaternion.Normalize(new Quaternion(0.1f, 0.2f, 0.3f, 0.927f));
             MediaPipePacket.Message message = CreateMessage();
             message.matrix = RowMajor(Matrix4x4.Rotate(source));
 
             Assert.That(Parse(message, out _, out FaceTrackingFrame face, out _), Is.True);
-            Quaternion expected = new Quaternion(source.x, -source.y, -source.z, source.w);
-            Assert.That(Quaternion.Angle(face.HeadRotation, expected), Is.LessThan(0.01f));
+            Assert.That(Quaternion.Angle(face.HeadRotation, source), Is.LessThan(0.01f));
         }
 
         [Test]
