@@ -43,6 +43,10 @@ namespace VRCast.Core
         public const int MinTrackingPort = 1024;
         public const int MaxTrackingPort = 65535;
 
+        // 外部操作の待ち受けポートの既定値（範囲はトラッキングと同じ）
+        public const int DefaultRemoteOscPort = 39570;
+        public const int DefaultRemoteHttpPort = 39571;
+
         // 頭の位置に合わせた体の動き（傾き・移動）の強さの上限（0 = 動かさない）
         public const float MaxTrackingBodyLean = 3f;
 
@@ -182,6 +186,14 @@ namespace VRCast.Core
         public string expressionSquint = string.Empty;
         public string expressionPout = string.Empty;
 
+        // 表情のショートカットキーを、VRCast のウィンドウが前面に無いときも使う（OBS などを操作中でも切り替えられる）
+        public bool expressionHotkeysInBackground = true;
+
+        // 外部（Stream Deck・OSC アプリ等）からの表情の操作。127.0.0.1 の OSC（UDP）と HTTP で待ち受ける（既定 OFF）
+        public bool remoteControlEnabled;
+        public int remoteOscPort = DefaultRemoteOscPort;
+        public int remoteHttpPort = DefaultRemoteHttpPort;
+
         // 表情ごとのしきい値（UseCommonThreshold = 未設定で trackingExpressionThreshold を使う。旧版の共通値を引き継ぐため）
         public float thresholdSmile = UseCommonThreshold;
         public float thresholdSurprise = UseCommonThreshold;
@@ -297,6 +309,33 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// アバターの表情のショートカットキーを返す（未記録なら空。一覧は複製）。
+        /// </summary>
+        public List<ExpressionHotkey> GetExpressionHotkeys(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0
+                ? new List<ExpressionHotkey>(avatarCameras[index].expressionHotkeys)
+                : new List<ExpressionHotkey>();
+        }
+
+        /// <summary>
+        /// アバターの表情のショートカットキーを記録する。カメラの視点を記録済みのアバターだけが対象（読込時に記録される）。
+        /// </summary>
+        public void SetExpressionHotkeys(string avatarPath, List<ExpressionHotkey> hotkeys)
+        {
+            // 記録の無いアバターは対象外（視点の無い記録を作らない）
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0)
+            {
+                return;
+            }
+
+            // 壊れた値は除いて複製を持つ
+            avatarCameras[index].expressionHotkeys = hotkeys.FindAll(hotkey => hotkey != null && hotkey.IsValid);
+        }
+
+        /// <summary>
         /// 最近使ったアバターのパスを新しい順に返す（最大 MaxRecentAvatars 件）。
         /// </summary>
         public List<string> RecentAvatars()
@@ -404,6 +443,10 @@ namespace VRCast.Core
                     limit.path ??= string.Empty;
                     limit.max = Mathf.Clamp(limit.max, BlendShapeLimit.MinWeight, BlendShapeLimit.MaxWeight);
                 }
+
+                // 表情のショートカットキーは壊れたもの・使えないキーを捨てる（旧版の設定には無いので空の一覧にする）
+                entry.expressionHotkeys ??= new List<ExpressionHotkey>();
+                entry.expressionHotkeys.RemoveAll(hotkey => hotkey == null || !hotkey.IsValid);
             }
 
             // 未知の表示言語は OS 準拠へ
@@ -470,6 +513,9 @@ namespace VRCast.Core
 
             // 受信ポートは特権ポートを避けた範囲に制限
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
+            // 外部操作のポートも同じ範囲に制限
+            remoteOscPort = Mathf.Clamp(remoteOscPort, MinTrackingPort, MaxTrackingPort);
+            remoteHttpPort = Mathf.Clamp(remoteHttpPort, MinTrackingPort, MaxTrackingPort);
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
             // 未知の体の動かし方は既定の傾きへ

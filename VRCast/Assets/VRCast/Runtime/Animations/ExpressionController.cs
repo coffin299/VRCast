@@ -2,20 +2,26 @@ using System.Collections.Generic;
 using UnityEngine;
 using VRCast.AvatarFormat;
 using VRCast.Core;
+using VRCast.Platform;
 
 namespace VRCast.Animations
 {
     /// <summary>
     /// 表情プリセットを BlendShape に適用する。切り替え時は前の表情から次の表情へ少しずつ変える（モーフィング）。
-    /// プリセットに含まれない BlendShape は読込時の値へ戻す。数字キー 1〜9 でプリセット、0 でニュートラル。
+    /// プリセットに含まれない BlendShape は読込時の値へ戻す。
+    /// ショートカットキーはアバターごとに割り当てたものだけ（既定はすべて未割り当て）。Windows の仮想キーと Ctrl / Alt / Shift の
+    /// 組み合わせで判定し、設定によりウィンドウが前面に無いときも反応する。
     /// </summary>
     public class ExpressionController : MonoBehaviour
     {
         // ログのカテゴリ名
         private const string LogCategory = "Expression";
 
-        // ホットキーで選べるプリセット数
-        private const int HotkeyCount = 9;
+        // キーの割り当て中にショートカットを止めたフレーム（割り当てるキーで表情が変わらないように）
+        private static int _suspendedFrame = int.MinValue / 2;
+
+        // 仮想キーが押されているか（毎フレームの判定でデリゲートを作り直さないように控える）
+        private static readonly System.Func<int, bool> IsKeyDown = GlobalKeyboard.IsDown;
 
         // 切り替えにかける秒数（BlendShape が 0 から 100 まで変わる時間。差が小さいほど早く終わる）
         private const float FadeSeconds = 0.2f;
@@ -51,10 +57,36 @@ namespace VRCast.Animations
         // 目標へ向けて変化中なら true
         private bool _fading;
 
+        // ショートカットキー（先頭 = ニュートラル、以降はプリセットの並び。None = 未割り当て）と、前のフレームで押されていたか
+        private KeyCombo[] _hotkeys = { KeyCombo.None };
+        private bool[] _hotkeyWasDown = { false };
+
+        // 背面でも反応するかの設定（未設定なら前面のときだけ）
+        private AppSettings _settings;
+
         // 選択中のプリセット（-1 = ニュートラル）
         public int Current { get; private set; } = -1;
 
+        /// <summary>
+        /// 手動（ボタン・ショートカットキー・外部操作）で選んだ表情を固定中なら true。
+        /// 固定中はトラッキングの表情の自動検出で上書きしない。
+        /// </summary>
+        public bool IsManual { get; private set; }
+
         public IReadOnlyList<string> Names => _names;
+
+        /// <summary>
+        /// キーの割り当て中なら true（前のフレームまでに止められた。パネルの Tab 切替もこれを見て止める）。
+        /// </summary>
+        public static bool HotkeysSuspended => _suspendedFrame >= Time.frameCount - 1;
+
+        /// <summary>
+        /// このフレームと次のフレームのショートカットを止める（割り当て中は毎フレーム呼ぶ）。
+        /// </summary>
+        public static void SuspendHotkeys()
+        {
+            _suspendedFrame = Time.frameCount;
+        }
 
         public void Initialize(Transform root, ExpressionSet expressions)
         {
@@ -82,6 +114,10 @@ namespace VRCast.Animations
                     _presets.Add(targets.ToArray());
                 }
             }
+
+            // ショートカットキーはニュートラルとプリセットの数だけ（すべて未割り当て）
+            _hotkeys = new KeyCombo[_names.Count + 1];
+            _hotkeyWasDown = new bool[_names.Count + 1];
 
             // EditorOnly 等で除去されたメッシュを指す値は無視される
             if (unresolved > 0)
@@ -143,8 +179,46 @@ namespace VRCast.Animations
             _fading = true;
         }
 
+        /// <summary>
+        /// 手動で表情を選んで固定する（範囲外はニュートラル）。
+        /// toggle なら、固定中の表情をもう一度選んだときに固定を外して自動検出へ戻す。
+        /// </summary>
+        public void Select(int presetIndex, bool toggle)
+        {
+            // 範囲外はニュートラルとしてそろえる（固定中の表情と比べるため）
+            int preset = presetIndex >= 0 && presetIndex < _presets.Count ? presetIndex : -1;
+
+            // 固定中の同じ表情を選び直したら、自動検出へ戻す
+            if (toggle && IsManual && Current == preset)
+            {
+                ReleaseManual();
+                return;
+            }
+
+            Apply(preset);
+            IsManual = true;
+        }
+
+        /// <summary>
+        /// 手動の固定を外して自動検出へ戻す（いったんニュートラルにし、検出中なら次のフレームで検出した表情になる）。
+        /// </summary>
+        public void ReleaseManual()
+        {
+            // 固定していなければ今の表情のまま
+            if (!IsManual)
+            {
+                return;
+            }
+
+            ResetToNeutral();
+        }
+
+        /// <summary>
+        /// ニュートラルへ戻し、手動の固定も外す。
+        /// </summary>
         public void ResetToNeutral()
         {
+            IsManual = false;
             Apply(-1);
         }
 
@@ -154,30 +228,123 @@ namespace VRCast.Animations
             Fade(Time.deltaTime);
         }
 
+        /// <summary>
+        /// 保存した割り当てを読み込む（今のアバターに無いプリセット名・使えないキーは無視）。
+        /// settings は背面でも反応するかの設定を毎フレーム読むために持つ。
+        /// </summary>
+        public void LoadHotkeys(IReadOnlyList<ExpressionHotkey> hotkeys, AppSettings settings)
+        {
+            _settings = settings;
+
+            // いったんすべて未割り当てにする
+            for (int i = 0; i < _hotkeys.Length; i++)
+            {
+                _hotkeys[i] = KeyCombo.None;
+            }
+
+            foreach (ExpressionHotkey hotkey in hotkeys)
+            {
+                // 壊れた値は飛ばす
+                if (hotkey == null || !hotkey.IsValid)
+                {
+                    continue;
+                }
+
+                // ニュートラルか、名前の一致するプリセットへ割り当てる（同じ組み合わせは後のものが勝つ）
+                int preset = hotkey.preset == ExpressionHotkey.NeutralPreset ? -1 : _names.IndexOf(hotkey.preset);
+                if (preset >= 0 || hotkey.preset == ExpressionHotkey.NeutralPreset)
+                {
+                    SetHotkey(preset, hotkey.Combo);
+                }
+            }
+        }
+
+        /// <summary>
+        /// 割り当てを保存用の一覧にする（割り当てたものだけ）。
+        /// </summary>
+        public List<ExpressionHotkey> ExportHotkeys()
+        {
+            var hotkeys = new List<ExpressionHotkey>();
+            for (int i = 0; i < _hotkeys.Length; i++)
+            {
+                // 未割り当ては保存しない
+                if (!_hotkeys[i].IsAssigned)
+                {
+                    continue;
+                }
+
+                // 先頭はニュートラル、以降はプリセット名で保存（アバターを作り直しても名前で戻せる）
+                string preset = i == 0 ? ExpressionHotkey.NeutralPreset : _names[i - 1];
+                hotkeys.Add(ExpressionHotkey.From(preset, _hotkeys[i]));
+            }
+
+            return hotkeys;
+        }
+
+        /// <summary>
+        /// プリセット（-1 = ニュートラル）のショートカットキーを返す（未割り当て・範囲外は None）。
+        /// </summary>
+        public KeyCombo GetHotkey(int presetIndex)
+        {
+            int slot = presetIndex + 1;
+            return slot >= 0 && slot < _hotkeys.Length ? _hotkeys[slot] : KeyCombo.None;
+        }
+
+        /// <summary>
+        /// プリセット（-1 = ニュートラル）にキーの組み合わせを割り当てる（None で解除）。同じ組み合わせを使っていた表情からは外す。
+        /// </summary>
+        public void SetHotkey(int presetIndex, KeyCombo combo)
+        {
+            // 範囲外・使えないキーは何もしない（未割り当ては解除として受け付ける）
+            int slot = presetIndex + 1;
+            if (slot < 0 || slot >= _hotkeys.Length || (combo.IsAssigned && !VirtualKeys.IsAssignable(combo.VirtualKey)))
+            {
+                return;
+            }
+
+            // 1 つの組み合わせで 1 つの表情だけを選ぶよう、ほかの表情の同じ組み合わせを外す
+            if (combo.IsAssigned)
+            {
+                for (int i = 0; i < _hotkeys.Length; i++)
+                {
+                    if (_hotkeys[i].Equals(combo))
+                    {
+                        _hotkeys[i] = KeyCombo.None;
+                    }
+                }
+            }
+
+            _hotkeys[slot] = combo;
+        }
+
         private void HandleHotkeys()
         {
-            // UI のテキスト入力中は数字キーを奪わない
-            if (GUIUtility.keyboardControl != 0)
-            {
-                return;
-            }
+            // 前面のときだけ VRCast 内のテキスト入力を気にする（背面では入力欄に文字は入らない）
+            bool focused = Application.isFocused;
+            bool background = _settings != null && _settings.expressionHotkeysInBackground;
+            bool blocked = HotkeysSuspended || (focused && GUIUtility.keyboardControl != 0);
 
-            // 0 キーでニュートラル
-            if (Input.GetKeyDown(KeyCode.Alpha0))
-            {
-                ResetToNeutral();
-                return;
-            }
+            // Windows のキーの状態を、前面か背面でも使う設定のときだけ読む
+            bool active = GlobalKeyboard.IsSupported && (focused || background);
 
-            // 1〜9 キーで対応するプリセット
-            int count = Mathf.Min(HotkeyCount, _presets.Count);
-            for (int i = 0; i < count; i++)
+            int pressed = -2;
+            for (int i = 0; i < _hotkeys.Length; i++)
             {
-                if (Input.GetKeyDown(KeyCode.Alpha1 + i))
+                // 押された瞬間（前のフレームは離れていた）だけ反応する。押しっぱなしで繰り返さない
+                bool down = active && _hotkeys[i].IsDown(IsKeyDown);
+                if (down && !_hotkeyWasDown[i] && !blocked && pressed == -2)
                 {
-                    Apply(i);
-                    return;
+                    pressed = i - 1;
                 }
+
+                // 止めている間も押下状態は追い続ける（割り当て直後に、離すまで反応しないように）
+                _hotkeyWasDown[i] = down;
+            }
+
+            // 押された組み合わせの表情（-1 = ニュートラル）で固定する（固定中の表情のキーをもう一度押すと自動検出へ戻す）
+            if (pressed != -2)
+            {
+                Select(pressed, true);
             }
         }
 
