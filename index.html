@@ -51,8 +51,10 @@
     "Show a VRChat avatar without Unity or VRChat running",
     "Transparent background for OBS Game Capture",
     "Virtual camera (VRCast Camera) for Discord and Zoom",
+    "Spout2 output to OBS with transparency",
     "Webcam tracking of head, eyes, mouth, arms, hands and fingers (MediaPipe / OpenSeeFace)",
     "Facial expressions from the webcam",
+    "Perfect sync for avatars with ARKit blend shapes",
     "A-I-U-E-O lip sync from the microphone and auto blink",
     "Keeps expressions, default toggles, PhysBones (approximated) and constraints"
   ],
@@ -193,12 +195,28 @@
     <p class="zh-hant">偵測笑臉、驚訝、生氣、悲傷，並切換為虛擬形象的表情（僅限 MediaPipe，可關閉）。</p>
   </section>
   <section>
+    <h3><span class="ja">パーフェクトシンク</span><span class="en">Perfect sync</span><span class="ko">퍼펙트 싱크</span><span class="zh-hans">完美同步</span><span class="zh-hant">完美同步</span></h3>
+    <p class="ja">ARKit 名の BlendShape を持つアバターなら、眉・頬・口の形まで顔の動きどおりに動きます（MediaPipe のみ）。</p>
+    <p class="en">Avatars with ARKit-named blend shapes follow your brows, cheeks and mouth shapes directly (MediaPipe only).</p>
+    <p class="ko">ARKit 이름의 BlendShape가 있는 아바타라면 눈썹·볼·입 모양까지 얼굴 움직임대로 움직입니다 (MediaPipe만).</p>
+    <p class="zh-hans">带有 ARKit 名称 BlendShape 的虚拟形象，眉毛、脸颊和嘴形都会跟随面部动作（仅限 MediaPipe）。</p>
+    <p class="zh-hant">帶有 ARKit 名稱 BlendShape 的虛擬形象，眉毛、臉頰和嘴形都會跟隨臉部動作（僅限 MediaPipe）。</p>
+  </section>
+  <section>
     <h3><span class="ja">仮想カメラ出力</span><span class="en">Virtual camera</span><span class="ko">가상 카메라 출력</span><span class="zh-hans">虚拟摄像头输出</span><span class="zh-hant">虛擬攝影機輸出</span></h3>
     <p class="ja"><span class="ui">VRCast Camera</span> として Discord や Zoom のカメラに選べます。</p>
     <p class="en">Pick <span class="ui">VRCast Camera</span> as your camera in Discord, Zoom and more.</p>
     <p class="ko">Discord나 Zoom의 카메라로 <span class="ui">VRCast Camera</span>를 선택할 수 있습니다.</p>
     <p class="zh-hans">可在 Discord、Zoom 等中将 <span class="ui">VRCast Camera</span> 选为摄像头。</p>
     <p class="zh-hant">可在 Discord、Zoom 等中將 <span class="ui">VRCast Camera</span> 選為攝影機。</p>
+  </section>
+  <section>
+    <h3><span class="ja">Spout2 出力</span><span class="en">Spout2 output</span><span class="ko">Spout2 출력</span><span class="zh-hans">Spout2 输出</span><span class="zh-hant">Spout2 輸出</span></h3>
+    <p class="ja">OBS へ GPU 上で映像を渡します。キャプチャより軽く、透過もそのまま（OBS 用 Spout2 プラグインが必要）。</p>
+    <p class="en">Share the image with OBS on the GPU. Lighter than capturing, with transparency kept (needs the Spout2 plugin for OBS).</p>
+    <p class="ko">OBS에 GPU에서 영상을 전달합니다. 캡처보다 가볍고 투명도 그대로 (OBS용 Spout2 플러그인 필요).</p>
+    <p class="zh-hans">在 GPU 上将画面传给 OBS。比捕获更轻，并保留透明（需要 OBS 的 Spout2 插件）。</p>
+    <p class="zh-hant">在 GPU 上將畫面傳給 OBS。比擷取更輕，並保留透明（需要 OBS 的 Spout2 外掛）。</p>
   </section>
   <section>
     <h3><span class="ja">はじめてでも迷わない</span><span class="en">Beginner friendly</span><span class="ko">처음이어도 헤매지 않음</span><span class="zh-hans">新手也不迷路</span><span class="zh-hant">新手也不迷路</span></h3>
@@ -276,11 +294,11 @@
   <p class="zh-hans">免费。基于 Apache License 2.0 开源，可从 <a href="https://github.com/coffin299/VRCast/releases">GitHub</a> 或 <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a> 下载。</p>
   <p class="zh-hant">免費。基於 Apache License 2.0 開源，可從 <a href="https://github.com/coffin299/VRCast/releases">GitHub</a> 或 <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a> 下載。</p>
   <h3><span class="ja">どのアプリに映せますか？</span><span class="en">Which apps can show the avatar?</span><span class="ko">어떤 앱에 표시할 수 있나요?</span><span class="zh-hans">可以显示在哪些应用中？</span><span class="zh-hant">可以顯示在哪些應用程式中？</span></h3>
-  <p class="ja">OBS ではゲームキャプチャで背景を透過して重ねられます。Discord や Zoom などでは仮想カメラ <span class="ui">VRCast Camera</span> をカメラとして選べます。</p>
-  <p class="en">In OBS, use Game Capture with a transparent background. In Discord, Zoom and similar apps, pick the <span class="ui">VRCast Camera</span> virtual camera.</p>
-  <p class="ko">OBS에서는 게임 캡처로 배경을 투명하게 해 겹칠 수 있습니다. Discord나 Zoom 등에서는 가상 카메라 <span class="ui">VRCast Camera</span>를 카메라로 선택할 수 있습니다.</p>
-  <p class="zh-hans">在 OBS 中可通过游戏采集以透明背景叠加。在 Discord、Zoom 等应用中可将虚拟摄像头 <span class="ui">VRCast Camera</span> 选为摄像头。</p>
-  <p class="zh-hant">在 OBS 中可透過遊戲擷取以透明背景疊加。在 Discord、Zoom 等應用程式中可將虛擬攝影機 <span class="ui">VRCast Camera</span> 選為攝影機。</p>
+  <p class="ja">OBS ではゲームキャプチャか Spout2 で背景を透過して重ねられます。Discord や Zoom などでは仮想カメラ <span class="ui">VRCast Camera</span> をカメラとして選べます。</p>
+  <p class="en">In OBS, use Game Capture or Spout2 with a transparent background. In Discord, Zoom and similar apps, pick the <span class="ui">VRCast Camera</span> virtual camera.</p>
+  <p class="ko">OBS에서는 게임 캡처나 Spout2로 배경을 투명하게 해 겹칠 수 있습니다. Discord나 Zoom 등에서는 가상 카메라 <span class="ui">VRCast Camera</span>를 카메라로 선택할 수 있습니다.</p>
+  <p class="zh-hans">在 OBS 中可通过游戏采集或 Spout2 以透明背景叠加。在 Discord、Zoom 等应用中可将虚拟摄像头 <span class="ui">VRCast Camera</span> 选为摄像头。</p>
+  <p class="zh-hant">在 OBS 中可透過遊戲擷取或 Spout2 以透明背景疊加。在 Discord、Zoom 等應用程式中可將虛擬攝影機 <span class="ui">VRCast Camera</span> 選為攝影機。</p>
   <h3><span class="ja">元のアバターは変更されますか？</span><span class="en">Does it change my original avatar?</span><span class="ko">원본 아바타가 변경되나요?</span><span class="zh-hans">会修改原始虚拟形象吗？</span><span class="zh-hant">會修改原始虛擬形象嗎？</span></h3>
   <p class="ja">いいえ。書き出しは元のアバターを変更しません。</p>
   <p class="en">No. Exporting does not modify your original avatar.</p>
