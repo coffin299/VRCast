@@ -107,7 +107,7 @@ namespace VRCast.UI
             _spout = spout;
             _avatarSection = new AvatarSection(session, settings, initialPath);
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
-            _animationSection = new AnimationSection(session);
+            _animationSection = new AnimationSection(session, settings);
             _faceSection = new FaceSection(session, microphone, settings);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering);
