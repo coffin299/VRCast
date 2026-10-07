@@ -135,6 +135,8 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 操作パネルは左のタブ（Start / Avatar / Pose / Face / Shape key setup / Tracking / Display / Output / Settings / Debug log / Credits）で項目を切り替え、内容は縦にスクロールする。
 配色は背景のベージュに合わせた濃いめのベージュ（焦げ茶の文字、キャラメル色のアクセント）。
 パネル下部には、どのタブでも押せるリセットボタン（**Head** 顔の向き / **Gaze** 視線 / **Expression** 表情をニュートラルへ / **Camera** カメラ）を常に表示する。
+その下に動作状況（**FPS** 描画のフレームレートと 1 フレームの時間 / **CPU** VRCast の CPU 使用率 / **GPU** 1 フレームの GPU 処理時間 / **Tracker CPU** 同梱トラッカーの CPU 使用率 / **Tracking** トラッキングの受信レート）を英語で表示する。
+1 秒ごとに更新し、**Settings** の **Show performance stats**（既定 ON）で隠せる。CPU 使用率はタスクマネージャーと同じく全論理コアに対する割合。
 パネルは見出し部分をドラッグして移動でき、高さは画面に収まるよう自動で調整される。
 
 - **Start**（はじめに、起動時に開く）: アバターの読み込み → 背景の透過 → OBS への取り込み → パネルを隠す、までを手順で案内する。

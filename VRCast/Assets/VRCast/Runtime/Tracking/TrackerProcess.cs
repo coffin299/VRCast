@@ -112,6 +112,11 @@ namespace VRCast.Tracking
         public bool IsRunning => _process != null;
 
         /// <summary>
+        /// 起動中のトラッカーの PID（起動していなければ 0）。
+        /// </summary>
+        public int ProcessId => _process != null ? _process.Id : 0;
+
+        /// <summary>
         /// 現在の入力元の同梱版が見つかったか（無ければ UI でパス入力を求める）。
         /// </summary>
         public bool HasBundled => _settings != null

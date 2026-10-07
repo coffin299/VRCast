@@ -84,6 +84,9 @@ namespace VRCast.Editor.Build
             PlayerSettings.visibleInBackground = true;
             PlayerSettings.useFlipModelSwapchain = true;
 
+            // パネル下部の動作状況で GPU の処理時間を取る（FrameTimingManager はこれが無いと値が 0）
+            PlayerSettings.enableFrameTimingStats = true;
+
             // VRChat / VCC プロジェクトと同じ Linear にする（Gamma だとアバターの陰影が VRChat より暗くなる）
             PlayerSettings.colorSpace = ColorSpace.Linear;
 

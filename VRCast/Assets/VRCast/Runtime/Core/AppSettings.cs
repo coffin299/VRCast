@@ -108,6 +108,9 @@ namespace VRCast.Core
         // 配信ではゲーム・OBS と併用することが多いため既定は ON
         public bool lowLoadMode = true;
 
+        // パネルの一番下に動作状況（fps・CPU・GPU・トラッキング）を表示するか
+        public bool showPerformanceStats = true;
+
         // VRCast 本体と同梱トラッカーのプロセスの優先度（両方に同じ値を使う）
         public ProcessPriority processPriority = ProcessPriority.Normal;
 

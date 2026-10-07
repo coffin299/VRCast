@@ -11,6 +11,11 @@ namespace VRCast.Tracking
         string Status { get; }
 
         /// <summary>
+        /// 直近 1 秒に受信したフレーム数（途絶・無効時は 0）。
+        /// </summary>
+        int FramesPerSecond { get; }
+
+        /// <summary>
         /// 有効かつ新しいフレームがあれば true。途絶・無効時は false。
         /// </summary>
         bool TryGetFrame(out FaceTrackingFrame frame);

@@ -148,6 +148,16 @@ namespace VRCast.UI
                 $"與遊戲或 OBS 同時使用時開啟。將畫面限制為 {RenderingController.LowLoadFrameRate}fps" +
                 $"（通常為 {RenderingController.NormalFrameRate}fps），並減輕內建追蹤器的處理。追蹤的流暢度會略有下降。"));
 
+            // パネル下部の動作状況（表示は英語のみ）
+            _settings.showPerformanceStats = GUILayout.Toggle(_settings.showPerformanceStats, Loc.T(
+                "Show performance stats", "動作状況を表示", "동작 상태 표시", "显示运行状态", "顯示執行狀態"));
+            GuiControls.Hint(Loc.T(
+                "Shows FPS, CPU, GPU time and tracking rate at the bottom of the panel (in English).",
+                "パネルの一番下に FPS・CPU・GPU の処理時間・トラッキングの受信レートを表示します（英語表記）。",
+                "패널 맨 아래에 FPS·CPU·GPU 처리 시간·트래킹 수신 속도를 표시합니다(영어 표기).",
+                "在面板底部显示 FPS、CPU、GPU 处理时间和追踪接收速率（英文显示）。",
+                "在面板底部顯示 FPS、CPU、GPU 處理時間和追蹤接收速率（英文顯示）。"));
+
             DrawPriority();
             GuiControls.EndCard();
 

@@ -16,7 +16,7 @@ namespace VRCast.UI
 {
     /// <summary>
     /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits）で
-    /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンを常に表示する。
+    /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンと動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
     /// </summary>
@@ -82,6 +82,7 @@ namespace VRCast.UI
         private LogSection _logSection;
         private CreditsSection _creditsSection;
         private ResetBar _resetBar;
+        private PerformanceBar _performanceBar;
 
         // テーマ（最初の OnGUI で作成）
         private UiTheme _theme;
@@ -123,6 +124,7 @@ namespace VRCast.UI
             _logSection = new LogSection(trackerProcess, tracker, settings);
             _creditsSection = new CreditsSection();
             _resetBar = new ResetBar(session, orbit);
+            _performanceBar = new PerformanceBar(settings, tracker, trackerProcess);
 
             // ウィンドウへのドロップで読み込む
             _fileDrop.FilesDropped += OnFilesDropped;
@@ -309,6 +311,9 @@ namespace VRCast.UI
             // どのタブでも押せるリセットボタン
             GUILayout.Space(FooterSpacing);
             _resetBar.Draw(_theme.Sidebar);
+
+            // どのタブでも見える動作状況（設定で OFF にできる）
+            _performanceBar.Draw();
 
             // 見出し行でドラッグ移動
             GUI.DragWindow(new Rect(0f, 0f, 10000f, HeaderHeight));

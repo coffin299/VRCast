@@ -99,6 +99,9 @@ namespace VRCast.Tracking
 
         public string Status { get; private set; } = "Disabled";
 
+        // 途絶した後に前回のレートが残らないよう、受信中のときだけ返す
+        public int FramesPerSecond => IsFresh(_faceTime) || IsFresh(_bodyTime) ? _framesPerSecond : 0;
+
         public void Initialize(AppSettings settings)
         {
             _settings = settings;
