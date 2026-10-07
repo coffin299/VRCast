@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- ポーズタブに「待機モーション」を追加（呼吸・体の揺れ・頭のゆらぎ。強さと速さを調整でき、既定は ON。顔のトラッキング中は頭のゆらぎを止めて本人の動きに任せる）
+
+[English]
+- Added "Idle motion" to the Pose tab (breathing, body sway and head motion; adjustable strength and speed, on by default; head motion pauses while face tracking is active)
+
 ■ 1.8.1 (2026-10-07)
 
 [日本語]
