@@ -156,5 +156,17 @@
         save(themeKey, theme);
       });
     });
+    // 自動再生の動画: ブラウザが自動再生を止めた（省電力モード・設定など）ときは操作ボタンを出して手動で再生できるようにする
+    document.querySelectorAll('video[data-autoplay]').forEach(function (video) {
+      // muted 属性だけでは無音扱いにならないブラウザがあるため、プロパティでも無音にする
+      video.muted = true;
+      var played = video.play();
+      // 古いブラウザは play() が Promise を返さない
+      if (played && played.catch) {
+        played.catch(function () {
+          video.controls = true;
+        });
+      }
+    });
   });
 })();

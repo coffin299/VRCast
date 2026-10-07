@@ -70,7 +70,7 @@
   "name": "VRCast demo - VRChat avatar with webcam tracking",
   "description": "A VRChat avatar (Marycia by BeroarN) driven by webcam tracking in VRCast, without Unity or VRChat running.",
   "contentUrl": "https://coffin299.github.io/VRCast/assets/preview.mp4",
-  "thumbnailUrl": "https://coffin299.github.io/VRCast/assets/screenshot.png",
+  "thumbnailUrl": "https://coffin299.github.io/VRCast/assets/preview-poster.jpg",
   "uploadDate": "2026-10-05"
 }
 </script>
@@ -119,9 +119,11 @@
 </div>
 
 <figure class="shot">
-  <video src="assets/preview.mp4" width="1392" height="768"
-    autoplay muted loop playsinline preload="auto"
+  <video width="1392" height="768" poster="assets/preview-poster.jpg"
+    autoplay muted loop playsinline preload="auto" data-autoplay
     aria-label="VRCast demo: a VRChat avatar (Marycia by BeroarN) following webcam tracking, shown without Unity or VRChat">
+    <source src="assets/preview.webm" type="video/webm; codecs=vp9">
+    <source src="assets/preview.mp4" type="video/mp4">
     <a href="assets/preview.mp4">VRCast demo video</a>
   </video>
   <figcaption>
