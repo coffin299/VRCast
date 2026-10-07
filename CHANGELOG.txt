@@ -4,6 +4,20 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.9.2 (2026-10-07)
+
+[日本語]
+- 仮想カメラの「ドライバーを登録」を押しても管理者の確認が出ず、「Success」と表示されたまま登録されず VRCast Camera が使えない問題を修正
+- デバッグログタブの「ログフォルダ」ボタンでフォルダが開かない問題を修正
+- トラッキングの入力元を、入力元ごとのスイッチを縦に並べた選び方に変更（MediaPipe は推奨、iFacialMocap は非推奨と表示し、PC 負荷の目安も横に表示）
+- 言語の切替ボタンで、韓国語・中国語などの文字の下側が切れて表示される問題を修正
+
+[English]
+- Fixed "Install driver" for the virtual camera showing "Success" without asking for administrator approval, leaving the driver unregistered so VRCast Camera could not be used
+- Fixed the "Log folder" button in the Debug log tab not opening the folder
+- Changed the tracking source to a vertical list of switches, one per source (MediaPipe is marked as recommended and iFacialMocap as not recommended, with a rough PC load shown next to each)
+- Fixed the bottom of Korean, Chinese and other characters being cut off on the language buttons
+
 ■ 1.9.1 (2026-10-07)
 
 [日本語]

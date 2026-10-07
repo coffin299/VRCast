@@ -171,6 +171,9 @@ namespace VRCast.UI
         public GUIStyle Sidebar { get; private set; }
         public GUIStyle Tab { get; private set; }
 
+        // 短い文字のボタン（言語の切替など。代替フォントの字形が下へはみ出しても切らない）
+        public GUIStyle OverflowButton { get; private set; }
+
         // 取り返しのつかない操作用の赤いボタンと、完了表示の緑の文字
         public GUIStyle Danger { get; private set; }
         public GUIStyle Success { get; private set; }
@@ -317,6 +320,7 @@ namespace VRCast.UI
             SetStates(Skin.button, Rounded(Control, ControlRadius), Rounded(ControlHover, ControlRadius),
                 Rounded(ControlActive, ControlRadius), TextColor);
             SetOnStates(Skin.button, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius), OnAccent);
+            OverflowButton = new GUIStyle(Skin.button) { clipping = TextClipping.Overflow };
 
             // 赤いボタン（全設定のリセット等）
             Danger = new GUIStyle(Skin.button) { fontStyle = FontStyle.Bold };

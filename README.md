@@ -243,14 +243,15 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 - Viseme を持たないアバター（JawFlap 方式）や、OFF のときは音量で口を開閉するだけ。一部の母音の Viseme が無い場合は aa で代用する。
 
 **Tracking** タブで Web カメラによるトラッキング（頭の向き・まばたき・口の開閉・視線、MediaPipe では腕・手・指も）を ON にできる（iPhone・外部アプリからの受信は後述）。
-トラッカーは別プロセスとして同梱し、VRCast が裏で起動して UDP で受信する。入力元は `<` `>` で切り替える。
+トラッカーは別プロセスとして同梱し、VRCast が裏で起動して UDP で受信する。入力元は縦に並んだスイッチで 1 つを ON にして切り替える
+（各行の右に推奨・非推奨と PC 負荷の目安を表示）。
 
-| 入力元 | 内容 | 実行ファイル |
-| :--- | :--- | :--- |
-| MediaPipe（既定） | 顔 + 腕・手・指（**Arms / hands** で ON/OFF） | `vrcast_tracker.exe`（[MediaPipe](https://ai.google.dev/edge/mediapipe) を使う同梱ツール） |
-| OpenSeeFace | 顔のみ | `facetracker.exe`（[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)） |
-| iPhone / external app (VMC) | 顔のみ（パーフェクトシンク・表情反映も可） | なし（スマートフォン等のアプリから VMC プロトコルで受信） |
-| iFacialMocap（暫定） | 顔のみ（パーフェクトシンク・表情反映も可） | なし（iPhone の iFacialMocap から受信） |
+| 入力元 | 内容 | 表示 / PC 負荷の目安 | 実行ファイル |
+| :--- | :--- | :--- | :--- |
+| MediaPipe（既定） | 顔 + 腕・手・指（**Arms / hands** で ON/OFF） | 推奨 / 高（腕・手 OFF で中） | `vrcast_tracker.exe`（[MediaPipe](https://ai.google.dev/edge/mediapipe) を使う同梱ツール） |
+| OpenSeeFace | 顔のみ | 中 | `facetracker.exe`（[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)） |
+| iPhone / external app (VMC) | 顔のみ（パーフェクトシンク・表情反映も可） | 低（推定はスマートフォン側） | なし（スマートフォン等のアプリから VMC プロトコルで受信） |
+| iFacialMocap（暫定） | 顔のみ（パーフェクトシンク・表情反映も可） | 非推奨 / 低 | なし（iPhone の iFacialMocap から受信） |
 
 1. **Enable tracking** を ON にすると、カメラ一覧を取得して先頭のカメラで自動起動する。
 2. `<` `>` でカメラをデバイス名で選ぶと起動し直す（カメラ名は保存され、次回起動時も同じカメラを使う）。

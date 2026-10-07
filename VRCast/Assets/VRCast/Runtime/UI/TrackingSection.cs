@@ -119,7 +119,8 @@ namespace VRCast.UI
 
         private void DrawSource()
         {
-            // 入力元の切替（変更するとトラッカー・受信が起動し直す）
+            // 入力元ごとのスイッチを縦に並べ、ON にしたものへ切り替える（変更するとトラッカー・受信が起動し直す）
+            GUILayout.Label(Loc.T("Source", "入力元", "입력 소스", "输入源", "輸入來源"));
             string[] labels =
             {
                 Loc.T("MediaPipe (face + hands)", "MediaPipe（顔 + 手）", "MediaPipe (얼굴 + 손)",
@@ -131,8 +132,65 @@ namespace VRCast.UI
                 Loc.T("iFacialMocap (iPhone, face only, beta)", "iFacialMocap（iPhone、顔のみ、暫定）",
                     "iFacialMocap (iPhone, 얼굴만, 임시)", "iFacialMocap（iPhone，仅面部，暂定）", "iFacialMocap（iPhone，僅臉部，暫定）"),
             };
-            _settings.trackingSource = (TrackingSource)GuiControls.EnumSelector(
-                Loc.T("Source", "入力元", "입력 소스", "输入源", "輸入來源"), labels, (int)_settings.trackingSource);
+            for (int i = 0; i < labels.Length; i++)
+            {
+                var source = (TrackingSource)i;
+                GUILayout.BeginHorizontal();
+
+                // 選択中を OFF にはできない（どれか 1 つは必ず ON）
+                bool selected = _settings.trackingSource == source;
+                if (GUILayout.Toggle(selected, labels[i]) && !selected)
+                {
+                    _settings.trackingSource = source;
+                }
+
+                GUILayout.FlexibleSpace();
+                DrawSourceNote(source);
+                GUILayout.EndHorizontal();
+            }
+
+            GuiControls.Hint(Loc.T(
+                "PC load is a rough guide for this PC's CPU (Low load mode lowers it)",
+                "PC 負荷はこの PC の CPU 負荷の目安です（軽量モードで下がります）",
+                "PC 부하는 이 PC의 CPU 부하 기준입니다 (저부하 모드에서 낮아집니다)",
+                "电脑负载为本机 CPU 负载的参考（低负载模式下会降低）",
+                "電腦負載為本機 CPU 負載的參考（低負載模式下會降低）"));
+        }
+
+        private void DrawSourceNote(TrackingSource source)
+        {
+            // 推奨・非推奨（緑 / 黄の太字）
+            UiTheme theme = UiTheme.Current;
+            if (source == TrackingSource.MediaPipe)
+            {
+                GUILayout.Label(Loc.T("Recommended", "推奨", "권장", "推荐", "推薦"),
+                    theme != null ? theme.Success : GUI.skin.label);
+            }
+            else if (source == TrackingSource.IFacialMocap)
+            {
+                GUILayout.Label(Loc.T("Not recommended", "非推奨", "비권장", "不推荐", "不推薦"),
+                    theme != null ? theme.WarningText : GUI.skin.label);
+            }
+
+            // PC 負荷の目安（スマートフォンから受信する入力元は推定をスマートフォン側で行うため軽い）
+            GUILayout.Label(Loc.T("PC load", "PC 負荷", "PC 부하", "电脑负载", "電腦負載") + ": " + DescribeLoad(source),
+                theme != null ? theme.Value : GUI.skin.label);
+        }
+
+        private string DescribeLoad(TrackingSource source)
+        {
+            switch (source)
+            {
+                // MediaPipe は腕・手の推定を止めると軽くなる
+                case TrackingSource.MediaPipe:
+                    return _settings.trackingHands
+                        ? Loc.T("High", "高", "높음", "高", "高")
+                        : Loc.T("Medium", "中", "보통", "中", "中");
+                case TrackingSource.OpenSeeFace:
+                    return Loc.T("Medium", "中", "보통", "中", "中");
+                default:
+                    return Loc.T("Low", "低", "낮음", "低", "低");
+            }
         }
 
         private void DrawSourceFeatures()

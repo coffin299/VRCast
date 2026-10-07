@@ -9,6 +9,7 @@ namespace VRCast.Platform
     /// <summary>
     /// CreateProcessW で外部プログラムを起動する。IL2CPP の System.Diagnostics.Process.Start（UseShellExecute = false）は
     /// 起動に失敗する（"Native error= Success"）ため、トラッカーの起動・VRCast の起動し直しはこちらを使う。
+    /// UseShellExecute = true（管理者権限での起動など）も同様に失敗するため、ShellExecuteExW で起動する RunElevated を使う。
     /// 出力を受け取る場合は標準出力と標準エラー出力を 1 本のパイプにまとめ、行ごとに別スレッドから通知する。
     /// </summary>
     public sealed class NativeProcess : IDisposable
@@ -66,6 +67,47 @@ namespace VRCast.Platform
             public IntPtr SecurityDescriptor;
             public int InheritHandle;
         }
+
+        // ShellExecuteExW: プロセスのハンドルを受け取る、起動完了まで戻らない、ウィンドウを出さない
+        private const uint ShellNoCloseProcess = 0x00000040;
+        private const uint ShellNoAsync = 0x00000100;
+        private const int ShowHidden = 0;
+
+        // COM の初期化（ShellExecuteExW の前提）
+        private const uint ComApartmentThreaded = 0x2;
+        private const uint ComDisableOle1Dde = 0x4;
+
+        [StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode)]
+        private struct ShellExecuteInfo
+        {
+            public int Size;
+            public uint Mask;
+            public IntPtr Window;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Verb;
+            [MarshalAs(UnmanagedType.LPWStr)] public string File;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Parameters;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Directory;
+            public int Show;
+            public IntPtr InstApp;
+            public IntPtr IdList;
+            [MarshalAs(UnmanagedType.LPWStr)] public string Class;
+            public IntPtr ClassKey;
+            public uint HotKey;
+            public IntPtr IconOrMonitor;
+            public IntPtr Process;
+        }
+
+        [DllImport("shell32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
+        private static extern bool ShellExecuteExW(ref ShellExecuteInfo info);
+
+        [DllImport("ole32.dll")]
+        private static extern int CoInitializeEx(IntPtr reserved, uint coInit);
+
+        [DllImport("ole32.dll")]
+        private static extern void CoUninitialize();
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr GetActiveWindow();
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         private static extern bool CreateProcessW(string applicationName, StringBuilder commandLine,
@@ -195,6 +237,61 @@ namespace VRCast.Platform
             }
 
             return process;
+        }
+
+        /// <summary>
+        /// 呼び出したスレッドのアクティブウィンドウ（メインスレッドで取ると VRCast のウィンドウ）。UAC の確認の親に使う。
+        /// </summary>
+        public static IntPtr ActiveWindow => GetActiveWindow();
+
+        /// <summary>
+        /// 管理者権限（UAC の確認あり）でウィンドウを出さずに起動し、終了を待って終了コードを返す。
+        /// 起動できなければ Win32Exception（UAC で拒否されたときは NativeErrorCode = 1223）。
+        /// </summary>
+        public static int RunElevated(string path, string arguments, IntPtr owner)
+        {
+            // ShellExecuteExW は COM の初期化を前提とする（初期化済みのスレッドならそのまま使う）
+            bool comInitialized = CoInitializeEx(IntPtr.Zero, ComApartmentThreaded | ComDisableOle1Dde) >= 0;
+            try
+            {
+                var info = new ShellExecuteInfo
+                {
+                    Size = Marshal.SizeOf<ShellExecuteInfo>(),
+                    Mask = ShellNoCloseProcess | ShellNoAsync,
+                    Window = owner,
+                    Verb = "runas",
+                    File = path,
+                    Parameters = arguments,
+                    Show = ShowHidden,
+                };
+                if (!ShellExecuteExW(ref info))
+                {
+                    throw Failure("ShellExecuteEx");
+                }
+
+                // プロセスのハンドルが無ければ結果は分からない（呼び出し側で結果を確かめる）
+                if (info.Process == IntPtr.Zero)
+                {
+                    return 0;
+                }
+
+                try
+                {
+                    WaitForSingleObject(info.Process, uint.MaxValue);
+                    return GetExitCodeProcess(info.Process, out uint code) ? unchecked((int)code) : -1;
+                }
+                finally
+                {
+                    CloseHandle(info.Process);
+                }
+            }
+            finally
+            {
+                if (comInitialized)
+                {
+                    CoUninitialize();
+                }
+            }
         }
 
         /// <summary>

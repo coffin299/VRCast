@@ -1,10 +1,10 @@
 using System;
 using System.ComponentModel;
-using System.Diagnostics;
 using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using VRCast.Platform;
 
 namespace VRCast.Output
 {
@@ -105,34 +105,21 @@ namespace VRCast.Output
         /// </summary>
         public static Task<string> RunElevatedAsync(string bundledFolder, bool install)
         {
+            // UAC の確認を VRCast のウィンドウの前に出すため、呼び出し元（メインスレッド）でウィンドウを取っておく
             string arguments = BuildArguments(bundledFolder, install);
-            return Task.Run(() => RunElevated(arguments));
+            IntPtr owner = NativeProcess.ActiveWindow;
+            return Task.Run(() => RunElevated(arguments, owner, install));
         }
 
-        private static string RunElevated(string arguments)
+        private static string RunElevated(string arguments, IntPtr owner, bool install)
         {
-            var startInfo = new ProcessStartInfo
-            {
-                FileName = "cmd.exe",
-                Arguments = arguments,
-                Verb = "runas",
-                UseShellExecute = true,
-                WindowStyle = ProcessWindowStyle.Hidden,
-            };
-
+            // IL2CPP の Process.Start（runas）は起動できないため Windows の API で直接起動する
+            string system = Environment.GetFolderPath(Environment.SpecialFolder.System);
+            string cmd = string.IsNullOrEmpty(system) ? "cmd.exe" : Path.Combine(system, "cmd.exe");
+            int exitCode;
             try
             {
-                // 終了を待って regsvr32 の結果を返す
-                using (Process process = Process.Start(startInfo))
-                {
-                    if (process == null)
-                    {
-                        return "Failed to start regsvr32";
-                    }
-
-                    process.WaitForExit();
-                    return process.ExitCode == 0 ? null : $"regsvr32 failed (exit code {process.ExitCode})";
-                }
+                exitCode = NativeProcess.RunElevated(cmd, arguments, owner);
             }
             catch (Win32Exception e) when (e.NativeErrorCode == ErrorCancelled)
             {
@@ -143,6 +130,28 @@ namespace VRCast.Output
             {
                 return e.Message;
             }
+            catch (EntryPointNotFoundException)
+            {
+                return "Not supported on this OS";
+            }
+            catch (DllNotFoundException)
+            {
+                return "Not supported on this OS";
+            }
+
+            if (exitCode != 0)
+            {
+                return $"regsvr32 failed (exit code {exitCode})";
+            }
+
+            // 終了コードが 0 でも登録されていなければ失敗として伝える
+            bool registered = !string.IsNullOrEmpty(ReadRegisteredPath());
+            if (registered != install)
+            {
+                return install ? "The driver was not registered" : "The driver was not unregistered";
+            }
+
+            return null;
         }
 
         private static string ReadRegisteredPath()

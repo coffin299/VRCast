@@ -366,7 +366,7 @@ namespace VRCast.UI
             for (int i = 0; i < labels.Length; i++)
             {
                 bool selected = (int)_settings.uiLanguage == i;
-                if (GUILayout.Toggle(selected, labels[i], GUI.skin.button) && !selected)
+                if (GUILayout.Toggle(selected, labels[i], _theme.OverflowButton) && !selected)
                 {
                     _settings.uiLanguage = (UiLanguage)i;
                 }

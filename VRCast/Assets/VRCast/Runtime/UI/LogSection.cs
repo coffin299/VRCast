@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Text;
 using UnityEngine;
@@ -376,9 +375,11 @@ namespace VRCast.UI
             try
             {
                 // 日本語を含むパスでも確実に開けるよう、URL ではなくエクスプローラーにパスを渡す
-                Process.Start("explorer.exe", $"\"{folder}\"")?.Dispose();
+                // （IL2CPP の Process.Start は起動できないため CreateProcessW で起動する）
+                string explorer = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "explorer.exe");
+                NativeProcess.Start(explorer, $"\"{folder}\"", null).Dispose();
             }
-            catch (Exception e) when (e is InvalidOperationException || e is System.ComponentModel.Win32Exception)
+            catch (System.ComponentModel.Win32Exception e)
             {
                 VRCastLog.Warning(LogCategory, "Failed to open log folder: " + e.Message);
             }
