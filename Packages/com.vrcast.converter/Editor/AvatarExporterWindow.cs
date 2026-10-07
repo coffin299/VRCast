@@ -20,6 +20,9 @@ namespace VRCast.Converter.Editor
         // 「シーンの BlendShape の値を優先」の選択を保持する EditorPrefs キー
         private const string KeepSceneBlendShapesKey = "VRCast.Converter.KeepSceneBlendShapes";
 
+        // 「パーフェクトシンク作成用に顔のメッシュを編集可能にする」の選択を保持する EditorPrefs キー
+        private const string EditableFaceMeshesKey = "VRCast.Converter.EditableFaceMeshes";
+
         // ダイアログ・進捗バーのタイトル（製品名なので訳さない）
         private const string Title = "VRCast Exporter";
 
@@ -150,6 +153,7 @@ namespace VRCast.Converter.Editor
                 MessageType.Info);
 
             DrawBlendShapeOption();
+            DrawEditableFaceMeshOption();
             DrawExtraExpressions();
 
             using (new EditorGUI.DisabledScope(error != null))
@@ -185,6 +189,38 @@ namespace VRCast.Converter.Editor
                     "(의상 전환에 맞춰 축소용 블렌드셰이프도 움직이는 경우 등).",
                     "关闭后，FX 层驱动的 BlendShape 会以初始状态的值导出（例如切换服装时同时驱动收缩用 BlendShape）。",
                     "關閉後，FX 層驅動的 BlendShape 會以初始狀態的值匯出（例如切換服裝時同時驅動收縮用 BlendShape）。"),
+                MessageType.None);
+        }
+
+        private static void DrawEditableFaceMeshOption()
+        {
+            // 既定は ON（VRCast でパーフェクトシンクの形状を作れるようにする）
+            bool editable = EditorPrefs.GetBool(EditableFaceMeshesKey, true);
+            bool changed = EditorGUILayout.ToggleLeft(
+                T("Editable face meshes (Perfect Sync)",
+                    "顔メッシュを編集可能にする（パーフェクトシンク）",
+                    "얼굴 메시 편집 가능 (퍼펙트 싱크)",
+                    "面部网格可编辑（完美同步）",
+                    "臉部網格可編輯（完美同步）"),
+                editable);
+            if (changed != editable)
+            {
+                EditorPrefs.SetBool(EditableFaceMeshesKey, changed);
+            }
+
+            // 何が変わるか（元のメッシュは変えない・メモリが増える）を補足
+            EditorGUILayout.HelpBox(
+                T(
+                    "Exports the face, teeth and tongue meshes with Read/Write enabled so that VRCast can sculpt " +
+                    "Perfect Sync (ARKit) shapes. The original meshes are not changed. Uses a little more memory in VRCast.",
+                    "顔・歯・舌のメッシュを Read/Write 有効で書き出し、VRCast でパーフェクトシンク（ARKit）の形状を作れるようにします。" +
+                    "元のメッシュは変更しません。VRCast での使用メモリが少し増えます。",
+                    "얼굴·치아·혀 메시를 Read/Write 활성으로 내보내 VRCast에서 퍼펙트 싱크(ARKit) 형상을 만들 수 있게 합니다. " +
+                    "원본 메시는 변경하지 않습니다. VRCast의 사용 메모리가 조금 늘어납니다.",
+                    "以启用 Read/Write 的方式导出面部、牙齿、舌头网格，使 VRCast 可以制作完美同步（ARKit）形态。" +
+                    "不会修改原始网格。VRCast 的内存占用会略有增加。",
+                    "以啟用 Read/Write 的方式匯出臉部、牙齒、舌頭網格，使 VRCast 可以製作完美同步（ARKit）形態。" +
+                    "不會修改原始網格。VRCast 的記憶體使用量會略為增加。"),
                 MessageType.None);
         }
 
@@ -525,7 +561,7 @@ namespace VRCast.Converter.Editor
                     0.5f);
                 AvatarExporter.Report report = AvatarExporter.Export(
                     _avatar, path, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true),
-                    ExtraExpressionClips.Collect(_extraEntries));
+                    ExtraExpressionClips.Collect(_extraEntries), EditorPrefs.GetBool(EditableFaceMeshesKey, true));
 
                 // Console のログは問い合わせ時に読みやすいよう英語固定、ダイアログは表示言語
                 Debug.Log("[VRCast][Exporter] " + BuildSummary(report, true).Replace("\n", " / "));
@@ -579,6 +615,8 @@ namespace VRCast.Converter.Editor
                 "EditorOnly 物件");
             string inactive = L("inactive objects", "非アクティブのオブジェクト", "비활성 오브젝트", "未激活的对象",
                 "未啟用的物件");
+            string editableMeshes = L("Editable face meshes (Perfect Sync)", "編集可能にした顔のメッシュ（パーフェクトシンク）",
+                "편집 가능하게 한 얼굴 메시 (퍼펙트 싱크)", "已设为可编辑的面部网格（完美同步）", "已設為可編輯的臉部網格（完美同步）");
 
             return
                 $"{exported}: {report.OutputPath}\n" +
@@ -593,6 +631,7 @@ namespace VRCast.Converter.Editor
                 $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +
                 $"PhysBones: {report.PhysBoneCount}\n" +
                 $"Constraints: {report.ConstraintCount}\n" +
+                $"{editableMeshes}: {report.EditableFaceMeshes}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +
                 $"{missing}: {report.Strip.RemovedMissingScripts}, " +
                 $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}, " +

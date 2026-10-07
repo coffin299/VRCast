@@ -35,7 +35,7 @@ namespace VRCast.UI
 
         // 条件に合う BlendShape（条件・アバター・上限付きの数・顔の数が変わったときだけ作り直す）と、作ったときの条件
         private readonly List<BlendShapeLimiter.Shape> _rows = new List<BlendShapeLimiter.Shape>();
-        private (BlendShapeLimiter limiter, int group, string search, bool limitedOnly, int limited, int face) _rowsKey;
+        private (BlendShapeLimiter limiter, int version, int group, string search, bool limitedOnly, int limited, int face) _rowsKey;
 
         // 一覧の欄のスクロール位置
         private Vector2 _listScroll;
@@ -181,8 +181,9 @@ namespace VRCast.UI
 
         private void RefreshRows(BlendShapeLimiter limiter)
         {
-            // 条件・アバター・上限付きの数・顔の数が前回と同じなら作り直さない
-            var key = (limiter, _limitGroup, _limitSearch, _limitedOnly, limiter.LimitedCount, limiter.FaceCount);
+            // 条件・アバター・一覧の版・上限付きの数・顔の数が前回と同じなら作り直さない
+            var key = (limiter, limiter.Version, _limitGroup, _limitSearch, _limitedOnly, limiter.LimitedCount,
+                limiter.FaceCount);
             if (_rowsKey.Equals(key))
             {
                 return;

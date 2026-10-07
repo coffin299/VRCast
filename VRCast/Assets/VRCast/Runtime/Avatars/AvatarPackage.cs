@@ -24,9 +24,13 @@ namespace VRCast.Avatars
         // Constraint 設定（無い・不正な場合は空）
         public ConstraintSet Constraints { get; }
 
+        // VRCast で作ったパーフェクトシンクの形状（無い・不正な場合は空）
+        public PerfectSyncData PerfectSync { get; }
+
         public AvatarPackage(
             AvatarManifest manifest, string sourcePath, string bundlePath,
-            ExpressionSet expressions, AvatarDescriptorData descriptor, PhysBoneSet physBones, ConstraintSet constraints)
+            ExpressionSet expressions, AvatarDescriptorData descriptor, PhysBoneSet physBones, ConstraintSet constraints,
+            PerfectSyncData perfectSync)
         {
             Manifest = manifest;
             SourcePath = sourcePath;
@@ -35,6 +39,7 @@ namespace VRCast.Avatars
             Descriptor = descriptor ?? new AvatarDescriptorData();
             PhysBones = physBones ?? new PhysBoneSet();
             Constraints = constraints ?? new ConstraintSet();
+            PerfectSync = perfectSync ?? PerfectSyncData.Empty;
         }
     }
 

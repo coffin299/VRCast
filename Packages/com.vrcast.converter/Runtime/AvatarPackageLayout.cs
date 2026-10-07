@@ -32,6 +32,13 @@ namespace VRCast.AvatarFormat
         // 任意エントリ: Constraint（位置・回転・親子・Aim 等）
         public const string ConstraintsEntry = MetadataPrefix + "constraints.json";
 
+        // 任意エントリ: VRCast で作ったパーフェクトシンクの形状の目次（旧 Runtime は未知の metadata として無視する）
+        public const string PerfectSyncEntry = MetadataPrefix + "perfectsync.json";
+
+        // 任意エントリ: 形状ごとの差分（metadata/perfectsync_<名前>.json）
+        public const string PerfectSyncShapePrefix = MetadataPrefix + "perfectsync_";
+        public const string PerfectSyncShapeSuffix = ".json";
+
         // metadata 1 ファイルの上限サイズ（1 MiB）
         public const long MaxMetadataBytes = 1024 * 1024;
 

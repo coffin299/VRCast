@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using UnityEngine;
@@ -60,6 +61,7 @@ namespace VRCast.Avatars
                     var descriptor = ReadMetadata<AvatarDescriptorData>(zip, AvatarPackageLayout.DescriptorEntry);
                     var physBones = ReadMetadata<PhysBoneSet>(zip, AvatarPackageLayout.PhysBonesEntry);
                     var constraints = ReadMetadata<ConstraintSet>(zip, AvatarPackageLayout.ConstraintsEntry);
+                    PerfectSyncData perfectSync = ReadPerfectSync(zip);
 
                     // bundle をキャッシュへ展開（ハッシュ検証込み）
                     string bundlePath = ExtractBundle(zip, manifest, cacheRoot);
@@ -71,7 +73,44 @@ namespace VRCast.Avatars
                             $"Unity version mismatch: package {manifest.unityVersion}, runtime {Application.unityVersion}.");
                     }
 
-                    return new AvatarPackage(manifest, info.FullName, bundlePath, expressions, descriptor, physBones, constraints);
+                    return new AvatarPackage(
+                        manifest, info.FullName, bundlePath, expressions, descriptor, physBones, constraints, perfectSync);
+                }
+            }
+            catch (InvalidDataException e)
+            {
+                // ZIP として壊れている
+                throw new AvatarPackageException("Not a valid package (corrupt ZIP).", e);
+            }
+        }
+
+        /// <summary>
+        /// bundle を展開せずに、パッケージのパーフェクトシンクの形状だけを読む（別のパッケージから形状を取り込む用）。
+        /// パッケージ自体の検証は Extract と同じで、不正なら AvatarPackageException。形状が無い・不正なら空。
+        /// </summary>
+        public static PerfectSyncData ReadPerfectSyncOnly(string packagePath)
+        {
+            // ファイルの存在とサイズを先に確認
+            var info = new FileInfo(packagePath);
+            if (!info.Exists)
+            {
+                throw new AvatarPackageException($"File not found: {packagePath}");
+            }
+
+            if (info.Length > MaxPackageBytes)
+            {
+                throw new AvatarPackageException($"Package is too large: {info.Length} bytes.");
+            }
+
+            try
+            {
+                using (FileStream stream = info.OpenRead())
+                using (var zip = new ZipArchive(stream, ZipArchiveMode.Read))
+                {
+                    // エントリ名と manifest は Extract と同じく検証する
+                    ValidateEntries(zip);
+                    ReadManifest(zip);
+                    return ReadPerfectSync(zip);
                 }
             }
             catch (InvalidDataException e)
@@ -220,6 +259,78 @@ namespace VRCast.Avatars
                 VRCastLog.Warning(LogCategory, $"Ignored unreadable {entryName}: {e.Message}");
                 return new T();
             }
+        }
+
+        private static PerfectSyncData ReadPerfectSync(ZipArchive zip)
+        {
+            // 目次が無い・不正・形状が空なら空（不正の警告は ReadMetadata が出す）
+            if (zip.GetEntry(AvatarPackageLayout.PerfectSyncEntry) == null)
+            {
+                return PerfectSyncData.Empty;
+            }
+
+            var set = ReadMetadata<PerfectSyncSet>(zip, AvatarPackageLayout.PerfectSyncEntry);
+            if (set.IsEmpty)
+            {
+                return PerfectSyncData.Empty;
+            }
+
+            var shapes = new List<PerfectSyncShapeData>();
+            foreach (string name in set.shapes)
+            {
+                // 目次にあって形状ファイルが無いものは飛ばす
+                string entryName = PerfectSyncSet.ShapeEntryName(name);
+                if (zip.GetEntry(entryName) == null)
+                {
+                    VRCastLog.Warning(LogCategory, $"Missing {entryName}.");
+                    continue;
+                }
+
+                // 不正（名前が空になる）・目次と名前が違うものは飛ばす
+                var shape = ReadMetadata<PerfectSyncShape>(zip, entryName);
+                if (shape.name != name)
+                {
+                    continue;
+                }
+
+                // 差分を展開できた形状だけを使う
+                PerfectSyncShapeData decoded = DecodeShape(set, shape, out string error);
+                if (decoded == null)
+                {
+                    VRCastLog.Warning(LogCategory, $"Ignored invalid {entryName}: {error}");
+                    continue;
+                }
+
+                shapes.Add(decoded);
+            }
+
+            return new PerfectSyncData(set.meshes, shapes);
+        }
+
+        private static PerfectSyncShapeData DecodeShape(PerfectSyncSet set, PerfectSyncShape shape, out string error)
+        {
+            var meshes = new List<PerfectSyncMeshDelta>();
+            foreach (PerfectSyncShapeMesh mesh in shape.meshes)
+            {
+                // 目次に無いメッシュを指していれば不正
+                if (mesh.mesh >= set.meshes.Length)
+                {
+                    error = "Mesh index is out of range.";
+                    return null;
+                }
+
+                // 目次の頂点数を上限に展開
+                if (!PerfectSyncCodec.TryDecode(mesh.indices, mesh.deltas, set.meshes[mesh.mesh].vertexCount,
+                        out int[] indices, out Vector3[] deltas, out error))
+                {
+                    return null;
+                }
+
+                meshes.Add(new PerfectSyncMeshDelta(mesh.mesh, indices, deltas));
+            }
+
+            error = null;
+            return new PerfectSyncShapeData(shape.name, meshes);
         }
 
         private static string ReadTextEntry(ZipArchiveEntry entry, long maxBytes)

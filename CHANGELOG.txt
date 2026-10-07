@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- パーフェクトシンクの形状（ARKit 名の BlendShape）を VRCast の中で作る作成モードをベータ版として追加（「はじめに」の下の「パーフェクトシンク設定(BETA)」タブ、またはトラッキングタブから開きます。顔をブラシでなでて形を作り、左右対称の編集・既存の BlendShape の合成・左右反転コピー・元に戻す・顔のトラッキングでの確認ができます。作った形状は .vrcaster に保存され、初回は元のファイルを .bak として残します。古い VRCast でも今までどおり開けます）
+- 書き出しツールに「顔メッシュを編集可能にする（パーフェクトシンク）」を追加（VRCast でパーフェクトシンクの形状を作るのに必要です。既定は ON）
+
+[English]
+- Added an editor for making perfect sync shapes (ARKit blend shapes) inside VRCast as a beta (open it from the new "Perfect sync setup (BETA)" tab under "Start", or from the Tracking tab; brush the face to shape it, with symmetric editing, adding existing blend shapes, mirrored copy, undo and a face tracking test; shapes are saved into the .vrcaster, keeping the original file as .bak on the first save; older VRCast versions still open the file as before)
+- Added "Editable face meshes (Perfect Sync)" to the exporter (needed to make perfect sync shapes in VRCast; on by default)
+
 ■ 1.11.3 (2026-10-07)
 
 [日本語]

@@ -178,6 +178,7 @@ namespace VRCast.UI
         public GUIStyle Card { get; private set; }
         public GUIStyle Sidebar { get; private set; }
         public GUIStyle Tab { get; private set; }
+        public GUIStyle WrappingTab { get; private set; }
 
         // 短い文字のボタン（言語の切替など。代替フォントの字形が下へはみ出しても切らない）
         public GUIStyle OverflowButton { get; private set; }
@@ -439,6 +440,9 @@ namespace VRCast.UI
             };
             SetStates(Tab, null, Rounded(ControlHover, ControlRadius), Rounded(ControlActive, ControlRadius), TextDim);
             Tab.hover.textColor = TextColor;
+
+            // 長い名前のタブ（タブ列の幅で折り返し、行数に合わせて高くする）
+            WrappingTab = new GUIStyle(Tab) { fixedHeight = 0f, wordWrap = true };
         }
 
         private static void SetStates(GUIStyle style, Texture2D normal, Texture2D hover, Texture2D active, Color text)
