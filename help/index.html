@@ -435,6 +435,11 @@
         <span class="ko">흔들림 (PhysBone 근사)과 자동 눈 깜빡임도 켜고 끌 수 있습니다.</span>
         <span class="zh-hans">物理摆动（PhysBone 近似）和自动眨眼也可以开启或关闭。</span>
         <span class="zh-hant">物理擺動（PhysBone 近似）和自動眨眼也可以開啟或關閉。</span></li>
+    <li><span class="ja"><span class="ui">表情中はまばたきしない</span> を ON にすると、表情を出している間は自動まばたきもトラッキングのまばたきも止まり、表情の目の形が崩れません。</span>
+        <span class="en">Turn on <span class="ui">Don't blink during expressions</span> to stop both auto blink and blinks from face tracking while an expression is shown, so they do not distort the expression's eyes.</span>
+        <span class="ko"><span class="ui">표정 중에는 눈 깜빡이지 않기</span>를 켜면 표정을 짓는 동안 자동 눈 깜빡임과 트래킹의 눈 깜빡임이 모두 멈춰 표정의 눈 모양이 흐트러지지 않습니다.</span>
+        <span class="zh-hans">开启 <span class="ui">表情期间不眨眼</span> 后，显示表情期间会同时停止自动眨眼和面部追踪的眨眼，表情的眼睛形状不会被破坏。</span>
+        <span class="zh-hant">開啟 <span class="ui">表情期間不眨眼</span> 後，顯示表情期間會同時停止自動眨眼和臉部追蹤的眨眼，表情的眼睛形狀不會被破壞。</span></li>
     <li><span class="ja"><span class="ui">シェイプキー</span> タブの <span class="ui">BlendShape の上限</span> では、BlendShape ごとに動く最大値（100 = 制限なし）を決められます。まばたきで目が消える・口を開くと顔が崩れるときは、その BlendShape を下げてください。
         <span class="ui">対象</span> で <span class="ui">顔（まばたき・口・表情）</span>（まばたき・口パク・表情・パーフェクトシンクで動くもの）か <span class="ui">その他</span>（体型・服など）を選び、<span class="ui">検索</span> で絞り込めます。設定はアバターごとに保存されます。</span>
         <span class="en">Under <span class="ui">Blend shape limits</span> in the <span class="ui">Shape keys</span> tab, set how far each blend shape can move (100 = no limit). If the eyes disappear when blinking or the face breaks when the mouth opens, lower that blend shape.
@@ -456,6 +461,11 @@
         <span class="ko"><span class="ui">트래킹 사용</span>을 켜면 포함된 트래커가 자동으로 시작되어 머리 방향·눈 깜빡임·입·시선 (MediaPipe에서는 팔·손도)이 움직입니다.</span>
         <span class="zh-hans">打开 <span class="ui">启用追踪</span> 后，内置追踪器会自动启动，驱动头部朝向、眨眼、嘴部和视线（MediaPipe 还包括手臂和手）。</span>
         <span class="zh-hant">開啟 <span class="ui">啟用追蹤</span> 後，內建追蹤器會自動啟動，驅動頭部朝向、眨眼、嘴部和視線（MediaPipe 還包括手臂和手）。</span></li>
+    <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
+        <span class="en">Turn off <span class="ui">Track blinks</span> (on by default) to ignore your eye openness and use auto blink from the Face tab instead (perfect sync also leaves blinking alone).</span>
+        <span class="ko"><span class="ui">눈 깜빡임 트래킹</span>(기본은 켜짐)을 끄면 눈의 개폐를 따라가지 않고 얼굴 탭의 자동 눈 깜빡임을 사용합니다 (퍼펙트 싱크에서도 눈 깜빡임만은 움직이지 않습니다).</span>
+        <span class="zh-hans">关闭 <span class="ui">追踪眨眼</span>（默认开启）后，不再跟随眼睛开合，改用面部标签的自动眨眼（完美同步也不驱动眨眼）。</span>
+        <span class="zh-hant">關閉 <span class="ui">追蹤眨眼</span>（預設開啟）後，不再跟隨眼睛開合，改用臉部分頁的自動眨眼（完美同步也不驅動眨眼）。</span></li>
     <li><span class="ja">MediaPipe では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面を検出してアバターの表情に切り替えます（割り当て先の表情が無いものは検出しません）。
         表情ごとの <span class="ui">しきい値</span> で反応のしやすさ（低いほど反応しやすい。<span class="ui">生データ表示</span> 中に出る表情の値が目安）を、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
         <span class="en">With MediaPipe, <span class="ui">Facial expressions</span> (on by default) detects your smile, surprise, anger, sadness, wink, half-closed eyes and pout and switches the avatar's expression (expressions with nothing assigned are not detected).
