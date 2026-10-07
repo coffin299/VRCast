@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 1.8.1 (2026-10-07)
 
 [日本語]
 - 表情を出している間はまばたきしない設定を追加（顔タブ。自動まばたきとトラッキングのまばたきの両方が止まり、表情の目の形が崩れません）
