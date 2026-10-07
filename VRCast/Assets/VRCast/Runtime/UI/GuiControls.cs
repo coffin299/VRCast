@@ -38,6 +38,15 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// カード内の項目のまとまりを区切る小見出し。
+        /// </summary>
+        public static void SubHeading(string text)
+        {
+            UiTheme theme = UiTheme.Current;
+            GUILayout.Label(text, theme != null ? theme.SubTitle : GUI.skin.label);
+        }
+
+        /// <summary>
         /// 手順のカードを開始する（「1. 見出し」と、右端に完了 / 未完了の表示。EndCard で閉じる）。
         /// done が null の手順（アプリ側で確認できない操作）は状態を出さない。
         /// </summary>
@@ -81,6 +90,16 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// 状態の 1 行（ok なら緑の太字、そうでなければ控えめな文字）。
+        /// </summary>
+        public static void Status(string text, bool ok)
+        {
+            UiTheme theme = UiTheme.Current;
+            GUIStyle style = theme == null ? GUI.skin.label : ok ? theme.Success : theme.Hint;
+            GUILayout.Label(text, style);
+        }
+
+        /// <summary>
         /// ラベル + ボタンの 1 行を描画し、ボタンが押されたら true。
         /// </summary>
         public static bool LabeledButton(string label, string text)
@@ -90,6 +109,21 @@ namespace VRCast.UI
             bool pressed = GUILayout.Button(text, Shrinkable);
             GUILayout.EndHorizontal();
             return pressed;
+        }
+
+        /// <summary>
+        /// ラベル + ポート番号の入力欄の 1 行を描画する。input は入力途中の文字列（呼び出し側で保持）。
+        /// 範囲内の数値になったときだけその値を、それ以外は current を返す。
+        /// </summary>
+        public static int PortField(string label, ref string input, int current, int min, int max)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, GUILayout.Width(LabelWidth));
+            input = GUILayout.TextField(input, 5);
+            GUILayout.EndHorizontal();
+
+            // 入力途中（空・範囲外）は今の値のまま
+            return int.TryParse(input, out int port) && port >= min && port <= max ? port : current;
         }
 
         /// <summary>

@@ -61,6 +61,26 @@ namespace VRCast.Tracking
         // 視線の BlendShape 1.0 あたりの角度（度）
         private const float GazeDegrees = 30f;
 
+        // ウインク: 左右のまばたきの差をウインクの強さ 0〜1 へ写す範囲と、閉じた側の目の閉じ具合の範囲
+        private const float WinkGapMin = 0.25f;
+        private const float WinkGapFull = 0.6f;
+        private const float WinkClosedMin = 0.35f;
+        private const float WinkClosedFull = 0.6f;
+
+        // ジト目: 両目の閉じ具合（平均）が半分ほどの範囲で強くなり、閉じきると弱くなる
+        private const float SquintStart = 0.2f;
+        private const float SquintFull = 0.4f;
+        private const float SquintFadeStart = 0.6f;
+        private const float SquintFadeEnd = 0.8f;
+
+        // ジト目: 下を見ているとまぶたも下がるため、下向きの視線の値でこの範囲だけ弱める
+        private const float LookDownFadeStart = 0.3f;
+        private const float LookDownFadeEnd = 0.6f;
+
+        // ふくれっ面（口をとがらせる）: mouthPucker を強さ 0〜1 へ写す範囲（「う」の口より強くとがらせたときに届く）
+        private const float PoutStart = 0.35f;
+        private const float PoutFull = 0.8f;
+
         // 腕の点を使う可視度の下限（画面外の推定値で腕が暴れないように）
         private const float MinVisibility = 0.5f;
 
@@ -83,6 +103,7 @@ namespace VRCast.Tracking
         private static readonly int[] FrownShapes = { IndexOf("mouthFrownLeft"), IndexOf("mouthFrownRight") };
         private static readonly int[] BrowOuterUpShapes = { IndexOf("browOuterUpLeft"), IndexOf("browOuterUpRight") };
         private static readonly int BrowInnerUp = IndexOf("browInnerUp");
+        private static readonly int MouthPucker = IndexOf("mouthPucker");
 
         /// <summary>
         /// 送信される JSON の形（フィールド名は送信側と一致させる。欠けた配列は null）。
@@ -213,7 +234,8 @@ namespace VRCast.Tracking
             face.HasGaze = true;
 
             // 表情: 笑顔 = 口角、怒り = 眉を下げる、驚き = 眉全体（内側と外側）を上げる、
-            // 悲しみ = 口角を下げる + 眉の内側だけを上げる（外側も上がる驚きと区別する）
+            // 悲しみ = 口角を下げる + 眉の内側だけを上げる（外側も上がる驚きと区別する）、
+            // ウインク = 片目だけ閉じる、ジト目 = 両目を半分閉じる、ふくれっ面 = 口をとがらせる
             float browInner = scores[BrowInnerUp];
             float browOuter = Average(scores, BrowOuterUpShapes);
             face.Expression = new ExpressionScores
@@ -222,12 +244,45 @@ namespace VRCast.Tracking
                 Surprise = (browInner + browOuter) * 0.5f,
                 Angry = Average(scores, AngryShapes),
                 Sad = Mathf.Clamp01(Average(scores, FrownShapes) + Mathf.Max(0f, browInner - browOuter)),
+                Wink = WinkScore(scores[EyeBlinkLeft], scores[EyeBlinkRight]),
+                Squint = SquintScore(scores[EyeBlinkLeft], scores[EyeBlinkRight],
+                    (scores[EyeLookDownLeft] + scores[EyeLookDownRight]) * 0.5f),
+                Pout = Mathf.InverseLerp(PoutStart, PoutFull, scores[MouthPucker]),
             };
             face.HasExpression = true;
 
             // パーフェクトシンク用に生の値も渡す（受信ごとに新しい配列のため複製しない）
             face.BlendShapes = scores;
             return true;
+        }
+
+        /// <summary>
+        /// ウインクの強さ（片目だけを閉じているほど 1 に近い）。
+        /// </summary>
+        public static float WinkScore(float blinkLeft, float blinkRight)
+        {
+            // 左右の差が大きく、閉じた側がしっかり閉じているときだけ強くする
+            float gap = Mathf.InverseLerp(WinkGapMin, WinkGapFull, Mathf.Abs(blinkLeft - blinkRight));
+            float closed = Mathf.InverseLerp(WinkClosedMin, WinkClosedFull, Mathf.Max(blinkLeft, blinkRight));
+            return gap * closed;
+        }
+
+        /// <summary>
+        /// ジト目の強さ（両目を半分ほど閉じているほど 1 に近い。閉じきり・片目だけ・下向きの視線では弱い）。
+        /// </summary>
+        public static float SquintScore(float blinkLeft, float blinkRight, float lookDown)
+        {
+            // 両目の閉じ具合の平均が半分ほどの間だけ強くする（閉じきったらまばたき・目を閉じた扱い）
+            float closed = (blinkLeft + blinkRight) * 0.5f;
+            float half = Mathf.InverseLerp(SquintStart, SquintFull, closed)
+                * (1f - Mathf.InverseLerp(SquintFadeStart, SquintFadeEnd, closed));
+
+            // 片目だけ閉じているならウインク側なので弱める
+            float symmetric = 1f - Mathf.InverseLerp(WinkGapMin, WinkGapFull, Mathf.Abs(blinkLeft - blinkRight));
+
+            // 下を見てまぶたが下がっているだけなら弱める
+            float notLookingDown = 1f - Mathf.InverseLerp(LookDownFadeStart, LookDownFadeEnd, lookDown);
+            return half * symmetric * notLookingDown;
         }
 
         private static float Average(float[] scores, int[] indices)

@@ -9,7 +9,7 @@ using VRCast.Dynamics;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Face タブ（揺れもの・自動まばたき・マイクリップシンク）。
+    /// Face タブ（揺れもの・自動まばたき・表情中のまばたき停止・マイクリップシンク）。
     /// </summary>
     public class FaceSection
     {
@@ -57,6 +57,13 @@ namespace VRCast.UI
 
             _settings.autoBlink = GUILayout.Toggle(
                 _settings.autoBlink, Loc.T("Auto blink", "自動まばたき", "자동 눈 깜빡임", "自动眨眼", "自動眨眼"));
+
+            // 自動・トラッキングのどちらのまばたきにも効く
+            _settings.blinkPausedByExpression = GUILayout.Toggle(
+                _settings.blinkPausedByExpression, Loc.T("Don't blink during expressions", "表情中はまばたきしない",
+                    "표정 중에는 눈 깜빡이지 않기", "表情期间不眨眼", "表情期間不眨眼"));
+            GuiControls.Hint(Loc.T("Also stops blinks from face tracking", "トラッキングのまばたきも止めます",
+                "트래킹의 눈 깜빡임도 멈춥니다", "也会停止面部追踪的眨眼", "也會停止臉部追蹤的眨眼"));
 
             // まぶた設定が無いアバターでは注記を付ける
             var blink = _avatar.Get<BlinkController>();

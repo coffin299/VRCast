@@ -26,7 +26,7 @@ namespace VRCast.UI
         private ExpressionController _expressionSource;
 
         // 表情ごとに「自動」で推定されるプリセットの位置（FaceExpression の値で引く、-1 = なし）
-        private readonly int[] _expressionGuesses = new int[(int)FaceExpression.Sad + 1];
+        private readonly int[] _expressionGuesses = new int[(int)FaceExpressions.Last + 1];
 
         public TrackingSection(
             AvatarSession session, IFaceTrackingProvider tracker, TrackerProcess process,
@@ -76,6 +76,7 @@ namespace VRCast.UI
             if (_settings.trackingEnabled)
             {
                 DrawSource();
+                DrawBlink();
                 DrawLauncher();
                 DrawPort();
                 GuiControls.Hint(_tracker.Status);
@@ -119,6 +120,21 @@ namespace VRCast.UI
 
             DrawPerfectSync();
             DrawExpressions();
+        }
+
+        private void DrawBlink()
+        {
+            // まばたきのトラッキングの ON/OFF（どの入力元でも使う。OFF の間は顔タブの自動まばたきに任せる）
+            _settings.trackingBlink = GUILayout.Toggle(
+                _settings.trackingBlink,
+                Loc.T("Track blinks", "まばたきをトラッキング", "눈 깜빡임 트래킹", "追踪眨眼", "追蹤眨眼"));
+
+            // OFF のときは自動まばたきになることを伝える
+            if (!_settings.trackingBlink)
+            {
+                GuiControls.Hint(Loc.T("Uses auto blink (Face tab) instead", "代わりに自動まばたき（顔タブ）を使います",
+                    "대신 자동 눈 깜빡임 (얼굴 탭)을 사용합니다", "改用自动眨眼（面部标签）", "改用自動眨眼（臉部分頁）"));
+            }
         }
 
         private void DrawPerfectSync()
@@ -210,16 +226,13 @@ namespace VRCast.UI
                 return;
             }
 
-            // しきい値（下の数値表示と同じ目盛り。小さいほど弱い表情でも切り替わる）
-            _settings.trackingExpressionThreshold = GuiControls.Slider(
-                Loc.T("Expression threshold", "表情のしきい値", "표정 임계값", "表情阈值", "表情閾值"),
-                _settings.trackingExpressionThreshold,
-                AppSettings.MinExpressionThreshold, AppSettings.MaxExpressionThreshold);
-            GuiControls.Hint(Loc.T("Switches when a value in the raw data reaches this (lower = reacts more easily)",
-                "生データの表情の値がこれを超えると切り替わります（低いほど反応しやすい）",
-                "원시 데이터의 표정 값이 이 값을 넘으면 전환됩니다 (낮을수록 쉽게 반응)",
-                "原始数据中的表情值超过此值时切换（越低越容易反应）",
-                "原始資料中的表情值超過此值時切換（越低越容易反應）"));
+            // しきい値は表情ごと（下の割り当ての各行。生データ表示の数値と同じ目盛り）
+            GuiControls.Hint(Loc.T(
+                "Each expression switches when its value in the raw data reaches its threshold (lower = reacts more easily)",
+                "表情ごとに、生データの値がしきい値を超えると切り替わります（低いほど反応しやすい）",
+                "표정마다 원시 데이터의 값이 임계값을 넘으면 전환됩니다 (낮을수록 쉽게 반응)",
+                "每种表情在原始数据中的值超过其阈值时切换（越低越容易反应）",
+                "每種表情在原始資料中的值超過其閾值時切換（越低越容易反應）"));
 
             // アバター未表示なら割り当ては出さない
             if (expressions == null)
@@ -229,10 +242,18 @@ namespace VRCast.UI
 
             // 表情ごとの割り当て（ニュートラル以外）
             RefreshExpressionOptions(expressions);
-            for (var expression = FaceExpression.Smile; expression <= FaceExpression.Sad; expression++)
+            for (var expression = FaceExpressions.First; expression <= FaceExpressions.Last; expression++)
             {
                 DrawExpressionMapping(expression, expressions.Names);
             }
+
+            // 割り当て先の無い表情は判定に使わないことを補足
+            GuiControls.Hint(Loc.T(
+                "Expressions set to None (or Auto with nothing found) are not detected and do not override the others",
+                "「なし」や、自動で見つからない表情は検出しません（ほかの表情の邪魔をしません）",
+                "「없음」이거나 자동으로 찾지 못한 표정은 감지하지 않습니다 (다른 표정을 방해하지 않습니다)",
+                "设为“无”或自动未找到的表情不会被检测（不会干扰其他表情）",
+                "設為「無」或自動未找到的表情不會被偵測（不會干擾其他表情）"));
 
             // 判定中の表情（受信中のみ）
             var driver = _avatar.Get<FaceTrackingDriver>();
@@ -286,6 +307,22 @@ namespace VRCast.UI
                     : names[selected - 1];
                 ExpressionMapping.SetSaved(_settings, expression, value);
             }
+
+            // 割り当てなしの表情は判定しないため、しきい値も出さない
+            if (ExpressionMapping.GetSaved(_settings, expression) == ExpressionMapping.None)
+            {
+                return;
+            }
+
+            // その表情のしきい値（動かしたときだけ表情ごとの値として保存）
+            float threshold = ExpressionMapping.GetThreshold(_settings, expression);
+            float moved = GuiControls.Slider(
+                "  " + Loc.T("Threshold", "しきい値", "임계값", "阈值", "閾值"),
+                threshold, AppSettings.MinExpressionThreshold, AppSettings.MaxExpressionThreshold);
+            if (moved != threshold)
+            {
+                ExpressionMapping.SetThreshold(_settings, expression, moved);
+            }
         }
 
         private static string ExpressionLabel(FaceExpression expression)
@@ -301,6 +338,12 @@ namespace VRCast.UI
                     return Loc.T("Angry", "怒り", "화남", "生气", "生氣");
                 case FaceExpression.Sad:
                     return Loc.T("Sad", "悲しみ", "슬픔", "悲伤", "悲傷");
+                case FaceExpression.Wink:
+                    return Loc.T("Wink", "ウインク", "윙크", "眨单眼", "眨單眼");
+                case FaceExpression.Squint:
+                    return Loc.T("Half-closed eyes", "ジト目", "실눈", "眯眼", "瞇眼");
+                case FaceExpression.Pout:
+                    return Loc.T("Pout", "ふくれっ面", "뾰로통", "嘟嘴", "嘟嘴");
                 default:
                     return Loc.T("Neutral", "ニュートラル", "무표정", "无表情", "無表情");
             }
@@ -379,18 +422,10 @@ namespace VRCast.UI
 
         private void DrawPort()
         {
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"), GUILayout.Width(130f));
-            _portInput = GUILayout.TextField(_portInput, 5);
-
             // 範囲内の数値になったときだけ反映（受信側・起動中のトラッカーがポート変更に追従する）
-            if (int.TryParse(_portInput, out int port)
-                && port >= AppSettings.MinTrackingPort && port <= AppSettings.MaxTrackingPort)
-            {
-                _settings.trackingPort = port;
-            }
-
-            GUILayout.EndHorizontal();
+            _settings.trackingPort = GuiControls.PortField(
+                Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"), ref _portInput,
+                _settings.trackingPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
         }
 
         private void DrawMotion()
@@ -476,6 +511,9 @@ namespace VRCast.UI
                         + $"{ExpressionLabel(FaceExpression.Surprise)} {scores.Surprise:F2}  "
                         + $"{ExpressionLabel(FaceExpression.Angry)} {scores.Angry:F2}  "
                         + $"{ExpressionLabel(FaceExpression.Sad)} {scores.Sad:F2}");
+                    GuiControls.Hint($"{ExpressionLabel(FaceExpression.Wink)} {scores.Wink:F2}  "
+                        + $"{ExpressionLabel(FaceExpression.Squint)} {scores.Squint:F2}  "
+                        + $"{ExpressionLabel(FaceExpression.Pout)} {scores.Pout:F2}");
                 }
             }
 

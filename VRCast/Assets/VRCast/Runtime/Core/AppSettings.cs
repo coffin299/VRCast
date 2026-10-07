@@ -43,6 +43,10 @@ namespace VRCast.Core
         public const int MinTrackingPort = 1024;
         public const int MaxTrackingPort = 65535;
 
+        // 外部操作の待ち受けポートの既定値（範囲はトラッキングと同じ）
+        public const int DefaultRemoteOscPort = 39570;
+        public const int DefaultRemoteHttpPort = 39571;
+
         // 頭の位置に合わせた体の動き（傾き・移動）の強さの上限（0 = 動かさない）
         public const float MaxTrackingBodyLean = 3f;
 
@@ -57,6 +61,9 @@ namespace VRCast.Core
         // 表情に切り替わるしきい値の範囲（表情の強さ 0〜1 と同じ目盛り。小さいほど弱い表情でも反応する）
         public const float MinExpressionThreshold = 0.1f;
         public const float MaxExpressionThreshold = 0.8f;
+
+        // 表情ごとのしきい値が未設定であることを表す値（範囲外の負の値）
+        public const float UseCommonThreshold = -1f;
 
         // 操作パネルの拡大率の範囲
         public const float MinUiScale = 0.75f;
@@ -98,6 +105,12 @@ namespace VRCast.Core
 
         // VRCast 本体と同梱トラッカーのプロセスの優先度（両方に同じ値を使う）
         public ProcessPriority processPriority = ProcessPriority.Normal;
+
+        // 2 CCD の X3D（片方だけ 3D V-Cache）で、VRCast 本体と同梱トラッカーをキャッシュの無い側のコアで動かす（ゲームとコアを取り合わない）
+        public bool avoidCacheCcd = true;
+
+        // P コアと E コアがある CPU で、VRCast 本体と同梱トラッカーに使わせるコア
+        public HybridCoreSelection hybridCores = HybridCoreSelection.Auto;
 
         // 描画に使う GPU（次回起動から反映）。gpuAdapter に GPU 名があれば直接指定し、gpuPreference より優先する
         public GpuPreference gpuPreference = GpuPreference.Auto;
@@ -143,6 +156,9 @@ namespace VRCast.Core
         // 自動まばたき
         public bool autoBlink = true;
 
+        // 表情（ニュートラル以外）を出している間はまばたきしない（自動・トラッキングとも。表情の目の形を崩さないため）
+        public bool blinkPausedByExpression;
+
         // 揺れもの（PhysBone 近似）
         public bool physicsEnabled = true;
 
@@ -165,6 +181,9 @@ namespace VRCast.Core
         public BodyMotion trackingBodyMotion = BodyMotion.Lean;
         public float trackingGaze = 1f;
 
+        // まばたきをトラッキングする（OFF なら目の開閉は使わず自動まばたきに任せる）
+        public bool trackingBlink = true;
+
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
 
@@ -181,6 +200,26 @@ namespace VRCast.Core
         public string expressionSurprise = string.Empty;
         public string expressionAngry = string.Empty;
         public string expressionSad = string.Empty;
+        public string expressionWink = string.Empty;
+        public string expressionSquint = string.Empty;
+        public string expressionPout = string.Empty;
+
+        // 表情のショートカットキーを、VRCast のウィンドウが前面に無いときも使う（OBS などを操作中でも切り替えられる）
+        public bool expressionHotkeysInBackground = true;
+
+        // 外部（Stream Deck・OSC アプリ等）からの表情の操作。127.0.0.1 の OSC（UDP）と HTTP で待ち受ける（既定 OFF）
+        public bool remoteControlEnabled;
+        public int remoteOscPort = DefaultRemoteOscPort;
+        public int remoteHttpPort = DefaultRemoteHttpPort;
+
+        // 表情ごとのしきい値（UseCommonThreshold = 未設定で trackingExpressionThreshold を使う。旧版の共通値を引き継ぐため）
+        public float thresholdSmile = UseCommonThreshold;
+        public float thresholdSurprise = UseCommonThreshold;
+        public float thresholdAngry = UseCommonThreshold;
+        public float thresholdSad = UseCommonThreshold;
+        public float thresholdWink = UseCommonThreshold;
+        public float thresholdSquint = UseCommonThreshold;
+        public float thresholdPout = UseCommonThreshold;
 
         // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
         public string trackerPath = string.Empty;
@@ -258,6 +297,60 @@ namespace VRCast.Core
             entry.hasLook = true;
             entry.look = look;
             avatarCameras.Add(entry);
+        }
+
+        /// <summary>
+        /// アバターの BlendShape の上限を返す（未記録なら空。一覧は複製なので増減しても記録は変わらない）。
+        /// </summary>
+        public List<BlendShapeLimit> GetBlendShapeLimits(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0
+                ? new List<BlendShapeLimit>(avatarCameras[index].blendShapeLimits)
+                : new List<BlendShapeLimit>();
+        }
+
+        /// <summary>
+        /// アバターの BlendShape の上限を記録する。カメラの視点を記録済みのアバターだけが対象（読込時に記録される）。
+        /// </summary>
+        public void SetBlendShapeLimits(string avatarPath, List<BlendShapeLimit> limits)
+        {
+            // 記録の無いアバターは対象外（視点の無い記録を作らない）
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0)
+            {
+                return;
+            }
+
+            // 壊れた値は除いて複製を持つ（呼び出し側の一覧と共有しない）
+            avatarCameras[index].blendShapeLimits = limits.FindAll(limit => limit != null && limit.IsValid);
+        }
+
+        /// <summary>
+        /// アバターの表情のショートカットキーを返す（未記録なら空。一覧は複製）。
+        /// </summary>
+        public List<ExpressionHotkey> GetExpressionHotkeys(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0
+                ? new List<ExpressionHotkey>(avatarCameras[index].expressionHotkeys)
+                : new List<ExpressionHotkey>();
+        }
+
+        /// <summary>
+        /// アバターの表情のショートカットキーを記録する。カメラの視点を記録済みのアバターだけが対象（読込時に記録される）。
+        /// </summary>
+        public void SetExpressionHotkeys(string avatarPath, List<ExpressionHotkey> hotkeys)
+        {
+            // 記録の無いアバターは対象外（視点の無い記録を作らない）
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0)
+            {
+                return;
+            }
+
+            // 壊れた値は除いて複製を持つ
+            avatarCameras[index].expressionHotkeys = hotkeys.FindAll(hotkey => hotkey != null && hotkey.IsValid);
         }
 
         /// <summary>
@@ -360,6 +453,18 @@ namespace VRCast.Core
             foreach (AvatarEntry entry in avatarCameras)
             {
                 entry.hasLook &= entry.look.IsFinite;
+                // BlendShape の上限は壊れたものを捨て、範囲内に制限する（旧版の設定には無いので空の一覧にする）
+                entry.blendShapeLimits ??= new List<BlendShapeLimit>();
+                entry.blendShapeLimits.RemoveAll(limit => limit == null || !limit.IsValid);
+                foreach (BlendShapeLimit limit in entry.blendShapeLimits)
+                {
+                    limit.path ??= string.Empty;
+                    limit.max = Mathf.Clamp(limit.max, BlendShapeLimit.MinWeight, BlendShapeLimit.MaxWeight);
+                }
+
+                // 表情のショートカットキーは壊れたもの・使えないキーを捨てる（旧版の設定には無いので空の一覧にする）
+                entry.expressionHotkeys ??= new List<ExpressionHotkey>();
+                entry.expressionHotkeys.RemoveAll(hotkey => hotkey == null || !hotkey.IsValid);
             }
 
             // 未知の表示言語は OS 準拠へ
@@ -376,6 +481,12 @@ namespace VRCast.Core
             if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))
             {
                 processPriority = ProcessPriority.Normal;
+            }
+
+            // 未知のコアの選択は Windows に任せる
+            if (!Enum.IsDefined(typeof(HybridCoreSelection), hybridCores))
+            {
+                hybridCores = HybridCoreSelection.Auto;
             }
 
             // 未知の GPU の優先設定は Windows に任せる
@@ -428,6 +539,9 @@ namespace VRCast.Core
 
             // 受信ポートは特権ポートを避けた範囲に制限
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
+            // 外部操作のポートも同じ範囲に制限
+            remoteOscPort = Mathf.Clamp(remoteOscPort, MinTrackingPort, MaxTrackingPort);
+            remoteHttpPort = Mathf.Clamp(remoteHttpPort, MinTrackingPort, MaxTrackingPort);
             // 上半身の傾きの強さは 0〜上限に制限
             trackingBodyLean = Mathf.Clamp(trackingBodyLean, 0f, MaxTrackingBodyLean);
             // 未知の体の動かし方は既定の傾きへ
@@ -450,10 +564,44 @@ namespace VRCast.Core
             expressionAngry ??= string.Empty;
             // 悲しみも同様
             expressionSad ??= string.Empty;
+            // ウインクも同様
+            expressionWink ??= string.Empty;
+            // ジト目も同様
+            expressionSquint ??= string.Empty;
+            // ふくれっ面も同様
+            expressionPout ??= string.Empty;
+            // 表情ごとのしきい値は、未設定（負）のまま残し、設定済みなら範囲内に制限
+            thresholdSmile = SanitizeThreshold(thresholdSmile);
+            // 驚きも同様
+            thresholdSurprise = SanitizeThreshold(thresholdSurprise);
+            // 怒りも同様
+            thresholdAngry = SanitizeThreshold(thresholdAngry);
+            // 悲しみも同様
+            thresholdSad = SanitizeThreshold(thresholdSad);
+            // ウインクも同様
+            thresholdWink = SanitizeThreshold(thresholdWink);
+            // ジト目も同様
+            thresholdSquint = SanitizeThreshold(thresholdSquint);
+            // ふくれっ面も同様
+            thresholdPout = SanitizeThreshold(thresholdPout);
             // null のパス・カメラ名は未設定扱いの空文字へ
             trackerPath ??= string.Empty;
             // カメラ名も同様
             trackerCamera ??= string.Empty;
+        }
+
+        /// <summary>
+        /// 表情ごとのしきい値を補正する（未設定・壊れた値は未設定に、設定済みは範囲内に）。
+        /// </summary>
+        public static float SanitizeThreshold(float value)
+        {
+            // NaN・負の値は未設定扱い、それ以外は範囲内へ
+            if (float.IsNaN(value) || value < 0f)
+            {
+                return UseCommonThreshold;
+            }
+
+            return Mathf.Clamp(value, MinExpressionThreshold, MaxExpressionThreshold);
         }
     }
 }

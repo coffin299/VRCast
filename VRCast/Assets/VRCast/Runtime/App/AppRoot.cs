@@ -9,6 +9,7 @@ using VRCast.Core;
 using VRCast.Dynamics;
 using VRCast.Output;
 using VRCast.Platform;
+using VRCast.Remote;
 using VRCast.Rendering;
 using VRCast.Tracking;
 using VRCast.UI;
@@ -117,11 +118,15 @@ namespace VRCast.App
             var updates = gameObject.AddComponent<UpdateChecker>();
             updates.Initialize(_settings);
 
+            // 外部（Stream Deck・OSC アプリ等）からの表情の操作（設定で ON のときだけ待ち受ける）
+            var remote = gameObject.AddComponent<RemoteControl>();
+            remote.Initialize(_session, _settings);
+
             // 操作パネル
             _initialAvatarPath = ResolveInitialAvatarPath();
             gameObject.AddComponent<MainPanel>().Initialize(
                 _session, _orbit, _rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, spout,
-                fileDrop, updates, _settings, _initialAvatarPath);
+                fileDrop, updates, remote, _settings, _initialAvatarPath);
         }
 
         private void Start()
@@ -181,10 +186,16 @@ namespace VRCast.App
             // 待機ポーズ・表情・まばたき・リップシンク・トラッキング・待機モーション・揺れもの（アバターと一緒に破棄されるよう本体に付ける）
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
+
+            // BlendShape の上限（このアバターで前回付けたもの）。表情・まばたき等は書き込む前にこれを通し、
+            // 初期化時に自分の BlendShape を「顔」として登録するので、それらより先に作る
+            avatar.Instance.AddComponent<BlendShapeLimiter>().Initialize(
+                root, _settings.GetBlendShapeLimits(avatar.SourcePath));
             var expressions = avatar.Instance.AddComponent<ExpressionController>();
             expressions.Initialize(root, avatar.Expressions);
+            expressions.LoadHotkeys(_settings.GetExpressionHotkeys(avatar.SourcePath), _settings);
             var blink = avatar.Instance.AddComponent<BlinkController>();
-            blink.Initialize(root, avatar.Descriptor.eyelids, _settings);
+            blink.Initialize(root, avatar.Descriptor.eyelids, _settings, expressions);
             var lipSync = avatar.Instance.AddComponent<LipSyncController>();
             lipSync.Initialize(root, avatar.Descriptor.lipSync, _microphone, _settings);
 

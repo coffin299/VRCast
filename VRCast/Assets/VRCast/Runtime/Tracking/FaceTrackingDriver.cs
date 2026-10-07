@@ -66,6 +66,17 @@ namespace VRCast.Tracking
         private FaceExpression _resolvedExpression = FaceExpression.Neutral;
         private string _resolvedSaved;
 
+        // 手動の固定で当てるのを止めていたら true（固定が外れたら判定結果をすぐ当て直す）
+        private bool _manualHeld;
+
+        // 割り当て先がある表情のビット列と、それを求めたときの割り当ての設定値（FaceExpression の値で引く）
+        private int _candidates;
+        private readonly string[] _candidateSaved = new string[(int)FaceExpressions.Last + 1];
+        private bool _candidatesValid;
+
+        // 表情ごとのしきい値（FaceExpression の値で引く。毎フレーム設定から詰め直す）
+        private readonly float[] _thresholds = new float[(int)FaceExpressions.Last + 1];
+
         // 腰ボーンと読込時の位置（体全体の移動用）、前フレームに動かしたかどうか
         private Transform _hips;
         private Vector3 _hipsRest;
@@ -318,16 +329,32 @@ namespace VRCast.Tracking
                 return;
             }
 
-            FaceExpression detected = _detector.Update(
-                _lastFrame.Expression, _lastFrame.MouthOpen, _settings.trackingExpressionThreshold, Time.deltaTime);
+            // 表情ごとのしきい値を詰める（スライダーの変更をすぐ反映する）
+            for (var expression = FaceExpressions.First; expression <= FaceExpressions.Last; expression++)
+            {
+                _thresholds[(int)expression] = ExpressionMapping.GetThreshold(_settings, expression);
+            }
 
-            // 判定結果か割り当ての設定が変わったときだけ切り替える（手動で選んだ表情を毎フレーム上書きしない）
+            // 割り当て先の無い表情は選ばない（強く出ても、割り当てのある表情を押しのけてニュートラルにしない）
+            FaceExpression detected = _detector.Update(
+                _lastFrame.Expression, _lastFrame.MouthOpen, _thresholds, Time.deltaTime, GetCandidates());
+
+            // 手動で固定中は当てない（判定は続け、固定を外したら今の判定結果をすぐ当て直す）
+            if (_expressions.IsManual)
+            {
+                _autoPreset = -1;
+                _manualHeld = true;
+                return;
+            }
+
+            // 判定結果か割り当ての設定が変わったとき、固定が外れた直後だけ切り替える
             string saved = ExpressionMapping.GetSaved(_settings, detected);
-            if (detected == _resolvedExpression && saved == _resolvedSaved)
+            if (!_manualHeld && detected == _resolvedExpression && saved == _resolvedSaved)
             {
                 return;
             }
 
+            _manualHeld = false;
             _resolvedExpression = detected;
             _resolvedSaved = saved;
 
@@ -343,10 +370,35 @@ namespace VRCast.Tracking
             _autoPreset = preset;
         }
 
+        private int GetCandidates()
+        {
+            // 割り当ての設定が前回から変わっていなければ前回の結果を使う（名前の推定を毎フレーム行わない）
+            bool same = _candidatesValid;
+            for (var expression = FaceExpressions.First; same && expression <= FaceExpressions.Last; expression++)
+            {
+                same = _candidateSaved[(int)expression] == ExpressionMapping.GetSaved(_settings, expression);
+            }
+
+            if (same)
+            {
+                return _candidates;
+            }
+
+            // 設定値を控えて求め直す
+            for (var expression = FaceExpressions.First; expression <= FaceExpressions.Last; expression++)
+            {
+                _candidateSaved[(int)expression] = ExpressionMapping.GetSaved(_settings, expression);
+            }
+
+            _candidates = ExpressionMapping.Candidates(_expressions.Names, _settings);
+            _candidatesValid = true;
+            return _candidates;
+        }
+
         private void ReleaseAutoExpression()
         {
-            // 自動で当てた表情が残っているときだけニュートラルへ（手動で選び直した表情は残す）
-            if (_expressions != null && _autoPreset >= 0 && _expressions.Current == _autoPreset)
+            // 自動で当てた表情が残っているときだけニュートラルへ（手動で選び直した・固定中の表情は残す）
+            if (_expressions != null && !_expressions.IsManual && _autoPreset >= 0 && _expressions.Current == _autoPreset)
             {
                 _expressions.ResetToNeutral();
             }
@@ -376,9 +428,14 @@ namespace VRCast.Tracking
                 personRight = _eyesClosed;
             }
 
+            // まばたきをトラッキングしない設定なら外部入力を解除し、自動まばたきに任せる
+            if (!_settings.trackingBlink)
+            {
+                ClearBlink();
+            }
             // パーフェクトシンクで目・口を動かす間は、まばたき・口パク用の BlendShape を重ねて閉じ過ぎ・開き過ぎにしない
             // （まばたきは開いたままの外部入力にして自動まばたきも止める）
-            if (IsPerfectSyncActive && _perfectSync.DrivesBlink)
+            else if (IsPerfectSyncActive && _perfectSync.DrivesBlink)
             {
                 SetBlink(0f, 0f);
             }
@@ -403,7 +460,7 @@ namespace VRCast.Tracking
             // 動作中は毎フレーム書き、使わない間は元の値へ戻す（一度だけ）
             if (IsPerfectSyncActive)
             {
-                _perfectSync.Apply(_lastFrame.BlendShapes, _settings.trackingMirror, Time.deltaTime);
+                _perfectSync.Apply(_lastFrame.BlendShapes, _settings.trackingMirror, Time.deltaTime, _settings.trackingBlink);
             }
             else
             {

@@ -1,9 +1,11 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using UnityEditor;
 using UnityEngine;
 using VRCast.AvatarFormat;
 using static VRCast.Converter.Editor.ExporterLoc;
+using Object = UnityEngine.Object;
 
 namespace VRCast.Converter.Editor
 {
@@ -30,11 +32,26 @@ namespace VRCast.Converter.Editor
         // ヘッダーの製品名の文字サイズ
         private const int TitleFontSize = 18;
 
+        // 追加の表情クリップのドロップ欄の高さ
+        private const float DropAreaHeight = 40f;
+
+        // 一覧の行の削除ボタンの幅
+        private const float RemoveButtonWidth = 24f;
+
         [SerializeField]
         private GameObject _avatar;
 
         private Texture2D _icon;
         private GUIStyle _titleStyle;
+        private Vector2 _scroll;
+
+        // 追加の表情クリップの指定と、その指定を読み込んだアバター（アバターが変わったら読み直す）
+        private List<Object> _extraEntries = new List<Object>();
+        private GameObject _extraOwner;
+        private bool _extraLoaded;
+
+        // 指定を展開したクリップと判定結果（指定・プロジェクトが変わったときだけ作り直す。null = 未作成）
+        private List<KeyValuePair<AnimationClip, ClipCheck>> _extraChecks;
 
         [MenuItem("VRCast/Avatar Exporter")]
         private static void Open()
@@ -51,7 +68,28 @@ namespace VRCast.Converter.Editor
             titleContent = new GUIContent(Title, _icon);
         }
 
+        private void OnFocus()
+        {
+            // 別の画面でクリップを編集して戻ってきたときに判定し直す
+            _extraChecks = null;
+        }
+
+        private void OnProjectChange()
+        {
+            // クリップ・フォルダの追加や削除を判定に反映する
+            _extraChecks = null;
+            Repaint();
+        }
+
         private void OnGUI()
+        {
+            // 追加の表情クリップの欄でウィンドウより長くなるため、全体をスクロールできるようにする
+            _scroll = EditorGUILayout.BeginScrollView(_scroll);
+            DrawContents();
+            EditorGUILayout.EndScrollView();
+        }
+
+        private void DrawContents()
         {
             DrawHeader();
 
@@ -108,6 +146,7 @@ namespace VRCast.Converter.Editor
                 MessageType.Info);
 
             DrawBlendShapeOption();
+            DrawExtraExpressions();
 
             using (new EditorGUI.DisabledScope(error != null))
             {
@@ -143,6 +182,214 @@ namespace VRCast.Converter.Editor
                     "关闭后，FX 层驱动的 BlendShape 会以初始状态的值导出（例如切换服装时同时驱动收缩用 BlendShape）。",
                     "關閉後，FX 層驅動的 BlendShape 會以初始狀態的值匯出（例如切換服裝時同時驅動收縮用 BlendShape）。"),
                 MessageType.None);
+        }
+
+        private void DrawExtraExpressions()
+        {
+            // アバターが変わった・ウィンドウを開き直したときは、そのアバターの指定を読み直す
+            if (!_extraLoaded || _extraOwner != _avatar)
+            {
+                _extraEntries = ExtraExpressionClips.Load(_avatar);
+                _extraOwner = _avatar;
+                _extraLoaded = true;
+                _extraChecks = null;
+            }
+
+            EditorGUILayout.Space();
+            EditorGUILayout.LabelField(
+                T("Additional expressions", "追加の表情", "추가 표정", "追加表情", "追加表情"), EditorStyles.boldLabel);
+            EditorGUILayout.HelpBox(
+                T(
+                    "Expression clips in the FX layer are exported automatically. Add animation clips that are not " +
+                    "in the FX layer (or folders containing them) here to use them as expressions in VRCast. " +
+                    "Only clips that move blend shapes alone are used. Saved per avatar.",
+                    "FX レイヤーにある表情クリップは自動で書き出されます。FX に入っていないアニメーションクリップ" +
+                    "（またはそれが入ったフォルダ）をここに追加すると、VRCast で表情として使えます。" +
+                    "ブレンドシェイプだけを動かすクリップが対象です。指定はアバターごとに保存されます。",
+                    "FX 레이어에 있는 표정 클립은 자동으로 내보냅니다. FX에 없는 애니메이션 클립" +
+                    "(또는 그것이 든 폴더)을 여기에 추가하면 VRCast에서 표정으로 사용할 수 있습니다. " +
+                    "블렌드셰이프만 움직이는 클립이 대상입니다. 아바타별로 저장됩니다.",
+                    "FX 层中的表情剪辑会自动导出。在此添加不在 FX 中的动画剪辑（或包含它们的文件夹），" +
+                    "即可在 VRCast 中作为表情使用。仅限只驱动 BlendShape 的剪辑。按虚拟形象分别保存。",
+                    "FX 層中的表情剪輯會自動匯出。在此新增不在 FX 中的動畫剪輯（或包含它們的資料夾），" +
+                    "即可在 VRCast 中作為表情使用。僅限只驅動 BlendShape 的剪輯。按虛擬形象分別儲存。"),
+                MessageType.None);
+
+            // アバター未指定では保存先が無いため操作させない
+            using (new EditorGUI.DisabledScope(_avatar == null))
+            {
+                bool changed = DrawExtraEntryRows();
+                changed |= HandleExtraDrop();
+
+                // 変更があればすぐ保存し、判定を作り直す
+                if (changed)
+                {
+                    ExtraExpressionClips.Save(_avatar, _extraEntries);
+                    _extraChecks = null;
+                }
+            }
+
+            DrawExtraChecks();
+        }
+
+        private void DrawExtraChecks()
+        {
+            // 指定が無ければ表示しない
+            if (_extraEntries.Count == 0)
+            {
+                return;
+            }
+
+            // 判定は重いため、作り直しが必要なときだけ行う（行の数が変わるのでレイアウト計算のときに限る）
+            if (_extraChecks == null)
+            {
+                if (Event.current.type != EventType.Layout)
+                {
+                    Repaint();
+                    return;
+                }
+
+                _extraChecks = new List<KeyValuePair<AnimationClip, ClipCheck>>();
+                foreach (AnimationClip clip in ExtraExpressionClips.Collect(_extraEntries))
+                {
+                    _extraChecks.Add(new KeyValuePair<AnimationClip, ClipCheck>(clip, ExpressionExtractor.Check(clip)));
+                }
+            }
+
+            // 取り込める数 / クリップの数
+            int usable = 0;
+            foreach (KeyValuePair<AnimationClip, ClipCheck> check in _extraChecks)
+            {
+                usable += check.Value == ClipCheck.Expression ? 1 : 0;
+            }
+
+            EditorGUILayout.LabelField(
+                T("Expressions to add", "追加される表情", "추가될 표정", "将追加的表情", "將追加的表情")
+                + $": {usable} / {_extraChecks.Count}",
+                EditorStyles.miniBoldLabel);
+
+            // クリップごとに取り込めるか（取り込めない理由）を表示。クリックでプロジェクト上の場所を示す
+            foreach (KeyValuePair<AnimationClip, ClipCheck> check in _extraChecks)
+            {
+                string mark = check.Value == ClipCheck.Expression ? "✓" : "✗";
+                string reason = check.Value == ClipCheck.Expression ? string.Empty : " — " + DescribeCheck(check.Value);
+                if (GUILayout.Button($"{mark} {check.Key.name}{reason}", EditorStyles.miniLabel))
+                {
+                    EditorGUIUtility.PingObject(check.Key);
+                }
+            }
+
+            // 名前が FX の表情と重なると番号付きになることを補足
+            EditorGUILayout.HelpBox(
+                T(
+                    "Clips that are also in the FX layer are added only once. If the name matches another expression, " +
+                    "a number is added, such as \"Name (2)\".",
+                    "FX レイヤーにもあるクリップは 1 回だけ入ります。名前がほかの表情と重なる場合は「名前 (2)」のように番号が付きます。",
+                    "FX 레이어에도 있는 클립은 한 번만 들어갑니다. 이름이 다른 표정과 겹치면 「이름 (2)」처럼 번호가 붙습니다.",
+                    "同时在 FX 层中的剪辑只会加入一次。名称与其他表情重复时会加上编号，例如“名称 (2)”。",
+                    "同時在 FX 層中的剪輯只會加入一次。名稱與其他表情重複時會加上編號，例如「名稱 (2)」。"),
+                MessageType.None);
+        }
+
+        private static string DescribeCheck(ClipCheck check)
+        {
+            // 取り込めない理由の文言
+            switch (check)
+            {
+                case ClipCheck.HasOtherCurves:
+                    return T("also moves things other than blend shapes", "ブレンドシェイプ以外も動かしています",
+                        "블렌드셰이프 이외의 것도 움직입니다", "还驱动了 BlendShape 以外的内容", "還驅動了 BlendShape 以外的內容");
+                case ClipCheck.NoCurves:
+                    return T("empty clip", "中身が空です", "빈 클립입니다", "剪辑为空", "剪輯為空");
+                case ClipCheck.TooManyCurves:
+                    return T("too many blend shapes", "ブレンドシェイプが多すぎます", "블렌드셰이프가 너무 많습니다",
+                        "BlendShape 过多", "BlendShape 過多");
+                case ClipCheck.AllZero:
+                    return T("all values are 0 (reset clip)", "値がすべて 0 です（戻す用のクリップ）",
+                        "값이 모두 0입니다 (되돌리기용 클립)", "所有值均为 0（复位用剪辑）", "所有值均為 0（復位用剪輯）");
+                default:
+                    return string.Empty;
+            }
+        }
+
+        private bool DrawExtraEntryRows()
+        {
+            bool changed = false;
+            int removeAt = -1;
+            for (int i = 0; i < _extraEntries.Count; i++)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    // 差し替えは使えるもの（クリップ・フォルダ）のときだけ受け付ける
+                    Object picked = EditorGUILayout.ObjectField(_extraEntries[i], typeof(Object), false);
+                    if (picked != _extraEntries[i] && ExtraExpressionClips.IsAccepted(picked))
+                    {
+                        _extraEntries[i] = picked;
+                        changed = true;
+                    }
+
+                    // × で外す行を控える（描画中に一覧を変えると行の数が合わなくなる）
+                    if (GUILayout.Button("×", GUILayout.Width(RemoveButtonWidth)))
+                    {
+                        removeAt = i;
+                    }
+                }
+            }
+
+            // 描画し終えてから一覧から外す
+            if (removeAt >= 0)
+            {
+                _extraEntries.RemoveAt(removeAt);
+                changed = true;
+            }
+
+            return changed;
+        }
+
+        private bool HandleExtraDrop()
+        {
+            // ドロップ欄（複数のクリップ・フォルダを一度に追加できる）
+            Rect area = GUILayoutUtility.GetRect(0f, DropAreaHeight, GUILayout.ExpandWidth(true));
+            GUI.Box(area, T("Drop animation clips or folders here", "ここにアニメーションクリップかフォルダをドロップ",
+                "여기에 애니메이션 클립이나 폴더를 드롭", "将动画剪辑或文件夹拖放到此处", "將動畫剪輯或資料夾拖放到此處"),
+                EditorStyles.helpBox);
+
+            // ドロップ欄の上でのドラッグ操作だけを扱う
+            Event current = Event.current;
+            bool dragging = current.type == EventType.DragUpdated || current.type == EventType.DragPerform;
+            if (!dragging || !area.Contains(current.mousePosition) || !GUI.enabled)
+            {
+                return false;
+            }
+
+            // 使えるものが含まれていればコピーのカーソルにする
+            bool acceptable = false;
+            foreach (Object dragged in DragAndDrop.objectReferences)
+            {
+                acceptable |= ExtraExpressionClips.IsAccepted(dragged);
+            }
+
+            DragAndDrop.visualMode = acceptable ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+            current.Use();
+
+            // 離したときに、使えるもののうちまだ一覧に無いものを追加する
+            if (current.type != EventType.DragPerform || !acceptable)
+            {
+                return false;
+            }
+
+            DragAndDrop.AcceptDrag();
+            bool added = false;
+            foreach (Object dragged in DragAndDrop.objectReferences)
+            {
+                if (ExtraExpressionClips.IsAccepted(dragged) && !_extraEntries.Contains(dragged))
+                {
+                    _extraEntries.Add(dragged);
+                    added = true;
+                }
+            }
+
+            return added;
         }
 
         private void DrawHeader()
@@ -204,7 +451,8 @@ namespace VRCast.Converter.Editor
                         "正在生成虚拟形象包...", "正在產生虛擬形象包..."),
                     0.5f);
                 AvatarExporter.Report report = AvatarExporter.Export(
-                    _avatar, path, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true));
+                    _avatar, path, EditorPrefs.GetBool(KeepSceneBlendShapesKey, true),
+                    ExtraExpressionClips.Collect(_extraEntries));
 
                 // Console のログは問い合わせ時に読みやすいよう英語固定、ダイアログは表示言語
                 Debug.Log("[VRCast][Exporter] " + BuildSummary(report, true).Replace("\n", " / "));
@@ -246,6 +494,7 @@ namespace VRCast.Converter.Editor
             string sceneBlendShapes = L("Kept scene blend shapes", "シーンのブレンドシェイプを優先",
                 "씬의 블렌드셰이프 우선", "优先场景 BlendShape", "優先場景 BlendShape");
             string expressions = L("Expressions", "表情", "표정", "表情", "表情");
+            string extraExpressions = L("added clips", "追加したクリップ", "추가한 클립", "追加的剪辑", "追加的剪輯");
             string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
             string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");
             string wink = L("wink", "ウインク", "윙크", "眨单眼", "眨單眼");
@@ -264,7 +513,8 @@ namespace VRCast.Converter.Editor
                 $"{attached}: {report.ModularAvatarFallbackFixes}\n" +
                 $"{baked}: {report.BakedFxClips}\n" +
                 $"{sceneBlendShapes}: {report.KeptSceneBlendShapes}\n" +
-                $"{expressions}: {report.ExpressionCount}\n" +
+                $"{expressions}: {report.ExpressionCount} " +
+                $"({extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips})\n" +
                 $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +
                 $"PhysBones: {report.PhysBoneCount}\n" +
                 $"Constraints: {report.ConstraintCount}\n" +
