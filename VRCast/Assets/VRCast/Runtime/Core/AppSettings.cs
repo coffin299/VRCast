@@ -53,6 +53,11 @@ namespace VRCast.Core
         // 視線の強さの上限（0 = 目を動かさない）
         public const float MaxTrackingGaze = 2f;
 
+        // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）の強さの上限と、速さの倍率の範囲
+        public const float MaxIdleMotionStrength = 2f;
+        public const float MinIdleMotionSpeed = 0.5f;
+        public const float MaxIdleMotionSpeed = 2f;
+
         // 表情に切り替わるしきい値の範囲（表情の強さ 0〜1 と同じ目盛り。小さいほど弱い表情でも反応する）
         public const float MinExpressionThreshold = 0.1f;
         public const float MaxExpressionThreshold = 0.8f;
@@ -140,6 +145,13 @@ namespace VRCast.Core
 
         // アバターの向き（度、0 = カメラ正面）
         public float avatarYaw;
+
+        // 待機モーション（強さ 0 = 動かさない、1 = 標準）と速さの倍率
+        public bool idleMotionEnabled = true;
+        public float idleBreathing = 1f;
+        public float idleSway = 1f;
+        public float idleHeadMotion = 1f;
+        public float idleMotionSpeed = 1f;
 
         // 自動まばたき
         public bool autoBlink = true;
@@ -503,6 +515,14 @@ namespace VRCast.Core
             poseElbowBend = Mathf.Clamp01(poseElbowBend);
             // アバターの向きは -180〜180 に正規化
             avatarYaw = Mathf.Repeat(avatarYaw + 180f, 360f) - 180f;
+            // 待機モーションの強さは 0〜上限に制限
+            idleBreathing = Mathf.Clamp(idleBreathing, 0f, MaxIdleMotionStrength);
+            // 体の揺れも同様
+            idleSway = Mathf.Clamp(idleSway, 0f, MaxIdleMotionStrength);
+            // 頭のゆらぎも同様
+            idleHeadMotion = Mathf.Clamp(idleHeadMotion, 0f, MaxIdleMotionStrength);
+            // 速さの倍率は範囲内に制限
+            idleMotionSpeed = Mathf.Clamp(idleMotionSpeed, MinIdleMotionSpeed, MaxIdleMotionSpeed);
             // null のデバイス名は既定デバイス扱いの空文字へ
             microphoneDevice ??= string.Empty;
             // マイク感度は下限〜上限に制限

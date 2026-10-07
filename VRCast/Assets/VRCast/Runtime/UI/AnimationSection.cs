@@ -8,7 +8,7 @@ using VRCast.Platform;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Pose タブ（待機ポーズ・表情）。表示中アバターのコントローラーを操作する。
+    /// Pose タブ（待機ポーズ・待機モーション・表情）。表示中アバターのコントローラーを操作する。
     /// 表情ごとにショートカットキーを割り当てられる（クリックで割り当て開始、Esc でやめる、アバターごとに記録）。
     /// 割り当ては Windows のキーの状態で読む（テンキー・記号キー・左右の修飾キー単独も区別できる）。
     /// </summary>
@@ -31,6 +31,7 @@ namespace VRCast.UI
         private string[] _labels = new string[0];
         private PoseController _pose;
         private ExpressionController _expressions;
+        private IdleMotionController _idleMotion;
 
         // 仮想キーの押下と表示名（描画のたびにデリゲートを作り直さないように控える）
         private static readonly System.Func<int, bool> IsKeyDown = GlobalKeyboard.IsDown;
@@ -63,6 +64,7 @@ namespace VRCast.UI
             }
 
             DrawPose();
+            DrawIdleMotion();
             DrawExpressions();
         }
 
@@ -73,6 +75,7 @@ namespace VRCast.UI
             {
                 _pose = _avatar.Get<PoseController>();
                 _expressions = _avatar.Get<ExpressionController>();
+                _idleMotion = _avatar.Get<IdleMotionController>();
                 BuildLabels();
 
                 // 別のアバターの表情へ割り当てないよう、割り当て中ならやめる
@@ -139,6 +142,51 @@ namespace VRCast.UI
             // 腕と肘の度合い
             _pose.ArmDown = GuiControls.Slider(Loc.T("Arms down", "腕を下ろす", "팔 내리기", "放下手臂", "放下手臂"), _pose.ArmDown, 0f, 1f);
             _pose.ElbowBend = GuiControls.Slider(Loc.T("Elbow bend", "肘の曲げ", "팔꿈치 굽힘", "肘部弯曲", "肘部彎曲"), _pose.ElbowBend, 0f, 1f);
+            GuiControls.EndCard();
+        }
+
+        private void DrawIdleMotion()
+        {
+            GuiControls.BeginCard(Loc.T("Idle motion", "待機モーション", "대기 모션", "待机动作", "待機動作"));
+
+            // 非 Humanoid は動かせるボーンが無い
+            if (_idleMotion == null || !_idleMotion.IsAvailable)
+            {
+                GuiControls.Hint(Loc.T("Idle motion requires a Humanoid avatar.", "待機モーションは Humanoid アバターのみ対応です。",
+                    "대기 모션은 Humanoid 아바타만 지원합니다.",
+                    "待机动作仅支持 Humanoid 虚拟形象。", "待機動作僅支援 Humanoid 虛擬形象。"));
+                GuiControls.EndCard();
+                return;
+            }
+
+            _settings.idleMotionEnabled = GUILayout.Toggle(
+                _settings.idleMotionEnabled, Loc.T("Breathing and sway", "呼吸・体の揺れ", "호흡 · 몸 흔들림",
+                    "呼吸 · 身体摇摆", "呼吸 · 身體搖擺"));
+
+            // OFF の間は強さの調整を出さない
+            if (!_settings.idleMotionEnabled)
+            {
+                GuiControls.EndCard();
+                return;
+            }
+
+            GuiControls.Hint(Loc.T("Head motion pauses while face tracking is active.",
+                "顔のトラッキング中は、頭のゆらぎを止めて本人の動きに任せます。",
+                "얼굴 트래킹 중에는 머리 흔들림을 멈추고 본인의 움직임을 따릅니다.",
+                "面部追踪时会停止头部晃动，跟随本人的动作。",
+                "臉部追蹤時會停止頭部晃動，跟隨本人的動作。"));
+
+            // 強さ（0 = 動かさない、1 = 標準）と速さの倍率
+            float max = AppSettings.MaxIdleMotionStrength;
+            _settings.idleBreathing = GuiControls.Slider(
+                Loc.T("Breathing", "呼吸", "호흡", "呼吸", "呼吸"), _settings.idleBreathing, 0f, max);
+            _settings.idleSway = GuiControls.Slider(
+                Loc.T("Body sway", "体の揺れ", "몸 흔들림", "身体摇摆", "身體搖擺"), _settings.idleSway, 0f, max);
+            _settings.idleHeadMotion = GuiControls.Slider(
+                Loc.T("Head motion", "頭のゆらぎ", "머리 흔들림", "头部晃动", "頭部晃動"), _settings.idleHeadMotion, 0f, max);
+            _settings.idleMotionSpeed = GuiControls.Slider(
+                Loc.T("Speed", "速さ", "속도", "速度", "速度"), _settings.idleMotionSpeed,
+                AppSettings.MinIdleMotionSpeed, AppSettings.MaxIdleMotionSpeed);
             GuiControls.EndCard();
         }
 
