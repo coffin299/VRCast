@@ -389,8 +389,10 @@ namespace VRCast.Converter.Editor
             }
 
             // ドロップ欄の上でのドラッグ操作だけを扱う
+            // Use() で種類が Used に変わるため、先に控えておく
             Event current = Event.current;
-            bool dragging = current.type == EventType.DragUpdated || current.type == EventType.DragPerform;
+            EventType type = current.type;
+            bool dragging = type == EventType.DragUpdated || type == EventType.DragPerform;
             if (!dragging || !area.Contains(current.mousePosition))
             {
                 return false;
@@ -403,7 +405,7 @@ namespace VRCast.Converter.Editor
             current.Use();
 
             // 離したときだけ処理する
-            if (current.type != EventType.DragPerform)
+            if (type != EventType.DragPerform)
             {
                 return false;
             }
