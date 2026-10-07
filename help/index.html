@@ -483,6 +483,11 @@
         <span class="ko"><span class="ui">표정 중에는 눈 깜빡이지 않기</span>를 켜면 표정을 짓는 동안 자동 눈 깜빡임과 트래킹의 눈 깜빡임이 모두 멈춰 표정의 눈 모양이 흐트러지지 않습니다.</span>
         <span class="zh-hans">开启 <span class="ui">表情期间不眨眼</span> 后，显示表情期间会同时停止自动眨眼和面部追踪的眨眼，表情的眼睛形状不会被破坏。</span>
         <span class="zh-hant">開啟 <span class="ui">表情期間不眨眼</span> 後，顯示表情期間會同時停止自動眨眼和臉部追蹤的眨眼，表情的眼睛形狀不會被破壞。</span></li>
+    <li><span class="ja"><span class="ui">表情中はマイクの口パクを止める</span>・<span class="ui">表情中はトラッキングの口を止める</span> を ON にすると、表情を出している間はそれぞれの口の動きが止まります（別々に選べ、両方 ON にもできます。表情の口とリップシンクが重なると崩れるアバター向け）。</span>
+        <span class="en">Turn on <span class="ui">Pause microphone lip sync during expressions</span> and/or <span class="ui">Pause tracked mouth during expressions</span> to stop that mouth movement while an expression is shown (each can be turned on separately, or both; for avatars whose expression mouth breaks when combined with lip sync).</span>
+        <span class="ko"><span class="ui">표정 중에는 마이크 립싱크 멈추기</span>·<span class="ui">표정 중에는 트래킹의 입 멈추기</span>를 켜면 표정을 짓는 동안 각각의 입 움직임이 멈춥니다 (따로 고를 수 있고 둘 다 켤 수도 있습니다. 표정의 입과 립싱크가 겹치면 깨지는 아바타용).</span>
+        <span class="zh-hans">开启 <span class="ui">表情期间停止麦克风口型同步</span>、<span class="ui">表情期间停止追踪的嘴部动作</span> 后，显示表情期间会停止相应的嘴部动作（可分别开启，也可同时开启；适用于表情的嘴型与口型同步重叠时会变形的虚拟形象）。</span>
+        <span class="zh-hant">開啟 <span class="ui">表情期間停止麥克風口型同步</span>、<span class="ui">表情期間停止追蹤的嘴部動作</span> 後，顯示表情期間會停止相應的嘴部動作（可分別開啟，也可同時開啟；適用於表情的嘴型與口型同步重疊時會變形的虛擬形象）。</span></li>
     <li><span class="ja"><span class="ui">シェイプキー設定</span> タブの <span class="ui">BlendShape の上限</span> では、BlendShape ごとに動く最大値（100 = 制限なし）を決められます。まばたきで目が消える・口を開くと顔が崩れるときは、その BlendShape を下げてください。
         <span class="ui">対象</span> で <span class="ui">顔（まばたき・口・表情）</span>（まばたき・口パク・表情・パーフェクトシンクで動くもの）か <span class="ui">その他</span>（体型・服など）を選び、<span class="ui">検索</span> で絞り込めます。設定はアバターごとに保存されます。</span>
         <span class="en">Under <span class="ui">Blend shape limits</span> in the <span class="ui">Shape key setup</span> tab, set how far each blend shape can move (100 = no limit). If the eyes disappear when blinking or the face breaks when the mouth opens, lower that blend shape.
@@ -610,11 +615,16 @@
         <span class="ko"><span class="ui">테마</span>: 라이트 (기본) / 다크. 표시 탭에서 배경색을 바꾸지 않았다면 배경도 테마에 맞춰 바뀝니다.</span>
         <span class="zh-hans"><span class="ui">主题</span>：浅色（默认）/ 深色。如果未在显示标签页中更改背景色，背景也会随主题切换。</span>
         <span class="zh-hant"><span class="ui">主題</span>：淺色（預設）/ 深色。若未在顯示分頁中變更背景色，背景也會隨主題切換。</span></li>
-    <li><span class="ja"><span class="ui">軽量モード</span>（既定は ON）: 描画を 30fps（OFF なら 60fps）に抑え、同梱トラッカーの処理も軽くして、ゲームや OBS と同時に使うときの負荷を減らします。動きの滑らかさを優先するなら OFF にします。</span>
-        <span class="en"><span class="ui">Low load mode</span> (on by default): limits drawing to 30 fps (60 fps when off) and lightens the bundled tracker to reduce load when running with games or OBS. Turn it off if you prefer smoother motion.</span>
-        <span class="ko"><span class="ui">저부하 모드</span> (기본은 켜짐): 화면을 30fps (끄면 60fps)로 제한하고 내장 트래커의 처리도 가볍게 해 게임이나 OBS와 함께 쓸 때의 부하를 줄입니다. 움직임의 부드러움을 우선하려면 끕니다.</span>
-        <span class="zh-hans"><span class="ui">低负载模式</span>（默认开启）：将画面限制为 30fps（关闭时为 60fps），并减轻内置追踪器的处理，降低与游戏或 OBS 同时使用时的负载。如更重视动作流畅度，请关闭。</span>
-        <span class="zh-hant"><span class="ui">低負載模式</span>（預設開啟）：將畫面限制為 30fps（關閉時為 60fps），並減輕內建追蹤器的處理，降低與遊戲或 OBS 同時使用時的負載。如更重視動作流暢度，請關閉。</span></li>
+    <li><span class="ja"><span class="ui">軽量モード</span>（既定は ON）: 描画を 30fps（OFF なら 60fps）に抑え、OpenSeeFace は軽いモデルを使って、ゲームや OBS と同時に使うときの負荷を減らします。MediaPipe の重さはトラッキングタブの <span class="ui">トラッカーの動作</span> で選びます。</span>
+        <span class="en"><span class="ui">Low load mode</span> (on by default): limits drawing to 30 fps (60 fps when off) and makes OpenSeeFace use a lighter model to reduce load when running with games or OBS. For MediaPipe, choose the load with <span class="ui">Tracker mode</span> in the Tracking tab.</span>
+        <span class="ko"><span class="ui">저부하 모드</span> (기본은 켜짐): 화면을 30fps (끄면 60fps)로 제한하고 OpenSeeFace는 가벼운 모델을 써서 게임이나 OBS와 함께 쓸 때의 부하를 줄입니다. MediaPipe의 부하는 트래킹 탭의 <span class="ui">트래커 동작</span>에서 고릅니다.</span>
+        <span class="zh-hans"><span class="ui">低负载模式</span>（默认开启）：将画面限制为 30fps（关闭时为 60fps），OpenSeeFace 使用较轻的模型，降低与游戏或 OBS 同时使用时的负载。MediaPipe 的负载请在追踪标签页的 <span class="ui">追踪器模式</span> 中选择。</span>
+        <span class="zh-hant"><span class="ui">低負載模式</span>（預設開啟）：將畫面限制為 30fps（關閉時為 60fps），OpenSeeFace 使用較輕的模型，降低與遊戲或 OBS 同時使用時的負載。MediaPipe 的負載請在追蹤分頁的 <span class="ui">追蹤器模式</span> 中選擇。</span></li>
+    <li><span class="ja"><span class="ui">動作状況を表示</span>（既定は ON）: パネルの一番下に、描画の FPS・VRCast の CPU 使用率・GPU の処理時間・同梱トラッカーの CPU 使用率・トラッキングの受信レートを英語で表示します（1 秒ごとに更新）。重いときの原因の見当をつけるのに使えます。</span>
+        <span class="en"><span class="ui">Show performance stats</span> (on by default): shows the drawing FPS, VRCast's CPU usage, GPU time per frame, the bundled tracker's CPU usage and the tracking rate at the bottom of the panel (updated every second). Useful for finding out what makes things heavy.</span>
+        <span class="ko"><span class="ui">동작 상태 표시</span> (기본은 켜짐): 패널 맨 아래에 화면 FPS·VRCast의 CPU 사용률·GPU 처리 시간·내장 트래커의 CPU 사용률·트래킹 수신 속도를 영어로 표시합니다 (1초마다 갱신). 무거울 때 원인을 짐작하는 데 쓸 수 있습니다.</span>
+        <span class="zh-hans"><span class="ui">显示运行状态</span>（默认开启）：在面板底部以英文显示画面 FPS、VRCast 的 CPU 使用率、GPU 处理时间、内置追踪器的 CPU 使用率和追踪接收速率（每秒更新）。可用于判断卡顿的原因。</span>
+        <span class="zh-hant"><span class="ui">顯示執行狀態</span>（預設開啟）：在面板底部以英文顯示畫面 FPS、VRCast 的 CPU 使用率、GPU 處理時間、內建追蹤器的 CPU 使用率和追蹤接收速率（每秒更新）。可用於判斷卡頓的原因。</span></li>
     <li><span class="ja"><span class="ui">プロセスの優先度</span>（既定は「通常」）: VRCast 本体と同梱トラッカーの優先度をまとめて変えます（すぐ反映）。ゲーム中にトラッキングがカクつくときは上げてください。「高」にすると他のアプリが重くなることがあります。</span>
         <span class="en"><span class="ui">Process priority</span> (Normal by default): changes the priority of VRCast and the bundled tracker together (applied right away). Raise it if tracking stutters during games. High can make other apps slower.</span>
         <span class="ko"><span class="ui">프로세스 우선순위</span> (기본은 「보통」): VRCast 본체와 내장 트래커의 우선순위를 함께 바꿉니다 (바로 적용). 게임 중에 트래킹이 끊기면 올려 주세요. 「높음」으로 하면 다른 앱이 느려질 수 있습니다.</span>
@@ -766,11 +776,11 @@
   <p class="zh-hant">以系統管理員身分執行 VRCast 時，Windows 會阻止拖放。請正常啟動，或使用 <span class="ui">選擇檔案...</span>。</p>
 
   <h3><span class="ja">ゲームや OBS と一緒に使うとトラッキングがカクつく</span><span class="en">Tracking stutters while running games or OBS</span><span class="ko">게임이나 OBS와 함께 쓰면 트래킹이 끊긴다</span><span class="zh-hans">与游戏或 OBS 同时使用时追踪卡顿</span><span class="zh-hant">與遊戲或 OBS 同時使用時追蹤卡頓</span></h3>
-  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
-  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Settings</span> tab is on (it is on by default). If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load. Setting <span class="ui">Process priority</span> to Above normal can also help.</p>
-  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
-  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
-  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
+  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">エコ</span> にすると負荷が半分ほどになります。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
+  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Settings</span> tab is on (it is on by default). With MediaPipe, setting <span class="ui">Tracker mode</span> in the Tracking tab to <span class="ui">Eco</span> roughly halves the load. If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load. Setting <span class="ui">Process priority</span> to Above normal can also help.</p>
+  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">절약</span>으로 하면 부하가 절반 정도가 됩니다. 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
+  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。使用 MediaPipe 时，将追踪标签页的 <span class="ui">追踪器模式</span> 设为 <span class="ui">节能</span> 可使负载减半左右。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
+  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。使用 MediaPipe 時，將追蹤分頁的 <span class="ui">追蹤器模式</span> 設為 <span class="ui">節能</span> 可使負載減半左右。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
 
   <h3><span class="ja">口パクしない</span><span class="en">Lip sync does not move</span><span class="ko">립싱크가 안 된다</span><span class="zh-hans">口型不动</span><span class="zh-hant">嘴型不動</span></h3>
   <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
