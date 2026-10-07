@@ -312,6 +312,29 @@
   <p class="note ko">출력 탭에 「준비되었습니다」가 표시되는 동안은 아직 어떤 앱도 카메라를 열지 않은 상태입니다 (오류가 아닙니다). 받는 쪽 앱에서 <span class="ui">VRCast Camera</span>를 선택하면 「전송 중」으로 바뀝니다.</p>
   <p class="note zh-hans">输出标签页显示“已就绪”时，表示还没有应用打开摄像头（不是错误）。在接收端应用中选择 <span class="ui">VRCast Camera</span> 后会变为“正在发送”。</p>
   <p class="note zh-hant">輸出分頁顯示「已就緒」時，表示還沒有應用程式開啟攝影機（不是錯誤）。在接收端應用程式中選擇 <span class="ui">VRCast Camera</span> 後會變為「正在傳送」。</p>
+  <h3><span class="ja">Discord などでカメラが起動しないとき（Windows 11）</span><span class="en">If the camera does not start in Discord, etc. (Windows 11)</span><span class="ko">Discord 등에서 카메라가 시작되지 않을 때 (Windows 11)</span><span class="zh-hans">在 Discord 等中摄像头无法启动时（Windows 11）</span><span class="zh-hant">在 Discord 等中攝影機無法啟動時（Windows 11）</span></h3>
+  <ol class="steps">
+    <li><span class="ja"><span class="ui">出力</span> タブで <span class="ui">Windows 11 の方式（Media Foundation）で出力する</span> を ON にします。</span>
+        <span class="en">In the <span class="ui">Output</span> tab, turn on <span class="ui">Use the Windows 11 method (Media Foundation)</span>.</span>
+        <span class="ko"><span class="ui">출력</span> 탭에서 <span class="ui">Windows 11 방식 (Media Foundation)으로 출력</span>을 켭니다.</span>
+        <span class="zh-hans">在 <span class="ui">输出</span> 标签页中打开 <span class="ui">使用 Windows 11 方式（Media Foundation）输出</span>。</span>
+        <span class="zh-hant">在 <span class="ui">輸出</span> 分頁中開啟 <span class="ui">使用 Windows 11 方式（Media Foundation）輸出</span>。</span></li>
+    <li><span class="ja">この方式のドライバーを <span class="ui">ドライバーを登録</span> で登録します（方式ごとに 1 回。管理者の確認が出ます）。</span>
+        <span class="en">Register this method's driver with <span class="ui">Install driver</span> (once per method; an administrator prompt appears).</span>
+        <span class="ko"><span class="ui">드라이버 등록</span>으로 이 방식의 드라이버를 등록합니다 (방식마다 한 번, 관리자 확인이 표시됩니다).</span>
+        <span class="zh-hans">点击 <span class="ui">安装驱动程序</span> 注册此方式的驱动程序（每种方式一次，会出现管理员确认）。</span>
+        <span class="zh-hant">點擊 <span class="ui">安裝驅動程式</span> 註冊此方式的驅動程式（每種方式一次，會出現系統管理員確認）。</span></li>
+    <li><span class="ja">使いたいアプリで <span class="ui">VRCast Camera (MF)</span> を選びます。</span>
+        <span class="en">Choose <span class="ui">VRCast Camera (MF)</span> in the other app.</span>
+        <span class="ko">사용할 앱에서 <span class="ui">VRCast Camera (MF)</span>를 선택합니다.</span>
+        <span class="zh-hans">在要使用的应用中选择 <span class="ui">VRCast Camera (MF)</span>。</span>
+        <span class="zh-hant">在要使用的應用程式中選擇 <span class="ui">VRCast Camera (MF)</span>。</span></li>
+  </ol>
+  <p class="note ja">Windows の通常のカメラとして扱われるため、従来の方式が一覧に出ない・起動に失敗するアプリでも使えることがあります。VRCast の起動中で出力が ON の間だけ一覧に出ます。ドライバーは Program Files にコピーされるため、VRCast のフォルダを移動しても登録し直す必要はありません。</p>
+  <p class="note en">It is handled as a regular Windows camera, so it may work in apps where the classic method is not listed or fails to start. It is listed only while VRCast is running with the output on. The driver is copied to Program Files, so you do not need to reinstall it after moving the VRCast folder.</p>
+  <p class="note ko">Windows의 일반 카메라로 취급되므로 기존 방식이 목록에 없거나 시작에 실패하는 앱에서도 사용할 수 있는 경우가 있습니다. VRCast가 실행 중이고 출력이 켜져 있는 동안에만 목록에 표시됩니다. 드라이버는 Program Files에 복사되므로 VRCast 폴더를 이동해도 다시 등록할 필요가 없습니다.</p>
+  <p class="note zh-hans">它会被视为普通的 Windows 摄像头，因此在旧方式未列出或启动失败的应用中也可能可以使用。仅在 VRCast 运行且输出打开时才会列出。驱动程序会复制到 Program Files，移动 VRCast 文件夹后无需重新注册。</p>
+  <p class="note zh-hant">它會被視為一般的 Windows 攝影機，因此在舊方式未列出或啟動失敗的應用程式中也可能可以使用。僅在 VRCast 執行中且輸出開啟時才會列出。驅動程式會複製到 Program Files，移動 VRCast 資料夾後無需重新註冊。</p>
 </section>
 
 <section id="spout">
@@ -612,15 +635,15 @@
         <span class="ko"><span class="ui">NVIDIA 인스턴트 리플레이</span> (NVIDIA GPU가 있는 PC에서만 표시): <span class="ui">NVIDIA 인스턴트 리플레이가 감지하지 않게 하기</span>를 누르면 VRCast가 인스턴트 리플레이(ShadowPlay)에 게임으로 감지되지 않도록 드라이버 설정에 VRCast용 프로필을 씁니다. VRCast를 다시 시작하면 적용됩니다. <span class="ui">NVIDIA 인스턴트 리플레이 감지 되돌리기</span>로 되돌릴 수 있습니다. 비공식 설정이라 드라이버에 따라 효과가 없을 수 있습니다. 변경하지 못했다고 표시되면 VRCast를 관리자 권한으로 실행해 보세요.</span>
         <span class="zh-hans"><span class="ui">NVIDIA 即时重放</span>（仅在有 NVIDIA GPU 的电脑上显示）：按下 <span class="ui">不让 NVIDIA 即时重放检测</span> 后，会在驱动设置中写入 VRCast 专用配置文件，使 VRCast 不被即时重放（ShadowPlay）识别为游戏。重新启动 VRCast 后生效。按 <span class="ui">恢复 NVIDIA 即时重放的检测</span> 可还原。这是非官方设置，部分驱动可能无效。如提示无法更改，请尝试以管理员身份运行 VRCast。</span>
         <span class="zh-hant"><span class="ui">NVIDIA 即時重播</span>（僅在有 NVIDIA GPU 的電腦上顯示）：按下 <span class="ui">不讓 NVIDIA 即時重播偵測</span> 後，會在驅動程式設定中寫入 VRCast 專用設定檔，使 VRCast 不被即時重播（ShadowPlay）視為遊戲。重新啟動 VRCast 後生效。按 <span class="ui">還原 NVIDIA 即時重播的偵測</span> 可還原。這是非官方設定，部分驅動程式可能無效。如提示無法變更，請嘗試以系統管理員身分執行 VRCast。</span></li>
-    <li><span class="ja"><span class="ui">アップデート</span>: 起動時に新しいバージョンがあるかを確認し、あればパネル上部に通知します（<span class="ui">GitHub からダウンロード</span> / <span class="ui">BOOTH からダウンロード</span> / <span class="ui">このバージョンは通知しない</span>）。
+    <li><span class="ja"><span class="ui">アップデート</span>: 起動時に新しいバージョンがあるかを確認し、あればパネル上部に通知します（<span class="ui">GitHub からダウンロード</span> / <span class="ui">BOOTH からダウンロード</span> / <span class="ui">更新履歴を表示する（GitHub）</span>）。
         確認は最新のバージョン番号を読むためだけに Web サイト（coffin299.github.io）へ接続します。OFF にもできます。</span>
-        <span class="en"><span class="ui">Updates</span>: checks for a new version at startup and shows a notice at the top of the panel if there is one (<span class="ui">Download from GitHub</span> / <span class="ui">Download from BOOTH</span> / <span class="ui">Skip this version</span>).
+        <span class="en"><span class="ui">Updates</span>: checks for a new version at startup and shows a notice at the top of the panel if there is one (<span class="ui">Download from GitHub</span> / <span class="ui">Download from BOOTH</span> / <span class="ui">View changelog (GitHub)</span>).
         It connects to the website (coffin299.github.io) only to read the latest version number, and can be turned off.</span>
-        <span class="ko"><span class="ui">업데이트</span>: 시작할 때 새 버전이 있는지 확인하고, 있으면 패널 위쪽에 알립니다 (<span class="ui">GitHub에서 다운로드</span> / <span class="ui">BOOTH에서 다운로드</span> / <span class="ui">이 버전은 알리지 않기</span>).
+        <span class="ko"><span class="ui">업데이트</span>: 시작할 때 새 버전이 있는지 확인하고, 있으면 패널 위쪽에 알립니다 (<span class="ui">GitHub에서 다운로드</span> / <span class="ui">BOOTH에서 다운로드</span> / <span class="ui">업데이트 내역 보기 (GitHub)</span>).
         최신 버전 번호를 읽기 위해서만 웹사이트 (coffin299.github.io)에 접속합니다. 끌 수도 있습니다.</span>
-        <span class="zh-hans"><span class="ui">更新</span>：启动时检查是否有新版本，如有则在面板顶部提示（<span class="ui">从 GitHub 下载</span> / <span class="ui">从 BOOTH 下载</span> / <span class="ui">不再提示此版本</span>）。
+        <span class="zh-hans"><span class="ui">更新</span>：启动时检查是否有新版本，如有则在面板顶部提示（<span class="ui">从 GitHub 下载</span> / <span class="ui">从 BOOTH 下载</span> / <span class="ui">查看更新日志（GitHub）</span>）。
         仅为读取最新版本号而连接网站（coffin299.github.io），也可以关闭。</span>
-        <span class="zh-hant"><span class="ui">更新</span>：啟動時檢查是否有新版本，如有則在面板頂部提示（<span class="ui">從 GitHub 下載</span> / <span class="ui">從 BOOTH 下載</span> / <span class="ui">不再提示此版本</span>）。
+        <span class="zh-hant"><span class="ui">更新</span>：啟動時檢查是否有新版本，如有則在面板頂部提示（<span class="ui">從 GitHub 下載</span> / <span class="ui">從 BOOTH 下載</span> / <span class="ui">查看更新紀錄（GitHub）</span>）。
         僅為讀取最新版本號而連線網站（coffin299.github.io），也可以關閉。</span></li>
     <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
         <span class="en">Settings are saved when VRCast closes and restored next time.</span>
