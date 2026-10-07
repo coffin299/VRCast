@@ -193,7 +193,22 @@ namespace VRCast.Converter.Editor
             // アバターが変わった・ウィンドウを開き直したときは、そのアバターの指定を読み直す
             if (!_extraLoaded || _extraOwner != _avatar)
             {
+                // アバター未選択の間に追加したものは、選んだアバターの指定に足して保存する（捨てない）
+                List<Object> pending = _extraLoaded && _extraOwner == null ? _extraEntries : null;
                 _extraEntries = ExtraExpressionClips.Load(_avatar);
+                if (pending != null && _avatar != null && pending.Count > 0)
+                {
+                    foreach (Object entry in pending)
+                    {
+                        if (!_extraEntries.Contains(entry))
+                        {
+                            _extraEntries.Add(entry);
+                        }
+                    }
+
+                    ExtraExpressionClips.Save(_avatar, _extraEntries);
+                }
+
                 _extraOwner = _avatar;
                 _extraLoaded = true;
                 _extraChecks = null;
@@ -220,18 +235,26 @@ namespace VRCast.Converter.Editor
                     "即可在 VRCast 中作為表情使用。僅限只驅動 BlendShape 的剪輯。按虛擬形象分別儲存。"),
                 MessageType.None);
 
-            // アバター未指定では保存先が無いため操作させない
-            using (new EditorGUI.DisabledScope(_avatar == null))
+            // アバター未選択でも追加できる（保存はアバターを選んだときに行う）
+            if (_avatar == null)
             {
-                bool changed = DrawExtraEntryRows();
-                changed |= HandleExtraDrop();
+                EditorGUILayout.HelpBox(
+                    T("No avatar selected. Added clips are saved when you select an avatar.",
+                        "アバターが未選択です。追加したものはアバターを選んだときに保存されます。",
+                        "아바타가 선택되지 않았습니다. 추가한 것은 아바타를 선택할 때 저장됩니다.",
+                        "尚未选择虚拟形象。添加的内容会在选择虚拟形象时保存。",
+                        "尚未選擇虛擬形象。新增的內容會在選擇虛擬形象時儲存。"),
+                    MessageType.Info);
+            }
 
-                // 変更があればすぐ保存し、判定を作り直す
-                if (changed)
-                {
-                    ExtraExpressionClips.Save(_avatar, _extraEntries);
-                    _extraChecks = null;
-                }
+            bool changed = DrawExtraEntryRows();
+            changed |= HandleExtraDrop();
+
+            // 変更があればすぐ保存し（アバター未選択なら保存しない）、判定を作り直す
+            if (changed)
+            {
+                ExtraExpressionClips.Save(_avatar, _extraEntries);
+                _extraChecks = null;
             }
 
             DrawExtraChecks();
@@ -353,14 +376,11 @@ namespace VRCast.Converter.Editor
 
         private bool HandleExtraDrop()
         {
-            // ドロップ欄（複数のクリップ・フォルダを一度に追加できる）。アバター未指定の間は理由を出す
+            // ドロップ欄（複数のクリップ・フォルダを一度に追加できる）
             Rect area = GUILayoutUtility.GetRect(0f, DropAreaHeight, GUILayout.ExpandWidth(true));
-            string label = GUI.enabled
-                ? T("Drop animation clips or folders here", "ここにアニメーションクリップかフォルダをドロップ",
-                    "여기에 애니메이션 클립이나 폴더를 드롭", "将动画剪辑或文件夹拖放到此处", "將動畫剪輯或資料夾拖放到此處")
-                : T("Select an avatar first to drop clips here", "先にアバターを選ぶとドロップできます",
-                    "먼저 아바타를 선택하면 드롭할 수 있습니다", "先选择虚拟形象后即可拖放", "先選擇虛擬形象後即可拖放");
-            GUI.Box(area, label, EditorStyles.helpBox);
+            GUI.Box(area, T("Drop animation clips or folders here", "ここにアニメーションクリップかフォルダをドロップ",
+                "여기에 애니메이션 클립이나 폴더를 드롭", "将动画剪辑或文件夹拖放到此处", "將動畫剪輯或資料夾拖放到此處"),
+                EditorStyles.helpBox);
 
             // 直前のドロップの結果（追加した件数、または使えなかった理由）
             if (_dropNotice != null)
@@ -371,7 +391,7 @@ namespace VRCast.Converter.Editor
             // ドロップ欄の上でのドラッグ操作だけを扱う
             Event current = Event.current;
             bool dragging = current.type == EventType.DragUpdated || current.type == EventType.DragPerform;
-            if (!dragging || !area.Contains(current.mousePosition) || !GUI.enabled)
+            if (!dragging || !area.Contains(current.mousePosition))
             {
                 return false;
             }
