@@ -405,6 +405,21 @@
     開啟 <span class="ui">VRCast 在背景時也可使用</span>（預設開啟）後，操作 OBS 等時也能切換。在其他應用程式中輸入時也會回應，建議與 Ctrl 或 Alt 組合使用。
     透過按鈕或快捷鍵選擇的表情會被固定，不會被自動偵測改變。再次選擇同一表情或點擊 <span class="ui">恢復自動偵測</span> 即可恢復。
     <span class="ui">OSC / HTTP</span> 分頁（輸出與設定之間）會列出目前虛擬形象每個表情的命令（點擊 <span class="ui">複製</span> 複製），連接埠下方顯示 OSC 目標和 HTTP URL（點擊 <span class="ui">在瀏覽器中開啟狀態</span> 測試；在 Stream Deck 中將完整 URL 設定到「網站」的「在背景傳送 GET 請求」）。開啟 <span class="ui">外部操作（OSC / HTTP）</span> 後，可從 Stream Deck 或 OSC 應用程式切換表情（僅限本機。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。編號 0 = 無表情，1 起 = 表情順序）。</p>
+  <p class="ja"><span class="ui">待機モーション</span>（既定 ON、Humanoid のみ）は、Web カメラを使っていないときにアバターが完全に止まって見えないよう、呼吸・体の揺れ・頭のゆらぎを少し足します。
+    <span class="ui">呼吸・体の揺れ</span> を OFF にすると止まります。ON のときは <span class="ui">呼吸</span>・<span class="ui">体の揺れ</span>・<span class="ui">頭のゆらぎ</span> の強さ（0〜2、1 が標準）と <span class="ui">速さ</span>（0.5〜2 倍）を調整できます。
+    顔のトラッキング中は頭のゆらぎを止め、本人の動きに任せます。</p>
+  <p class="en"><span class="ui">Idle motion</span> (on by default, Humanoid only) adds a little breathing, body sway and head motion so the avatar does not freeze when you are not using a webcam.
+    Turn off <span class="ui">Breathing and sway</span> to stop it. While it is on, adjust the strength of <span class="ui">Breathing</span>, <span class="ui">Body sway</span> and <span class="ui">Head motion</span> (0 to 2, 1 is standard) and <span class="ui">Speed</span> (0.5 to 2×).
+    Head motion pauses while face tracking is active, so your own movement is used.</p>
+  <p class="ko"><span class="ui">대기 모션</span>(기본 켜짐, Humanoid만)은 웹캠을 쓰지 않을 때 아바타가 완전히 멈춰 보이지 않도록 호흡·몸 흔들림·머리 흔들림을 조금 더합니다.
+    <span class="ui">호흡 · 몸 흔들림</span>을 끄면 멈춥니다. 켜져 있을 때는 <span class="ui">호흡</span>·<span class="ui">몸 흔들림</span>·<span class="ui">머리 흔들림</span>의 강도 (0~2, 1이 표준)와 <span class="ui">속도</span> (0.5~2배)를 조정할 수 있습니다.
+    얼굴 트래킹 중에는 머리 흔들림을 멈추고 본인의 움직임을 따릅니다.</p>
+  <p class="zh-hans"><span class="ui">待机动作</span>（默认开启，仅限 Humanoid）会在不使用摄像头时，稍微加上呼吸、身体摇摆和头部晃动，避免虚拟形象完全静止。
+    关闭 <span class="ui">呼吸 · 身体摇摆</span> 后会停止。开启时可以调整 <span class="ui">呼吸</span>、<span class="ui">身体摇摆</span>、<span class="ui">头部晃动</span> 的强度（0～2，1 为标准）和 <span class="ui">速度</span>（0.5～2 倍）。
+    面部追踪时会停止头部晃动，跟随本人的动作。</p>
+  <p class="zh-hant"><span class="ui">待機動作</span>（預設開啟，僅限 Humanoid）會在不使用攝影機時，稍微加上呼吸、身體搖擺和頭部晃動，避免虛擬形象完全靜止。
+    關閉 <span class="ui">呼吸 · 身體搖擺</span> 後會停止。開啟時可以調整 <span class="ui">呼吸</span>、<span class="ui">身體搖擺</span>、<span class="ui">頭部晃動</span> 的強度（0～2，1 為標準）和 <span class="ui">速度</span>（0.5～2 倍）。
+    臉部追蹤時會停止頭部晃動，跟隨本人的動作。</p>
 </section>
 
 <section id="face">
