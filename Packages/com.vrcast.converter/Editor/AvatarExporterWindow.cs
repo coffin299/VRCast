@@ -53,6 +53,9 @@ namespace VRCast.Converter.Editor
         // 指定を展開したクリップと判定結果（指定・プロジェクトが変わったときだけ作り直す。null = 未作成）
         private List<KeyValuePair<AnimationClip, ClipCheck>> _extraChecks;
 
+        // 直前のドロップで使えなかったものがあったときの説明（null = なし）
+        private string _dropNotice;
+
         [MenuItem("VRCast/Avatar Exporter")]
         private static void Open()
         {
@@ -348,11 +351,20 @@ namespace VRCast.Converter.Editor
 
         private bool HandleExtraDrop()
         {
-            // ドロップ欄（複数のクリップ・フォルダを一度に追加できる）
+            // ドロップ欄（複数のクリップ・フォルダを一度に追加できる）。アバター未指定の間は理由を出す
             Rect area = GUILayoutUtility.GetRect(0f, DropAreaHeight, GUILayout.ExpandWidth(true));
-            GUI.Box(area, T("Drop animation clips or folders here", "ここにアニメーションクリップかフォルダをドロップ",
-                "여기에 애니메이션 클립이나 폴더를 드롭", "将动画剪辑或文件夹拖放到此处", "將動畫剪輯或資料夾拖放到此處"),
-                EditorStyles.helpBox);
+            string label = GUI.enabled
+                ? T("Drop animation clips or folders here", "ここにアニメーションクリップかフォルダをドロップ",
+                    "여기에 애니메이션 클립이나 폴더를 드롭", "将动画剪辑或文件夹拖放到此处", "將動畫剪輯或資料夾拖放到此處")
+                : T("Select an avatar first to drop clips here", "先にアバターを選ぶとドロップできます",
+                    "먼저 아바타를 선택하면 드롭할 수 있습니다", "先选择虚拟形象后即可拖放", "先選擇虛擬形象後即可拖放");
+            GUI.Box(area, label, EditorStyles.helpBox);
+
+            // 直前のドロップで使えなかった理由（プロジェクトの外・クリップでないもの）
+            if (_dropNotice != null)
+            {
+                EditorGUILayout.HelpBox(_dropNotice, MessageType.Warning);
+            }
 
             // ドロップ欄の上でのドラッグ操作だけを扱う
             Event current = Event.current;
@@ -362,29 +374,41 @@ namespace VRCast.Converter.Editor
                 return false;
             }
 
-            // 使えるものが含まれていればコピーのカーソルにする
-            bool acceptable = false;
-            foreach (Object dragged in DragAndDrop.objectReferences)
-            {
-                acceptable |= ExtraExpressionClips.IsAccepted(dragged);
-            }
-
-            DragAndDrop.visualMode = acceptable ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+            // 使えるものが含まれていればコピーのカーソルにする（エクスプローラーからのプロジェクト内のフォルダも可）
+            List<Object> dropped = ExtraExpressionClips.FromDrag(
+                DragAndDrop.objectReferences, DragAndDrop.paths, out bool outsideProject);
+            DragAndDrop.visualMode = dropped.Count > 0 ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
             current.Use();
 
-            // 離したときに、使えるもののうちまだ一覧に無いものを追加する
-            if (current.type != EventType.DragPerform || !acceptable)
+            // 離したときだけ処理する
+            if (current.type != EventType.DragPerform)
             {
                 return false;
             }
 
             DragAndDrop.AcceptDrag();
+
+            // 使えなかったものがあれば理由を残す（次のドロップまで表示）
+            _dropNotice = outsideProject
+                ? T("Folders outside this Unity project cannot be used. Move them into the project (Assets) first.",
+                    "この Unity プロジェクトの外にあるフォルダは使えません。先にプロジェクト（Assets）の中へ入れてください。",
+                    "이 Unity 프로젝트 밖에 있는 폴더는 사용할 수 없습니다. 먼저 프로젝트 (Assets) 안으로 옮기세요.",
+                    "无法使用此 Unity 项目之外的文件夹。请先将其移入项目（Assets）中。",
+                    "無法使用此 Unity 專案之外的資料夾。請先將其移入專案（Assets）中。")
+                : dropped.Count == 0
+                    ? T("Only animation clips (.anim) and folders can be dropped.",
+                        "ドロップできるのはアニメーションクリップ（.anim）とフォルダだけです。",
+                        "드롭할 수 있는 것은 애니메이션 클립 (.anim)과 폴더뿐입니다.",
+                        "只能拖放动画剪辑（.anim）和文件夹。", "只能拖放動畫剪輯（.anim）和資料夾。")
+                    : null;
+
+            // 使えるもののうち、まだ一覧に無いものを追加する
             bool added = false;
-            foreach (Object dragged in DragAndDrop.objectReferences)
+            foreach (Object entry in dropped)
             {
-                if (ExtraExpressionClips.IsAccepted(dragged) && !_extraEntries.Contains(dragged))
+                if (!_extraEntries.Contains(entry))
                 {
-                    _extraEntries.Add(dragged);
+                    _extraEntries.Add(entry);
                     added = true;
                 }
             }

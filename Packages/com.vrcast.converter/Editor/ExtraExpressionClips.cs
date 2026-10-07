@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
@@ -98,6 +99,69 @@ namespace VRCast.Converter.Editor
             }
 
             return entry is AnimationClip || AssetDatabase.IsValidFolder(AssetDatabase.GetAssetPath(entry));
+        }
+
+        /// <summary>
+        /// ドラッグ中のものから使える指定を集める（プロジェクトウィンドウのアセットと、
+        /// エクスプローラーからドラッグしたプロジェクト内のファイル・フォルダ）。
+        /// プロジェクトの外のものが含まれていれば outsideProject が true になる。
+        /// </summary>
+        public static List<Object> FromDrag(IEnumerable<Object> objects, IEnumerable<string> paths, out bool outsideProject)
+        {
+            var entries = new List<Object>();
+            outsideProject = false;
+
+            // プロジェクトウィンドウからはアセットそのものが届く
+            foreach (Object dragged in objects)
+            {
+                AddIfAccepted(dragged, entries);
+            }
+
+            // エクスプローラーからはパスだけが届くので、プロジェクト内ならアセットとして読み込む
+            foreach (string path in paths)
+            {
+                string assetPath = ToAssetPath(path);
+                if (assetPath == null)
+                {
+                    outsideProject = true;
+                    continue;
+                }
+
+                AddIfAccepted(AssetDatabase.LoadAssetAtPath<Object>(assetPath), entries);
+            }
+
+            return entries;
+        }
+
+        private static void AddIfAccepted(Object entry, List<Object> entries)
+        {
+            // 使えるもので、まだ無いものだけ
+            if (IsAccepted(entry) && !entries.Contains(entry))
+            {
+                entries.Add(entry);
+            }
+        }
+
+        private static string ToAssetPath(string path)
+        {
+            // 空のパスは対象外
+            if (string.IsNullOrEmpty(path))
+            {
+                return null;
+            }
+
+            // プロジェクトウィンドウからは "Assets/..." の相対パスのまま
+            string normalized = path.Replace('\\', '/');
+            if (!Path.IsPathRooted(normalized))
+            {
+                return normalized;
+            }
+
+            // エクスプローラーからの絶対パスは、プロジェクトのフォルダ内ならその相対パスへ（外なら null）
+            string root = Path.GetDirectoryName(Application.dataPath)?.Replace('\\', '/') + "/";
+            return normalized.StartsWith(root, StringComparison.OrdinalIgnoreCase)
+                ? normalized.Substring(root.Length)
+                : null;
         }
 
         /// <summary>

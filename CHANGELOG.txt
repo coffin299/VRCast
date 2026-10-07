@@ -12,6 +12,7 @@ Newest first. Each version is written in Japanese, then English.
 - トラッキングの入力元に「iFacialMocap」を暫定で追加（iPhone の iFacialMocap に表示される IP アドレスを入力すると顔の動きを受け取れます。パーフェクトシンクと表情の反映にも対応。アプリでの動作は未確認です）
 - 文字の下の部分が途切れて表示される問題と、長い選択肢の名前の左右が切れる問題を修正
 - 「シェイプキー」タブの名前を「シェイプキー設定」に変更
+- 書き出しツールの「追加の表情」で、エクスプローラーからフォルダやクリップをドロップしても反応しない問題を修正（プロジェクト内のものなら追加でき、使えないときやアバター未選択のときは理由を表示）
 
 [English]
 - Added "Lock camera" to the Display tab (while on, mouse drags and the wheel no longer move the camera, so scrolling other windows will not move it by accident; field of view and reset still work; kept after restarting)
@@ -19,6 +20,7 @@ Newest first. Each version is written in Japanese, then English.
 - Added "iFacialMocap" as a tracking source in beta (enter the IP address shown in iFacialMocap on your iPhone to receive your face movement; works with perfect sync and facial expressions; not yet tested with the app)
 - Fixed the bottom of text being cut off, and long option names being cut off at both sides
 - Renamed the "Shape keys" tab to "Shape key setup"
+- Fixed "Extra expressions" in the exporter not reacting to folders or clips dropped from File Explorer (items inside the project are now added, and the reason is shown when something cannot be used or no avatar is selected)
 
 ■ 1.8.1 (2026-10-07)
 
