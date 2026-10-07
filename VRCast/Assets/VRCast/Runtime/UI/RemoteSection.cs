@@ -13,12 +13,8 @@ namespace VRCast.UI
     /// </summary>
     public class RemoteSection
     {
-        // コマンド行の種類の列の幅と、コピーボタンの幅
+        // コマンド行の種類の列の幅
         private const float KindWidth = 60f;
-        private const float CopyButtonWidth = 80f;
-
-        // 「コピーしました」を出しておく秒数
-        private const float CopiedSeconds = 1.5f;
 
         private readonly AvatarComponentCache _avatar;
         private readonly RemoteControl _remote;
@@ -30,10 +26,6 @@ namespace VRCast.UI
 
         // 表情のコマンドに toggle を付けて表示するか（同じ表情をもう一度送ると自動検出へ戻る。保存しない表示の切替）
         private bool _toggle = true;
-
-        // 最後にコピーした文字列と、「コピーしました」を消す時刻
-        private string _copied;
-        private float _copiedUntil;
 
         public RemoteSection(AvatarSession session, RemoteControl remote, AppSettings settings)
         {
@@ -221,18 +213,8 @@ namespace VRCast.UI
             UiTheme theme = UiTheme.Current;
             GUILayout.Label(text, theme != null ? theme.Hint : GUI.skin.label, GuiControls.Shrinkable);
 
-            // コピー（押した直後だけ「コピーしました」）
-            string value = copyText ?? text;
-            bool justCopied = _copied == value && Time.unscaledTime < _copiedUntil;
-            if (GUILayout.Button(justCopied
-                    ? Loc.T("Copied", "コピー済み", "복사됨", "已复制", "已複製")
-                    : Loc.T("Copy", "コピー", "복사", "复制", "複製"), GUILayout.Width(CopyButtonWidth)))
-            {
-                GUIUtility.systemCopyBuffer = value;
-                _copied = value;
-                _copiedUntil = Time.unscaledTime + CopiedSeconds;
-            }
-
+            // コピー（押した直後だけ「コピー済み」）
+            GuiControls.CopyButton(copyText ?? text);
             GUILayout.EndHorizontal();
         }
     }

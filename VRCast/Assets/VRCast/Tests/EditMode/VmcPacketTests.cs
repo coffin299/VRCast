@@ -32,31 +32,33 @@ namespace VRCast.Tests
         }
 
         [Test]
-        public void Read_SwapsPersonSidesToVideoSides()
+        public void Read_KeepsSenderAvatarSides()
         {
-            // iPhone の値は本人基準: 本人の左目を閉じ、本人の左の口角を上げる（名前の揺れも受け付ける）
+            // 送信側アバター（鏡像済み）の左目を閉じ、左の口角を上げる（名前の揺れも受け付ける）
             var vmc = new VmcPacket();
             Read(vmc, Bundle(Blend("EyeBlinkLeft", 1f), Blend("mouthSmile_L", 0.6f), Apply()), out _,
                 out FaceTrackingFrame frame);
 
-            // 本人の左目が閉じ、受信値は MediaPipe と同じ映像基準（本人の左 = 映像の右）に並ぶこと
-            Assert.That(frame.EyeOpenLeft, Is.EqualTo(0f).Within(1e-5f));
-            Assert.That(frame.EyeOpenRight, Is.EqualTo(1f).Within(1e-5f));
-            Assert.That(frame.BlendShapes[ArKitFace.IndexOf("mouthSmileRight")], Is.EqualTo(0.6f).Within(1e-5f));
-            Assert.That(frame.BlendShapes[ArKitFace.IndexOf("mouthSmileLeft")], Is.EqualTo(0f).Within(1e-5f));
+            // 左右を入れ替えずに並び、鏡像 ON でアバターの同じ側へ書かれる位置（SourceIndex(i, true) = i）に入ること
+            Assert.That(frame.BlendShapes[ArKitFace.EyeBlinkLeft], Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(frame.BlendShapes[ArKitFace.IndexOf("mouthSmileLeft")], Is.EqualTo(0.6f).Within(1e-5f));
+            Assert.That(frame.BlendShapes[ArKitFace.IndexOf("mouthSmileRight")], Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(frame.EyeOpenRight, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(frame.EyeOpenLeft, Is.EqualTo(1f).Within(1e-5f));
         }
 
         [Test]
         public void Read_HeadBone_SetsHeadRotation()
         {
-            // Head ボーンの回転が頭の向きになり、ほかのボーンは無視すること
-            Quaternion turn = Quaternion.Euler(0f, 30f, 0f);
+            // Head ボーンの回転（鏡像済み）を左右反転して頭の向きにし、ほかのボーンは無視すること
+            Quaternion turn = Quaternion.Euler(10f, 30f, 5f);
             var vmc = new VmcPacket();
             Read(vmc, Bundle(Bone("Neck", Quaternion.Euler(45f, 0f, 0f)), Bone("Head", turn), Apply()), out _,
                 out FaceTrackingFrame frame);
 
             Assert.That(vmc.HasHead, Is.True);
-            Assert.That(Quaternion.Angle(frame.HeadRotation, turn), Is.LessThan(0.01f));
+            var mirrored = new Quaternion(turn.x, -turn.y, -turn.z, turn.w);
+            Assert.That(Quaternion.Angle(frame.HeadRotation, mirrored), Is.LessThan(0.01f));
         }
 
         [Test]
@@ -66,8 +68,9 @@ namespace VRCast.Tests
             var vmc = new VmcPacket();
             Read(vmc, Bundle(Blend("Blink_L", 1f), Blend("A", 0.5f), Apply()), out _, out FaceTrackingFrame frame);
 
-            Assert.That(frame.EyeOpenLeft, Is.EqualTo(0f).Within(1e-5f));
-            Assert.That(frame.EyeOpenRight, Is.EqualTo(1f).Within(1e-5f));
+            // 送信側アバターの左目は ARKit の eyeBlinkLeft と同じ側（フレームでは右目）
+            Assert.That(frame.EyeOpenRight, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(frame.EyeOpenLeft, Is.EqualTo(1f).Within(1e-5f));
             Assert.That(frame.MouthOpen, Is.EqualTo(0.5f).Within(1e-5f));
             Assert.That(frame.BlendShapes, Is.Null);
             Assert.That(frame.HasExpression, Is.False);
@@ -81,8 +84,8 @@ namespace VRCast.Tests
             Read(vmc, Bundle(Blend("blinkRight", 1f), Blend("aa", 0.2f), Blend("oh", 0.6f), Apply()), out _,
                 out FaceTrackingFrame frame);
 
-            Assert.That(frame.EyeOpenLeft, Is.EqualTo(1f).Within(1e-5f));
-            Assert.That(frame.EyeOpenRight, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(frame.EyeOpenRight, Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(frame.EyeOpenLeft, Is.EqualTo(0f).Within(1e-5f));
             Assert.That(frame.MouthOpen, Is.EqualTo(0.6f).Within(1e-5f));
         }
 
@@ -96,8 +99,9 @@ namespace VRCast.Tests
 
             Assert.That(frame.MouthOpen, Is.EqualTo(1f).Within(1e-5f));
             Assert.That(frame.BlendShapes[ArKitFace.JawOpen], Is.EqualTo(1f).Within(1e-5f));
-            Assert.That(frame.EyeOpenLeft, Is.EqualTo(0f).Within(1e-5f));
-            Assert.That(frame.EyeOpenRight, Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(frame.BlendShapes[ArKitFace.EyeBlinkLeft], Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(frame.EyeOpenRight, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(frame.EyeOpenLeft, Is.EqualTo(1f).Within(1e-5f));
 
             // ARKit の jawOpen が届けば、そちらを優先すること
             Read(vmc, Bundle(Blend("jawOpen", 0f), Apply()), out _, out frame);

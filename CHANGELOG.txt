@@ -4,23 +4,17 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
-
-[日本語]
-- iPhone・外部アプリ（VMC）で、アプリによって口が動かない問題を修正（「あ」以外の母音・VRM 1.0 の表情名にも対応し、顎の値が届かないときは母音の値で口を動かします）
-
-[English]
-- Fixed the mouth not moving with some apps when using iPhone / external app (VMC) (vowels other than "A" and VRM 1.0 expression names now work, and the vowels move the mouth when no jaw value is sent)
-
 ■ 1.9.1 (2026-10-07)
 
 [日本語]
 - 表示タブに「カメラを固定」を追加（ON の間はマウスのドラッグ・ホイールでカメラが動かず、ほかのウィンドウをスクロールしたときなどに誤って動かしません。画角とリセットは使えます。再起動後も保持）
-- トラッキングの入力元に「iPhone・外部アプリ（VMC）」を追加（iPhone の Waidayo などから同じ Wi-Fi 経由で顔の動きを受け取れます。パーフェクトシンクと表情の反映にも対応。送信先に入力する PC の IP アドレスをトラッキングタブに表示）
+- トラッキングの入力元に「iPhone・外部アプリ（VMC）」を追加（iPhone の Waidayo などから同じ Wi-Fi 経由で顔の動きを受け取れます。パーフェクトシンクと表情の反映にも対応。送信先に入力する PC の IP アドレスをトラッキングタブに表示し、コピーできます）
+- 文字の下の部分が途切れて表示される問題と、長い選択肢の名前の左右が切れる問題を修正
 
 [English]
 - Added "Lock camera" to the Display tab (while on, mouse drags and the wheel no longer move the camera, so scrolling other windows will not move it by accident; field of view and reset still work; kept after restarting)
-- Added "iPhone / external app (VMC)" as a tracking source (receive your face movement from apps such as Waidayo on iPhone over the same Wi-Fi; works with perfect sync and facial expressions; the Tracking tab shows this PC's IP address to enter in the app)
+- Added "iPhone / external app (VMC)" as a tracking source (receive your face movement from apps such as Waidayo on iPhone over the same Wi-Fi; works with perfect sync and facial expressions; the Tracking tab shows this PC's IP address to enter in the app, with a copy button)
+- Fixed the bottom of text being cut off, and long option names being cut off at both sides
 
 ■ 1.8.1 (2026-10-07)
 

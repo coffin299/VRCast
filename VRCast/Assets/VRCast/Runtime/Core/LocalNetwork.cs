@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Net;
 using System.Net.NetworkInformation;
 using System.Net.Sockets;
 
@@ -14,6 +16,7 @@ namespace VRCast.Core
 
         /// <summary>
         /// 動作中のネットワークアダプターの IPv4 アドレス（ループバック・トンネル・自動割り当てを除く）。取得できなければ空。
+        /// アダプター一覧が取れない環境では、ホスト名から引いたアドレスで代用する。
         /// </summary>
         public static List<string> GetIPv4Addresses()
         {
@@ -32,23 +35,46 @@ namespace VRCast.Core
 
                     foreach (UnicastIPAddressInformation info in adapter.GetIPProperties().UnicastAddresses)
                     {
-                        // IPv4 で、自動割り当てでないものだけ
-                        string text = info.Address.ToString();
-                        if (info.Address.AddressFamily == AddressFamily.InterNetwork
-                            && !text.StartsWith(LinkLocalPrefix, System.StringComparison.Ordinal)
-                            && !addresses.Contains(text))
-                        {
-                            addresses.Add(text);
-                        }
+                        Add(addresses, info.Address);
                     }
                 }
             }
-            catch (NetworkInformationException)
+            catch (Exception)
             {
-                // 取得できない環境では空のまま（UI は「ipconfig で確認」を案内する）
+                // ビルドの種類によっては未対応の例外になるため、ここでは握りつぶして下の代用へ進む
+                addresses.Clear();
+            }
+
+            // 1 つも取れなければホスト名から引く（アダプターの状態は分からないが、表示しないよりよい）
+            if (addresses.Count == 0)
+            {
+                try
+                {
+                    foreach (IPAddress address in Dns.GetHostAddresses(Dns.GetHostName()))
+                    {
+                        Add(addresses, address);
+                    }
+                }
+                catch (Exception)
+                {
+                    // 取得できない環境では空のまま（UI は「ipconfig で確認」を案内する）
+                }
             }
 
             return addresses;
+        }
+
+        private static void Add(List<string> addresses, IPAddress address)
+        {
+            // IPv4 で、ループバック・自動割り当てでなく、まだ無いものだけ
+            string text = address.ToString();
+            if (address.AddressFamily == AddressFamily.InterNetwork
+                && !IPAddress.IsLoopback(address)
+                && !text.StartsWith(LinkLocalPrefix, StringComparison.Ordinal)
+                && !addresses.Contains(text))
+            {
+                addresses.Add(text);
+            }
         }
     }
 }

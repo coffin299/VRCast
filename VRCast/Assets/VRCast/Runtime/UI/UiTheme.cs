@@ -260,11 +260,12 @@ namespace VRCast.UI
 
         private void BuildText()
         {
-            // 本文（折り返しあり）
+            // 本文（折り返しあり）。日本語フォントの字形は行の高さより下へはみ出すため、枠で切らずにはみ出して描く
             Skin.label = new GUIStyle(Skin.label)
             {
                 fontSize = 13,
                 wordWrap = true,
+                clipping = TextClipping.Overflow,
                 padding = new RectOffset(2, 2, 3, 3),
                 margin = new RectOffset(4, 4, 2, 2),
             };
@@ -290,10 +291,8 @@ namespace VRCast.UI
             };
             KeyHint.normal.textColor = Accent;
             Value = new GUIStyle(Hint) { alignment = TextAnchor.MiddleRight, wordWrap = false };
-            Centered = new GUIStyle(Skin.label)
-            {
-                alignment = TextAnchor.MiddleCenter, wordWrap = false, clipping = TextClipping.Clip,
-            };
+            // 選択行の候補名（幅が足りなければ左右を切らずに折り返す）
+            Centered = new GUIStyle(Skin.label) { alignment = TextAnchor.MiddleCenter };
             Success = new GUIStyle(Skin.label) { fontStyle = FontStyle.Bold, wordWrap = false };
             Success.normal.textColor = SuccessColor;
             WarningText = new GUIStyle(Success);
@@ -332,6 +331,7 @@ namespace VRCast.UI
             {
                 fontSize = 13,
                 alignment = TextAnchor.MiddleLeft,
+                clipping = TextClipping.Overflow,
                 fixedHeight = SwitchHeight,
                 border = new RectOffset(SwitchTextureWidth - 2, 1, 0, 0),
                 padding = new RectOffset(SwitchTextureWidth + 4, 4, 0, 0),

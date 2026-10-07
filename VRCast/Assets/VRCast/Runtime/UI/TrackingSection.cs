@@ -87,14 +87,18 @@ namespace VRCast.UI
             if (_settings.trackingEnabled)
             {
                 DrawSource();
-                DrawBlink();
 
-                // 外部アプリはカメラ・トラッカーの代わりに、送信先として入力してもらう IP アドレスとポートを出す
+                // 外部アプリは、送信先として入力してもらう IP アドレスとポートを入力元のすぐ下に出す（見落とさないように）
                 if (external)
                 {
                     DrawVmcConnection();
                 }
-                else
+
+                DrawSourceFeatures();
+                DrawBlink();
+
+                // 同梱トラッカーはカメラ・起動・ポートの設定
+                if (!external)
                 {
                     DrawLauncher();
                     DrawPort();
@@ -120,7 +124,10 @@ namespace VRCast.UI
             };
             _settings.trackingSource = (TrackingSource)GuiControls.EnumSelector(
                 Loc.T("Source", "入力元", "입력 소스", "输入源", "輸入來源"), labels, (int)_settings.trackingSource);
+        }
 
+        private void DrawSourceFeatures()
+        {
             // 腕・手は受信できる入力元（MediaPipe）のみ
             if (TrackingSourceInfo.HasArms(_settings.trackingSource))
             {
@@ -169,12 +176,23 @@ namespace VRCast.UI
                 _nextAddressRefresh = Time.unscaledTime + AddressRefreshSeconds;
             }
 
-            string addresses = _localAddresses.Count > 0
-                ? string.Join(" / ", _localAddresses)
-                : Loc.T("not found (check with ipconfig)", "見つかりません（ipconfig で確認）", "찾을 수 없음 (ipconfig로 확인)",
-                    "未找到（请用 ipconfig 确认）", "找不到（請用 ipconfig 確認）");
-            GuiControls.Hint(Loc.T("This PC's IP address", "この PC の IP アドレス", "이 PC의 IP 주소", "此电脑的 IP 地址",
-                "此電腦的 IP 位址") + ": " + addresses);
+            // 見出しの下に 1 行ずつ、目立つ太字とコピーボタンで出す（見つからなければ ipconfig を案内）
+            GuiControls.SubHeading(Loc.T("This PC's IP address (destination)", "この PC の IP アドレス（送信先）",
+                "이 PC의 IP 주소 (전송 대상)", "此电脑的 IP 地址（发送目标）", "此電腦的 IP 位址（傳送目標）"));
+            if (_localAddresses.Count == 0)
+            {
+                GuiControls.Hint(Loc.T("Not found (check with ipconfig)", "見つかりません（ipconfig で確認）",
+                    "찾을 수 없음 (ipconfig로 확인)", "未找到（请用 ipconfig 确认）", "找不到（請用 ipconfig 確認）"));
+            }
+
+            UiTheme theme = UiTheme.Current;
+            foreach (string address in _localAddresses)
+            {
+                GUILayout.BeginHorizontal();
+                GUILayout.Label(address, theme != null ? theme.Title : GUI.skin.label, GuiControls.Shrinkable);
+                GuiControls.CopyButton(address);
+                GUILayout.EndHorizontal();
+            }
 
             // VMC の受信ポート（範囲内の数値になったときだけ反映。受信側が追従する）
             _settings.vmcPort = GuiControls.PortField(

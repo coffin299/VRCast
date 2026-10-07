@@ -10,7 +10,8 @@ namespace VRCast.Tracking
     /// VMC は状態を送り続ける形式なので、値は受信のたびに上書きして保持し、"/VMC/Ext/Blend/Apply" で 1 フレームを確定する。
     /// - "/VMC/Ext/Blend/Val (s 名前, f 値)": ARKit 名（パーフェクトシンク）または VRM の表情名（Blink_L / Blink_R / A 等）
     /// - "/VMC/Ext/Bone/Pos (s 名前, f px, py, pz, qx, qy, qz, qw)": Head の回転を頭の向きに使う（Unity 座標系）
-    /// ARKit の左右は本人基準なので、MediaPipe と同じ映像基準へ入れ替えてから ArKitFace に渡す。
+    /// VMC の値は送信側アプリのアバターの動き（本人と向かい合う鏡像。Waidayo 等）なので、
+    /// 鏡像 ON で送信側と同じ向きになるよう、頭の回転は左右反転し、表情の左右は入れ替えずにカメラ基準のフレームへ置く。
     /// </summary>
     public sealed class VmcPacket
     {
@@ -47,12 +48,9 @@ namespace VRCast.Tracking
         // 母音の種類数
         private const int VowelCount = 5;
 
-        // 本人基準の左右で受け取った ARKit の値（ArKitFace.BlendShapeNames 順）と、受け取ったことのある名前
-        private readonly float[] _personScores = new float[ArKitFace.BlendShapeNames.Length];
+        // 受け取った ARKit の値（送信側アバターの左右のまま、ArKitFace.BlendShapeNames 順）と、受け取ったことのある名前
+        private readonly float[] _scores = new float[ArKitFace.BlendShapeNames.Length];
         private readonly bool[] _received = new bool[ArKitFace.BlendShapeNames.Length];
-
-        // 本人基準の位置 → 映像基準の位置（左右の無い名前は自分自身）
-        private static readonly int[] ToVideoSide = BuildSideSwap();
 
         // 解析用に使い回すメッセージの一覧
         private readonly List<OscMessage> _messages = new List<OscMessage>();
@@ -89,7 +87,7 @@ namespace VRCast.Tracking
         /// </summary>
         public void Reset()
         {
-            Array.Clear(_personScores, 0, _personScores.Length);
+            Array.Clear(_scores, 0, _scores.Length);
             Array.Clear(_received, 0, _received.Length);
             ArKitShapeCount = 0;
             _vrmBlink = 0f;
@@ -192,20 +190,16 @@ namespace VRCast.Tracking
                 HeadPosition = Vector3.zero,
             };
 
-            // VRM の表情名から求めた目の閉じ具合（映像上の左右。片目ずつの値が無ければ両目の値）と口の開き
+            // VRM の表情名から求めた目の閉じ具合（送信側アバターの左右。片目ずつの値が無ければ両目の値）と口の開き
             float vrmClosedLeft = Mathf.Clamp01(Mathf.Max(_vrmBlink, _vrmBlinkLeft));
             float vrmClosedRight = Mathf.Clamp01(Mathf.Max(_vrmBlink, _vrmBlinkRight));
             float vrmMouth = VrmMouthOpen();
 
-            // ARKit 名が届く送信元は、映像基準の左右に並べ替えて MediaPipe と同じ処理に通す（フレームごとに新しい配列）。
+            // ARKit 名が届く送信元は、左右をそのまま MediaPipe と同じ処理に通す（フレームごとに新しい配列）。
             // 届かない送信元は VRM の表情名で目・口だけ動かす
             if (ArKitShapeCount > 0)
             {
-                var scores = new float[_personScores.Length];
-                for (int i = 0; i < scores.Length; i++)
-                {
-                    scores[ToVideoSide[i]] = _personScores[i];
-                }
+                var scores = (float[])_scores.Clone();
 
                 // 一部の ARKit 名だけ届く送信元では、届かない顎・まばたきを VRM の表情名の値で補う
                 // （補わないと口・目が閉じたままになる。パーフェクトシンクの顎・まぶたにも同じ値が入る）
@@ -214,20 +208,20 @@ namespace VRCast.Tracking
                     scores[ArKitFace.JawOpen] = vrmMouth;
                 }
 
-                // 映像上の左目 = ArKit の映像基準の eyeBlinkRight（ArKitFace.Fill と同じ対応）
+                // 送信側アバターの左目（Blink_L）は ARKit の eyeBlinkLeft と同じ側
                 if (!_received[ArKitFace.EyeBlinkLeft] && !_received[ArKitFace.EyeBlinkRight])
                 {
-                    scores[ArKitFace.EyeBlinkRight] = vrmClosedLeft;
-                    scores[ArKitFace.EyeBlinkLeft] = vrmClosedRight;
+                    scores[ArKitFace.EyeBlinkLeft] = vrmClosedLeft;
+                    scores[ArKitFace.EyeBlinkRight] = vrmClosedRight;
                 }
 
                 ArKitFace.Fill(scores, ArKitRange.IPhone, ref frame);
                 return frame;
             }
 
-            // VRM の表情名だけの送信元は目と口だけ
-            frame.EyeOpenLeft = 1f - vrmClosedLeft;
-            frame.EyeOpenRight = 1f - vrmClosedRight;
+            // VRM の表情名だけの送信元は目と口だけ（ArKitFace.Fill と同じく、フレームの左目は eyeBlinkRight 側）
+            frame.EyeOpenLeft = 1f - vrmClosedRight;
+            frame.EyeOpenRight = 1f - vrmClosedLeft;
             frame.MouthOpen = vrmMouth;
             return frame;
         }
@@ -251,7 +245,7 @@ namespace VRCast.Tracking
                     ArKitShapeCount++;
                 }
 
-                _personScores[index] = Mathf.Clamp01(value);
+                _scores[index] = Mathf.Clamp01(value);
                 return;
             }
 
@@ -297,8 +291,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 送信元のアバター基準の回転をそのまま頭の向きにする（正面は FaceTrackingDriver のキャリブレーションで決まる）
-            _headRotation = Quaternion.Normalize(rotation);
+            // 送信側アバターの回転は鏡像済みなので、左右反転してカメラ基準にする（正面は FaceTrackingDriver のキャリブレーションで決まる）
+            _headRotation = TrackingMath.MirrorRotation(Quaternion.Normalize(rotation));
             HasHead = true;
         }
 
@@ -316,18 +310,6 @@ namespace VRCast.Tracking
             }
 
             return new string(chars, 0, length);
-        }
-
-        private static int[] BuildSideSwap()
-        {
-            // 左右の付く名前は相手の位置へ、左右の無い名前は自分自身へ（鏡像 OFF のパーフェクトシンクと同じ対応）
-            var swap = new int[ArKitFace.BlendShapeNames.Length];
-            for (int i = 0; i < swap.Length; i++)
-            {
-                swap[i] = PerfectSyncBlendShapes.SourceIndex(i, false);
-            }
-
-            return swap;
         }
     }
 }

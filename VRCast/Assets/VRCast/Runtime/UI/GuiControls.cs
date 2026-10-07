@@ -17,6 +17,14 @@ namespace VRCast.UI
         private const float ArrowWidth = 30f;
         private const int MaxOptionLabelLength = 32;
 
+        // コピーボタンの幅と、「コピー済み」を出しておく秒数
+        private const float CopyButtonWidth = 80f;
+        private const float CopiedSeconds = 1.5f;
+
+        // 最後にコピーした文字列と、「コピー済み」を消す時刻（どのタブのコピーボタンでも共通）
+        private static string _copied;
+        private static float _copiedUntil;
+
         /// <summary>
         /// 横に並べるボタン用の配置指定。行の幅が足りないときに文字の幅より縮めて、パネルの右へはみ出さないようにする。
         /// </summary>
@@ -109,6 +117,24 @@ namespace VRCast.UI
             bool pressed = GUILayout.Button(text, Shrinkable);
             GUILayout.EndHorizontal();
             return pressed;
+        }
+
+        /// <summary>
+        /// value をクリップボードへコピーするボタン（押した直後だけ「コピー済み」と表示）。
+        /// </summary>
+        public static void CopyButton(string value)
+        {
+            // 同じ文字列を直前にコピーしていれば「コピー済み」を出す
+            bool justCopied = _copied == value && Time.unscaledTime < _copiedUntil;
+            if (GUILayout.Button(justCopied
+                    ? Loc.T("Copied", "コピー済み", "복사됨", "已复制", "已複製")
+                    : Loc.T("Copy", "コピー", "복사", "复制", "複製"), GUILayout.Width(CopyButtonWidth)))
+            {
+                // コピーして、表示を切り替える時刻を覚える
+                GUIUtility.systemCopyBuffer = value;
+                _copied = value;
+                _copiedUntil = Time.unscaledTime + CopiedSeconds;
+            }
         }
 
         /// <summary>
