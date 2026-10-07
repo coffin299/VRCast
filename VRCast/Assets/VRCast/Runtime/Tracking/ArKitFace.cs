@@ -158,6 +158,21 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
+        /// 本人基準の左右（ARKit そのまま）の値を、共通の映像基準の左右へ入れ替えた新しい配列にする。
+        /// </summary>
+        public static float[] FromPersonSides(float[] personScores)
+        {
+            // 左右の付く名前は相手の位置へ、左右の無い名前はそのまま（鏡像 OFF のパーフェクトシンクと同じ対応）
+            var scores = new float[personScores.Length];
+            for (int i = 0; i < scores.Length; i++)
+            {
+                scores[PerfectSyncBlendShapes.SourceIndex(i, false)] = personScores[i];
+            }
+
+            return scores;
+        }
+
+        /// <summary>
         /// ウインクの強さ（片目だけを閉じているほど 1 に近い）。
         /// </summary>
         public static float WinkScore(float blinkLeft, float blinkRight)

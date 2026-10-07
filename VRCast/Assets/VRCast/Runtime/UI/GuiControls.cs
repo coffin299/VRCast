@@ -138,6 +138,18 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// ラベル + 文字の入力欄の 1 行を描画し、入力後の文字列を返す。
+        /// </summary>
+        public static string TextField(string label, string text, int maxLength)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, GUILayout.Width(LabelWidth));
+            string result = GUILayout.TextField(text ?? string.Empty, maxLength);
+            GUILayout.EndHorizontal();
+            return result;
+        }
+
+        /// <summary>
         /// ラベル + ポート番号の入力欄の 1 行を描画する。input は入力途中の文字列（呼び出し側で保持）。
         /// 範囲内の数値になったときだけその値を、それ以外は current を返す。
         /// </summary>

@@ -8,8 +8,10 @@ namespace VRCast.Tracking
 {
     /// <summary>
     /// トラッカーの UDP 出力を受信する Provider。アプリ全体で 1 つ。
-    /// 設定の入力元に合わせて OpenSeeFace（バイナリ、顔のみ）・MediaPipe（JSON、顔・腕・手）・VMC（OSC、顔のみ）を解析し分ける。
-    /// 同梱トラッカーは 127.0.0.1 にのみ bind し、VMC（iPhone 等から LAN 経由で届く）だけ全アドレスで待ち受ける。
+    /// 設定の入力元に合わせて OpenSeeFace（バイナリ、顔のみ）・MediaPipe（JSON、顔・腕・手）・VMC（OSC、顔のみ）・
+    /// iFacialMocap（テキスト、顔のみ）を解析し分ける。
+    /// 同梱トラッカーは 127.0.0.1 にのみ bind し、外部アプリ（iPhone 等から LAN 経由で届く）だけ全アドレスで待ち受ける。
+    /// iFacialMocap はデータが来ない間、設定の iPhone へ送信開始の合図を同じソケットから送り続ける。
     /// スレッドを使わず Update でポーリングする。
     /// </summary>
     public class TrackingReceiver : MonoBehaviour, IFaceTrackingProvider, IBodyTrackingProvider
@@ -31,6 +33,18 @@ namespace VRCast.Tracking
 
         // VMC の値の保持（VMC は状態を送り続ける形式のため、パケットをまたいで値を持つ）
         private readonly VmcPacket _vmc = new VmcPacket();
+
+        // iFacialMocap: データが来ない間に送信開始の合図を送る間隔（秒）と、次に送ってよい時刻・合図の中身
+        private const float StartCommandInterval = 2f;
+        private float _nextStartCommandTime;
+        private static readonly byte[] StartCommandBytes = Encoding.ASCII.GetBytes(IFacialMocapPacket.StartCommand);
+
+        // iFacialMocap: 合図の送信失敗を警告する最短間隔（秒）と、次に警告してよい時刻
+        private const float SendWarningInterval = 10f;
+        private float _nextSendWarningTime;
+
+        // Windows で UDP の送信先が閉じているときに、次の受信がエラー（接続のリセット）になるのを止める制御コード
+        private const int SioUdpConnReset = -1744830452;
 
         private AppSettings _settings;
         private Socket _socket;
@@ -134,9 +148,10 @@ namespace VRCast.Tracking
                 Open(port, _settings.trackingSource);
             }
 
-            // 溜まっているパケットを処理
+            // 溜まっているパケットを処理（iFacialMocap は先に送信開始の合図を送る）
             if (_socket != null)
             {
+                SendStartCommandIfNeeded();
                 Receive();
                 UpdateStatus();
                 UpdateDiagnostics();
@@ -150,9 +165,15 @@ namespace VRCast.Tracking
 
             try
             {
-                // 同梱トラッカーはループバックのみ、VMC は LAN から届くため全アドレスで待ち受け（ブロックしない）
-                IPAddress address = TrackingSourceInfo.ReceivesFromNetwork(source) ? IPAddress.Any : IPAddress.Loopback;
+                // 同梱トラッカーはループバックのみ、外部アプリは LAN から届くため全アドレスで待ち受け（ブロックしない）
+                bool network = TrackingSourceInfo.ReceivesFromNetwork(source);
+                IPAddress address = network ? IPAddress.Any : IPAddress.Loopback;
                 _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp) { Blocking = false };
+                if (network)
+                {
+                    DisableConnectionReset(_socket);
+                }
+
                 _socket.Bind(new IPEndPoint(address, port));
                 _boundPort = port;
                 _boundSource = source;
@@ -160,6 +181,7 @@ namespace VRCast.Tracking
                 _listenStart = Time.unscaledTime;
                 _receivedSinceOpen = false;
                 _warnedNoData = false;
+                _nextStartCommandTime = 0f;
 
                 // 前の待ち受けで受け取った VMC の値を持ち越さない
                 _vmc.Reset();
@@ -171,6 +193,54 @@ namespace VRCast.Tracking
                 // ポート使用中など。間隔を空けて再試行
                 Close($"Failed to listen on {port}: {e.SocketErrorCode}");
                 VRCastLog.Warning(LogCategory, Status);
+            }
+        }
+
+        private static void DisableConnectionReset(Socket socket)
+        {
+            // 合図の宛先が閉じていると Windows は次の受信をエラーにするため止める（Windows 以外・未対応の環境では何もしない）
+            try
+            {
+                socket.IOControl(SioUdpConnReset, new byte[4], null);
+            }
+            catch (System.Exception)
+            {
+                // 止められなくても受信側でリセットのエラーを無視する
+            }
+        }
+
+        private void SendStartCommandIfNeeded()
+        {
+            // iFacialMocap で、受信が途絶えている間だけ間隔を空けて送る
+            float now = Time.unscaledTime;
+            if (_boundSource != TrackingSource.IFacialMocap || now < _nextStartCommandTime
+                || now - _lastPacketTime <= StaleSeconds)
+            {
+                return;
+            }
+
+            _nextStartCommandTime = now + StartCommandInterval;
+
+            // iPhone の IP アドレスが未設定・不正なら送らない（状態表示で入力を促す）
+            if (!IPAddress.TryParse(_settings.iFacialMocapAddress, out IPAddress phone)
+                || phone.AddressFamily != AddressFamily.InterNetwork)
+            {
+                return;
+            }
+
+            try
+            {
+                // 受信と同じポートから送ると、iFacialMocap はこの PC のそのポートへ送り返してくる
+                _socket.SendTo(StartCommandBytes, new IPEndPoint(phone, AppSettings.IFacialMocapPort));
+            }
+            catch (SocketException e)
+            {
+                // 宛先に届かない（別のネットワーク等）。毎回は警告しない
+                if (now >= _nextSendWarningTime)
+                {
+                    _nextSendWarningTime = now + SendWarningInterval;
+                    VRCastLog.Warning(LogCategory, $"Could not send the start command to {phone}: {e.SocketErrorCode}");
+                }
             }
         }
 
@@ -210,6 +280,10 @@ namespace VRCast.Tracking
                     }
                 }
             }
+            catch (SocketException e) when (e.SocketErrorCode == SocketError.ConnectionReset)
+            {
+                // 送った合図の宛先が閉じていた通知（iPhone のアプリが未起動等）。待ち受けは続ける
+            }
             catch (SocketException e)
             {
                 // 受信エラーは閉じて再試行に任せる
@@ -223,10 +297,14 @@ namespace VRCast.Tracking
             float now = Time.unscaledTime;
             completedFrame = true;
 
-            // OpenSeeFace は顔のみ
-            if (_boundSource == TrackingSource.OpenSeeFace)
+            // OpenSeeFace・iFacialMocap は顔のみ（1 パケット 1 フレーム）
+            if (_boundSource == TrackingSource.OpenSeeFace || _boundSource == TrackingSource.IFacialMocap)
             {
-                if (!OpenSeeFacePacket.TryParse(_buffer, 0, length, out FaceTrackingFrame frame))
+                FaceTrackingFrame frame;
+                bool parsed = _boundSource == TrackingSource.OpenSeeFace
+                    ? OpenSeeFacePacket.TryParse(_buffer, 0, length, out frame)
+                    : IFacialMocapPacket.TryParse(_buffer, length, out frame);
+                if (!parsed)
                 {
                     return false;
                 }
@@ -323,6 +401,12 @@ namespace VRCast.Tracking
                     : "not OSC data (set the sender to the VMC protocol)";
             }
 
+            if (_boundSource == TrackingSource.IFacialMocap)
+            {
+                string preview = Encoding.ASCII.GetString(_buffer, 0, Mathf.Min(length, PreviewLength));
+                return $"no ARKit values in the text (not iFacialMocap data?): {preview}";
+            }
+
             if (_boundSource == TrackingSource.MediaPipe)
             {
                 if (!json)
@@ -359,7 +443,7 @@ namespace VRCast.Tracking
                 // OpenSeeFace は顔が映っていない間は何も送らないため、その可能性も添える。VMC は送信側アプリの停止・スリープ
                 string hint = _boundSource == TrackingSource.OpenSeeFace
                     ? "face out of view, tracker stopped, or camera disconnected?"
-                    : _boundSource == TrackingSource.Vmc
+                    : TrackingSourceInfo.ReceivesFromNetwork(_boundSource)
                         ? "sender app stopped, phone asleep, or Wi-Fi disconnected?"
                         : "tracker stopped or camera disconnected?";
                 VRCastLog.Warning(LogCategory, $"No {_boundSource} data for {SilenceWarningSeconds:F0} s ({hint})");
@@ -371,7 +455,9 @@ namespace VRCast.Tracking
                 _warnedNoData = true;
                 string hint = _boundSource == TrackingSource.Vmc
                     ? "wrong IP address or port in the sender app, a different network, or blocked by Windows Firewall?"
-                    : "tracker not running, camera not opened, or port mismatch?";
+                    : _boundSource == TrackingSource.IFacialMocap
+                        ? "wrong iPhone IP address, iFacialMocap not open, a different network, or blocked by Windows Firewall?"
+                        : "tracker not running, camera not opened, or port mismatch?";
                 VRCastLog.Warning(LogCategory,
                     $"No {_boundSource} data on port {_boundPort} for {NoDataWarningSeconds:F0} s since listening started " +
                     $"({hint})");
@@ -462,6 +548,11 @@ namespace VRCast.Tracking
             else if (TryGetBody(out _))
             {
                 Status = $"Receiving on {_boundPort} ({_framesPerSecond} fps, no face)";
+            }
+            else if (_boundSource == TrackingSource.IFacialMocap && !IPAddress.TryParse(_settings.iFacialMocapAddress, out _))
+            {
+                // 合図を送れないので、iPhone の IP アドレスの入力を促す
+                Status = $"Listening on {_boundAddress}:{_boundPort} (enter the iPhone's IP address)";
             }
             else
             {

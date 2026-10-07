@@ -27,6 +27,9 @@ namespace VRCast.UI
         private List<string> _localAddresses = new List<string>();
         private float _nextAddressRefresh;
 
+        // iPhone の IP アドレスの入力欄の最大文字数（IPv4 の最長 15 文字に余裕を持たせる）
+        private const int MaxAddressLength = 40;
+
         // 表情の割り当ての候補（先頭は「割り当てなし」、以降は表情プリセット名）と、作成元のコントローラー
         private readonly List<string> _expressionOptions = new List<string>();
         private ExpressionController _expressionSource;
@@ -88,10 +91,14 @@ namespace VRCast.UI
             {
                 DrawSource();
 
-                // 外部アプリは、送信先として入力してもらう IP アドレスとポートを入力元のすぐ下に出す（見落とさないように）
-                if (external)
+                // 外部アプリは、接続に必要な IP アドレス・ポートを入力元のすぐ下に出す（見落とさないように）
+                if (_settings.trackingSource == TrackingSource.Vmc)
                 {
                     DrawVmcConnection();
+                }
+                else if (_settings.trackingSource == TrackingSource.IFacialMocap)
+                {
+                    DrawIFacialMocapConnection();
                 }
 
                 DrawSourceFeatures();
@@ -121,6 +128,8 @@ namespace VRCast.UI
                     "OpenSeeFace（仅面部）", "OpenSeeFace（僅臉部）"),
                 Loc.T("iPhone / external app (VMC, face only)", "iPhone・外部アプリ（VMC、顔のみ）",
                     "iPhone·외부 앱 (VMC, 얼굴만)", "iPhone / 外部应用（VMC，仅面部）", "iPhone / 外部應用程式（VMC，僅臉部）"),
+                Loc.T("iFacialMocap (iPhone, face only, beta)", "iFacialMocap（iPhone、顔のみ、暫定）",
+                    "iFacialMocap (iPhone, 얼굴만, 임시)", "iFacialMocap（iPhone，仅面部，暂定）", "iFacialMocap（iPhone，僅臉部，暫定）"),
             };
             _settings.trackingSource = (TrackingSource)GuiControls.EnumSelector(
                 Loc.T("Source", "入力元", "입력 소스", "输入源", "輸入來源"), labels, (int)_settings.trackingSource);
@@ -134,7 +143,7 @@ namespace VRCast.UI
                 DrawHands();
             }
 
-            // パーフェクトシンク・表情の反映は ARKit の値を受信できる入力元（MediaPipe・VMC）のみ
+            // パーフェクトシンク・表情の反映は ARKit の値を受信できる入力元（MediaPipe・VMC・iFacialMocap）のみ
             if (TrackingSourceInfo.HasArKit(_settings.trackingSource))
             {
                 DrawPerfectSync();
@@ -199,6 +208,41 @@ namespace VRCast.UI
                 Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"), ref _vmcPortInput,
                 _settings.vmcPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
 
+            DrawFirewallHint();
+        }
+
+        private void DrawIFacialMocapConnection()
+        {
+            // iFacialMocap の接続手順（こちらから iPhone へ送信開始の合図を送るため、iPhone の IP アドレスが要る）
+            GuiControls.Hint(Loc.T(
+                "Open iFacialMocap on your iPhone and enter the IP address shown at the top of its screen below. Use the same Wi-Fi as this PC. (Beta: not yet tested with the app)",
+                "iPhone で iFacialMocap を開き、画面上部に表示される IP アドレスを下に入力してください。この PC と同じ Wi-Fi につないでください。（暫定対応: アプリでの動作は未確認です）",
+                "iPhone에서 iFacialMocap을 열고 화면 위쪽에 표시되는 IP 주소를 아래에 입력하세요. 이 PC와 같은 Wi-Fi에 연결하세요. (임시 지원: 앱에서의 동작은 확인되지 않았습니다)",
+                "在 iPhone 上打开 iFacialMocap，并在下方输入其屏幕上方显示的 IP 地址。请连接与此电脑相同的 Wi-Fi。（暂定支持：尚未在应用中验证）",
+                "在 iPhone 上開啟 iFacialMocap，並在下方輸入其畫面上方顯示的 IP 位址。請連接與此電腦相同的 Wi-Fi。（暫定支援：尚未在應用程式中驗證）"));
+
+            // iPhone の IP アドレス（前後の空白は除く。送信開始の合図は受信側が設定から読む）
+            _settings.iFacialMocapAddress = GuiControls.TextField(
+                Loc.T("iPhone IP address", "iPhone の IP アドレス", "iPhone IP 주소", "iPhone 的 IP 地址", "iPhone 的 IP 位址"),
+                _settings.iFacialMocapAddress, MaxAddressLength).Trim();
+
+            // 入力済みで形式が違えば知らせる（未入力は案内文で足りる）
+            if (_settings.iFacialMocapAddress.Length > 0
+                && !System.Net.IPAddress.TryParse(_settings.iFacialMocapAddress, out _))
+            {
+                GuiControls.Hint(Loc.T("Not a valid IP address (e.g. 192.168.1.20)", "IP アドレスの形式ではありません（例: 192.168.1.20）",
+                    "IP 주소 형식이 아닙니다 (예: 192.168.1.20)", "不是有效的 IP 地址（例：192.168.1.20）",
+                    "不是有效的 IP 位址（例：192.168.1.20）"));
+            }
+
+            // ポートはアプリ側で固定
+            GuiControls.Hint(Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠") + ": "
+                + AppSettings.IFacialMocapPort);
+            DrawFirewallHint();
+        }
+
+        private static void DrawFirewallHint()
+        {
             // 届かないときの主な原因（初回のファイアウォールの許可）
             GuiControls.Hint(Loc.T(
                 "If nothing arrives, allow VRCast on private networks in Windows Firewall (asked the first time) and set your Wi-Fi to a private network.",
@@ -225,7 +269,7 @@ namespace VRCast.UI
 
         private void DrawPerfectSync()
         {
-            // パーフェクトシンクの ON/OFF（MediaPipe・VMC のみ。対応していないアバターでは何も起きない）
+            // パーフェクトシンクの ON/OFF（MediaPipe・VMC・iFacialMocap のみ。対応していないアバターでは何も起きない）
             _settings.trackingPerfectSync = GUILayout.Toggle(
                 _settings.trackingPerfectSync,
                 Loc.T("Perfect sync", "パーフェクトシンク", "퍼펙트 싱크", "完美同步", "完美同步"));
@@ -284,7 +328,7 @@ namespace VRCast.UI
 
         private void DrawExpressions()
         {
-            // 表情反映の ON/OFF（MediaPipe・VMC のみ。OFF にすると自動で当てた表情はすぐ戻る）
+            // 表情反映の ON/OFF（MediaPipe・VMC・iFacialMocap のみ。OFF にすると自動で当てた表情はすぐ戻る）
             _settings.trackingExpressions = GUILayout.Toggle(
                 _settings.trackingExpressions,
                 Loc.T("Facial expressions", "表情を反映", "표정 반영", "反映表情", "反映表情"));
@@ -589,7 +633,7 @@ namespace VRCast.UI
                     + Loc.T("Mouth", "口", "입", "嘴", "嘴") + $" {face.MouthOpen:F2}");
                 GuiControls.Hint(Loc.T("Gaze", "視線", "시선", "视线", "視線") + $" x {face.Gaze.x:F1}  y {face.Gaze.y:F1}");
 
-                // 表情の強さ（MediaPipe・VMC のみ。しきい値調整の目安）
+                // 表情の強さ（MediaPipe・VMC・iFacialMocap のみ。しきい値調整の目安）
                 if (face.HasExpression)
                 {
                     ExpressionScores scores = face.Expression;

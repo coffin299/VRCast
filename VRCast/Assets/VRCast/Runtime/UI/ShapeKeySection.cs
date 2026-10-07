@@ -8,7 +8,7 @@ using VRCast.Core;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Shape keys タブ（BlendShape ごとの上限。顔 / その他の切り替え・検索・上限付きだけの表示、アバターごとに記録）。
+    /// Shape key setup タブ（BlendShape ごとの上限。顔 / その他の切り替え・検索・上限付きだけの表示、アバターごとに記録）。
     /// 一覧は全件を専用のスクロール欄に出し、軽くするため見えている行だけを描く（絞り込み結果は条件が変わったときだけ作り直す）。
     /// </summary>
     public class ShapeKeySection

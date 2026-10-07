@@ -47,8 +47,9 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 視線（目ボーン）・左右別ウインク | 済 |
 | MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 済 |
 | iPhone・外部アプリからの顔トラッキング（VMC プロトコル受信。Waidayo 等の ARKit の値） | 済 |
-| 表情反映（MediaPipe・VMC のみ。笑顔・驚き・怒り・悲しみ → 表情プリセット） | 済 |
-| パーフェクトシンク（MediaPipe・VMC のみ。ARKit 名の BlendShape を直接動かす） | 済 |
+| iFacialMocap からの顔トラッキング（独自形式の受信。アプリでの動作は未確認） | 暫定 |
+| 表情反映（MediaPipe・VMC・iFacialMocap のみ。笑顔・驚き・怒り・悲しみ → 表情プリセット） | 済 |
+| パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit 名の BlendShape を直接動かす） | 済 |
 | 表示言語（英語 / 日本語 / 韓国語 / 中国語 簡体字・繁体字）・クレジットタブ | 済 |
 | デバッグログタブ（重要度・カテゴリ・文字列の絞り込み、環境の要約、コピー） | 済 |
 | Constraint（VRC / Unity 標準の Position・Rotation・Scale・Parent・Aim・LookAt） | 済 |
@@ -125,7 +126,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | Tab | 操作パネルの表示切替（隠している間は OBS で背景も透過） |
 | 割り当てたキー | 表情プリセット切替 / ニュートラル（Pose タブで表情ごとに割り当て。テンキー・記号キー・修飾キー単独・Ctrl / Alt / Shift の組み合わせ可、既定は未割り当て、背面でも有効） |
 
-操作パネルは左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / Settings / Debug log / Credits）で項目を切り替え、内容は縦にスクロールする。
+操作パネルは左のタブ（Start / Avatar / Pose / Face / Shape key setup / Tracking / Display / Output / Settings / Debug log / Credits）で項目を切り替え、内容は縦にスクロールする。
 配色は背景のベージュに合わせた濃いめのベージュ（焦げ茶の文字、キャラメル色のアクセント）。
 パネル下部には、どのタブでも押せるリセットボタン（**Head** 顔の向き / **Gaze** 視線 / **Expression** 表情をニュートラルへ / **Camera** カメラ）を常に表示する。
 パネルは見出し部分をドラッグして移動でき、高さは画面に収まるよう自動で調整される。
@@ -225,7 +226,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level メーターを見ながら調整する。
 「表情中はまばたきしない」を ON にすると、ニュートラル以外の表情を出している間は自動まばたき・トラッキングのまばたきとも止めて目を開いたままにする（表情の目の形を崩さない。既定 OFF）。
 
-**Shape keys**（シェイプキー）タブの **Blend shape limits**（BlendShape の上限）では、BlendShape ごとに動く最大値（0〜100、100 = 制限なし）を決められる。
+**Shape key setup**（シェイプキー設定）タブの **Blend shape limits**（BlendShape の上限）では、BlendShape ごとに動く最大値（0〜100、100 = 制限なし）を決められる。
 まばたきで目が消える・口を開くと顔が崩れる等、100 まで動かすと破綻する BlendShape を下げて使う。
 対象は「顔」（まばたき・口パク・表情・パーフェクトシンクで動く BlendShape）と「その他」（どれにも使われないもの。体型・服など）から選び、
 名前で検索・上限を付けたものだけの表示ができる（顔と体が 1 つのメッシュでも役割で分かれる）。
@@ -247,6 +248,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 | MediaPipe（既定） | 顔 + 腕・手・指（**Arms / hands** で ON/OFF） | `vrcast_tracker.exe`（[MediaPipe](https://ai.google.dev/edge/mediapipe) を使う同梱ツール） |
 | OpenSeeFace | 顔のみ | `facetracker.exe`（[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)） |
 | iPhone / external app (VMC) | 顔のみ（パーフェクトシンク・表情反映も可） | なし（スマートフォン等のアプリから VMC プロトコルで受信） |
+| iFacialMocap（暫定） | 顔のみ（パーフェクトシンク・表情反映も可） | なし（iPhone の iFacialMocap から受信） |
 
 1. **Enable tracking** を ON にすると、カメラ一覧を取得して先頭のカメラで自動起動する。
 2. `<` `>` でカメラをデバイス名で選ぶと起動し直す（カメラ名は保存され、次回起動時も同じカメラを使う）。
@@ -280,9 +282,25 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 
 - 使うメッセージ: `/VMC/Ext/Blend/Val`（ARKit 名の値。名前の大文字・小文字や `_L` / `_R` は問わない）、`/VMC/Ext/Blend/Apply`（1 フレームの確定）、
   `/VMC/Ext/Bone/Pos` の `Head`（頭の向き）。ARKit の値からまばたき・口・視線・表情の強さを作り、パーフェクトシンクと表情反映にも使う。
-- ARKit 名が届かないアプリでは、VRM の表情名（`Blink` / `Blink_L` / `Blink_R` / `A`）で目と口だけ動かす。腕・手は無し。
-- この入力元のときだけ全アドレス（`0.0.0.0`）で待ち受ける（受け取るのは顔の値だけで、操作のコマンドは受け付けない）。
+- ARKit 名が届かないアプリ（または顎・まばたきの ARKit 名だけ届かないアプリ）では、VRM の表情名
+  （`Blink` / `Blink_L` / `Blink_R` / 母音 `A` `I` `U` `E` `O`。VRM 1.0 の `blinkLeft` / `aa` 等も可）で目と口を動かす。腕・手は無し。
+- VMC の値は送信側アプリのアバター（本人と向かい合う鏡像）の動きとして扱う。**Mirror** が ON のとき送信側アプリと同じ向きに動く。
+- 外部アプリの入力元のときだけ全アドレス（`0.0.0.0`）で待ち受ける（受け取るのは顔の値だけで、操作のコマンドは受け付けない）。
 - 届かないときは Debug log タブで詳細ログを ON にすると、受け取ったメッセージの種類と、ARKit 名の数・頭の向きの有無が記録される。
+
+#### iFacialMocap（暫定対応）
+
+入力元を **iFacialMocap (iPhone, face only, beta)** にすると、iPhone の [iFacialMocap](https://www.ifacialmocap.com/) から顔の値を受信する。
+公開されている形式をもとにした暫定対応で、アプリでの動作は未確認（頭の向きの軸・左右などは実機で調整が必要な可能性がある）。
+
+1. PC と iPhone を同じ Wi-Fi につなぎ、iPhone で iFacialMocap を開く。
+2. iFacialMocap の画面上部に出る IP アドレスを、パネルの **iPhone IP address** に入力する。
+3. VRCast が UDP 49983 で待ち受け、データが来ない間は 2 秒ごとに iPhone へ送信開始の合図を送る（iFacialMocap はこの PC へ送り返してくる）。
+4. 初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可する。
+
+- 形式: `eyeBlink_L-35|jawOpen-60|...|=head#回転x,回転y,回転z,位置x,位置y,位置z|...`（値は 0〜100。`名前&値` の形式も可）。
+  ARKit の値は本人基準の左右なので、MediaPipe と同じ扱いに入れ替えてから、まばたき・口・視線・表情の強さ・パーフェクトシンクに使う。
+- 頭の向きは ARKit（右手系）の回転角を Unity へ変換して使う。位置は単位が不明なため使わない。
 - 受信開始時（トラッキング ON・入力元やカメラの変更後）に、頭が 0.5 秒ほど静止したときの顔の向き・位置を正面とする。
   顔を手で隠すなどして見失っても正面は取り直さない（再検出直後の 0.3 秒は頭の向きを反映しない）。
   ずれたらカメラを見て、パネル下部の **Reset** の **Head**（頭・上半身・目線をまとめて正面に）を押す。

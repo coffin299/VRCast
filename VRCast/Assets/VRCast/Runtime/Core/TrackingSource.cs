@@ -13,6 +13,9 @@ namespace VRCast.Core
 
         // 外部アプリ（iPhone の Waidayo 等）が VMC プロトコルで送る顔の値（顔のみ。LAN から受信）
         Vmc = 2,
+
+        // iPhone の iFacialMocap が独自形式で送る顔の値（顔のみ。LAN から受信し、送信開始の合図をこちらから送る）
+        IFacialMocap = 3,
     }
 
     /// <summary>
@@ -25,7 +28,7 @@ namespace VRCast.Core
         /// </summary>
         public static bool UsesBundledTracker(TrackingSource source)
         {
-            return source != TrackingSource.Vmc;
+            return source == TrackingSource.MediaPipe || source == TrackingSource.OpenSeeFace;
         }
 
         /// <summary>
@@ -41,7 +44,7 @@ namespace VRCast.Core
         /// </summary>
         public static bool HasArKit(TrackingSource source)
         {
-            return source == TrackingSource.MediaPipe || source == TrackingSource.Vmc;
+            return source != TrackingSource.OpenSeeFace;
         }
 
         /// <summary>
@@ -49,15 +52,23 @@ namespace VRCast.Core
         /// </summary>
         public static bool ReceivesFromNetwork(TrackingSource source)
         {
-            return source == TrackingSource.Vmc;
+            return !UsesBundledTracker(source);
         }
 
         /// <summary>
-        /// 入力元の受信ポート（VMC は同梱トラッカーとは別のポートを使う）。
+        /// 入力元の受信ポート（VMC は設定のポート、iFacialMocap はアプリが決めた固定ポート、同梱トラッカーは trackingPort）。
         /// </summary>
         public static int PortOf(AppSettings settings)
         {
-            return settings.trackingSource == TrackingSource.Vmc ? settings.vmcPort : settings.trackingPort;
+            switch (settings.trackingSource)
+            {
+                case TrackingSource.Vmc:
+                    return settings.vmcPort;
+                case TrackingSource.IFacialMocap:
+                    return AppSettings.IFacialMocapPort;
+                default:
+                    return settings.trackingPort;
+            }
         }
     }
 }

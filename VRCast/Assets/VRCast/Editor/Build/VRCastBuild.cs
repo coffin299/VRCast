@@ -143,6 +143,12 @@ namespace VRCast.Editor.Build
             // 入力元ごとに Trackers/(フォルダ) 以下に実行ファイルがあればビルド後に同梱される（BundledTrackerCopier）
             foreach (TrackingSource source in (TrackingSource[])System.Enum.GetValues(typeof(TrackingSource)))
             {
+                // 外部アプリから受信する入力元には同梱版が無い
+                if (!TrackingSourceInfo.UsesBundledTracker(source))
+                {
+                    continue;
+                }
+
                 if (TrackerProcess.FindBundled(TrackerProcess.BundledRoot, source) == null)
                 {
                     string executable = TrackerProcess.ExecutableOf(source);

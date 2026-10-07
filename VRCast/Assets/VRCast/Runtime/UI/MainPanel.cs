@@ -451,7 +451,7 @@ namespace VRCast.UI
                 case Tab.Face:
                     return Loc.T("Face", "顔", "얼굴", "面部", "臉部");
                 case Tab.ShapeKeys:
-                    return Loc.T("Shape keys", "シェイプキー", "셰이프 키", "形态键", "形態鍵");
+                    return Loc.T("Shape key setup", "シェイプキー設定", "셰이프 키 설정", "形态键设置", "形態鍵設定");
                 case Tab.Tracking:
                     return Loc.T("Tracking", "トラッキング", "트래킹", "追踪", "追蹤");
                 case Tab.Display:

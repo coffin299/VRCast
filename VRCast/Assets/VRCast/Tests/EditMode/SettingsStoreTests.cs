@@ -136,6 +136,17 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Load_IFacialMocapAddress_IsTrimmed()
+        {
+            // iPhone の IP アドレスは前後の空白を除き、null は空文字になること
+            _store.Save(new AppSettings { iFacialMocapAddress = " 192.168.1.20 " });
+            Assert.That(_store.Load().iFacialMocapAddress, Is.EqualTo("192.168.1.20"));
+
+            _store.Save(new AppSettings { iFacialMocapAddress = null });
+            Assert.That(_store.Load().iFacialMocapAddress, Is.EqualTo(string.Empty));
+        }
+
+        [Test]
         public void Load_UnknownTrackingSource_FallsBackToMediaPipe()
         {
             _store.Save(new AppSettings { trackingSource = (TrackingSource)99 });

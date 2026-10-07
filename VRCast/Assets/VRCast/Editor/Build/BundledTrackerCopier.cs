@@ -34,6 +34,12 @@ namespace VRCast.Editor.Build
             // 入力元ごとに、置かれているものだけをコピーする
             foreach (TrackingSource source in (TrackingSource[])System.Enum.GetValues(typeof(TrackingSource)))
             {
+                // 外部アプリから受信する入力元には同梱版が無い（MediaPipe のフォルダを二重にコピーしない）
+                if (!TrackingSourceInfo.UsesBundledTracker(source))
+                {
+                    continue;
+                }
+
                 string folder = TrackerProcess.FolderOf(source);
                 string from = Path.Combine(TrackerProcess.BundledRoot, folder);
                 if (!Directory.Exists(from))

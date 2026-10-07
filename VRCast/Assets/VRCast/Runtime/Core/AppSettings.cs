@@ -46,6 +46,9 @@ namespace VRCast.Core
         // VMC プロトコルの受信ポートの既定値（VMC プロトコルの標準）
         public const int DefaultVmcPort = 39539;
 
+        // iFacialMocap のポート（アプリ側で固定。送信開始の合図の宛先と、受信の待ち受けの両方に使う）
+        public const int IFacialMocapPort = 49983;
+
         // 外部操作の待ち受けポートの既定値（範囲はトラッキングと同じ）
         public const int DefaultRemoteOscPort = 39570;
         public const int DefaultRemoteHttpPort = 39571;
@@ -186,6 +189,9 @@ namespace VRCast.Core
 
         // 外部アプリ（VMC プロトコル）の受信ポート（同梱トラッカーの trackingPort とは別。LAN から受信する）
         public int vmcPort = DefaultVmcPort;
+
+        // iFacialMocap を動かしている iPhone の IP アドレス（送信開始の合図の宛先。空なら未設定）
+        public string iFacialMocapAddress = string.Empty;
         public float trackingBodyLean = 1f;
         public BodyMotion trackingBodyMotion = BodyMotion.Lean;
         public float trackingGaze = 1f;
@@ -196,13 +202,13 @@ namespace VRCast.Core
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
 
-        // パーフェクトシンク（MediaPipe・VMC のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
+        // パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
         public bool trackingPerfectSync = true;
 
         // パーフェクトシンクを有効にする条件（false = ARKit 名が MinMatchedShapes 種類以上、true = 1 種類でもあれば）
         public bool trackingPerfectSyncAnyShape;
 
-        // 表情反映（MediaPipe・VMC のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
+        // 表情反映（MediaPipe・VMC・iFacialMocap のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;
         public float trackingExpressionThreshold = 0.3f;
         public string expressionSmile = string.Empty;
@@ -550,6 +556,8 @@ namespace VRCast.Core
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
             // VMC の受信ポートも同じ範囲に制限
             vmcPort = Mathf.Clamp(vmcPort, MinTrackingPort, MaxTrackingPort);
+            // iPhone の IP アドレスは前後の空白を除く（null は未設定の空文字へ）
+            iFacialMocapAddress = (iFacialMocapAddress ?? string.Empty).Trim();
             // 外部操作のポートも同じ範囲に制限
             remoteOscPort = Mathf.Clamp(remoteOscPort, MinTrackingPort, MaxTrackingPort);
             remoteHttpPort = Mathf.Clamp(remoteHttpPort, MinTrackingPort, MaxTrackingPort);
