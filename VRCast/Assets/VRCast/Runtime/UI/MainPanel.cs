@@ -322,7 +322,13 @@ namespace VRCast.UI
         private void DrawHeader()
         {
             GUILayout.BeginHorizontal(GUILayout.Height(HeaderHeight - 12f));
-            GUILayout.Label("VRCast", _theme.Title);
+            GUILayout.Label("VRCast", _theme.Title, GUILayout.ExpandWidth(false));
+
+            // バージョン番号（見出しより小さい文字を下端にそろえる）
+            GUILayout.BeginVertical(GUILayout.ExpandWidth(false));
+            GUILayout.FlexibleSpace();
+            GUILayout.Label($"v{Application.version}", _theme.Hint, GUILayout.ExpandWidth(false));
+            GUILayout.EndVertical();
             GUILayout.FlexibleSpace();
             GUILayout.Label(Loc.T("[Tab] Hide all & transparent", "[Tab] 全部隠して透過", "[Tab] 모두 숨기고 투명",
                 "[Tab] 全部隐藏并透明", "[Tab] 全部隱藏並透明"), _theme.KeyHint);
