@@ -45,6 +45,9 @@ foreach ($path in $optional.Keys) {
         Write-Warning "Missing: $($optional[$path])"
     }
 }
+if (-not (Test-Path (Join-Path $BuildPath "VRCast_Data\Plugins\x86_64\VRCastVirtualCamera.dll"))) {
+    Write-Warning "Missing: Windows 11 virtual camera (run Tools\VirtualCamera\build.ps1, then rebuild in Unity)"
+}
 
 # Stop when the Spout2 plugin is missing (it only gets in through the Unity build; never ship a zip without it)
 if (-not (Test-Path (Join-Path $BuildPath "VRCast_Data\Plugins\x86_64\KlakSpout.dll"))) {

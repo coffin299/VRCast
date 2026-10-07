@@ -12,8 +12,9 @@ namespace VRCast.UI
         private readonly VirtualCameraOutput _output;
         private readonly SpoutOutput _spout;
 
-        // 現在の登録状態（表示時に毎回レジストリを読まないよう、開始時と登録・解除の後に更新）
+        // 現在の登録状態（表示時に毎回レジストリを読まないよう、開始時・方式の切り替え時・登録・解除の後に更新）と、読んだときの方式
         private VirtualCameraRegistration _registration;
+        private bool _registrationMediaFoundation;
 
         // 実行中の登録・解除と、最後の結果（エラー文言、成功時は null）
         private Task<string> _pending;
@@ -25,11 +26,21 @@ namespace VRCast.UI
             _output = output;
             _spout = spout;
             _registration = output.GetRegistration();
+            _registrationMediaFoundation = output.UseMediaFoundation;
         }
 
         public void Draw()
         {
             PollPending();
+
+            // 方式が変わったら（切り替え・全設定のリセット）その方式の登録状態を読み直し、前の方式の結果は消す
+            if (_pending == null && _output.UseMediaFoundation != _registrationMediaFoundation)
+            {
+                _registrationMediaFoundation = _output.UseMediaFoundation;
+                _registration = _output.GetRegistration();
+                _hasResult = false;
+            }
+
             GuiControls.BeginCard(Loc.T("Virtual camera", "仮想カメラ", "가상 카메라", "虚拟摄像头", "虛擬攝影機"));
             GuiControls.Hint(Loc.T(
                 "Use the avatar as a webcam in OBS, Discord, Zoom, etc. (this panel is not shown)",
@@ -39,11 +50,12 @@ namespace VRCast.UI
                 "可在 OBS、Discord、Zoom 等中作為網路攝影機使用（不會顯示此面板）"));
             _output.Enabled = GUILayout.Toggle(
                 _output.Enabled,
-                Loc.T("Output", "出力する", "출력하기", "输出", "輸出") + $" ({VirtualCameraInstaller.DeviceName})");
+                Loc.T("Output", "出力する", "출력하기", "输出", "輸出") + $" ({_output.DeviceName})");
 
             // 有効時のみ詳細を出す
             if (_output.Enabled)
             {
+                DrawMethod();
                 DrawDriver();
                 GuiControls.Hint(DescribeState(_output));
             }
@@ -79,17 +91,69 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
+        private void DrawMethod()
+        {
+            // Windows 11 の方式（Media Foundation）への切り替え。対応していない環境では選べない
+            bool supported = MediaFoundationCamera.IsSupported;
+            GUI.enabled = supported && _pending == null;
+            bool useMediaFoundation = GUILayout.Toggle(_output.UseMediaFoundation, Loc.T(
+                "Use the Windows 11 method (Media Foundation)",
+                "Windows 11 の方式（Media Foundation）で出力する",
+                "Windows 11 방식 (Media Foundation)으로 출력",
+                "使用 Windows 11 方式（Media Foundation）输出",
+                "使用 Windows 11 方式（Media Foundation）輸出"));
+            GUI.enabled = true;
+
+            if (supported)
+            {
+                _output.UseMediaFoundation = useMediaFoundation;
+            }
+
+            if (!MediaFoundationCamera.PluginFound)
+            {
+                GuiControls.Hint(Loc.T("Not bundled (VRCastVirtualCamera.dll)",
+                    "同梱されていません（VRCastVirtualCamera.dll）",
+                    "포함되어 있지 않습니다 (VRCastVirtualCamera.dll)",
+                    "未附带（VRCastVirtualCamera.dll）",
+                    "未附帶（VRCastVirtualCamera.dll）"));
+            }
+            else if (!supported)
+            {
+                GuiControls.Hint(Loc.T("Requires Windows 11 or later", "Windows 11 以降が必要です",
+                    "Windows 11 이상이 필요합니다", "需要 Windows 11 或更高版本", "需要 Windows 11 或更新版本"));
+            }
+            else
+            {
+                GuiControls.Hint(Loc.T(
+                    "Turn on if Discord etc. says the camera failed to start. Shown as a regular Windows camera named "
+                    + $"\"{MediaFoundationCamera.DeviceName}\" (needs its own driver install)",
+                    "Discord などで「カメラの起動に失敗しました」と出るときに ON。Windows の通常のカメラとして"
+                    + $"「{MediaFoundationCamera.DeviceName}」の名前で表示されます（ドライバーの登録は別に必要）",
+                    "Discord 등에서 「카메라 시작에 실패했습니다」가 나올 때 켜세요. Windows의 일반 카메라로 "
+                    + $"「{MediaFoundationCamera.DeviceName}」 이름으로 표시됩니다 (드라이버 등록은 별도로 필요)",
+                    "在 Discord 等中提示“摄像头启动失败”时开启。将作为 Windows 的普通摄像头以"
+                    + $"“{MediaFoundationCamera.DeviceName}”的名称显示（需另行安装驱动程序）",
+                    "在 Discord 等中提示「攝影機啟動失敗」時開啟。將作為 Windows 的一般攝影機以"
+                    + $"「{MediaFoundationCamera.DeviceName}」的名稱顯示（需另行安裝驅動程式）"));
+            }
+        }
+
         private void DrawDriver()
         {
             // 同梱されていなければ登録できない
-            string folder = _output.BundledFolder;
-            if (folder == null)
+            if (!_output.HasDriverFiles)
             {
-                GuiControls.Hint(Loc.T("Driver not bundled (StreamingAssets/UnityCapture)",
-                    "ドライバーが同梱されていません（StreamingAssets/UnityCapture）",
-                    "드라이버가 포함되어 있지 않습니다 (StreamingAssets/UnityCapture)",
-                    "未附带驱动程序（StreamingAssets/UnityCapture）",
-                    "未附帶驅動程式（StreamingAssets/UnityCapture）"));
+                GuiControls.Hint(_output.UseMediaFoundation
+                    ? Loc.T("Driver not bundled (VRCastVirtualCamera.dll)",
+                        "ドライバーが同梱されていません（VRCastVirtualCamera.dll）",
+                        "드라이버가 포함되어 있지 않습니다 (VRCastVirtualCamera.dll)",
+                        "未附带驱动程序（VRCastVirtualCamera.dll）",
+                        "未附帶驅動程式（VRCastVirtualCamera.dll）")
+                    : Loc.T("Driver not bundled (StreamingAssets/UnityCapture)",
+                        "ドライバーが同梱されていません（StreamingAssets/UnityCapture）",
+                        "드라이버가 포함되어 있지 않습니다 (StreamingAssets/UnityCapture)",
+                        "未附带驱动程序（StreamingAssets/UnityCapture）",
+                        "未附帶驅動程式（StreamingAssets/UnityCapture）"));
                 return;
             }
 
@@ -103,14 +167,14 @@ namespace VRCast.UI
                 : Loc.T("Reinstall driver", "ドライバーを再登録", "드라이버 재등록", "重新安装驱动程序", "重新安裝驅動程式");
             if (GUILayout.Button(installLabel, GuiControls.Shrinkable))
             {
-                Run(folder, true);
+                Run(true);
             }
 
             // 解除（登録されているときのみ）
             GUI.enabled = _pending == null && _registration != VirtualCameraRegistration.NotInstalled;
             if (GUILayout.Button(Loc.T("Uninstall driver", "ドライバーを解除", "드라이버 해제", "卸载驱动程序", "解除安裝驅動程式"), GuiControls.Shrinkable))
             {
-                Run(folder, false);
+                Run(false);
             }
 
             GUI.enabled = true;
@@ -133,12 +197,12 @@ namespace VRCast.UI
             }
         }
 
-        private void Run(string folder, bool install)
+        private void Run(bool install)
         {
-            // 管理者権限で regsvr32 を実行（UAC の確認が出る）
+            // 使用中の方式のドライバーを管理者権限で登録・解除（UAC の確認が出る）
             _hasResult = false;
             _error = null;
-            _pending = VirtualCameraInstaller.RunElevatedAsync(folder, install);
+            _pending = _output.RunDriverAsync(install);
         }
 
         private void PollPending()
@@ -159,24 +223,25 @@ namespace VRCast.UI
         private static string DescribeState(VirtualCameraOutput output)
         {
             // 送信状態と、次に何をすればよいかを表示言語で伝える（エラーの原因は英語のまま添える）
+            string name = output.DeviceName;
             switch (output.State)
             {
                 case VirtualCameraState.Sending:
-                    return Loc.T("Sending to the app showing VRCast Camera",
-                        "VRCast Camera を開いているアプリへ送信中",
-                        "VRCast Camera를 연 앱으로 전송 중",
-                        "正在发送到打开 VRCast Camera 的应用",
-                        "正在傳送到開啟 VRCast Camera 的應用程式");
+                    return Loc.T($"Sending to the app showing {name}",
+                        $"{name} を開いているアプリへ送信中",
+                        $"{name}를 연 앱으로 전송 중",
+                        $"正在发送到打开 {name} 的应用",
+                        $"正在傳送到開啟 {name} 的應用程式");
                 case VirtualCameraState.WaitingForApp:
                     return Loc.T(
-                        "Ready. Choose \"VRCast Camera\" as the camera in Discord, Zoom, OBS, etc. to show the avatar " +
+                        $"Ready. Choose \"{name}\" as the camera in Discord, Zoom, OBS, etc. to show the avatar " +
                         "(restart that app if it is not listed)",
-                        "準備できました。Discord・Zoom・OBS などのカメラで「VRCast Camera」を選ぶと映ります" +
+                        $"準備できました。Discord・Zoom・OBS などのカメラで「{name}」を選ぶと映ります" +
                         "（一覧に無ければそのアプリを再起動）",
-                        "준비되었습니다. Discord·Zoom·OBS 등의 카메라에서 「VRCast Camera」를 선택하면 표시됩니다" +
+                        $"준비되었습니다. Discord·Zoom·OBS 등의 카메라에서 「{name}」를 선택하면 표시됩니다" +
                         " (목록에 없으면 그 앱을 다시 시작)",
-                        "已就绪。在 Discord、Zoom、OBS 等的摄像头中选择“VRCast Camera”即可显示（若未列出，请重启该应用）",
-                        "已就緒。在 Discord、Zoom、OBS 等的攝影機中選擇「VRCast Camera」即可顯示（若未列出，請重新啟動該應用程式）");
+                        $"已就绪。在 Discord、Zoom、OBS 等的摄像头中选择“{name}”即可显示（若未列出，请重启该应用）",
+                        $"已就緒。在 Discord、Zoom、OBS 等的攝影機中選擇「{name}」即可顯示（若未列出，請重新啟動該應用程式）");
                 case VirtualCameraState.Error:
                     return Loc.T("Cannot send: ", "送信できません: ", "전송할 수 없습니다: ", "无法发送：", "無法傳送：")
                         + output.Status;

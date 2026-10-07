@@ -21,6 +21,7 @@ namespace VRCast.Editor.Build
 
         // 仮想カメラの送信プラグインのパス（Tools/UnityCapture/fetch.ps1 で配置）
         private const string VirtualCameraPluginPath = "Assets/Plugins/UnityCapture/x86_64/UnityCapturePlugin.dll";
+        private const string MediaFoundationPluginPath = "Assets/Plugins/VRCastVirtualCamera/x86_64/VRCastVirtualCamera.dll";
 
         // Spout2 の送信プラグインのパス（Tools/Spout/fetch.ps1 で配置）
         private const string SpoutPluginPath = "Assets/Plugins/KlakSpout/x86_64/KlakSpout.dll";
@@ -36,7 +37,7 @@ namespace VRCast.Editor.Build
         private const string ProductName = "VRCast";
 
         // アプリのバージョン（CHANGELOG.txt と converter の package.json の version に合わせる）
-        private const string AppVersion = "1.9.2";
+        private const string AppVersion = "1.10.2";
 
         // 初回起動時のウィンドウサイズ（以降は settings.json の値を使う）
         private const int DefaultWidth = 1280;
@@ -167,6 +168,13 @@ namespace VRCast.Editor.Build
             {
                 Debug.LogWarning("[VRCast][Build] UnityCapture files not found. Run Tools/UnityCapture/fetch.ps1 "
                     + "to enable the virtual camera output.");
+            }
+
+            // Windows 11 の方式（Media Foundation）の DLL
+            if (!File.Exists(MediaFoundationPluginPath))
+            {
+                Debug.LogWarning("[VRCast][Build] VRCastVirtualCamera.dll not found. Run Tools/VirtualCamera/build.ps1 "
+                    + "to enable the Windows 11 virtual camera method.");
             }
         }
 

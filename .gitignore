@@ -23,6 +23,10 @@
 /VRCast/Assets/Plugins/UnityCapture/
 /VRCast/Assets/Plugins/UnityCapture.meta
 
+# Virtual camera for Windows 11 (Media Foundation; built by Tools/VirtualCamera/build.ps1, shipped in builds)
+/VRCast/Assets/Plugins/VRCastVirtualCamera/
+/VRCast/Assets/Plugins/VRCastVirtualCamera.meta
+
 # Spout2 output (KlakSpout native plugin; fetched by Tools/Spout/fetch.ps1, shipped in builds)
 /VRCast/Assets/Plugins/KlakSpout/
 /VRCast/Assets/Plugins/KlakSpout.meta

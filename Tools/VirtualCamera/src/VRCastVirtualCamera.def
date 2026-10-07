@@ -1,0 +1,11 @@
+LIBRARY VRCastVirtualCamera
+EXPORTS
+    DllCanUnloadNow PRIVATE
+    DllGetClassObject PRIVATE
+    DllRegisterServer PRIVATE
+    DllUnregisterServer PRIVATE
+    VRCastVCam_IsSupported
+    VRCastVCam_Start
+    VRCastVCam_Stop
+    VRCastVCam_Send
+    VRCastVCam_GetModulePath

@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using UnityEngine;
 using VRCast.Core;
 
@@ -18,7 +19,8 @@ namespace VRCast.Output
     }
 
     /// <summary>
-    /// カメラの描画結果を仮想カメラ（UnityCapture）へ送る。メインカメラに付け、有効な間だけ毎フレーム送る。
+    /// カメラの描画結果を仮想カメラへ送る。メインカメラに付け、有効な間だけ毎フレーム送る。
+    /// 方式は従来の UnityCapture（DirectShow）と、設定で選べる Windows 11 の Media Foundation（MediaFoundationCamera）。
     /// 送るのはカメラの描画結果のみで、IMGUI の操作パネルは映らない。解像度は受け取る側に合わせて拡大縮小する。
     /// </summary>
     [RequireComponent(typeof(UnityEngine.Camera))]
@@ -69,6 +71,9 @@ namespace VRCast.Output
             IntPtr instance, IntPtr nativeTexture, int timeout, bool useDoubleBuffering, ResizeMode resizeMode,
             MirrorMode mirrorMode, bool isLinearColorSpace);
 
+        // Media Foundation 版の作成に失敗したときに作り直すまでの間隔（ドライバーを登録すると次の試行で始まる）
+        private const float MediaFoundationRetrySeconds = 5f;
+
         private AppSettings _settings;
         private IntPtr _instance;
 
@@ -77,6 +82,11 @@ namespace VRCast.Output
 
         // 前回の送信結果（変わったときだけ状態表示・ログを更新する。未送信は null）
         private SendResult? _lastResult;
+
+        // Media Foundation 版の送信先、送信中の方式（切り替えたら前の方式を閉じる）、作成を次に試す時刻
+        private readonly MediaFoundationCamera _mediaFoundation = new MediaFoundationCamera();
+        private bool _sendingMediaFoundation;
+        private float _nextMediaFoundationStart;
 
         /// <summary>
         /// 同梱ドライバーのフォルダ（無ければ null）。
@@ -109,6 +119,32 @@ namespace VRCast.Output
             }
         }
 
+        /// <summary>
+        /// Windows 11 の方式（Media Foundation）で送るなら true（設定は対応環境でのみ有効）。
+        /// </summary>
+        public bool UseMediaFoundation
+        {
+            get => _settings != null && _settings.virtualCameraMediaFoundation && MediaFoundationCamera.IsSupported;
+            set
+            {
+                // 未初期化なら何もしない（送信の切り替えは次の描画で行う）
+                if (_settings != null)
+                {
+                    _settings.virtualCameraMediaFoundation = value;
+                }
+            }
+        }
+
+        /// <summary>
+        /// 使用中の方式でカメラを使うアプリに表示されるデバイス名。
+        /// </summary>
+        public string DeviceName => UseMediaFoundation ? MediaFoundationCamera.DeviceName : VirtualCameraInstaller.DeviceName;
+
+        /// <summary>
+        /// 使用中の方式のドライバーが同梱されていれば true。
+        /// </summary>
+        public bool HasDriverFiles => UseMediaFoundation ? MediaFoundationCamera.ModulePath != null : BundledFolder != null;
+
         public void Initialize(AppSettings settings)
         {
             _settings = settings;
@@ -124,13 +160,31 @@ namespace VRCast.Output
         /// </summary>
         public VirtualCameraRegistration GetRegistration()
         {
-            return VirtualCameraInstaller.GetRegistration(BundledFolder);
+            return UseMediaFoundation
+                ? VirtualCameraInstaller.GetMediaFoundationRegistration()
+                : VirtualCameraInstaller.GetRegistration(BundledFolder);
+        }
+
+        /// <summary>
+        /// 使用中の方式のドライバーを管理者権限で登録（install = true）または解除する。成功なら null、失敗なら理由。
+        /// </summary>
+        public Task<string> RunDriverAsync(bool install)
+        {
+            if (!UseMediaFoundation)
+            {
+                return VirtualCameraInstaller.RunElevatedAsync(BundledFolder, install);
+            }
+
+            // 自分のカメラが DLL を使っていると上書き・削除できないため、いったん消す（次のフレームから作り直す）
+            Close();
+            _nextMediaFoundationStart = Time.unscaledTime + MediaFoundationRetrySeconds;
+            return VirtualCameraInstaller.RunMediaFoundationElevatedAsync(MediaFoundationCamera.ModulePath, install);
         }
 
         private void OnEnable()
         {
-            // プラグインが無いと分かっていればエラーのまま（送信しないため結果が出ない）
-            if (_pluginMissing)
+            // 従来方式でプラグインが無いと分かっていればエラーのまま（送信しないため結果が出ない）
+            if (_pluginMissing && !UseMediaFoundation)
             {
                 State = VirtualCameraState.Error;
                 Status = "Error: UnityCapturePlugin.dll not found";
@@ -157,11 +211,33 @@ namespace VRCast.Output
 
         private void OnRenderImage(RenderTexture source, RenderTexture destination)
         {
+            // 方式を切り替えたら前の方式を閉じて開始からやり直す（全設定のリセットも含む）
+            bool mediaFoundation = UseMediaFoundation;
+            if (mediaFoundation != _sendingMediaFoundation)
+            {
+                Close();
+                _sendingMediaFoundation = mediaFoundation;
+                _nextMediaFoundationStart = 0f;
+                State = VirtualCameraState.Starting;
+                Status = "Starting";
+
+                // 従来方式へ戻したがプラグインが無いと分かっていれば、送信しないためここでエラーにする
+                if (!mediaFoundation && _pluginMissing)
+                {
+                    SetState(VirtualCameraState.Error, "Error: UnityCapturePlugin.dll not found");
+                }
+            }
+
+            if (mediaFoundation && _settings != null)
+            {
+                SendMediaFoundation(source);
+            }
+
             // 画面への表示はそのまま
             Graphics.Blit(source, destination);
 
-            // 未初期化・プラグイン無しなら送らない
-            if (_settings == null || _pluginMissing)
+            // 未初期化・プラグイン無し・Media Foundation で送っているなら UnityCapture へは送らない
+            if (_settings == null || _pluginMissing || mediaFoundation)
             {
                 return;
             }
@@ -189,6 +265,52 @@ namespace VRCast.Output
             }
         }
 
+        private void SendMediaFoundation(RenderTexture source)
+        {
+            // カメラを作る（失敗したら間隔を空けて作り直す。ドライバー未登録など）
+            if (!_mediaFoundation.Started)
+            {
+                if (Time.unscaledTime < _nextMediaFoundationStart)
+                {
+                    return;
+                }
+
+                _nextMediaFoundationStart = Time.unscaledTime + MediaFoundationRetrySeconds;
+                int result = _mediaFoundation.Start();
+                if (result < 0)
+                {
+                    SetState(VirtualCameraState.Error,
+                        $"Error: could not create '{MediaFoundationCamera.DeviceName}' (0x{result:X8}). Install the driver");
+                    return;
+                }
+
+                VRCastLog.Info(LogCategory, $"Created '{MediaFoundationCamera.DeviceName}'");
+            }
+
+            // 描画結果を読み戻して渡す（受け取る側がいるかは前回の読み戻しの結果）
+            _mediaFoundation.Capture(source);
+            SetState(_mediaFoundation.HasReader ? VirtualCameraState.Sending : VirtualCameraState.WaitingForApp,
+                _mediaFoundation.HasReader
+                    ? $"Sending to '{MediaFoundationCamera.DeviceName}'"
+                    : $"Waiting for an app to open '{MediaFoundationCamera.DeviceName}'");
+        }
+
+        private void SetState(VirtualCameraState state, string status)
+        {
+            // 変わったときだけ更新し、エラーはログに残す
+            if (State == state && Status == status)
+            {
+                return;
+            }
+
+            State = state;
+            Status = status;
+            if (state == VirtualCameraState.Error)
+            {
+                VRCastLog.Warning(LogCategory, status);
+            }
+        }
+
         private void Report(SendResult result)
         {
             // 同じ結果が続く間は何もしない
@@ -197,15 +319,9 @@ namespace VRCast.Output
                 return;
             }
 
-            _lastResult = result;
-            State = StateOf(result);
-            Status = Describe(result);
-
             // エラーだけログに残す（受け取るアプリが無い・フレーム落ちは通常の状態）
-            if ((int)result >= (int)SendResult.ErrorUnsupportedGraphicsDevice)
-            {
-                VRCastLog.Warning(LogCategory, Status);
-            }
+            _lastResult = result;
+            SetState(StateOf(result), Describe(result));
         }
 
         private static VirtualCameraState StateOf(SendResult result)
@@ -254,6 +370,9 @@ namespace VRCast.Output
 
             _instance = IntPtr.Zero;
             _lastResult = null;
+
+            // Media Foundation 版のカメラと読み戻し用のテクスチャも消す（作っていなければ DLL は呼ばない）
+            _mediaFoundation.Stop();
         }
     }
 }

@@ -22,6 +22,9 @@ namespace VRCast.Platform
         public const string DefaultGitHubUrl = "https://github.com/coffin299/VRCast/releases/";
         public const string DefaultBoothUrl = "https://coffin299.booth.pm/items/8933317";
 
+        // 更新履歴（GitHub の CHANGELOG.txt）
+        public const string ChangelogUrl = "https://github.com/coffin299/VRCast/blob/main/CHANGELOG.txt";
+
         // 開いてよいダウンロードページの接頭辞（取得した JSON から任意の URL を開かないため）
         private static readonly string[] GitHubUrlPrefixes =
         {
@@ -79,14 +82,9 @@ namespace VRCast.Platform
         public string BoothUrl { get; private set; } = DefaultBoothUrl;
 
         /// <summary>
-        /// 今のバージョンより新しいものがあれば true（通知しないことにしたバージョンでも true）。
+        /// 今のバージョンより新しいものがあれば true。
         /// </summary>
         public bool IsUpdateAvailable => State == CheckState.Done && VersionUtility.IsNewer(LatestVersion, Application.version);
-
-        /// <summary>
-        /// 通知を出すべきなら true（新しいバージョンがあり、通知しないことにしたバージョンではない）。
-        /// </summary>
-        public bool ShouldNotify => IsUpdateAvailable && LatestVersion != _settings.skippedVersion;
 
         public void Initialize(AppSettings settings)
         {
@@ -116,11 +114,11 @@ namespace VRCast.Platform
         }
 
         /// <summary>
-        /// 取得した最新バージョンを通知しないことにする（次の新しいバージョンでまた通知する）。
+        /// 更新履歴（GitHub）をブラウザで開く。
         /// </summary>
-        public void SkipLatest()
+        public void OpenChangelog()
         {
-            _settings.skippedVersion = LatestVersion;
+            Application.OpenURL(ChangelogUrl);
         }
 
         /// <summary>

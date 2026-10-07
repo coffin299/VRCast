@@ -336,8 +336,8 @@ namespace VRCast.UI
 
         private void DrawUpdateNotice()
         {
-            // 新しいバージョンがあり、通知しないことにしていなければ見出しの下に出す
-            if (!_updates.ShouldNotify)
+            // 新しいバージョンがあれば見出しの下に出す
+            if (!_updates.IsUpdateAvailable)
             {
                 return;
             }
@@ -348,11 +348,12 @@ namespace VRCast.UI
                 + Loc.T("Latest", "最新", "최신", "最新", "最新") + $": {_updates.LatestVersion}");
             UpdateDownloadButtons.Draw(_updates);
 
-            // このバージョンは通知しない（次の新しいバージョンでまた通知する）
-            if (GUILayout.Button(Loc.T("Skip this version", "このバージョンは通知しない", "이 버전은 알리지 않기",
-                    "不再提示此版本", "不再提示此版本"), GuiControls.Shrinkable))
+            // 何が変わったかを GitHub の更新履歴で確かめられる
+            if (GUILayout.Button(Loc.T("View changelog (GitHub)", "更新履歴を表示する（GitHub）",
+                    "업데이트 내역 보기 (GitHub)", "查看更新日志（GitHub）", "查看更新紀錄（GitHub）"),
+                    GuiControls.Shrinkable))
             {
-                _updates.SkipLatest();
+                _updates.OpenChangelog();
             }
 
             GuiControls.EndCard();

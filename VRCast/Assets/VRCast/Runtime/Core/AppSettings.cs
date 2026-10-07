@@ -101,9 +101,8 @@ namespace VRCast.Core
         // 操作パネルのダークモード（既定はライト = ベージュ。OS の設定には合わせない）
         public bool darkMode;
 
-        // 起動時に Web サイトの version.json で新しいバージョンを確認するかと、通知しないことにしたバージョン
+        // 起動時に Web サイトの version.json で新しいバージョンを確認するか
         public bool checkForUpdates = true;
-        public string skippedVersion = string.Empty;
 
         // 軽量モード（描画のフレームレートとトラッカーの処理回数を下げ、ゲーム・OBS と同時に使うときの負荷を減らす）。
         // 配信ではゲーム・OBS と併用することが多いため既定は ON
@@ -130,8 +129,9 @@ namespace VRCast.Core
         // カメラの固定（マウスの回転・移動・ズームを無視する。画角スライダーとリセットは使える）
         public bool cameraLocked;
 
-        // 仮想カメラ（VRCast Camera）への出力
+        // 仮想カメラ（VRCast Camera）への出力と、Windows 11 の方式（Media Foundation。カメラ名は VRCast Camera (MF)）で出すか
         public bool virtualCameraEnabled;
+        public bool virtualCameraMediaFoundation;
 
         // Spout2 への出力（OBS 等へ GPU 上で映像を渡す）
         public bool spoutEnabled;
@@ -490,8 +490,6 @@ namespace VRCast.Core
 
             // パネルの拡大率は範囲内に制限
             uiScale = Mathf.Clamp(uiScale, MinUiScale, MaxUiScale);
-            // null の通知しないバージョンは未設定扱いの空文字へ
-            skippedVersion ??= string.Empty;
             // 未知の優先度（リアルタイム等の手編集）は通常へ
             if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))
             {

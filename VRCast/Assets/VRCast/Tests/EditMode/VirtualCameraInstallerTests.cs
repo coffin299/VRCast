@@ -32,6 +32,34 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void BuildMediaFoundationArguments_Install_CopiesThenRegistersCopy()
+        {
+            string source = Path.Combine("C:", "VRCast", MediaFoundationCamera.PluginFileName);
+            string folder = Path.Combine("C:", "Program Files", "VRCast", "VirtualCamera");
+            string target = Path.Combine(folder, MediaFoundationCamera.PluginFileName);
+            string arguments = VirtualCameraInstaller.BuildMediaFoundationArguments(source, folder, true);
+
+            // コピー先（Program Files）の DLL を登録し、元の場所の DLL は登録しないこと
+            StringAssert.StartsWith("/s /c \"", arguments);
+            StringAssert.Contains($"copy /y \"{source}\" \"{target}\"", arguments);
+            StringAssert.Contains($"&& regsvr32 /s \"{target}\"", arguments);
+            StringAssert.DoesNotContain($"regsvr32 /s \"{source}\"", arguments);
+        }
+
+        [Test]
+        public void BuildMediaFoundationArguments_Uninstall_UnregistersAndDeletesCopy()
+        {
+            string folder = Path.Combine("C:", "Program Files", "VRCast", "VirtualCamera");
+            string target = Path.Combine(folder, MediaFoundationCamera.PluginFileName);
+            string arguments = VirtualCameraInstaller.BuildMediaFoundationArguments("unused.dll", folder, false);
+
+            // 解除してからコピーを消す（登録の成否はレジストリで確かめる）
+            StringAssert.Contains($"regsvr32 /s /u \"{target}\"", arguments);
+            StringAssert.Contains($"del /f /q \"{target}\"", arguments);
+            StringAssert.DoesNotContain("copy", arguments);
+        }
+
+        [Test]
         public void FindBundled_RequiresBothFilters()
         {
             // 64 bit だけを置いた一時 StreamingAssets

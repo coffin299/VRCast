@@ -37,6 +37,8 @@ CHANGELOG.txt をご覧ください。
 - 非公式ツールです。VRChat Inc. とは関係ありません。
 - アバター・衣装の利用規約を守ってお使いください。
 - 仮想カメラを使った場合は、このフォルダを移動・削除する前に「出力」タブの「ドライバーを解除」を押してください。
+  Discord などでカメラが起動しないときは、Windows 11 なら「Windows 11 の方式（Media Foundation）で出力する」を試してください
+  （こちらのドライバーは C:\Program Files\VRCast\VirtualCamera に入ります。使わなくなったらこの方式を選んだまま「ドライバーを解除」）。
 - 設定とログ: %USERPROFILE%\AppData\LocalLow\VRCast\VRCast\
   不具合の報告時は Player.log を添えてください: https://github.com/coffin299/VRCast/issues
   カメラが認識されない等のときは、「デバッグログ」タブの「表示中をコピー」で、ログと環境をまとめてコピーして貼り付けられます。
@@ -85,6 +87,8 @@ See CHANGELOG.txt.
 - This is an unofficial tool and is not affiliated with VRChat Inc.
 - Please follow the terms of use of your avatar and outfits.
 - If you used the virtual camera, press "Uninstall driver" in the Output tab before moving or deleting this folder.
+  If the camera fails to start in Discord and other apps, try "Use the Windows 11 method (Media Foundation)" on Windows 11
+  (its driver goes to C:\Program Files\VRCast\VirtualCamera; when you no longer need it, press "Uninstall driver" with this method selected).
 - Settings and logs: %USERPROFILE%\AppData\LocalLow\VRCast\VRCast\
   Please attach Player.log when reporting a problem: https://github.com/coffin299/VRCast/issues
   If your camera is not detected, "Copy shown" in the "Debug log" tab copies the logs and your environment so you can paste them.

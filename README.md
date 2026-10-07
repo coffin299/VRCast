@@ -56,6 +56,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | デバッグログタブ（重要度・カテゴリ・文字列の絞り込み、環境の要約、コピー） | 済 |
 | Constraint（VRC / Unity 標準の Position・Rotation・Scale・Parent・Aim・LookAt） | 済 |
 | 仮想カメラ出力（VRCast Camera、Discord / Zoom 等） | 済 |
+| Windows 11 の仮想カメラ（Media Foundation、VRCast Camera (MF)。出力タブで従来方式と切替） | 済 |
 | Spout2 出力（OBS へ GPU 上で共有、透過のまま） | 済 |
 
 ロードマップは [docs/milestones.md](docs/milestones.md) を参照。
@@ -183,7 +184,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
   非公式の設定のためドライバーによっては効かない。VRCast.exe が既に別のプロファイルに入っていれば書き換えない。
   書き込めないときは NvAPI のエラー番号を表示する（その場合は管理者として実行して試す）。エディターでは押せない。
 - **アップデートの確認**（既定 ON）: 起動時に Web サイトの `https://coffin299.github.io/VRCast/version.json` を 1 回だけ読み、
-  新しいバージョンがあればパネル上部に通知する（**GitHub からダウンロード** / **BOOTH からダウンロード** / **このバージョンは通知しない**）。
+  新しいバージョンがあればパネル上部に通知する（**GitHub からダウンロード** / **BOOTH からダウンロード** / **更新履歴を表示する（GitHub）**）。
   通信は最新のバージョン番号を読むためだけで、失敗しても何も表示しない。**Settings** の **Check for updates at startup** で OFF にできる。
 - **全設定のリセット**: **Settings** の赤いボタン **Reset all settings** → 確認の **Yes, reset** で全ての設定を初期状態に戻す
   （ウィンドウサイズと最後に開いたアバターは保持。元に戻せない）。
@@ -383,6 +384,14 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
   OBS の映像キャプチャデバイスで受ける場合は、映像フォーマットを ARGB にすると透過のまま取り込める。
 - DirectShow 方式の仮想カメラ（[UnityCapture](https://github.com/schellingb/UnityCapture)）のため、DirectShow のカメラを
   一覧に出すアプリで使える。他のアプリが同じ UnityCapture を登録している場合は、後から登録した方の名前・場所になる。
+- Discord などで「カメラの起動に失敗しました」（エラー 2014 など）と出る場合は、Windows 11 以降なら
+  **Use the Windows 11 method (Media Foundation)** を ON にして、その方式のドライバーを **Install driver** で登録する。
+  Windows の通常のカメラ（Media Foundation の仮想カメラ）として **VRCast Camera (MF)** の名前で一覧に出る（VRCast の起動中・出力 ON の間だけ）。
+  - ドライバーは `C:\Program Files\VRCast\VirtualCamera\` にコピーして登録する（Windows のカメラサービスはユーザーのフォルダを読めないため）。
+    VRCast のフォルダを移動しても登録し直す必要はない。新しいバージョンに更新したら **Reinstall driver** で入れ替える。
+  - 映像は 30fps・1920x1080 で送り、受け取る側の選んだ 1080p / 720p（NV12 / RGB32）に合わせる。
+  - 使用中の DLL を入れ替えるため、登録・解除で失敗したときだけ Windows のカメラサービス（Frame Server）を止めてからやり直す
+    （他のアプリのカメラ映像が一瞬止まることがある。サービスは次にカメラを開いたときに自動で起動する）。
 
 ### 5. Spout2 で OBS に取り込む
 
@@ -413,7 +422,8 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 │   ├── MediaPipeTracker/         同梱トラッカー (Python + MediaPipe、build.ps1 / build.bat で exe 化)
 │   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (一括 release.bat / package.bat / unitypackage.bat、同梱 README.txt)
 │   ├── Spout/                    Spout2 送信プラグインの取得スクリプト (fetch.ps1)
-│   └── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
+│   ├── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
+│   └── VirtualCamera/            Windows 11 の仮想カメラ (Media Foundation、C++。build.ps1 で DLL をビルド)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
         ├── Branding/AppIcon.png  アプリアイコン (512px、ビルド時に設定)
@@ -478,6 +488,20 @@ powershell -ExecutionPolicy Bypass -File .\Tools\UnityCapture\fetch.ps1
 - ドライバー（32 / 64 bit）とライセンス表記は `VRCast/Assets/StreamingAssets/UnityCapture/`、
   送信プラグインは `VRCast/Assets/Plugins/UnityCapture/x86_64/` に置かれる（取得元のコミットは固定）。
 - 見つからない場合もビルドは続行し、警告ログを出す（仮想カメラは使えない）。
+
+### Windows 11 の仮想カメラ（Media Foundation）のビルド
+
+出力タブの **Use the Windows 11 method (Media Foundation)** で使う DLL は C++ のソース（`Tools/VirtualCamera/src/`）から作る。
+出力はリポジトリに含めない（`.gitignore` 済み）。Visual Studio 2022 の「C++ によるデスクトップ開発」（Windows SDK 10.0.22000 以降）を入れ、
+Unity Editor を閉じてからリポジトリ直下で実行する:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\Tools\VirtualCamera\build.ps1
+```
+
+- `VRCast/Assets/Plugins/VRCastVirtualCamera/x86_64/VRCastVirtualCamera.dll` に置かれる（中間ファイルは一時フォルダ。CRT は静的リンク）。
+- 1 つの DLL に、Frame Server（Windows のカメラサービス）が読み込むメディアソースと、VRCast が P/Invoke で呼ぶ送信用の関数が入っている。
+- 見つからない場合もビルドは続行し、警告ログを出す（出力タブでこの方式を選べない）。
 
 ### Spout2（KlakSpout）の同梱
 

@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.10.2 (2026-10-07)
+
+[日本語]
+- 出力タブに「Windows 11 の方式（Media Foundation）で出力する」を追加（Windows の通常のカメラ「VRCast Camera (MF)」として出力し、Discord などで従来の方式のカメラが起動しないときに使えます。Windows 11 以降。方式ごとにドライバーの登録が必要）
+- 新しいバージョンの通知の「このバージョンは通知しない」を廃止し、代わりに「更新履歴を表示する（GitHub）」を追加
+
+[English]
+- Added "Use the Windows 11 method (Media Foundation)" to the Output tab (outputs as a regular Windows camera, "VRCast Camera (MF)", for when the classic camera fails to start in Discord and other apps; Windows 11 or later; each method needs its own driver install)
+- Removed "Skip this version" from the update notice and added "View changelog (GitHub)" instead
+
 ■ 1.9.2 (2026-10-07)
 
 [日本語]

@@ -454,7 +454,7 @@ namespace VRCast.UI
                 "僅為讀取最新版本號而連線 VRCast 網站（coffin299.github.io）"));
             GuiControls.Hint(UpdateStatus());
 
-            // 新しいバージョンがあれば（通知しないことにしたものでも）ここから開ける
+            // 新しいバージョンがあればここからも開ける
             if (_updates.IsUpdateAvailable)
             {
                 UpdateDownloadButtons.Draw(_updates);
