@@ -4,21 +4,15 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
-
-[日本語]
-- ポーズタブに「待機モーション」を追加（呼吸・体の揺れ・頭のゆらぎ。強さと速さを調整でき、既定は ON。顔のトラッキング中は頭のゆらぎを止めて本人の動きに任せる）
-
-[English]
-- Added "Idle motion" to the Pose tab (breathing, body sway and head motion; adjustable strength and speed, on by default; head motion pauses while face tracking is active)
-
 ■ 1.8.1 (2026-10-07)
 
 [日本語]
+- ポーズタブに「待機モーション」を追加（呼吸・体の揺れ・頭のゆらぎ。強さと速さを調整でき、既定は ON。顔のトラッキング中は頭のゆらぎを止めて本人の動きに任せる）
 - 表情を出している間はまばたきしない設定を追加（顔タブ。自動まばたきとトラッキングのまばたきの両方が止まり、表情の目の形が崩れません）
 - まばたきをトラッキングせず自動まばたきを使う設定を追加（トラッキングタブの「まばたきをトラッキング」を OFF）
 
 [English]
+- Added "Idle motion" to the Pose tab (breathing, body sway and head motion; adjustable strength and speed, on by default; head motion pauses while face tracking is active)
 - Added an option to stop blinking while an expression is shown (Face tab; stops both auto blink and blinks from face tracking so they do not distort the expression's eyes)
 - Added an option to use auto blink instead of tracking your blinks (turn off "Track blinks" in the Tracking tab)
 
