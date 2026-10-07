@@ -48,9 +48,19 @@ namespace VRCast.Tests
         [Test]
         public void TryParse_HeadDegrees_ConvertsToUnity()
         {
-            // ARKit（右手系）の回転角を、X・Y 軸まわりを逆向きにして Unity へ変換すること
+            // ARKit（右手系）の回転角を、MediaPipe と同じく Y・Z 軸まわりを逆向きにして Unity へ変換すること
             IFacialMocapPacket.TryParse("jawOpen-0|=head#10,20,5,0,0,0|", out FaceTrackingFrame frame);
-            Assert.That(Quaternion.Angle(frame.HeadRotation, Quaternion.Euler(-10f, -20f, 5f)), Is.LessThan(0.01f));
+            Assert.That(Quaternion.Angle(frame.HeadRotation, Quaternion.Euler(10f, -20f, -5f)), Is.LessThan(0.01f));
+        }
+
+        [Test]
+        public void TryParse_HeadPitch_MatchesMediaPipeDirection()
+        {
+            // 上下だけの回転は MediaPipe の変換（四元数の x を保つ）と同じ向きになること（上を向いたら上）
+            Quaternion arKit = Quaternion.Euler(15f, 0f, 0f);
+            var mediaPipe = new Quaternion(arKit.x, -arKit.y, -arKit.z, arKit.w);
+            IFacialMocapPacket.TryParse("jawOpen-0|=head#15,0,0,0,0,0|", out FaceTrackingFrame frame);
+            Assert.That(Quaternion.Angle(frame.HeadRotation, mediaPipe), Is.LessThan(0.01f));
         }
 
         [Test]

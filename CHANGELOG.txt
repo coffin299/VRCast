@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.10.3 (2026-10-07)
+
+[日本語]
+- iFacialMocap で上を向くとアバターが下を向く（首の左右の傾きも逆になる）問題を修正
+
+[English]
+- Fixed the avatar looking down when you look up with iFacialMocap (head tilt to the sides was also reversed)
+
 ■ 1.10.2 (2026-10-07)
 
 [日本語]

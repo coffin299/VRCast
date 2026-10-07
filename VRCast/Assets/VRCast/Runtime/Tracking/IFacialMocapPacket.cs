@@ -127,8 +127,9 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // ARKit（右手系、Z が手前）から Unity（左手系）へ: Z 軸を反転するので X・Y 軸まわりの回転が逆向きになる
-            frame.HeadRotation = Quaternion.Euler(-x, -y, z);
+            // ARKit（右手系、Z が手前）から MediaPipe と同じ映像基準の Unity 座標へ: X 軸を反転するので
+            // Y・Z 軸まわりの回転が逆向きになる（上下の向きはそのまま。下向きが正）
+            frame.HeadRotation = Quaternion.Euler(x, -y, -z);
         }
     }
 }
