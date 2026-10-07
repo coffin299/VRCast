@@ -9,6 +9,7 @@ Key facts:
 - Platform: Windows 10 / 11 (x64). Price: free.
 - Output: transparent background for OBS Game Capture ("Allow Transparency"), and the "VRCast Camera" virtual camera for Discord, Zoom and similar apps.
 - Tracking: bundled MediaPipe tracker for head, blink, mouth, gaze, arms, hands and fingers, plus facial expressions (smile, surprise, anger, sadness); OpenSeeFace is also supported. A webcam is optional.
+- Idle motion: breathing, body sway and slight head motion in the Pose tab while a webcam is not driving the avatar (on by default for Humanoid avatars; head motion pauses during face tracking).
 - Face: A-I-U-E-O lip sync from the microphone and auto blink.
 - Keeps the VRChat setup: expressions, default toggles, PhysBones (approximated) and constraints. The original avatar is not modified.
 - UI languages: Japanese, English, Korean, Simplified Chinese, Traditional Chinese.
