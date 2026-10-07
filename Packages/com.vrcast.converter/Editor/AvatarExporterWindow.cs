@@ -53,8 +53,9 @@ namespace VRCast.Converter.Editor
         // 指定を展開したクリップと判定結果（指定・プロジェクトが変わったときだけ作り直す。null = 未作成）
         private List<KeyValuePair<AnimationClip, ClipCheck>> _extraChecks;
 
-        // 直前のドロップで使えなかったものがあったときの説明（null = なし）
+        // 直前のドロップの結果の表示と、その種類（null = なし）
         private string _dropNotice;
+        private MessageType _dropNoticeType;
 
         [MenuItem("VRCast/Avatar Exporter")]
         private static void Open()
@@ -196,6 +197,7 @@ namespace VRCast.Converter.Editor
                 _extraOwner = _avatar;
                 _extraLoaded = true;
                 _extraChecks = null;
+                _dropNotice = null;
             }
 
             EditorGUILayout.Space();
@@ -360,10 +362,10 @@ namespace VRCast.Converter.Editor
                     "먼저 아바타를 선택하면 드롭할 수 있습니다", "先选择虚拟形象后即可拖放", "先選擇虛擬形象後即可拖放");
             GUI.Box(area, label, EditorStyles.helpBox);
 
-            // 直前のドロップで使えなかった理由（プロジェクトの外・クリップでないもの）
+            // 直前のドロップの結果（追加した件数、または使えなかった理由）
             if (_dropNotice != null)
             {
-                EditorGUILayout.HelpBox(_dropNotice, MessageType.Warning);
+                EditorGUILayout.HelpBox(_dropNotice, _dropNoticeType);
             }
 
             // ドロップ欄の上でのドラッグ操作だけを扱う
@@ -388,32 +390,57 @@ namespace VRCast.Converter.Editor
 
             DragAndDrop.AcceptDrag();
 
-            // 使えなかったものがあれば理由を残す（次のドロップまで表示）
-            _dropNotice = outsideProject
-                ? T("Folders outside this Unity project cannot be used. Move them into the project (Assets) first.",
-                    "この Unity プロジェクトの外にあるフォルダは使えません。先にプロジェクト（Assets）の中へ入れてください。",
-                    "이 Unity 프로젝트 밖에 있는 폴더는 사용할 수 없습니다. 먼저 프로젝트 (Assets) 안으로 옮기세요.",
-                    "无法使用此 Unity 项目之外的文件夹。请先将其移入项目（Assets）中。",
-                    "無法使用此 Unity 專案之外的資料夾。請先將其移入專案（Assets）中。")
-                : dropped.Count == 0
-                    ? T("Only animation clips (.anim) and folders can be dropped.",
-                        "ドロップできるのはアニメーションクリップ（.anim）とフォルダだけです。",
-                        "드롭할 수 있는 것은 애니메이션 클립 (.anim)과 폴더뿐입니다.",
-                        "只能拖放动画剪辑（.anim）和文件夹。", "只能拖放動畫剪輯（.anim）和資料夾。")
-                    : null;
-
             // 使えるもののうち、まだ一覧に無いものを追加する
-            bool added = false;
+            int added = 0;
             foreach (Object entry in dropped)
             {
                 if (!_extraEntries.Contains(entry))
                 {
                     _extraEntries.Add(entry);
-                    added = true;
+                    added++;
                 }
             }
 
-            return added;
+            // 結果を次のドロップまで表示し、追加した行と判定がすぐ見えるよう描き直す
+            SetDropNotice(added, dropped.Count, outsideProject);
+            Repaint();
+            return added > 0;
+        }
+
+        private void SetDropNotice(int added, int usable, bool outsideProject)
+        {
+            // プロジェクトの外のものがあれば、追加できたものがあっても警告を優先する
+            if (outsideProject)
+            {
+                _dropNoticeType = MessageType.Warning;
+                _dropNotice = T("Folders outside this Unity project cannot be used. Move them into the project (Assets) first.",
+                    "この Unity プロジェクトの外にあるフォルダは使えません。先にプロジェクト（Assets）の中へ入れてください。",
+                    "이 Unity 프로젝트 밖에 있는 폴더는 사용할 수 없습니다. 먼저 프로젝트 (Assets) 안으로 옮기세요.",
+                    "无法使用此 Unity 项目之外的文件夹。请先将其移入项目（Assets）中。",
+                    "無法使用此 Unity 專案之外的資料夾。請先將其移入專案（Assets）中。");
+                return;
+            }
+
+            // クリップでもフォルダでもない
+            if (usable == 0)
+            {
+                _dropNoticeType = MessageType.Warning;
+                _dropNotice = T("Only animation clips (.anim) and folders can be dropped.",
+                    "ドロップできるのはアニメーションクリップ（.anim）とフォルダだけです。",
+                    "드롭할 수 있는 것은 애니메이션 클립 (.anim)과 폴더뿐입니다.",
+                    "只能拖放动画剪辑（.anim）和文件夹。", "只能拖放動畫剪輯（.anim）和資料夾。");
+                return;
+            }
+
+            // 追加した件数（全部が追加済みならその旨）
+            _dropNoticeType = MessageType.Info;
+            _dropNotice = added > 0
+                ? T($"Added {added}. Check below whether each clip can be used.",
+                    $"{added} 件追加しました。取り込めるかどうかは下の一覧で確認できます。",
+                    $"{added}개 추가했습니다. 가져올 수 있는지는 아래 목록에서 확인할 수 있습니다.",
+                    $"已添加 {added} 项。可在下方列表中确认能否导入。",
+                    $"已新增 {added} 項。可在下方清單中確認能否匯入。")
+                : T("Already added.", "すでに追加されています。", "이미 추가되어 있습니다.", "已经添加过了。", "已經新增過了。");
         }
 
         private void DrawHeader()
