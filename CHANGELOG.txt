@@ -12,6 +12,7 @@ Newest first. Each version is written in Japanese, then English.
 - MediaPipe のトラッキングで、手が映っていない間の無駄な処理を減らし、カメラ待ちで推定が止まらないように変更
 - 軽量モードが MediaPipe のトラッカーに影響しないように変更（MediaPipe の重さは「トラッカーの動作」で選びます。OpenSeeFace は従来どおり軽量モードで軽くなります）
 - パネル左上の「VRCast」の横にバージョン番号の表示を追加
+- 各項目の説明文の下に区切り線を表示し、説明がどの項目のものか分かりやすくなるように変更
 - 顔タブに「表情中はマイクの口パクを止める」「表情中はトラッキングの口を止める」を追加（表情を出している間はそれぞれの口の動きを止め、表情の口の形と重なって崩れるのを防ぎます。別々に選べ、両方 ON も可。既定はどちらも OFF）
 
 [English]
@@ -20,6 +21,7 @@ Newest first. Each version is written in Japanese, then English.
 - Reduced wasted work in MediaPipe tracking while your hands are not visible, and tracking no longer pauses while waiting for the camera
 - Changed Low load mode to no longer affect the MediaPipe tracker (choose its load with "Tracker mode"; OpenSeeFace still gets lighter with Low load mode)
 - Added the version number next to "VRCast" at the top left of the panel
+- Changed the panel to draw a divider under each description, so it is clear which setting it belongs to
 - Added "Pause microphone lip sync during expressions" and "Pause tracked mouth during expressions" to the Face tab (each stops that mouth movement while an expression is shown, so it does not break the expression's mouth; can be turned on separately or both; off by default)
 
 ■ 1.10.3 (2026-10-07)

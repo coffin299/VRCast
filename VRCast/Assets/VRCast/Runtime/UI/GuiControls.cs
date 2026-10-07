@@ -25,6 +25,26 @@ namespace VRCast.UI
         private static string _copied;
         private static float _copiedUntil;
 
+        // 説明文の下の区切り線（線を含む余白の高さと線の太さ）
+        private const float DividerSpacing = 12f;
+        private const float DividerThickness = 1f;
+
+        // 描画中のカード（見出しと、カード内の説明文の通し番号）。カードの外の説明文には線を引かない
+        private static bool _inCard;
+        private static string _cardTitle;
+        private static int _hintIndex;
+
+        // 説明文ごとに線を引くか（カードの見出し・通し番号 → 後ろに別の部品が続くか）。
+        // Layout と Repaint で配置を食い違わせないよう、Repaint で調べた結果は次のフレームの最初の Layout で反映する
+        private static readonly Dictionary<(string, int), bool> Dividers = new Dictionary<(string, int), bool>();
+        private static readonly Dictionary<(string, int), bool> NextDividers = new Dictionary<(string, int), bool>();
+        private static int _dividerFrame = -1;
+
+        // Repaint 中の直前の説明文（後ろに何が続くかを次の説明文・カードの終わりで調べる）
+        private static bool _pendingHint;
+        private static (string, int) _pendingKey;
+        private static Rect _pendingRect;
+
         /// <summary>
         /// 横に並べるボタン用の配置指定。行の幅が足りないときに文字の幅より縮めて、パネルの右へはみ出さないようにする。
         /// </summary>
@@ -38,11 +58,47 @@ namespace VRCast.UI
             UiTheme theme = UiTheme.Current;
             GUILayout.BeginVertical(theme != null ? theme.Card : GUI.skin.box);
             GUILayout.Label(title, theme != null ? theme.SectionTitle : GUI.skin.label);
+            EnterCard(title);
         }
 
         public static void EndCard()
         {
+            // カードの最後の説明文には線を引かない（後ろに何も無いことを記録する）
+            ResolvePendingHint();
+            _inCard = false;
             GUILayout.EndVertical();
+        }
+
+        private static void EnterCard(string title)
+        {
+            // 前のフレームの Repaint で調べた結果を、このフレームの最初の Layout で反映する
+            if (Event.current.type == EventType.Layout && Time.frameCount != _dividerFrame)
+            {
+                _dividerFrame = Time.frameCount;
+                foreach (KeyValuePair<(string, int), bool> entry in NextDividers)
+                {
+                    Dividers[entry.Key] = entry.Value;
+                }
+
+                NextDividers.Clear();
+            }
+
+            _inCard = true;
+            _cardTitle = title;
+            _hintIndex = 0;
+            _pendingHint = false;
+        }
+
+        private static void ResolvePendingHint()
+        {
+            // 直前の説明文の後ろに別の部品が描かれていれば線を引く（説明文が続く・カードの終わりなら引かない）
+            if (!_pendingHint || Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+
+            NextDividers[_pendingKey] = GUILayoutUtility.GetLastRect() != _pendingRect;
+            _pendingHint = false;
         }
 
         /// <summary>
@@ -62,6 +118,7 @@ namespace VRCast.UI
         {
             UiTheme theme = UiTheme.Current;
             GUILayout.BeginVertical(theme != null ? theme.Card : GUI.skin.box);
+            EnterCard(title);
             GUILayout.BeginHorizontal();
             GUILayout.Label($"{number}. {title}", theme != null ? theme.SectionTitle : GUI.skin.label);
             GUILayout.FlexibleSpace();
@@ -89,12 +146,49 @@ namespace VRCast.UI
         }
 
         /// <summary>
-        /// 補足・状態表示用の控えめな文字。
+        /// 補足・状態表示用の控えめな文字。カード内では、後ろに別の部品が続くとき下に区切り線を引き、
+        /// 説明文がどの項目のものか（上の項目）を分かるようにする。
         /// </summary>
         public static void Hint(string text)
         {
+            // 直前の説明文の続きかどうかを先に調べる（説明文が続くときは間に線を引かない）
+            ResolvePendingHint();
+
             UiTheme theme = UiTheme.Current;
             GUILayout.Label(text, theme != null ? theme.Hint : GUI.skin.label);
+            if (!_inCard)
+            {
+                return;
+            }
+
+            // 前のフレームで後ろに部品が続いていた説明文だけ線の余白を取る（初めて描く説明文は線ありとみなす）
+            (string, int) key = (_cardTitle, _hintIndex++);
+            bool divider = !Dividers.TryGetValue(key, out bool known) || known;
+            Rect label = Event.current.type == EventType.Repaint ? GUILayoutUtility.GetLastRect() : default;
+            if (divider)
+            {
+                GUILayout.Space(DividerSpacing);
+            }
+
+            if (Event.current.type != EventType.Repaint)
+            {
+                return;
+            }
+
+            // 余白の中央に、説明文と同じ幅の線を引く
+            if (divider)
+            {
+                Color previous = GUI.color;
+                GUI.color = theme != null ? theme.Divider : Color.gray;
+                float y = label.yMax + (theme != null ? theme.Hint.margin.bottom : 0f) + DividerSpacing * 0.5f;
+                GUI.DrawTexture(new Rect(label.x, Mathf.Round(y), label.width, DividerThickness), Texture2D.whiteTexture);
+                GUI.color = previous;
+            }
+
+            // 後ろに何が続くかは次の説明文・カードの終わりで調べる
+            _pendingHint = true;
+            _pendingKey = key;
+            _pendingRect = GUILayoutUtility.GetLastRect();
         }
 
         /// <summary>

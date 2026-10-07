@@ -157,6 +157,14 @@ namespace VRCast.UI
         /// </summary>
         public bool Dark { get; private set; }
 
+        /// <summary>
+        /// カード内の説明文の下に引く区切り線の色（控えめな文字色を薄くしたもの）。
+        /// </summary>
+        public Color Divider => new Color(TextDim.r, TextDim.g, TextDim.b, DividerAlpha);
+
+        // 区切り線の不透明度
+        private const float DividerAlpha = 0.35f;
+
         public GUISkin Skin { get; private set; }
         public GUIStyle Title { get; private set; }
         public GUIStyle SectionTitle { get; private set; }
