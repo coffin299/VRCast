@@ -28,11 +28,13 @@ namespace VRCast.UI
 
         private readonly OrbitCameraController _orbit;
         private readonly RenderingController _rendering;
+        private readonly AppSettings _settings;
 
-        public DisplaySection(OrbitCameraController orbit, RenderingController rendering)
+        public DisplaySection(OrbitCameraController orbit, RenderingController rendering, AppSettings settings)
         {
             _orbit = orbit;
             _rendering = rendering;
+            _settings = settings;
         }
 
         public void Draw()
@@ -57,6 +59,21 @@ namespace VRCast.UI
                 "카메라 위치와 화각은 아바타마다 기억되며, 다시 시작한 후에도 유지됩니다.",
                 "相机位置和视野会按虚拟形象分别记住，重启后也会恢复。",
                 "相機位置和視野會依虛擬形象分別記住，重新啟動後也會恢復。"));
+
+            // 位置を決めた後にマウス操作で動かしてしまわないよう固定する（画角とリセットは固定中も使える）
+            _settings.cameraLocked = GUILayout.Toggle(_settings.cameraLocked,
+                Loc.T("Lock camera (ignore mouse drag and wheel)", "カメラを固定（マウスのドラッグ・ホイールで動かさない）",
+                    "카메라 고정 (마우스 드래그·휠로 움직이지 않음)", "锁定相机（不响应鼠标拖动和滚轮）",
+                    "鎖定相機（不回應滑鼠拖曳和滾輪）"));
+            if (_settings.cameraLocked)
+            {
+                GuiControls.Hint(Loc.T("Field of view and Reset camera still work while locked.",
+                    "固定中も画角の変更とカメラのリセットは使えます。",
+                    "고정 중에도 화각 변경과 카메라 초기화는 사용할 수 있습니다.",
+                    "锁定时仍可更改视野和重置相机。",
+                    "鎖定時仍可變更視野和重設相機。"));
+            }
+
             _orbit.FieldOfView = GuiControls.Slider(
                 Loc.T("Field of view", "画角", "화각", "视野", "視野"), _orbit.FieldOfView, MinFov, MaxFov);
 

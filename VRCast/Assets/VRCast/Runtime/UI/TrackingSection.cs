@@ -18,8 +18,14 @@ namespace VRCast.UI
         private readonly TrackingSkeletonView _skeleton;
         private readonly AppSettings _settings;
 
-        // 入力途中のポート文字列（確定するまで設定へ反映しない）
+        // 入力途中のポート文字列（同梱トラッカー用と VMC 用。確定するまで設定へ反映しない）
         private string _portInput;
+        private string _vmcPortInput;
+
+        // この PC の LAN のアドレス（VMC の送信先として表示。取得に時間がかかることがあるため間隔を空けて取り直す）
+        private const float AddressRefreshSeconds = 5f;
+        private List<string> _localAddresses = new List<string>();
+        private float _nextAddressRefresh;
 
         // 表情の割り当ての候補（先頭は「割り当てなし」、以降は表情プリセット名）と、作成元のコントローラー
         private readonly List<string> _expressionOptions = new List<string>();
@@ -37,7 +43,7 @@ namespace VRCast.UI
             _process = process;
             _skeleton = skeleton;
             _settings = settings;
-            _portInput = settings.trackingPort.ToString();
+            SyncFromSettings();
         }
 
         /// <summary>
@@ -46,6 +52,7 @@ namespace VRCast.UI
         public void SyncFromSettings()
         {
             _portInput = _settings.trackingPort.ToString();
+            _vmcPortInput = _settings.vmcPort.ToString();
         }
 
         public void Draw()
@@ -66,8 +73,12 @@ namespace VRCast.UI
 
         private void DrawGeneral()
         {
-            GuiControls.BeginCard(Loc.T("Webcam tracking", "Web カメラトラッキング", "웹캠 트래킹",
-                "摄像头追踪", "網路攝影機追蹤"));
+            // 見出しは入力元に合わせる（Web カメラ / iPhone 等の外部アプリ）
+            bool external = !TrackingSourceInfo.UsesBundledTracker(_settings.trackingSource);
+            GuiControls.BeginCard(external
+                ? Loc.T("Tracking (external app)", "トラッキング（外部アプリ）", "트래킹 (외부 앱)",
+                    "追踪（外部应用）", "追蹤（外部應用程式）")
+                : Loc.T("Webcam tracking", "Web カメラトラッキング", "웹캠 트래킹", "摄像头追踪", "網路攝影機追蹤"));
             _settings.trackingEnabled = GUILayout.Toggle(
                 _settings.trackingEnabled, Loc.T("Enable tracking", "トラッキングを有効にする", "트래킹 사용",
                     "启用追踪", "啟用追蹤"));
@@ -77,8 +88,18 @@ namespace VRCast.UI
             {
                 DrawSource();
                 DrawBlink();
-                DrawLauncher();
-                DrawPort();
+
+                // 外部アプリはカメラ・トラッカーの代わりに、送信先として入力してもらう IP アドレスとポートを出す
+                if (external)
+                {
+                    DrawVmcConnection();
+                }
+                else
+                {
+                    DrawLauncher();
+                    DrawPort();
+                }
+
                 GuiControls.Hint(_tracker.Status);
             }
 
@@ -94,16 +115,28 @@ namespace VRCast.UI
                     "MediaPipe（面部 + 手）", "MediaPipe（臉部 + 手）"),
                 Loc.T("OpenSeeFace (face only)", "OpenSeeFace（顔のみ）", "OpenSeeFace (얼굴만)",
                     "OpenSeeFace（仅面部）", "OpenSeeFace（僅臉部）"),
+                Loc.T("iPhone / external app (VMC, face only)", "iPhone・外部アプリ（VMC、顔のみ）",
+                    "iPhone·외부 앱 (VMC, 얼굴만)", "iPhone / 外部应用（VMC，仅面部）", "iPhone / 外部應用程式（VMC，僅臉部）"),
             };
             _settings.trackingSource = (TrackingSource)GuiControls.EnumSelector(
                 Loc.T("Source", "入力元", "입력 소스", "输入源", "輸入來源"), labels, (int)_settings.trackingSource);
 
-            // 腕・手は MediaPipe のみ
-            if (_settings.trackingSource != TrackingSource.MediaPipe)
+            // 腕・手は受信できる入力元（MediaPipe）のみ
+            if (TrackingSourceInfo.HasArms(_settings.trackingSource))
             {
-                return;
+                DrawHands();
             }
 
+            // パーフェクトシンク・表情の反映は ARKit の値を受信できる入力元（MediaPipe・VMC）のみ
+            if (TrackingSourceInfo.HasArKit(_settings.trackingSource))
+            {
+                DrawPerfectSync();
+                DrawExpressions();
+            }
+        }
+
+        private void DrawHands()
+        {
             _settings.trackingHands = GUILayout.Toggle(
                 _settings.trackingHands, Loc.T("Arms / hands", "腕・手", "팔·손", "手臂 / 手", "手臂 / 手"));
 
@@ -117,9 +150,44 @@ namespace VRCast.UI
                     : Loc.T("Arms / hands: not visible (idle pose)", "腕・手: 映っていません（待機ポーズ）",
                         "팔·손: 보이지 않음 (대기 포즈)", "手臂 / 手：未拍到（待机姿势）", "手臂 / 手：未拍到（待機姿勢）"));
             }
+        }
 
-            DrawPerfectSync();
-            DrawExpressions();
+        private void DrawVmcConnection()
+        {
+            // 送信側アプリ（Waidayo 等）の設定手順
+            GuiControls.Hint(Loc.T(
+                "In the app on your phone (e.g. Waidayo), set the VMC protocol destination to one of these addresses and the port below. Use the same Wi-Fi as this PC.",
+                "スマートフォンのアプリ（Waidayo など）で、VMC プロトコルの送信先に下のどれかの IP アドレスとポートを入力してください。この PC と同じ Wi-Fi につないでください。",
+                "스마트폰 앱 (Waidayo 등)에서 VMC 프로토콜 전송 대상에 아래 IP 주소 중 하나와 포트를 입력하세요. 이 PC와 같은 Wi-Fi에 연결하세요.",
+                "在手机应用（如 Waidayo）中，将 VMC 协议的发送目标设为下方任一 IP 地址和端口。请连接与此电脑相同的 Wi-Fi。",
+                "在手機應用程式（如 Waidayo）中，將 VMC 協定的傳送目標設為下方任一 IP 位址和連接埠。請連接與此電腦相同的 Wi-Fi。"));
+
+            // この PC の IP アドレス（間隔を空けて取り直す。Wi-Fi の切り替え後にも追従）
+            if (Time.unscaledTime >= _nextAddressRefresh)
+            {
+                _localAddresses = LocalNetwork.GetIPv4Addresses();
+                _nextAddressRefresh = Time.unscaledTime + AddressRefreshSeconds;
+            }
+
+            string addresses = _localAddresses.Count > 0
+                ? string.Join(" / ", _localAddresses)
+                : Loc.T("not found (check with ipconfig)", "見つかりません（ipconfig で確認）", "찾을 수 없음 (ipconfig로 확인)",
+                    "未找到（请用 ipconfig 确认）", "找不到（請用 ipconfig 確認）");
+            GuiControls.Hint(Loc.T("This PC's IP address", "この PC の IP アドレス", "이 PC의 IP 주소", "此电脑的 IP 地址",
+                "此電腦的 IP 位址") + ": " + addresses);
+
+            // VMC の受信ポート（範囲内の数値になったときだけ反映。受信側が追従する）
+            _settings.vmcPort = GuiControls.PortField(
+                Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"), ref _vmcPortInput,
+                _settings.vmcPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
+
+            // 届かないときの主な原因（初回のファイアウォールの許可）
+            GuiControls.Hint(Loc.T(
+                "If nothing arrives, allow VRCast on private networks in Windows Firewall (asked the first time) and set your Wi-Fi to a private network.",
+                "届かないときは、Windows ファイアウォールで VRCast をプライベートネットワークで許可し（初回に確認が出ます）、Wi-Fi をプライベートネットワークにしてください。",
+                "데이터가 오지 않으면 Windows 방화벽에서 VRCast를 개인 네트워크에서 허용하고 (처음에 확인 창이 나옵니다), Wi-Fi를 개인 네트워크로 설정하세요.",
+                "如果收不到数据，请在 Windows 防火墙中允许 VRCast 使用专用网络（首次会弹出确认），并将 Wi-Fi 设为专用网络。",
+                "如果收不到資料，請在 Windows 防火牆中允許 VRCast 使用私人網路（首次會跳出確認），並將 Wi-Fi 設為私人網路。"));
         }
 
         private void DrawBlink()
@@ -139,7 +207,7 @@ namespace VRCast.UI
 
         private void DrawPerfectSync()
         {
-            // パーフェクトシンクの ON/OFF（MediaPipe のみ。対応していないアバターでは何も起きない）
+            // パーフェクトシンクの ON/OFF（MediaPipe・VMC のみ。対応していないアバターでは何も起きない）
             _settings.trackingPerfectSync = GUILayout.Toggle(
                 _settings.trackingPerfectSync,
                 Loc.T("Perfect sync", "パーフェクトシンク", "퍼펙트 싱크", "完美同步", "完美同步"));
@@ -170,7 +238,7 @@ namespace VRCast.UI
 
             // 対応状況（見つかった ARKit 名の数）
             int count = driver.PerfectSyncShapeCount;
-            int total = MediaPipePacket.BlendShapeNames.Length;
+            int total = ArKitFace.BlendShapeNames.Length;
             int required = _settings.trackingPerfectSyncAnyShape ? 1 : min;
             GuiControls.Hint(driver.SupportsPerfectSync
                 ? Loc.T($"Supported ({count}/{total} ARKit blend shapes)",
@@ -198,7 +266,7 @@ namespace VRCast.UI
 
         private void DrawExpressions()
         {
-            // 表情反映の ON/OFF（MediaPipe のみ。OFF にすると自動で当てた表情はすぐ戻る）
+            // 表情反映の ON/OFF（MediaPipe・VMC のみ。OFF にすると自動で当てた表情はすぐ戻る）
             _settings.trackingExpressions = GUILayout.Toggle(
                 _settings.trackingExpressions,
                 Loc.T("Facial expressions", "表情を反映", "표정 반영", "反映表情", "反映表情"));
@@ -503,7 +571,7 @@ namespace VRCast.UI
                     + Loc.T("Mouth", "口", "입", "嘴", "嘴") + $" {face.MouthOpen:F2}");
                 GuiControls.Hint(Loc.T("Gaze", "視線", "시선", "视线", "視線") + $" x {face.Gaze.x:F1}  y {face.Gaze.y:F1}");
 
-                // 表情の強さ（MediaPipe のみ。しきい値調整の目安）
+                // 表情の強さ（MediaPipe・VMC のみ。しきい値調整の目安）
                 if (face.HasExpression)
                 {
                     ExpressionScores scores = face.Expression;

@@ -47,6 +47,11 @@ namespace VRCast.Cameras
         /// </summary>
         public bool InputBlocked { get; set; }
 
+        /// <summary>
+        /// 位置を決めた後に誤って動かさないよう、マウス操作を受け付けないときに true にする。
+        /// </summary>
+        public bool Locked { get; set; }
+
         public float FieldOfView
         {
             get => _camera.fieldOfView;
@@ -123,8 +128,8 @@ namespace VRCast.Cameras
 
         private void LateUpdate()
         {
-            // UI 操作中はカメラを動かさない
-            if (!InputBlocked)
+            // UI 操作中・固定中はカメラを動かさない
+            if (!InputBlocked && !Locked)
             {
                 HandleInput();
             }

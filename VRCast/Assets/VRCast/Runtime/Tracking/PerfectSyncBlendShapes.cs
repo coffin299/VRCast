@@ -19,10 +19,6 @@ namespace VRCast.Tracking
         /// </summary>
         public const int MinMatchedShapes = 20;
 
-        // まばたきの値を閉じ具合へ写す範囲（MediaPipe は目を閉じても 1 まで上がらないため、他の値と違い広げる）
-        private const float BlinkOpenScore = 0.15f;
-        private const float BlinkClosedScore = 0.65f;
-
         // 値の追従速度（大きいほど速い、1 秒あたり。検出の細かな揺れで顔が震えないように）
         private const float Smoothing = 30f;
 
@@ -33,9 +29,9 @@ namespace VRCast.Tracking
         private static readonly int[] Opposite = BuildOpposites();
 
         // まばたき・顎の開きの位置（既存のまばたき・口パクと二重に動かさないための判定と、値の補正に使う）
-        private static readonly int EyeBlinkLeft = Array.IndexOf(MediaPipePacket.BlendShapeNames, "eyeBlinkLeft");
-        private static readonly int EyeBlinkRight = Array.IndexOf(MediaPipePacket.BlendShapeNames, "eyeBlinkRight");
-        private static readonly int JawOpen = Array.IndexOf(MediaPipePacket.BlendShapeNames, "jawOpen");
+        private static readonly int EyeBlinkLeft = ArKitFace.EyeBlinkLeft;
+        private static readonly int EyeBlinkRight = ArKitFace.EyeBlinkRight;
+        private static readonly int JawOpen = ArKitFace.JawOpen;
 
         // ARKit の各名前に対応するアバター側の書き込み先（無ければ null）
         private readonly List<BlendShapeOverlay>[] _targets;
@@ -87,7 +83,7 @@ namespace VRCast.Tracking
         /// </summary>
         public static PerfectSyncBlendShapes Create(Transform root)
         {
-            var targets = new List<BlendShapeOverlay>[MediaPipePacket.BlendShapeNames.Length];
+            var targets = new List<BlendShapeOverlay>[ArKitFace.BlendShapeNames.Length];
             int matched = 0;
             foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
@@ -149,10 +145,10 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// 受信値を書き込む（毎フレーム呼ぶ）。
+        /// 受信値を書き込む（毎フレーム呼ぶ）。range は入力元のまばたきの値の範囲。
         /// drivesBlink が false なら eyeBlinkLeft / Right は元の値へ戻して書かない（自動まばたきに任せる）。
         /// </summary>
-        public void Apply(float[] scores, bool mirror, float deltaTime, bool drivesBlink)
+        public void Apply(float[] scores, ArKitRange range, bool mirror, float deltaTime, bool drivesBlink)
         {
             // 要素数が合わない値は使わない
             if (scores == null || scores.Length != _targets.Length)
@@ -187,7 +183,7 @@ namespace VRCast.Tracking
                 float target = Mathf.Clamp01(scores[SourceIndex(i, mirror)]);
                 if (blinkShape)
                 {
-                    target = Mathf.InverseLerp(BlinkOpenScore, BlinkClosedScore, target);
+                    target = range.BlinkToClosed(target);
                 }
 
                 _current[i] = Mathf.Lerp(_current[i], target, blend);
@@ -246,7 +242,7 @@ namespace VRCast.Tracking
         private static Dictionary<string, int> BuildNameTable()
         {
             var table = new Dictionary<string, int>();
-            string[] names = MediaPipePacket.BlendShapeNames;
+            string[] names = ArKitFace.BlendShapeNames;
             for (int i = 0; i < names.Length; i++)
             {
                 // 正式な名前と、末尾の Left / Right を L / R にした名前（"eyeBlink_L" 等）を登録
@@ -267,7 +263,7 @@ namespace VRCast.Tracking
 
         private static int[] BuildOpposites()
         {
-            string[] names = MediaPipePacket.BlendShapeNames;
+            string[] names = ArKitFace.BlendShapeNames;
             var opposites = new int[names.Length];
             for (int i = 0; i < names.Length; i++)
             {

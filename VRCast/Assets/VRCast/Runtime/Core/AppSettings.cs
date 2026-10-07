@@ -43,6 +43,9 @@ namespace VRCast.Core
         public const int MinTrackingPort = 1024;
         public const int MaxTrackingPort = 65535;
 
+        // VMC プロトコルの受信ポートの既定値（VMC プロトコルの標準）
+        public const int DefaultVmcPort = 39539;
+
         // 外部操作の待ち受けポートの既定値（範囲はトラッキングと同じ）
         public const int DefaultRemoteOscPort = 39570;
         public const int DefaultRemoteHttpPort = 39571;
@@ -121,6 +124,9 @@ namespace VRCast.Core
         public bool transparentBackground;
         public Color backgroundColor = LightBackgroundColor;
 
+        // カメラの固定（マウスの回転・移動・ズームを無視する。画角スライダーとリセットは使える）
+        public bool cameraLocked;
+
         // 仮想カメラ（VRCast Camera）への出力
         public bool virtualCameraEnabled;
 
@@ -177,6 +183,9 @@ namespace VRCast.Core
         public TrackingSource trackingSource = TrackingSource.MediaPipe;
         public int trackingPort = DefaultTrackingPort;
         public bool trackingMirror = true;
+
+        // 外部アプリ（VMC プロトコル）の受信ポート（同梱トラッカーの trackingPort とは別。LAN から受信する）
+        public int vmcPort = DefaultVmcPort;
         public float trackingBodyLean = 1f;
         public BodyMotion trackingBodyMotion = BodyMotion.Lean;
         public float trackingGaze = 1f;
@@ -187,13 +196,13 @@ namespace VRCast.Core
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
 
-        // パーフェクトシンク（MediaPipe のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
+        // パーフェクトシンク（MediaPipe・VMC のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
         public bool trackingPerfectSync = true;
 
         // パーフェクトシンクを有効にする条件（false = ARKit 名が MinMatchedShapes 種類以上、true = 1 種類でもあれば）
         public bool trackingPerfectSyncAnyShape;
 
-        // 表情反映（MediaPipe のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
+        // 表情反映（MediaPipe・VMC のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;
         public float trackingExpressionThreshold = 0.3f;
         public string expressionSmile = string.Empty;
@@ -539,6 +548,8 @@ namespace VRCast.Core
 
             // 受信ポートは特権ポートを避けた範囲に制限
             trackingPort = Mathf.Clamp(trackingPort, MinTrackingPort, MaxTrackingPort);
+            // VMC の受信ポートも同じ範囲に制限
+            vmcPort = Mathf.Clamp(vmcPort, MinTrackingPort, MaxTrackingPort);
             // 外部操作のポートも同じ範囲に制限
             remoteOscPort = Mathf.Clamp(remoteOscPort, MinTrackingPort, MaxTrackingPort);
             remoteHttpPort = Mathf.Clamp(remoteHttpPort, MinTrackingPort, MaxTrackingPort);

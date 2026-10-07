@@ -5,7 +5,7 @@ using System.Text;
 namespace VRCast.Remote
 {
     /// <summary>
-    /// OSC の引数の種類（最初の 1 つだけ読む）。
+    /// OSC の最初の引数の種類。
     /// </summary>
     public enum OscValueKind
     {
@@ -18,7 +18,7 @@ namespace VRCast.Remote
     }
 
     /// <summary>
-    /// 受信した 1 つの OSC メッセージ（アドレスと最初の引数）。
+    /// 受信した 1 つの OSC メッセージ（アドレス、最初の引数、全引数のうちの float）。
     /// </summary>
     public struct OscMessage
     {
@@ -27,6 +27,10 @@ namespace VRCast.Remote
         public int Int;
         public float Float;
         public string String;
+
+        // 位置に関係なく、すべての float 引数を順に並べたもの（無ければ null）。
+        // VMC プロトコルの "/VMC/Ext/Bone/Pos (s, f×7)" のように、名前の後に値が続くメッセージで使う
+        public float[] Floats;
 
         /// <summary>
         /// ボタンを離したときの値（0 / false）なら true。OSC アプリのボタンは押下で 1、離すと 0 を送るため、0 は無視する。
@@ -38,6 +42,7 @@ namespace VRCast.Remote
 
     /// <summary>
     /// OSC 1.0 のパケット（メッセージ・バンドル）を読む。読めない部分は捨てる。
+    /// 外部操作（RemoteControl）と VMC プロトコルの受信（TrackingReceiver）で共用する。
     /// </summary>
     public static class OscPacket
     {
@@ -135,8 +140,20 @@ namespace VRCast.Remote
                 return true;
             }
 
-            // 最初の引数だけ読む
-            switch (tags[1])
+            // 最初の引数を読む（壊れていればメッセージごと捨てる）
+            if (!TryReadFirstArgument(data, ref position, end, tags[1], ref message))
+            {
+                return false;
+            }
+
+            // float 引数を全部集める（2 つ目以降が壊れていれば、読めたところまでで止める）
+            message.Floats = ReadFloats(data, position, end, tags, message);
+            return true;
+        }
+
+        private static bool TryReadFirstArgument(byte[] data, ref int position, int end, char tag, ref OscMessage message)
+        {
+            switch (tag)
             {
                 case 'i':
                     // 32bit 整数（ビッグエンディアン）
@@ -147,6 +164,7 @@ namespace VRCast.Remote
 
                     message.Kind = OscValueKind.Int;
                     message.Int = ReadInt32(data, position);
+                    position += 4;
                     return true;
                 case 'f':
                     // 32bit 浮動小数（ビッグエンディアン）
@@ -157,6 +175,7 @@ namespace VRCast.Remote
 
                     message.Kind = OscValueKind.Float;
                     message.Float = BitConverter.Int32BitsToSingle(ReadInt32(data, position));
+                    position += 4;
                     return true;
                 case 's':
                     // 文字列（UTF-8）
@@ -175,8 +194,114 @@ namespace VRCast.Remote
                     message.Kind = OscValueKind.False;
                     return true;
                 default:
-                    // 未対応の型は引数なしとして扱う
+                    // 未対応の型は引数なしとして扱う（以降の位置も分からないため、後続の引数は読まない）
+                    position = end;
                     return true;
+            }
+        }
+
+        private static float[] ReadFloats(byte[] data, int position, int end, string tags, OscMessage first)
+        {
+            // float 引数の数を数える（無ければ配列を作らない）
+            int count = 0;
+            foreach (char tag in tags)
+            {
+                if (tag == 'f')
+                {
+                    count++;
+                }
+            }
+
+            if (count == 0)
+            {
+                return null;
+            }
+
+            // 最初の引数が float ならそれを先頭に入れ、2 つ目以降を順に読む
+            var floats = new float[count];
+            int found = 0;
+            if (first.Kind == OscValueKind.Float)
+            {
+                floats[found++] = first.Float;
+            }
+
+            for (int i = 2; i < tags.Length && found < count; i++)
+            {
+                // 型ごとの長さだけ進め、float だけ取り出す（未対応・壊れた引数で止める）
+                if (!TrySkipOrReadFloat(data, ref position, end, tags[i], out bool isFloat, out float value))
+                {
+                    break;
+                }
+
+                if (isFloat)
+                {
+                    floats[found++] = value;
+                }
+            }
+
+            // 読めた分だけに詰める
+            if (found < count)
+            {
+                Array.Resize(ref floats, found);
+            }
+
+            return found > 0 ? floats : null;
+        }
+
+        private static bool TrySkipOrReadFloat(
+            byte[] data, ref int position, int end, char tag, out bool isFloat, out float value)
+        {
+            isFloat = false;
+            value = 0f;
+            switch (tag)
+            {
+                case 'f':
+                    // 32bit 浮動小数
+                    if (position + 4 > end)
+                    {
+                        return false;
+                    }
+
+                    isFloat = true;
+                    value = BitConverter.Int32BitsToSingle(ReadInt32(data, position));
+                    position += 4;
+                    return true;
+                case 'i':
+                case 'c':
+                case 'r':
+                case 'm':
+                    // 4 バイトの値（整数・文字・色・MIDI）
+                    position += 4;
+                    return position <= end;
+                case 'h':
+                case 't':
+                case 'd':
+                    // 8 バイトの値（64bit 整数・タイムタグ・倍精度）
+                    position += 8;
+                    return position <= end;
+                case 's':
+                case 'S':
+                    // 文字列は終端まで読み飛ばす
+                    return TryReadString(data, ref position, end, out _);
+                case 'b':
+                    // バイナリ（長さ + 本体、4 バイト境界）
+                    if (position + 4 > end)
+                    {
+                        return false;
+                    }
+
+                    int size = ReadInt32(data, position);
+                    position += 4 + ((size + 3) & ~3);
+                    return size >= 0 && position <= end;
+                case 'T':
+                case 'F':
+                case 'N':
+                case 'I':
+                    // 値を持たない型
+                    return true;
+                default:
+                    // 配列（[ ]）などの未対応の型
+                    return false;
             }
         }
 

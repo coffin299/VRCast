@@ -10,5 +10,54 @@ namespace VRCast.Core
 
         // 同梱の OpenSeeFace（顔のみ）
         OpenSeeFace = 1,
+
+        // 外部アプリ（iPhone の Waidayo 等）が VMC プロトコルで送る顔の値（顔のみ。LAN から受信）
+        Vmc = 2,
+    }
+
+    /// <summary>
+    /// 入力元ごとにできることの判定（入力元の種類での分岐をここへ集める）。
+    /// </summary>
+    public static class TrackingSourceInfo
+    {
+        /// <summary>
+        /// VRCast が同梱トラッカー（カメラ）を起動して受信する入力元なら true。
+        /// </summary>
+        public static bool UsesBundledTracker(TrackingSource source)
+        {
+            return source != TrackingSource.Vmc;
+        }
+
+        /// <summary>
+        /// 腕・手のトラッキングを受信できる入力元なら true。
+        /// </summary>
+        public static bool HasArms(TrackingSource source)
+        {
+            return source == TrackingSource.MediaPipe;
+        }
+
+        /// <summary>
+        /// ARKit 互換の BlendShape の値（パーフェクトシンク・表情の反映に使う）を受信できる入力元なら true。
+        /// </summary>
+        public static bool HasArKit(TrackingSource source)
+        {
+            return source == TrackingSource.MediaPipe || source == TrackingSource.Vmc;
+        }
+
+        /// <summary>
+        /// 別の PC・スマートフォンから LAN 経由で受信する入力元なら true（127.0.0.1 以外でも待ち受ける）。
+        /// </summary>
+        public static bool ReceivesFromNetwork(TrackingSource source)
+        {
+            return source == TrackingSource.Vmc;
+        }
+
+        /// <summary>
+        /// 入力元の受信ポート（VMC は同梱トラッカーとは別のポートを使う）。
+        /// </summary>
+        public static int PortOf(AppSettings settings)
+        {
+            return settings.trackingSource == TrackingSource.Vmc ? settings.vmcPort : settings.trackingPort;
+        }
     }
 }

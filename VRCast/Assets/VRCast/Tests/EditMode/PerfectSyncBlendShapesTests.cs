@@ -13,7 +13,7 @@ namespace VRCast.Tests
         [Test]
         public void Match_AcceptsCommonNamingVariants()
         {
-            int blinkLeft = Array.IndexOf(MediaPipePacket.BlendShapeNames, "eyeBlinkLeft");
+            int blinkLeft = Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft");
 
             // 正式名・大文字始まり・区切り記号・L 表記・FBX の接頭辞付きは同じ名前とみなすこと
             Assert.That(PerfectSyncBlendShapes.Match("eyeBlinkLeft"), Is.EqualTo(blinkLeft));
@@ -36,7 +36,7 @@ namespace VRCast.Tests
         [Test]
         public void SourceIndex_SwapsSidesOnlyWithoutMirror()
         {
-            string[] names = MediaPipePacket.BlendShapeNames;
+            string[] names = ArKitFace.BlendShapeNames;
             int smileLeft = Array.IndexOf(names, "mouthSmileLeft");
             int smileRight = Array.IndexOf(names, "mouthSmileRight");
             int jawOpen = Array.IndexOf(names, "jawOpen");
@@ -52,7 +52,7 @@ namespace VRCast.Tests
         public void Create_FindsShapesAndApplyWritesWeights()
         {
             // ARKit 名を全部持つ顔メッシュを用意
-            string[] names = MediaPipePacket.BlendShapeNames;
+            string[] names = ArKitFace.BlendShapeNames;
             var root = new GameObject("Avatar");
             var renderer = root.AddComponent<SkinnedMeshRenderer>();
             var mesh = new Mesh { vertices = new[] { Vector3.zero, Vector3.right, Vector3.up } };
@@ -77,14 +77,14 @@ namespace VRCast.Tests
                 scores[Array.IndexOf(names, "mouthSmileLeft")] = 1f;
                 scores[Array.IndexOf(names, "jawOpen")] = 0.5f;
                 scores[Array.IndexOf(names, "eyeBlinkLeft")] = 1f;
-                sync.Apply(scores, false, 10f, true);
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true);
                 Assert.That(Weight(renderer, "mouthSmileRight"), Is.EqualTo(100f).Within(0.01f));
                 Assert.That(Weight(renderer, "mouthSmileLeft"), Is.EqualTo(0f).Within(0.01f));
                 Assert.That(Weight(renderer, "jawOpen"), Is.EqualTo(50f).Within(0.01f));
                 Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(100f).Within(0.01f));
 
                 // まばたきを動かさない設定では、まばたきだけ元の値（0）へ戻り、ほかは書き続けること
-                sync.Apply(scores, false, 10f, false);
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, false);
                 Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(0f).Within(0.01f));
                 Assert.That(Weight(renderer, "mouthSmileRight"), Is.EqualTo(100f).Within(0.01f));
 

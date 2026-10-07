@@ -275,10 +275,9 @@ namespace VRCast.Tracking
                 TryAutoCalibrate();
             }
 
-            // パーフェクトシンクは MediaPipe で受信中・設定 ON・対応アバターのときだけ
+            // パーフェクトシンクは ARKit の値を受信中（MediaPipe・VMC）・設定 ON・対応アバターのときだけ
             IsPerfectSyncActive = received && _settings.trackingPerfectSync
-                && _settings.trackingSource == TrackingSource.MediaPipe && _lastFrame.BlendShapes != null
-                && SupportsPerfectSync;
+                && _lastFrame.BlendShapes != null && SupportsPerfectSync;
 
             ApplyFace(received);
             ApplyPerfectSync();
@@ -315,10 +314,10 @@ namespace VRCast.Tracking
 
         private void ApplyExpression(bool received)
         {
-            // MediaPipe で受信中・設定 ON・表情データありのときだけ判定する
+            // 受信中・設定 ON・表情データあり（MediaPipe・VMC）のときだけ判定する
             // （パーフェクトシンク中は顔の動きで表情が出るため、表情プリセットを重ねない）
             IsDetectingExpression = received && _settings.trackingExpressions && !PausesExpressions
-                && _settings.trackingSource == TrackingSource.MediaPipe && _lastFrame.HasExpression
+                && _lastFrame.HasExpression
                 && _expressions != null && _expressions.Names.Count > 0;
             if (!IsDetectingExpression)
             {
@@ -460,7 +459,8 @@ namespace VRCast.Tracking
             // 動作中は毎フレーム書き、使わない間は元の値へ戻す（一度だけ）
             if (IsPerfectSyncActive)
             {
-                _perfectSync.Apply(_lastFrame.BlendShapes, _settings.trackingMirror, Time.deltaTime, _settings.trackingBlink);
+                _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.trackingMirror,
+                    Time.deltaTime, _settings.trackingBlink);
             }
             else
             {

@@ -116,7 +116,7 @@ namespace VRCast.UI
             _faceSection = new FaceSection(session, microphone, settings);
             _shapeKeySection = new ShapeKeySection(session, settings);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
-            _displaySection = new DisplaySection(orbit, rendering);
+            _displaySection = new DisplaySection(orbit, rendering, settings);
             _outputSection = new OutputSection(virtualCamera, spout);
             _remoteSection = new RemoteSection(session, remote, settings);
             _settingsSection = new SettingsSection(settings, rendering, updates, ResetAllSettings);
@@ -205,6 +205,9 @@ namespace VRCast.UI
             Vector3 mouse = Input.mousePosition;
             var position = new Vector2(mouse.x / scale, (Screen.height - mouse.y) / scale);
             _orbit.InputBlocked = _visible && _windowRect.Contains(position);
+
+            // カメラの固定を反映（設定のリセットにも追従するよう毎フレーム）
+            _orbit.Locked = _settings.cameraLocked;
         }
 
         private void SetVisible(bool visible)

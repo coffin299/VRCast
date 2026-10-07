@@ -207,9 +207,9 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 有効（MediaPipe で腕・手が ON）かつ受信中のときだけ値を使う
+            // 有効（腕・手を受信できる入力元で腕・手が ON）かつ受信中のときだけ値を使う
             bool enabled = _settings.trackingEnabled && _settings.trackingHands
-                && _settings.trackingSource == TrackingSource.MediaPipe;
+                && TrackingSourceInfo.HasArms(_settings.trackingSource);
             BodyTrackingFrame frame = default;
             bool received = enabled && _provider != null && _provider.TryGetBody(out frame);
 

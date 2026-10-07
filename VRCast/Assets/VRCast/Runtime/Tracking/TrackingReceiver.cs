@@ -8,8 +8,9 @@ namespace VRCast.Tracking
 {
     /// <summary>
     /// トラッカーの UDP 出力を受信する Provider。アプリ全体で 1 つ。
-    /// 設定の入力元に合わせて OpenSeeFace（バイナリ、顔のみ）と MediaPipe（JSON、顔・腕・手）を解析し分ける。
-    /// 外部からの入力を受けないよう 127.0.0.1 にのみ bind し、スレッドを使わず Update でポーリングする。
+    /// 設定の入力元に合わせて OpenSeeFace（バイナリ、顔のみ）・MediaPipe（JSON、顔・腕・手）・VMC（OSC、顔のみ）を解析し分ける。
+    /// 同梱トラッカーは 127.0.0.1 にのみ bind し、VMC（iPhone 等から LAN 経由で届く）だけ全アドレスで待ち受ける。
+    /// スレッドを使わず Update でポーリングする。
     /// </summary>
     public class TrackingReceiver : MonoBehaviour, IFaceTrackingProvider, IBodyTrackingProvider
     {
@@ -27,10 +28,15 @@ namespace VRCast.Tracking
 
         // 受信バッファ（UDP の最大長）
         private readonly byte[] _buffer = new byte[65536];
+
+        // VMC の値の保持（VMC は状態を送り続ける形式のため、パケットをまたいで値を持つ）
+        private readonly VmcPacket _vmc = new VmcPacket();
+
         private AppSettings _settings;
         private Socket _socket;
         private int _boundPort = -1;
         private TrackingSource _boundSource;
+        private IPAddress _boundAddress = IPAddress.Loopback;
         private float _nextRetryTime;
 
         // 最新の顔・腕手フレームと受信時刻（顔が映らず腕だけのフレームもあるため別々に持つ）
@@ -121,11 +127,11 @@ namespace VRCast.Tracking
             }
 
             // ポート・入力元の変更時は即時（前の入力元の値を捨てる）、未 bind 時は間隔を空けて（再）bind
-            bool changed = _socket != null
-                && (_boundPort != _settings.trackingPort || _boundSource != _settings.trackingSource);
+            int port = TrackingSourceInfo.PortOf(_settings);
+            bool changed = _socket != null && (_boundPort != port || _boundSource != _settings.trackingSource);
             if (changed || (_socket == null && Time.unscaledTime >= _nextRetryTime))
             {
-                Open(_settings.trackingPort, _settings.trackingSource);
+                Open(port, _settings.trackingSource);
             }
 
             // 溜まっているパケットを処理
@@ -144,15 +150,20 @@ namespace VRCast.Tracking
 
             try
             {
-                // ループバックのみで待ち受け（ブロックしない）
+                // 同梱トラッカーはループバックのみ、VMC は LAN から届くため全アドレスで待ち受け（ブロックしない）
+                IPAddress address = TrackingSourceInfo.ReceivesFromNetwork(source) ? IPAddress.Any : IPAddress.Loopback;
                 _socket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp) { Blocking = false };
-                _socket.Bind(new IPEndPoint(IPAddress.Loopback, port));
+                _socket.Bind(new IPEndPoint(address, port));
                 _boundPort = port;
                 _boundSource = source;
+                _boundAddress = address;
                 _listenStart = Time.unscaledTime;
                 _receivedSinceOpen = false;
                 _warnedNoData = false;
-                Status = $"Listening on 127.0.0.1:{port}";
+
+                // 前の待ち受けで受け取った VMC の値を持ち越さない
+                _vmc.Reset();
+                Status = $"Listening on {address}:{port}";
                 VRCastLog.Info(LogCategory, $"{Status} ({source})");
             }
             catch (SocketException e)
@@ -184,9 +195,13 @@ namespace VRCast.Tracking
                         VRCastLog.Info(LogCategory, $"Receiving {_boundSource} data from {remote}");
                     }
 
-                    if (Parse(length))
+                    if (Parse(length, out bool completedFrame))
                     {
-                        _framesThisSecond++;
+                        // VMC は 1 フレームが複数パケットに分かれることがあるため、確定したフレームだけ数える
+                        if (completedFrame)
+                        {
+                            _framesThisSecond++;
+                        }
                     }
                     else
                     {
@@ -203,9 +218,10 @@ namespace VRCast.Tracking
             }
         }
 
-        private bool Parse(int length)
+        private bool Parse(int length, out bool completedFrame)
         {
             float now = Time.unscaledTime;
+            completedFrame = true;
 
             // OpenSeeFace は顔のみ
             if (_boundSource == TrackingSource.OpenSeeFace)
@@ -218,6 +234,30 @@ namespace VRCast.Tracking
                 _latestFace = frame;
                 _faceTime = now;
                 _statFaces++;
+                return true;
+            }
+
+            // VMC は顔のみ（Apply で 1 フレーム確定したときだけ更新）
+            if (_boundSource == TrackingSource.Vmc)
+            {
+                if (!_vmc.Read(_buffer, length, out completedFrame, out FaceTrackingFrame frame, VRCastLog.DetailEnabled))
+                {
+                    return false;
+                }
+
+                // 送信内容（ARKit 名か・Head があるか）を確かめられるよう、初めてのアドレスを詳細ログへ
+                foreach (string address in _vmc.NewAddresses)
+                {
+                    VRCastLog.Detail(LogCategory, $"VMC message: {address}");
+                }
+
+                if (completedFrame)
+                {
+                    _latestFace = frame;
+                    _faceTime = now;
+                    _statFaces++;
+                }
+
                 return true;
             }
 
@@ -273,8 +313,16 @@ namespace VRCast.Tracking
 
         private string DescribeInvalid(int length)
         {
-            // 先頭が '{' なら MediaPipe 版の JSON、それ以外はバイナリ（OpenSeeFace）とみなして原因を推定する
+            // 先頭が '{' なら MediaPipe 版の JSON、'/' か '#' なら OSC、それ以外はバイナリ（OpenSeeFace）とみなして原因を推定する
             bool json = length > 0 && _buffer[0] == (byte)'{';
+            bool osc = length > 0 && (_buffer[0] == (byte)'/' || _buffer[0] == (byte)'#');
+            if (_boundSource == TrackingSource.Vmc)
+            {
+                return osc
+                    ? "OSC data without VMC messages (the sender is not using the VMC protocol?)"
+                    : "not OSC data (set the sender to the VMC protocol)";
+            }
+
             if (_boundSource == TrackingSource.MediaPipe)
             {
                 if (!json)
@@ -308,10 +356,12 @@ namespace VRCast.Tracking
             {
                 _receiving = false;
 
-                // OpenSeeFace は顔が映っていない間は何も送らないため、その可能性も添える
+                // OpenSeeFace は顔が映っていない間は何も送らないため、その可能性も添える。VMC は送信側アプリの停止・スリープ
                 string hint = _boundSource == TrackingSource.OpenSeeFace
                     ? "face out of view, tracker stopped, or camera disconnected?"
-                    : "tracker stopped or camera disconnected?";
+                    : _boundSource == TrackingSource.Vmc
+                        ? "sender app stopped, phone asleep, or Wi-Fi disconnected?"
+                        : "tracker stopped or camera disconnected?";
                 VRCastLog.Warning(LogCategory, $"No {_boundSource} data for {SilenceWarningSeconds:F0} s ({hint})");
             }
 
@@ -319,9 +369,12 @@ namespace VRCast.Tracking
             if (!_receivedSinceOpen && !_warnedNoData && now - _listenStart > NoDataWarningSeconds)
             {
                 _warnedNoData = true;
+                string hint = _boundSource == TrackingSource.Vmc
+                    ? "wrong IP address or port in the sender app, a different network, or blocked by Windows Firewall?"
+                    : "tracker not running, camera not opened, or port mismatch?";
                 VRCastLog.Warning(LogCategory,
                     $"No {_boundSource} data on port {_boundPort} for {NoDataWarningSeconds:F0} s since listening started " +
-                    "(tracker not running, camera not opened, or port mismatch?)");
+                    $"({hint})");
             }
 
             // 顔が映った / 見失った瞬間（受信中のみ。詳細ログ。一瞬の見失いで交互に並ばないよう長めの猶予で判定）
@@ -360,6 +413,12 @@ namespace VRCast.Tracking
             {
                 summary += $", arms {Percent(_statArms, valid)}, " +
                     $"left hand {Percent(_statLeftHands, valid)}, right hand {Percent(_statRightHands, valid)}";
+            }
+
+            // VMC は届いた ARKit 名の数と頭の向きの有無（パーフェクトシンク・頭の動きが使えるか）
+            if (_boundSource == TrackingSource.Vmc)
+            {
+                summary += $", ARKit shapes {_vmc.ArKitShapeCount}, head {(_vmc.HasHead ? "yes" : "no")}";
             }
 
             return summary;
@@ -406,7 +465,7 @@ namespace VRCast.Tracking
             }
             else
             {
-                Status = $"Listening on 127.0.0.1:{_boundPort} (no data)";
+                Status = $"Listening on {_boundAddress}:{_boundPort} (no data)";
             }
         }
 

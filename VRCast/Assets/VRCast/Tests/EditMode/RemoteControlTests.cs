@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using NUnit.Framework;
 using VRCast.Remote;
+using static VRCast.Tests.OscTestData;
 
 namespace VRCast.Tests
 {
@@ -27,18 +28,10 @@ namespace VRCast.Tests
         public void Osc_ReadsBundle()
         {
             // バンドルの中の複数のメッセージを順に読めること
-            byte[] first = Message("/vrcast/auto", ",", new byte[0]);
-            byte[] second = Message("/vrcast/expression", ",i", Int(1));
-            var bundle = new List<byte>();
-            bundle.AddRange(Str("#bundle"));
-            bundle.AddRange(new byte[8]);
-            bundle.AddRange(Int(first.Length));
-            bundle.AddRange(first);
-            bundle.AddRange(Int(second.Length));
-            bundle.AddRange(second);
+            byte[] bundle = Bundle(Message("/vrcast/auto", ","), Message("/vrcast/expression", ",i", Int(1)));
 
             var messages = new List<OscMessage>();
-            OscPacket.Parse(bundle.ToArray(), 0, bundle.Count, messages);
+            OscPacket.Parse(bundle, 0, bundle.Length, messages);
             Assert.That(messages.Count, Is.EqualTo(2));
             Assert.That(messages[0].Address, Is.EqualTo("/vrcast/auto"));
             Assert.That(messages[1].Int, Is.EqualTo(1));
@@ -182,37 +175,6 @@ namespace VRCast.Tests
             // メッセージを操作として読めること
             Assert.That(RemoteCommand.TryParseOsc(ParseSingle(packet), out RemoteCommand command), Is.True);
             return command;
-        }
-
-        private static byte[] Message(string address, string tags, byte[] argument)
-        {
-            // アドレス・型タグ・引数を並べた OSC メッセージ
-            var bytes = new List<byte>();
-            bytes.AddRange(Str(address));
-            bytes.AddRange(Str(tags));
-            bytes.AddRange(argument);
-            return bytes.ToArray();
-        }
-
-        private static byte[] Str(string text)
-        {
-            // 終端の 0 を含めて 4 バイト境界まで埋めた OSC 文字列
-            byte[] raw = Encoding.UTF8.GetBytes(text);
-            var padded = new byte[(raw.Length + 4) & ~3];
-            Array.Copy(raw, padded, raw.Length);
-            return padded;
-        }
-
-        private static byte[] Int(int value)
-        {
-            // ビッグエンディアンの 32bit 整数
-            return new[] { (byte)(value >> 24), (byte)(value >> 16), (byte)(value >> 8), (byte)value };
-        }
-
-        private static byte[] Float(float value)
-        {
-            // ビッグエンディアンの 32bit 浮動小数
-            return Int(BitConverter.SingleToInt32Bits(value));
         }
     }
 }

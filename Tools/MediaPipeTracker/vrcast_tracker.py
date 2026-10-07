@@ -57,7 +57,7 @@ from mediapipe.tasks.python import vision  # noqa: E402
 # VRCast 側（MediaPipePacket.ProtocolVersion）と一致させるプロトコル番号
 PROTOCOL_VERSION = 1
 
-# 送信する BlendShape の並び（VRCast 側 MediaPipePacket.BlendShapeNames と一致させる）
+# 送信する BlendShape の並び（VRCast 側 ArKitFace.BlendShapeNames と一致させる）
 BLENDSHAPE_NAMES = (
     "browDownLeft", "browDownRight", "browInnerUp", "browOuterUpLeft",
     "browOuterUpRight",

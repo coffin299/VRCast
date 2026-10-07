@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.9.1 (2026-10-07)
+
+[日本語]
+- 表示タブに「カメラを固定」を追加（ON の間はマウスのドラッグ・ホイールでカメラが動かず、ほかのウィンドウをスクロールしたときなどに誤って動かしません。画角とリセットは使えます。再起動後も保持）
+- トラッキングの入力元に「iPhone・外部アプリ（VMC）」を追加（iPhone の Waidayo などから同じ Wi-Fi 経由で顔の動きを受け取れます。パーフェクトシンクと表情の反映にも対応。送信先に入力する PC の IP アドレスをトラッキングタブに表示）
+
+[English]
+- Added "Lock camera" to the Display tab (while on, mouse drags and the wheel no longer move the camera, so scrolling other windows will not move it by accident; field of view and reset still work; kept after restarting)
+- Added "iPhone / external app (VMC)" as a tracking source (receive your face movement from apps such as Waidayo on iPhone over the same Wi-Fi; works with perfect sync and facial expressions; the Tracking tab shows this PC's IP address to enter in the app)
+
 ■ 1.8.1 (2026-10-07)
 
 [日本語]

@@ -114,7 +114,8 @@ namespace VRCast.Tracking
         /// <summary>
         /// 現在の入力元の同梱版が見つかったか（無ければ UI でパス入力を求める）。
         /// </summary>
-        public bool HasBundled => _settings != null && _bundledPaths[_settings.trackingSource] != null;
+        public bool HasBundled => _settings != null
+            && _bundledPaths.TryGetValue(_settings.trackingSource, out string bundled) && bundled != null;
 
         public string Status { get; private set; } = "Not started";
 
@@ -131,6 +132,12 @@ namespace VRCast.Tracking
             // 全入力元の同梱版を探しておく
             foreach (TrackingSource source in (TrackingSource[])Enum.GetValues(typeof(TrackingSource)))
             {
+                // 外部アプリから受信する入力元には同梱版が無い
+                if (!TrackingSourceInfo.UsesBundledTracker(source))
+                {
+                    continue;
+                }
+
                 _bundledPaths[source] = FindBundled(BundledRoot, source);
                 VRCastLog.Info(LogCategory, $"Bundled {ExecutableOf(source)}: {_bundledPaths[source] ?? "not found"}");
             }
@@ -311,6 +318,20 @@ namespace VRCast.Tracking
                 return;
             }
 
+            // 外部アプリ（VMC）から受信する間は同梱トラッカーを使わない（起動中なら止め、カメラも開かない）
+            if (!TrackingSourceInfo.UsesBundledTracker(_settings.trackingSource))
+            {
+                if (IsRunning)
+                {
+                    StopProcess();
+                    VRCastLog.Info(LogCategory, "Switched to an external app; tracker stopped");
+                }
+
+                Status = "Not used (receiving from an external app)";
+                _listedSource = null;
+                return;
+            }
+
             // 有効化後の初回と入力元の変更時は一覧を自動取得
             if (_listedSource != _settings.trackingSource)
             {
@@ -444,8 +465,8 @@ namespace VRCast.Tracking
 
         private bool UsesHands()
         {
-            // 手の推定を行うのは MediaPipe で腕・手が有効なときだけ
-            return _settings.trackingSource == TrackingSource.MediaPipe && _settings.trackingHands;
+            // 手の推定を行うのは腕・手を受信できる入力元で腕・手が有効なときだけ
+            return TrackingSourceInfo.HasArms(_settings.trackingSource) && _settings.trackingHands;
         }
 
         private void StartTracker()
@@ -633,7 +654,8 @@ namespace VRCast.Tracking
             TrackingSource source = _settings.trackingSource;
             string executable = ExecutableOf(source);
             string custom = PathUtility.NormalizeInput(_settings.trackerPath);
-            path = string.IsNullOrEmpty(custom) ? _bundledPaths[source] : custom;
+            _bundledPaths.TryGetValue(source, out string bundled);
+            path = string.IsNullOrEmpty(custom) ? bundled : custom;
 
             // 入力元に合った名前の実在する実行ファイルのみ受け付ける（入力元の切替後に別のトラッカーを起動しないように）
             bool valid = path != null
