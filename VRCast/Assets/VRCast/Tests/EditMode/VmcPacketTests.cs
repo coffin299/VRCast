@@ -74,6 +74,37 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Read_Vrm1NamesAndOtherVowels_DriveEyesAndMouth()
+        {
+            // VRM 1.0 の名前も受け付け、「あ」以外の母音でも口が開くこと（いちばん大きい母音の値）
+            var vmc = new VmcPacket();
+            Read(vmc, Bundle(Blend("blinkRight", 1f), Blend("aa", 0.2f), Blend("oh", 0.6f), Apply()), out _,
+                out FaceTrackingFrame frame);
+
+            Assert.That(frame.EyeOpenLeft, Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(frame.EyeOpenRight, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(frame.MouthOpen, Is.EqualTo(0.6f).Within(1e-5f));
+        }
+
+        [Test]
+        public void Read_ArKitWithoutJawOrBlink_FallsBackToVrmNames()
+        {
+            // 一部の ARKit 名だけ届く送信元では、届かない顎・まばたきを VRM の表情名で補うこと（パーフェクトシンクの値にも入る）
+            var vmc = new VmcPacket();
+            Read(vmc, Bundle(Blend("mouthSmileLeft", 0.5f), Blend("Blink_L", 1f), Blend("A", 1f), Apply()), out _,
+                out FaceTrackingFrame frame);
+
+            Assert.That(frame.MouthOpen, Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(frame.BlendShapes[ArKitFace.JawOpen], Is.EqualTo(1f).Within(1e-5f));
+            Assert.That(frame.EyeOpenLeft, Is.EqualTo(0f).Within(1e-5f));
+            Assert.That(frame.EyeOpenRight, Is.EqualTo(1f).Within(1e-5f));
+
+            // ARKit の jawOpen が届けば、そちらを優先すること
+            Read(vmc, Bundle(Blend("jawOpen", 0f), Apply()), out _, out frame);
+            Assert.That(frame.MouthOpen, Is.EqualTo(0f).Within(1e-5f));
+        }
+
+        [Test]
         public void Read_NonVmcOrBrokenPacket_ReturnsFalse()
         {
             var vmc = new VmcPacket();

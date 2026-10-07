@@ -29,11 +29,23 @@ namespace VRCast.Tracking
         // 診断用に覚えるアドレスの数の上限
         private const int MaxSeenAddresses = 256;
 
-        // VRM の表情名（正規化済み: 英数字のみ小文字）。ARKit 名が届かない送信元の目・口に使う
+        // VRM の表情名（正規化済み: 英数字のみ小文字。VRM 0.x と 1.0 の両方）。ARKit 名が届かない値の代わりに目・口へ使う
         private const string VrmBlink = "blink";
-        private const string VrmBlinkLeft = "blinkl";
-        private const string VrmBlinkRight = "blinkr";
-        private const string VrmMouthA = "a";
+        private static readonly HashSet<string> VrmBlinkLeftNames = new HashSet<string> { "blinkl", "blinkleft" };
+        private static readonly HashSet<string> VrmBlinkRightNames = new HashSet<string> { "blinkr", "blinkright" };
+
+        // 母音の表情名 → 位置（あいうえお。どの母音でも口は開くので、最大値を口の開きにする）
+        private static readonly Dictionary<string, int> VrmVowels = new Dictionary<string, int>
+        {
+            { "a", 0 }, { "aa", 0 },
+            { "i", 1 }, { "ih", 1 },
+            { "u", 2 }, { "ou", 2 },
+            { "e", 3 }, { "ee", 3 },
+            { "o", 4 }, { "oh", 4 },
+        };
+
+        // 母音の種類数
+        private const int VowelCount = 5;
 
         // 本人基準の左右で受け取った ARKit の値（ArKitFace.BlendShapeNames 順）と、受け取ったことのある名前
         private readonly float[] _personScores = new float[ArKitFace.BlendShapeNames.Length];
@@ -52,7 +64,7 @@ namespace VRCast.Tracking
         private float _vrmBlink;
         private float _vrmBlinkLeft;
         private float _vrmBlinkRight;
-        private float _vrmMouthA;
+        private readonly float[] _vrmVowels = new float[VowelCount];
 
         // 頭の向き（Head ボーンの回転。届くまでは正面）
         private Quaternion _headRotation = Quaternion.identity;
@@ -83,7 +95,7 @@ namespace VRCast.Tracking
             _vrmBlink = 0f;
             _vrmBlinkLeft = 0f;
             _vrmBlinkRight = 0f;
-            _vrmMouthA = 0f;
+            Array.Clear(_vrmVowels, 0, _vrmVowels.Length);
             _headRotation = Quaternion.identity;
             HasHead = false;
             _seenAddresses.Clear();
@@ -180,6 +192,11 @@ namespace VRCast.Tracking
                 HeadPosition = Vector3.zero,
             };
 
+            // VRM の表情名から求めた目の閉じ具合（映像上の左右。片目ずつの値が無ければ両目の値）と口の開き
+            float vrmClosedLeft = Mathf.Clamp01(Mathf.Max(_vrmBlink, _vrmBlinkLeft));
+            float vrmClosedRight = Mathf.Clamp01(Mathf.Max(_vrmBlink, _vrmBlinkRight));
+            float vrmMouth = VrmMouthOpen();
+
             // ARKit 名が届く送信元は、映像基準の左右に並べ替えて MediaPipe と同じ処理に通す（フレームごとに新しい配列）。
             // 届かない送信元は VRM の表情名で目・口だけ動かす
             if (ArKitShapeCount > 0)
@@ -190,14 +207,28 @@ namespace VRCast.Tracking
                     scores[ToVideoSide[i]] = _personScores[i];
                 }
 
+                // 一部の ARKit 名だけ届く送信元では、届かない顎・まばたきを VRM の表情名の値で補う
+                // （補わないと口・目が閉じたままになる。パーフェクトシンクの顎・まぶたにも同じ値が入る）
+                if (!_received[ArKitFace.JawOpen])
+                {
+                    scores[ArKitFace.JawOpen] = vrmMouth;
+                }
+
+                // 映像上の左目 = ArKit の映像基準の eyeBlinkRight（ArKitFace.Fill と同じ対応）
+                if (!_received[ArKitFace.EyeBlinkLeft] && !_received[ArKitFace.EyeBlinkRight])
+                {
+                    scores[ArKitFace.EyeBlinkRight] = vrmClosedLeft;
+                    scores[ArKitFace.EyeBlinkLeft] = vrmClosedRight;
+                }
+
                 ArKitFace.Fill(scores, ArKitRange.IPhone, ref frame);
                 return frame;
             }
 
-            // VRM の表情名だけの送信元は目と口だけ（片目ずつの値が無ければ両目の値を使う）
-            frame.EyeOpenLeft = 1f - Mathf.Clamp01(Mathf.Max(_vrmBlink, _vrmBlinkLeft));
-            frame.EyeOpenRight = 1f - Mathf.Clamp01(Mathf.Max(_vrmBlink, _vrmBlinkRight));
-            frame.MouthOpen = Mathf.Clamp01(_vrmMouthA);
+            // VRM の表情名だけの送信元は目と口だけ
+            frame.EyeOpenLeft = 1f - vrmClosedLeft;
+            frame.EyeOpenRight = 1f - vrmClosedRight;
+            frame.MouthOpen = vrmMouth;
             return frame;
         }
 
@@ -225,21 +256,35 @@ namespace VRCast.Tracking
             }
 
             // VRM の表情名（目と口に使うものだけ）
-            switch (Normalize(name))
+            string normalized = Normalize(name);
+            if (normalized == VrmBlink)
             {
-                case VrmBlink:
-                    _vrmBlink = value;
-                    break;
-                case VrmBlinkLeft:
-                    _vrmBlinkLeft = value;
-                    break;
-                case VrmBlinkRight:
-                    _vrmBlinkRight = value;
-                    break;
-                case VrmMouthA:
-                    _vrmMouthA = value;
-                    break;
+                _vrmBlink = value;
             }
+            else if (VrmBlinkLeftNames.Contains(normalized))
+            {
+                _vrmBlinkLeft = value;
+            }
+            else if (VrmBlinkRightNames.Contains(normalized))
+            {
+                _vrmBlinkRight = value;
+            }
+            else if (VrmVowels.TryGetValue(normalized, out int vowel))
+            {
+                _vrmVowels[vowel] = value;
+            }
+        }
+
+        private float VrmMouthOpen()
+        {
+            // どの母音でも口は開くので、いちばん大きい値を口の開きにする
+            float open = 0f;
+            foreach (float value in _vrmVowels)
+            {
+                open = Mathf.Max(open, value);
+            }
+
+            return Mathf.Clamp01(open);
         }
 
         private void SetHead(float[] values)

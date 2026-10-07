@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- iPhone・外部アプリ（VMC）で、アプリによって口が動かない問題を修正（「あ」以外の母音・VRM 1.0 の表情名にも対応し、顎の値が届かないときは母音の値で口を動かします）
+
+[English]
+- Fixed the mouth not moving with some apps when using iPhone / external app (VMC) (vowels other than "A" and VRM 1.0 expression names now work, and the vowels move the mouth when no jaw value is sent)
+
 ■ 1.9.1 (2026-10-07)
 
 [日本語]
