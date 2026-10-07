@@ -76,6 +76,7 @@ namespace VRCast.UI
             if (_settings.trackingEnabled)
             {
                 DrawSource();
+                DrawBlink();
                 DrawLauncher();
                 DrawPort();
                 GuiControls.Hint(_tracker.Status);
@@ -119,6 +120,21 @@ namespace VRCast.UI
 
             DrawPerfectSync();
             DrawExpressions();
+        }
+
+        private void DrawBlink()
+        {
+            // まばたきのトラッキングの ON/OFF（どの入力元でも使う。OFF の間は顔タブの自動まばたきに任せる）
+            _settings.trackingBlink = GUILayout.Toggle(
+                _settings.trackingBlink,
+                Loc.T("Track blinks", "まばたきをトラッキング", "눈 깜빡임 트래킹", "追踪眨眼", "追蹤眨眼"));
+
+            // OFF のときは自動まばたきになることを伝える
+            if (!_settings.trackingBlink)
+            {
+                GuiControls.Hint(Loc.T("Uses auto blink (Face tab) instead", "代わりに自動まばたき（顔タブ）を使います",
+                    "대신 자동 눈 깜빡임 (얼굴 탭)을 사용합니다", "改用自动眨眼（面部标签）", "改用自動眨眼（臉部分頁）"));
+            }
         }
 
         private void DrawPerfectSync()

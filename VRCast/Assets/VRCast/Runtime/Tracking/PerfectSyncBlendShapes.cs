@@ -150,8 +150,9 @@ namespace VRCast.Tracking
 
         /// <summary>
         /// 受信値を書き込む（毎フレーム呼ぶ）。
+        /// drivesBlink が false なら eyeBlinkLeft / Right は元の値へ戻して書かない（自動まばたきに任せる）。
         /// </summary>
-        public void Apply(float[] scores, bool mirror, float deltaTime)
+        public void Apply(float[] scores, bool mirror, float deltaTime, bool drivesBlink)
         {
             // 要素数が合わない値は使わない
             if (scores == null || scores.Length != _targets.Length)
@@ -169,9 +170,22 @@ namespace VRCast.Tracking
                     continue;
                 }
 
+                // まばたきを動かさない間は、一度だけ元の値へ戻して以降は書かない（同じ BlendShape への自動まばたきと競合させない）
+                bool blinkShape = i == EyeBlinkLeft || i == EyeBlinkRight;
+                if (blinkShape && !drivesBlink)
+                {
+                    if (_current[i] != 0f)
+                    {
+                        _current[i] = 0f;
+                        Write(i, 0f);
+                    }
+
+                    continue;
+                }
+
                 // 左右を合わせた値（まばたきは閉じ切るよう範囲を広げる）を平滑化して 0〜100 で書く
                 float target = Mathf.Clamp01(scores[SourceIndex(i, mirror)]);
-                if (i == EyeBlinkLeft || i == EyeBlinkRight)
+                if (blinkShape)
                 {
                     target = Mathf.InverseLerp(BlinkOpenScore, BlinkClosedScore, target);
                 }

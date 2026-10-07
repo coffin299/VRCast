@@ -76,10 +76,17 @@ namespace VRCast.Tests
                 var scores = new float[names.Length];
                 scores[Array.IndexOf(names, "mouthSmileLeft")] = 1f;
                 scores[Array.IndexOf(names, "jawOpen")] = 0.5f;
-                sync.Apply(scores, false, 10f);
+                scores[Array.IndexOf(names, "eyeBlinkLeft")] = 1f;
+                sync.Apply(scores, false, 10f, true);
                 Assert.That(Weight(renderer, "mouthSmileRight"), Is.EqualTo(100f).Within(0.01f));
                 Assert.That(Weight(renderer, "mouthSmileLeft"), Is.EqualTo(0f).Within(0.01f));
                 Assert.That(Weight(renderer, "jawOpen"), Is.EqualTo(50f).Within(0.01f));
+                Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(100f).Within(0.01f));
+
+                // まばたきを動かさない設定では、まばたきだけ元の値（0）へ戻り、ほかは書き続けること
+                sync.Apply(scores, false, 10f, false);
+                Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(0f).Within(0.01f));
+                Assert.That(Weight(renderer, "mouthSmileRight"), Is.EqualTo(100f).Within(0.01f));
 
                 // 解除すると元の値（0）へ戻ること
                 sync.Release();
