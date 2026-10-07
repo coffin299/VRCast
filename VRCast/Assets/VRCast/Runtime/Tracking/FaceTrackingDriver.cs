@@ -428,9 +428,14 @@ namespace VRCast.Tracking
                 personRight = _eyesClosed;
             }
 
+            // まばたきをトラッキングしない設定なら外部入力を解除し、自動まばたきに任せる
+            if (!_settings.trackingBlink)
+            {
+                ClearBlink();
+            }
             // パーフェクトシンクで目・口を動かす間は、まばたき・口パク用の BlendShape を重ねて閉じ過ぎ・開き過ぎにしない
             // （まばたきは開いたままの外部入力にして自動まばたきも止める）
-            if (IsPerfectSyncActive && _perfectSync.DrivesBlink)
+            else if (IsPerfectSyncActive && _perfectSync.DrivesBlink)
             {
                 SetBlink(0f, 0f);
             }
@@ -455,7 +460,7 @@ namespace VRCast.Tracking
             // 動作中は毎フレーム書き、使わない間は元の値へ戻す（一度だけ）
             if (IsPerfectSyncActive)
             {
-                _perfectSync.Apply(_lastFrame.BlendShapes, _settings.trackingMirror, Time.deltaTime);
+                _perfectSync.Apply(_lastFrame.BlendShapes, _settings.trackingMirror, Time.deltaTime, _settings.trackingBlink);
             }
             else
             {

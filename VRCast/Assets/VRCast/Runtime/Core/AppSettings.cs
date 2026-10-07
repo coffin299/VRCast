@@ -144,6 +144,9 @@ namespace VRCast.Core
         // 自動まばたき
         public bool autoBlink = true;
 
+        // 表情（ニュートラル以外）を出している間はまばたきしない（自動・トラッキングとも。表情の目の形を崩さないため）
+        public bool blinkPausedByExpression;
+
         // 揺れもの（PhysBone 近似）
         public bool physicsEnabled = true;
 
@@ -165,6 +168,9 @@ namespace VRCast.Core
         public float trackingBodyLean = 1f;
         public BodyMotion trackingBodyMotion = BodyMotion.Lean;
         public float trackingGaze = 1f;
+
+        // まばたきをトラッキングする（OFF なら目の開閉は使わず自動まばたきに任せる）
+        public bool trackingBlink = true;
 
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;

@@ -195,7 +195,7 @@ namespace VRCast.App
             expressions.Initialize(root, avatar.Expressions);
             expressions.LoadHotkeys(_settings.GetExpressionHotkeys(avatar.SourcePath), _settings);
             var blink = avatar.Instance.AddComponent<BlinkController>();
-            blink.Initialize(root, avatar.Descriptor.eyelids, _settings);
+            blink.Initialize(root, avatar.Descriptor.eyelids, _settings, expressions);
             var lipSync = avatar.Instance.AddComponent<LipSyncController>();
             lipSync.Initialize(root, avatar.Descriptor.lipSync, _microphone, _settings);
 

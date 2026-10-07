@@ -7,6 +7,7 @@ namespace VRCast.Animations
 {
     /// <summary>
     /// まばたき。ランダム間隔の自動まばたき（AppSettings.autoBlink で ON/OFF）と、外部（トラッキング）からの左右別の閉じ具合。
+    /// AppSettings.blinkPausedByExpression なら、ニュートラル以外の表情を出している間はどちらも止めて開いたままにする。
     /// 両目用の BlendShape には左右の小さい方（両目とも閉じている分）、片目用（ウインク）には左右の差分を上乗せし、二重に閉じないようにする。
     /// </summary>
     public class BlinkController : MonoBehaviour
@@ -32,6 +33,7 @@ namespace VRCast.Animations
         private readonly List<BlendShapeOverlay> _overlays = new List<BlendShapeOverlay>();
         private readonly List<EyeSide> _sides = new List<EyeSide>();
         private AppSettings _settings;
+        private ExpressionController _expressions;
         private float _nextBlinkTime;
         private bool _hasBoth;
 
@@ -50,9 +52,13 @@ namespace VRCast.Animations
         /// </summary>
         public bool HasWink { get; private set; }
 
-        public void Initialize(Transform root, EyelidData data, AppSettings settings)
+        /// <summary>
+        /// expressions は表情中にまばたきを止める設定のために見る（無ければ止めない）。
+        /// </summary>
+        public void Initialize(Transform root, EyelidData data, AppSettings settings, ExpressionController expressions)
         {
             _settings = settings;
+            _expressions = expressions;
 
             // まばたき用 BlendShape（ウインクと同名なら片目用として扱う）
             foreach (string shape in data.blinkBlendShapes)
@@ -123,6 +129,14 @@ namespace VRCast.Animations
                 return;
             }
 
+            // 表情中に止める設定なら、トラッキング・自動とも開いたまま（表情の目の形をそのまま見せる）
+            if (IsPausedByExpression)
+            {
+                _blinkStart = -1f;
+                Write(0f, 0f);
+                return;
+            }
+
             // 外部入力がある間はその値を使い、自動まばたきは止める
             if (_hasExternal)
             {
@@ -163,6 +177,10 @@ namespace VRCast.Animations
 
             Write(closed, closed);
         }
+
+        // ニュートラル以外の表情を出していて、その間は止める設定なら true
+        private bool IsPausedByExpression =>
+            _settings.blinkPausedByExpression && _expressions != null && _expressions.Current >= 0;
 
         private void Write(float left, float right)
         {
