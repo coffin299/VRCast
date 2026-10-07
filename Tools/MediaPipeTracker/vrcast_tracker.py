@@ -21,7 +21,12 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 頭の行列・腕・手・可視度は One Euro フィルターで平滑化してから送る
 （止まっているときの細かい揺れを消し、速い動きでは遅れを抑える。CPU 負荷はほぼ無い）。
 
---max-fps を指定すると推定の回数を毎秒その回数までに間引く（VRCast の軽量モード）。
+負荷を抑える仕組み（VRCast のトラッカーの動作「なめらか」「エコ」で値を変える）:
+    --max-fps            推定の回数を毎秒その回数までに間引く
+    --pose-every         体・手の推定を N フレームに 1 回にする（顔は毎フレーム。間のフレームは前回の結果を送る）
+    --hand-search-every  手が映っていない間、手を探すのを体の推定 N 回に 1 回にする
+                         （手が 2 本そろわない間は毎回手のひらの検出からやり直すため重い）
+カメラの読み取りは別スレッドで続け、推定は常に最新のフレームで行う（カメラ待ちで推定を止めない）。
 
 状態ログ（VRCast のデバッグログタブで行頭から重要度を判定する）:
     INFO: ...   起動・カメラ・モデルの状態（標準出力）
@@ -40,6 +45,7 @@ import os
 import platform
 import socket
 import sys
+import threading
 import time
 
 # 実行時に __pycache__ を作らない
@@ -98,6 +104,12 @@ MAX_READ_FAILURES = 30
 # 統計の状態ログを出す既定の間隔（秒）
 DEFAULT_STATUS_INTERVAL = 5.0
 
+# 新しいフレームを待つ最長時間（秒。この間隔で親プロセスの終了も確認する）
+FRAME_WAIT_TIMEOUT = 0.5
+
+# 終了時にカメラの読み取りスレッドを待つ最長時間（秒）
+GRABBER_JOIN_TIMEOUT = 2.0
+
 # 同じ種類の警告を出す最短間隔（秒。出力が増えすぎないように）
 WARNING_INTERVAL = 10.0
 
@@ -152,6 +164,10 @@ def parse_arguments():
     parser.add_argument("--no-hands", action="store_true")
     # 推定の回数の上限（毎秒、0 以下で無制限）。VRCast の軽量モードで CPU 負荷を下げる
     parser.add_argument("--max-fps", type=float, default=0.0)
+    # 体・手の推定を何フレームに 1 回にするか（1 で毎フレーム）
+    parser.add_argument("--pose-every", type=int, default=1)
+    # 手が映っていない間、体の推定何回に 1 回手を探すか（1 で毎回）
+    parser.add_argument("--hand-search-every", type=int, default=1)
     # 親プロセス（VRCast）の PID。終了したらトラッカーも終了する
     parser.add_argument("--parent-pid", type=int, default=0)
     # 統計の状態ログを出す間隔（秒、0 以下で出さない）
@@ -189,6 +205,9 @@ class Stats:
         self.read_failures = 0
         self.inferred = 0
         self.send_errors = 0
+        # 体・手の推定を実際に行った回数（間引いたフレームは数えない）
+        self.pose_runs = 0
+        self.hand_runs = 0
         # 顔・体が見つかった回数と、見つかった手の本数の合計
         self.faces = 0
         self.poses = 0
@@ -204,15 +223,19 @@ class Stats:
         elapsed = now - self._start
         if self._interval <= 0 or elapsed < self._interval:
             return
-        # 0 除算を避けた推定回数
+        # 0 除算を避けた推定回数（時間はモデルごとに実際に推定した回数で割る）
         inferred = max(self.inferred, 1)
-        hands = (f"hands {self.hand_ms / inferred:.1f} ms"
+        pose_runs = max(self.pose_runs, 1)
+        hand_runs = max(self.hand_runs, 1)
+        hands = (f"hands {self.hand_ms / hand_runs:.1f} ms x "
+                 f"{self.hand_runs / elapsed:.1f}/s"
                  if self._use_hands else "hands off")
         log("STATS",
             f"camera {self.read / elapsed:.1f} fps, "
             f"inference {self.inferred / elapsed:.1f} fps "
             f"(face {self.face_ms / inferred:.1f} ms, "
-            f"pose {self.pose_ms / inferred:.1f} ms, {hands}), "
+            f"pose {self.pose_ms / pose_runs:.1f} ms x "
+            f"{self.pose_runs / elapsed:.1f}/s, {hands}), "
             f"face found {self.faces * 100 // inferred}%, "
             f"pose found {self.poses * 100 // inferred}%, "
             f"hands per frame {self.hands / inferred:.2f}, "
@@ -220,6 +243,88 @@ class Stats:
             f"send errors {self.send_errors}")
         self._start = now
         self._clear()
+
+
+class FrameGrabber:
+    """カメラを別スレッドで読み続け、最新のフレームだけを保持する。
+
+    推定中もカメラのバッファを空にし続けるため、推定は常に最新のフレームで行え、
+    カメラのフレーム待ちで推定が止まらない（cv2 の読み取り中は GIL を手放す）。
+    """
+
+    def __init__(self, capture):
+        """capture（開いた cv2.VideoCapture）の読み取りを準備する。"""
+        self._capture = capture
+        self._condition = threading.Condition()
+        # 最新のフレームとその通し番号（0 = まだ無い）
+        self._frame = None
+        self._sequence = 0
+        # 連続の読み取り失敗回数と、前回の取り出し以降の読み取り・失敗の回数
+        self._failures = 0
+        self._reads = 0
+        self._read_failures = 0
+        self._stopped = False
+        self._thread = threading.Thread(
+            target=self._run, name="camera", daemon=True)
+
+    def start(self):
+        """読み取りを始める。"""
+        self._thread.start()
+
+    def stop(self):
+        """読み取りを止めてスレッドの終了を待つ（カメラの解放は呼び出し側）。"""
+        with self._condition:
+            self._stopped = True
+        self._thread.join(GRABBER_JOIN_TIMEOUT)
+
+    @property
+    def gave_up(self):
+        """連続で読めずに読み取りを止めたら True。"""
+        return self._failures >= MAX_READ_FAILURES
+
+    def take_counts(self):
+        """前回以降の (読み取り回数, 失敗回数, 連続の失敗回数) を返して数え直す。"""
+        with self._condition:
+            counts = (self._reads, self._read_failures, self._failures)
+            self._reads = 0
+            self._read_failures = 0
+            return counts
+
+    def wait(self, last_sequence, timeout):
+        """last_sequence より新しいフレームを待って (フレーム, 通し番号) を返す。
+
+        時間内に来なければ、または読み取りを止めていれば (None, last_sequence)。
+        """
+        with self._condition:
+            self._condition.wait_for(
+                lambda: self._sequence != last_sequence or self.gave_up,
+                timeout)
+            # 新しいフレームが無ければ無し
+            if self._sequence == last_sequence:
+                return None, last_sequence
+            return self._frame, self._sequence
+
+    def _run(self):
+        """止めるか、連続で読めなくなるまで読み続ける。"""
+        while True:
+            # 止める指示・読み取りの断念を確認する
+            with self._condition:
+                if self._stopped or self.gave_up:
+                    self._condition.notify_all()
+                    return
+            ok, frame = self._capture.read()
+            with self._condition:
+                if ok:
+                    # 最新のフレームに置き換え、待っている推定側へ知らせる
+                    self._frame = frame
+                    self._sequence += 1
+                    self._reads += 1
+                    self._failures = 0
+                    self._condition.notify_all()
+                else:
+                    # 失敗は連続回数で判定する（推定側がカメラの切断として終了する）
+                    self._failures += 1
+                    self._read_failures += 1
 
 
 class ParentWatch:
@@ -638,6 +743,59 @@ def assign_hands(hand_result, pose_result):
     return assigned
 
 
+class Inference:
+    """顔は毎フレーム、体・手は間引いて推定する（間引いたフレームは前回の結果を使う）。
+
+    手は映っている間は体と同じ頻度で追い、映っていない間は探す回数をさらに減らす。
+    """
+
+    def __init__(self, landmarkers, pose_every, hand_search_every, stats):
+        """landmarkers は (顔, 体, 手 or None)。頻度は 1 以上に丸める。"""
+        self._face, self._pose, self._hands = landmarkers
+        self._pose_every = max(1, pose_every)
+        self._hand_search_every = max(1, hand_search_every)
+        self._stats = stats
+        # 推定したフレーム数・体を推定した回数と、体・手の前回の結果
+        self._frames = 0
+        self._pose_runs = 0
+        self._pose_result = None
+        self._hand_result = None
+
+    def detect(self, image, timestamp):
+        """1 フレームを推定して (顔, 体, 手) の結果を返す（最初のフレームは必ず全部推定する）。"""
+        stats = self._stats
+        started = time.perf_counter()
+        face_result = self._face.detect_for_video(image, timestamp)
+        stats.face_ms += (time.perf_counter() - started) * 1000.0
+
+        # 体（と手）は N フレームに 1 回
+        if self._frames % self._pose_every == 0:
+            self._detect_body(image, timestamp)
+        self._frames += 1
+        stats.inferred += 1
+        return face_result, self._pose_result, self._hand_result
+
+    def _detect_body(self, image, timestamp):
+        """体を推定し、必要なら手も推定する。"""
+        stats = self._stats
+        started = time.perf_counter()
+        self._pose_result = self._pose.detect_for_video(image, timestamp)
+        pose_done = time.perf_counter()
+        stats.pose_ms += (pose_done - started) * 1000.0
+        stats.pose_runs += 1
+
+        # 手は映っていれば毎回、映っていなければ N 回に 1 回だけ探す
+        if self._hands is not None:
+            tracking = (self._hand_result is not None
+                        and bool(self._hand_result.hand_world_landmarks))
+            if tracking or self._pose_runs % self._hand_search_every == 0:
+                self._hand_result = self._hands.detect_for_video(
+                    image, timestamp)
+                stats.hand_ms += (time.perf_counter() - pose_done) * 1000.0
+                stats.hand_runs += 1
+        self._pose_runs += 1
+
+
 def build_packet(face_result, pose_result, hand_result, smoother, now):
     """推定結果を平滑化して、送信する JSON のバイト列を作る。"""
     packet = {"v": PROTOCOL_VERSION}
@@ -691,10 +849,15 @@ def run(arguments):
     log("INFO", f"Tracking camera {arguments.capture} -> "
                 f"{arguments.ip}:{arguments.port}")
 
-    failures = 0
     last_timestamp = -1
     smoother = Smoother()
     stats = Stats(arguments.status_interval, use_hands)
+    inference = Inference((face, pose, hands), arguments.pose_every,
+                          arguments.hand_search_every, stats)
+    # カメラは別スレッドで読み続ける（推定は最新のフレームだけを使う）
+    grabber = FrameGrabber(capture)
+    grabber.start()
+    last_sequence = 0
     # 最初のフレームを記録したか・次に読み取り失敗 / 送信失敗を警告してよい時刻
     first_frame = True
     next_read_warning = 0.0
@@ -715,24 +878,36 @@ def run(arguments):
                 log("INFO", "Parent process exited")
                 return 0
 
-            ok, frame = capture.read()
+            # 上限を超えないよう、次に推定してよい時刻まで待つ（その間もカメラは読み続ける）
+            wait = next_due - time.perf_counter()
+            if wait > 0:
+                time.sleep(wait)
+
+            # まだ推定していない新しいフレームを待つ
+            frame, sequence = grabber.wait(last_sequence, FRAME_WAIT_TIMEOUT)
             now = time.perf_counter()
+
+            # 読み取りスレッドの回数を集計する
+            reads, read_failures, failures = grabber.take_counts()
+            stats.read += reads
+            stats.read_failures += read_failures
             stats.report(now)
-            # 読めないフレームが続いたらカメラ切断とみなして終了
-            if not ok:
-                failures += 1
-                stats.read_failures += 1
-                # 失敗が始まったことを間隔を空けて警告する
-                if failures == 1 and now >= next_read_warning:
-                    next_read_warning = now + WARNING_INTERVAL
-                    log("WARN", "camera read failed; retrying "
-                                f"(exits after {MAX_READ_FAILURES} in a row)")
-                if failures >= MAX_READ_FAILURES:
-                    log("ERROR", "Camera stopped delivering frames")
-                    return 2
+
+            # 失敗が始まったことを間隔を空けて警告し、続いたらカメラ切断とみなして終了
+            if failures > 0 and now >= next_read_warning:
+                next_read_warning = now + WARNING_INTERVAL
+                log("WARN", "camera read failed; retrying "
+                            f"(exits after {MAX_READ_FAILURES} in a row)")
+            if grabber.gave_up:
+                log("ERROR", "Camera stopped delivering frames")
+                return 2
+
+            # 時間内に新しいフレームが来なければ待ち直す
+            if frame is None:
                 continue
-            failures = 0
-            stats.read += 1
+            # 推定に使わずに置き換わったフレームの数（推定がカメラに追いつかない分）
+            stats.skipped += sequence - last_sequence - 1
+            last_sequence = sequence
 
             # 最初のフレームだけ、届くまでの時間と実際の大きさを記録する
             if first_frame:
@@ -748,10 +923,6 @@ def run(arguments):
                 save_frame(save_path, frame)
                 save_path = ""
 
-            # 上限を超える分のフレームは読み捨てる（溜めると遅延するため読み取りは続ける）
-            if now < next_due:
-                stats.skipped += 1
-                continue
             # 次の推定時刻。大きく遅れたら今を起点にしてまとめて推定しない
             # （半間隔までの遅れは持ち越し、カメラのフレーム間隔とのずれで回数が減りすぎないようにする）
             next_due = max(next_due, now - interval / 2) + interval
@@ -765,19 +936,9 @@ def run(arguments):
             rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
             image = mp.Image(image_format=mp.ImageFormat.SRGB, data=rgb)
 
-            # 顔・体・（有効なら）手を推定し、モデルごとの時間を集計する
-            started = time.perf_counter()
-            face_result = face.detect_for_video(image, timestamp)
-            face_done = time.perf_counter()
-            pose_result = pose.detect_for_video(image, timestamp)
-            pose_done = time.perf_counter()
-            hand_result = (hands.detect_for_video(image, timestamp)
-                           if hands is not None else None)
-            hand_done = time.perf_counter()
-            stats.inferred += 1
-            stats.face_ms += (face_done - started) * 1000.0
-            stats.pose_ms += (pose_done - face_done) * 1000.0
-            stats.hand_ms += (hand_done - pose_done) * 1000.0
+            # 顔・体・（有効なら）手を推定する（体・手は間引き、モデルごとの時間は Inference が集計）
+            face_result, pose_result, hand_result = inference.detect(
+                image, timestamp)
             # 見つかった顔・体・手の数
             has_face = bool(face_result.face_blendshapes)
             has_pose = bool(pose_result.pose_landmarks)
@@ -813,7 +974,8 @@ def run(arguments):
                     log("WARN", f"failed to send to "
                                 f"{arguments.ip}:{arguments.port}: {error}")
     finally:
-        # カメラ・推定器・ソケット・監視ハンドルを解放
+        # 読み取りスレッドを止めてから、カメラ・推定器・ソケット・監視ハンドルを解放
+        grabber.stop()
         capture.release()
         sender.close()
         if watch is not None:

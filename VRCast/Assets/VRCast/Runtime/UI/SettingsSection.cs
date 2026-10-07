@@ -135,18 +135,20 @@ namespace VRCast.UI
 
             GuiControls.Hint(Loc.T(
                 $"Use this with games or OBS: drawing is limited to {RenderingController.LowLoadFrameRate} fps " +
-                $"(normally {RenderingController.NormalFrameRate}) and the bundled tracker runs lighter. " +
-                "Tracking becomes slightly less smooth.",
+                $"(normally {RenderingController.NormalFrameRate}) and OpenSeeFace uses a lighter model. " +
+                "For MediaPipe, choose Eco in the Tracking tab's Tracker mode.",
                 $"ゲームや OBS と同時に使うときに。描画を {RenderingController.LowLoadFrameRate}fps " +
-                $"（通常は {RenderingController.NormalFrameRate}fps）に抑え、同梱トラッカーの処理も軽くします。" +
-                "トラッキングの滑らかさは少し下がります。",
+                $"（通常は {RenderingController.NormalFrameRate}fps）に抑え、OpenSeeFace は軽いモデルを使います。" +
+                "MediaPipe はトラッキングタブの「トラッカーの動作」でエコを選んでください。",
                 $"게임이나 OBS와 함께 쓸 때 사용하세요. 화면을 {RenderingController.LowLoadFrameRate}fps" +
-                $"(평소 {RenderingController.NormalFrameRate}fps)로 제한하고 내장 트래커의 처리도 가볍게 합니다. " +
-                "트래킹의 부드러움은 조금 떨어집니다.",
+                $"(평소 {RenderingController.NormalFrameRate}fps)로 제한하고 OpenSeeFace는 가벼운 모델을 씁니다. " +
+                "MediaPipe는 트래킹 탭의 「트래커 동작」에서 절약을 선택하세요.",
                 $"与游戏或 OBS 同时使用时开启。将画面限制为 {RenderingController.LowLoadFrameRate}fps" +
-                $"（通常为 {RenderingController.NormalFrameRate}fps），并减轻内置追踪器的处理。追踪的流畅度会略有下降。",
+                $"（通常为 {RenderingController.NormalFrameRate}fps），OpenSeeFace 使用较轻的模型。" +
+                "MediaPipe 请在追踪标签页的“追踪器模式”中选择节能。",
                 $"與遊戲或 OBS 同時使用時開啟。將畫面限制為 {RenderingController.LowLoadFrameRate}fps" +
-                $"（通常為 {RenderingController.NormalFrameRate}fps），並減輕內建追蹤器的處理。追蹤的流暢度會略有下降。"));
+                $"（通常為 {RenderingController.NormalFrameRate}fps），OpenSeeFace 使用較輕的模型。" +
+                "MediaPipe 請在追蹤分頁的「追蹤器模式」中選擇節能。"));
 
             // パネル下部の動作状況（表示は英語のみ）
             _settings.showPerformanceStats = GUILayout.Toggle(_settings.showPerformanceStats, Loc.T(

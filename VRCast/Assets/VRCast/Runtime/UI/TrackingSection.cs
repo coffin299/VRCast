@@ -187,11 +187,11 @@ namespace VRCast.UI
             }
 
             GuiControls.Hint(Loc.T(
-                "PC load is a rough guide for this PC's CPU (Low load mode lowers it)",
-                "PC 負荷はこの PC の CPU 負荷の目安です（軽量モードで下がります）",
-                "PC 부하는 이 PC의 CPU 부하 기준입니다 (저부하 모드에서 낮아집니다)",
-                "电脑负载为本机 CPU 负载的参考（低负载模式下会降低）",
-                "電腦負載為本機 CPU 負載的參考（低負載模式下會降低）"));
+                "PC load is a rough guide for this PC's CPU (MediaPipe: Eco lowers it, OpenSeeFace: Low load mode lowers it)",
+                "PC 負荷はこの PC の CPU 負荷の目安です（MediaPipe はエコ、OpenSeeFace は軽量モードで下がります）",
+                "PC 부하는 이 PC의 CPU 부하 기준입니다 (MediaPipe는 절약, OpenSeeFace는 저부하 모드에서 낮아집니다)",
+                "电脑负载为本机 CPU 负载的参考（MediaPipe 在节能模式、OpenSeeFace 在低负载模式下会降低）",
+                "電腦負載為本機 CPU 負載的參考（MediaPipe 在節能模式、OpenSeeFace 在低負載模式下會降低）"));
         }
 
         private bool SourceNotesFit(string[] labels)
@@ -266,11 +266,14 @@ namespace VRCast.UI
         {
             switch (source)
             {
-                // MediaPipe は腕・手の推定を止めると軽くなる
+                // MediaPipe はエコ・腕と手の推定を止めるとそれぞれ 1 段軽くなる
                 case TrackingSource.MediaPipe:
-                    return _settings.trackingHands
+                    int level = (_settings.trackingHands ? 1 : 0) + (_settings.trackerMode == TrackerMode.Eco ? 0 : 1);
+                    return level >= 2
                         ? Loc.T("High", "高", "높음", "高", "高")
-                        : Loc.T("Medium", "中", "보통", "中", "中");
+                        : level == 1
+                            ? Loc.T("Medium", "中", "보통", "中", "中")
+                            : Loc.T("Low", "低", "낮음", "低", "低");
                 case TrackingSource.OpenSeeFace:
                     return Loc.T("Medium", "中", "보통", "中", "中");
                 default:
@@ -280,6 +283,12 @@ namespace VRCast.UI
 
         private void DrawSourceFeatures()
         {
+            // トラッカーの動作は同梱の MediaPipe 版のみ
+            if (_settings.trackingSource == TrackingSource.MediaPipe)
+            {
+                DrawTrackerMode();
+            }
+
             // 腕・手は受信できる入力元（MediaPipe）のみ
             if (TrackingSourceInfo.HasArms(_settings.trackingSource))
             {
@@ -292,6 +301,32 @@ namespace VRCast.UI
                 DrawPerfectSync();
                 DrawExpressions();
             }
+        }
+
+        private void DrawTrackerMode()
+        {
+            // 並びは TrackerMode と同じ（変更すると TrackerProcess がトラッカーを起動し直す）
+            string[] labels =
+            {
+                Loc.T("Smooth", "なめらか", "부드럽게", "流畅", "流暢"),
+                Loc.T("Eco", "エコ", "절약", "节能", "節能"),
+            };
+            _settings.trackerMode = (TrackerMode)GuiControls.EnumSelector(
+                Loc.T("Tracker mode", "トラッカーの動作", "트래커 동작", "追踪器模式", "追蹤器模式"),
+                labels, (int)_settings.trackerMode);
+            GuiControls.Hint(_settings.trackerMode == TrackerMode.Eco
+                ? Loc.T(
+                    "Eco: up to 20 fps, arms and hands are updated less often. About half the PC load of Smooth.",
+                    "エコ: 最大 20fps。腕・手の更新を減らし、PC 負荷は「なめらか」の半分ほどです。",
+                    "절약: 최대 20fps. 팔·손 갱신을 줄여 PC 부하가 「부드럽게」의 절반 정도입니다.",
+                    "节能：最高 20fps，减少手臂和手的更新，电脑负载约为“流畅”的一半。",
+                    "節能：最高 20fps，減少手臂和手的更新，電腦負載約為「流暢」的一半。")
+                : Loc.T(
+                    "Smooth: face and expressions follow at the camera's frame rate (up to 30 fps). Arms and hands update every other frame.",
+                    "なめらか: 顔・表情をカメラのフレームレート（最大 30fps）で追従します。腕・手は 2 フレームに 1 回の更新です。",
+                    "부드럽게: 얼굴·표정을 카메라 프레임 레이트(최대 30fps)로 따라갑니다. 팔·손은 2프레임에 1번 갱신합니다.",
+                    "流畅：面部和表情以摄像头帧率（最高 30fps）跟随。手臂和手每 2 帧更新 1 次。",
+                    "流暢：臉部和表情以攝影機影格率（最高 30fps）跟隨。手臂和手每 2 格更新 1 次。"));
         }
 
         private void DrawHands()

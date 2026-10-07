@@ -111,6 +111,9 @@ namespace VRCast.Core
         // パネルの一番下に動作状況（fps・CPU・GPU・トラッキング）を表示するか
         public bool showPerformanceStats = true;
 
+        // 同梱の MediaPipe トラッカーの動作（なめらか / エコ）
+        public TrackerMode trackerMode = TrackerMode.Smooth;
+
         // VRCast 本体と同梱トラッカーのプロセスの優先度（両方に同じ値を使う）
         public ProcessPriority processPriority = ProcessPriority.Normal;
 
@@ -508,6 +511,12 @@ namespace VRCast.Core
             if (!Enum.IsDefined(typeof(HybridCoreSelection), hybridCores))
             {
                 hybridCores = HybridCoreSelection.Auto;
+            }
+
+            // 未知のトラッカーの動作はなめらかへ
+            if (!Enum.IsDefined(typeof(TrackerMode), trackerMode))
+            {
+                trackerMode = TrackerMode.Smooth;
             }
 
             // 未知の GPU の優先設定は Windows に任せる

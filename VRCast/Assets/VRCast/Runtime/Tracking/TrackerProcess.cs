@@ -37,8 +37,11 @@ namespace VRCast.Tracking
         // MediaPipe 版に親プロセス（VRCast）の PID を渡す引数（親の終了を検出して自分も終了する）
         private const string ParentPidArgument = " --parent-pid ";
 
-        // 軽量モードの引数（MediaPipe 版: 推定を毎秒 20 回までに間引く / OpenSeeFace: 既定（3）より軽いモデル）
-        private const string LowLoadMediaPipeArgument = " --max-fps 20";
+        // MediaPipe 版のトラッカーの動作ごとの引数（推定回数の上限・体と手の間引き・手が映っていない間に探す頻度）
+        private const string SmoothMediaPipeArgument = " --pose-every 2 --hand-search-every 2";
+        private const string EcoMediaPipeArgument = " --max-fps 20 --pose-every 3 --hand-search-every 3";
+
+        // 軽量モードの引数（OpenSeeFace: 既定（3）より軽いモデル。MediaPipe 版はトラッカーの動作で決める）
         private const string LowLoadOpenSeeFaceArgument = " --model 2";
 
         // 一覧の 1 行（"0: カメラ名"）
@@ -94,6 +97,7 @@ namespace VRCast.Tracking
         private TrackingSource _startedSource;
         private bool _startedHands;
         private bool _startedLowLoad;
+        private TrackerMode _startedMode;
         private ProcessPriority _appliedPriority;
         private ulong _appliedCoreMask;
         private float _nextStartTime;
@@ -375,10 +379,11 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・軽量モードが変わったら起動し直す
+            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・動作・（OpenSeeFace の）軽量モードが変わったら起動し直す
+            bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
             bool changed = _startedPort != _settings.trackingPort || _startedCamera != _settings.trackerCamera
                 || _startedSource != _settings.trackingSource || _startedHands != UsesHands()
-                || _startedLowLoad != _settings.lowLoadMode;
+                || (mediaPipe ? _startedMode != _settings.trackerMode : _startedLowLoad != _settings.lowLoadMode);
             if (changed)
             {
                 VRCastLog.Info(LogCategory, "Tracking settings changed; restarting tracker");
@@ -506,6 +511,7 @@ namespace VRCast.Tracking
                 _startedSource = _settings.trackingSource;
                 _startedHands = UsesHands();
                 _startedLowLoad = _settings.lowLoadMode;
+                _startedMode = _settings.trackerMode;
                 bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
                 string arguments = $"-c {camera} -i 127.0.0.1 -p {_startedPort}";
                 if (mediaPipe && !_startedHands)
@@ -513,10 +519,14 @@ namespace VRCast.Tracking
                     arguments += NoHandsArgument;
                 }
 
-                // 軽量モードでは入力元に合わせて処理を軽くする
-                if (_startedLowLoad)
+                // MediaPipe 版はトラッカーの動作、OpenSeeFace は軽量モードで処理の重さを決める
+                if (mediaPipe)
                 {
-                    arguments += mediaPipe ? LowLoadMediaPipeArgument : LowLoadOpenSeeFaceArgument;
+                    arguments += _startedMode == TrackerMode.Eco ? EcoMediaPipeArgument : SmoothMediaPipeArgument;
+                }
+                else if (_startedLowLoad)
+                {
+                    arguments += LowLoadOpenSeeFaceArgument;
                 }
 
                 // MediaPipe 版には自分の PID を渡し、VRCast が異常終了してもトラッカー（とカメラ）を残さない

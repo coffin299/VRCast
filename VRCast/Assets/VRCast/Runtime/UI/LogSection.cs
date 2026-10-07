@@ -118,7 +118,8 @@ namespace VRCast.UI
                     $"hybrid {_settings.hybridCores}, mask 0x{CpuTopology.CoreMaskFor(_settings):X}",
                 $"Tracking: {_settings.trackingSource}, " +
                     (_settings.trackingEnabled ? "enabled" : "disabled") +
-                    (_settings.lowLoadMode ? ", low load" : string.Empty),
+                    (_settings.lowLoadMode ? ", low load" : string.Empty) +
+                    $", mode {_settings.trackerMode}",
                 $"Tracker: {_process.Status}",
                 $"Receiver: {_receiver.Status}",
                 $"Selected camera: {(string.IsNullOrEmpty(_settings.trackerCamera) ? "-" : _settings.trackerCamera)}",
