@@ -9,7 +9,7 @@ using VRCast.Dynamics;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Face タブ（揺れもの・自動まばたき・表情中のまばたき停止・マイクリップシンク）。
+    /// Face タブ（揺れもの・自動まばたき・表情中のまばたき停止・マイクリップシンク・表情中の口の停止）。
     /// </summary>
     public class FaceSection
     {
@@ -91,6 +91,21 @@ namespace VRCast.UI
                     "입 BlendShape (Viseme)가 없습니다", "没有嘴部的 BlendShape（Viseme）",
                     "沒有嘴部的 BlendShape（Viseme）"));
             }
+
+            // 表情中の口の停止（マイク・トラッキングを別々に選べ、両方 ON も可。マイクを OFF にしていても出す）
+            _settings.lipSyncPausedByExpression = GUILayout.Toggle(
+                _settings.lipSyncPausedByExpression, Loc.T("Pause microphone lip sync during expressions",
+                    "表情中はマイクの口パクを止める", "표정 중에는 마이크 립싱크 멈추기", "表情期间停止麦克风口型同步",
+                    "表情期間停止麥克風口型同步"));
+            _settings.trackingMouthPausedByExpression = GUILayout.Toggle(
+                _settings.trackingMouthPausedByExpression, Loc.T("Pause tracked mouth during expressions",
+                    "表情中はトラッキングの口を止める", "표정 중에는 트래킹의 입 멈추기", "表情期间停止追踪的嘴部动作",
+                    "表情期間停止追蹤的嘴部動作"));
+            GuiControls.Hint(Loc.T("For avatars whose expression mouth breaks when combined with lip sync",
+                "表情の口とリップシンクが重なると崩れるアバター向け",
+                "표정의 입과 립싱크가 겹치면 깨지는 아바타용",
+                "适用于表情的嘴型与口型同步重叠时会变形的虚拟形象",
+                "適用於表情的嘴型與口型同步重疊時會變形的虛擬形象"));
 
             // 無効時は詳細設定を出さない
             if (_settings.lipSyncEnabled)

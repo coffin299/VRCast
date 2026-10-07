@@ -10,6 +10,8 @@ namespace VRCast.Animations
     /// マイク音声で口を動かすリップシンク。
     /// Viseme 方式は母音（あいうえお）の重みで aa / ih / ou / E / oh を、JawFlap 方式は口開閉 BlendShape を音量に応じて上乗せする。
     /// 外部入力（フェイストラッキングの口の開き）は口の開き具合に使い、形は声が出ている間はマイクの母音、無音なら aa（口を開く形）。
+    /// ニュートラル以外の表情を出している間、AppSettings.lipSyncPausedByExpression ならマイク分、
+    /// trackingMouthPausedByExpression なら外部入力分を止める（両方なら元の値に戻る）。
     /// </summary>
     public class LipSyncController : MonoBehaviour
     {
@@ -34,6 +36,7 @@ namespace VRCast.Animations
 
         private MicrophoneInput _microphone;
         private AppSettings _settings;
+        private ExpressionController _expressions;
 
         public bool IsAvailable => _openShape >= 0;
 
@@ -47,10 +50,15 @@ namespace VRCast.Animations
         /// </summary>
         public float ExternalLevel { get; set; }
 
-        public void Initialize(Transform root, LipSyncData data, MicrophoneInput microphone, AppSettings settings)
+        /// <summary>
+        /// expressions は表情中に口を止める設定のために見る（無ければ止めない）。
+        /// </summary>
+        public void Initialize(Transform root, LipSyncData data, MicrophoneInput microphone, AppSettings settings,
+            ExpressionController expressions)
         {
             _microphone = microphone;
             _settings = settings;
+            _expressions = expressions;
 
             // モードに応じて母音ごとの BlendShape を選ぶ（JawFlap は全母音で同じ口開閉）
             bool visemes = data.mode == LipSyncData.ModeVisemeBlendShape
@@ -114,12 +122,21 @@ namespace VRCast.Animations
                 return;
             }
 
-            // 無効時・マイク無しはマイク分 0
-            bool active = _settings.lipSyncEnabled && _microphone != null;
+            // 表情を出しているか（止める設定ごとに使う）
+            bool expressionShown = _expressions != null && _expressions.Current >= 0;
+
+            // 無効時・マイク無し・表情中にマイクを止める設定ならマイク分 0
+            bool active = _settings.lipSyncEnabled && _microphone != null
+                && !(expressionShown && _settings.lipSyncPausedByExpression);
             float level = active ? _microphone.Level : 0f;
 
+            // 表情中にトラッキングの口を止める設定なら外部入力分 0
+            float external = expressionShown && _settings.trackingMouthPausedByExpression
+                ? 0f
+                : Mathf.Clamp01(ExternalLevel);
+
             // 口の開き具合はマイクの音量と外部入力（カメラの口の開き）の大きい方
-            float amount = Mathf.Max(level, Mathf.Clamp01(ExternalLevel));
+            float amount = Mathf.Max(level, external);
             System.Array.Clear(_values, 0, _values.Length);
 
             // 声が出ている間はマイクの母音の重みで各 BlendShape へ配る（同じ BlendShape の母音は合算）。
@@ -142,6 +159,5 @@ namespace VRCast.Animations
             {
                 _shapes[i].Write(Mathf.Clamp01(_values[i]) * 100f);
             }
-        }
-    }
+        }    }
 }

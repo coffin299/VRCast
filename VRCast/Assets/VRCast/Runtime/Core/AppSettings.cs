@@ -181,6 +181,11 @@ namespace VRCast.Core
         public bool lipSyncVowels = true;
         public float lipSyncVoiceScale = 1f;
 
+        // 表情（ニュートラル以外）を出している間は口を動かさない（表情の口の形と重ねて崩さないため）。
+        // マイクの口パクとトラッキングの口の開きは別々に止められる（両方 ON も可）
+        public bool lipSyncPausedByExpression;
+        public bool trackingMouthPausedByExpression;
+
         // トラッキング（入力元のトラッカーから UDP 受信。鏡像 = 本人の動きを鏡のように反映）
         public bool trackingEnabled;
         public TrackingSource trackingSource = TrackingSource.MediaPipe;

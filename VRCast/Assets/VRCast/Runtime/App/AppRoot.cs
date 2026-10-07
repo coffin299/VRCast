@@ -197,7 +197,7 @@ namespace VRCast.App
             var blink = avatar.Instance.AddComponent<BlinkController>();
             blink.Initialize(root, avatar.Descriptor.eyelids, _settings, expressions);
             var lipSync = avatar.Instance.AddComponent<LipSyncController>();
-            lipSync.Initialize(root, avatar.Descriptor.lipSync, _microphone, _settings);
+            lipSync.Initialize(root, avatar.Descriptor.lipSync, _microphone, _settings, expressions);
 
             // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
             var face = avatar.Instance.AddComponent<FaceTrackingDriver>();

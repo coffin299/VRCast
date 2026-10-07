@@ -100,7 +100,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | :--- | :--- |
 | `VRCastLog` | `Debug.Log` をカテゴリ付きで薄くラップ |
 | `LogBuffer` | Debug log タブ用に、`Application.logMessageReceivedThreaded`（`SubsystemRegistration` で登録）で全スレッドのログを最大 2000 件の環状バッファに保持。`[VRCast][Category]` はカテゴリと本文に分け、それ以外は `Unity` カテゴリ。スタックトレースはエラーのみ保持。`Add` で Player.log に書かないログ（トラッカーの出力 `TrackerOutput`）も追加できる。`Version` で UI が変化を検出。重要度は DEBUG / INFO / WARN / ERROR で、DEBUG は `DetailEnabled`（設定 `detailedLogging`）の間だけ記録（`VRCastLog.Detail`）。直前と同じ内容は 1 件にまとめて `Count` を増やす。配布版では通常ログ・警告のスタックトレース取得を止める |
-| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色（既定ベージュ）、仮想カメラの ON/OFF と方式（Windows 11 の Media Foundation を使うか）、ライト強度・向き・色温度・環境光・アバターの明るさ、待機ポーズの度合い、待機モーション（呼吸・体の揺れ・頭のゆらぎの ON/OFF・強さ・速さ）、自動まばたき・表情中のまばたき停止、揺れもの ON/OFF、リップシンク・マイク設定・母音の口の形と声の高さ補正、トラッキングの ON/OFF・入力元（MediaPipe / OpenSeeFace）・ポート・鏡像・体の動かし方と強さ・視線の強さ・まばたきのトラッキングの ON/OFF・腕と手の ON/OFF・トラッカーのパス・カメラ名、表示言語・UI の大きさ・ダークモード・軽量モード・プロセスの優先度・X3D でキャッシュの無い側のコアで動かすか・P コア / E コアの選択（`HybridCoreSelection`）・描画に使う GPU（優先設定と直接指定の GPU 名）・アップデート確認の ON/OFF）。`ResetToDefaults` で同じインスタンスのまま既定値へ戻す（ウィンドウサイズ・最後のアバターは保持） |
+| `AppSettings` | 永続化する設定値（ウィンドウサイズ、最後に開いたアバター、背景透過・背景色（既定ベージュ）、仮想カメラの ON/OFF と方式（Windows 11 の Media Foundation を使うか）、ライト強度・向き・色温度・環境光・アバターの明るさ、待機ポーズの度合い、待機モーション（呼吸・体の揺れ・頭のゆらぎの ON/OFF・強さ・速さ）、自動まばたき・表情中のまばたき停止、揺れもの ON/OFF、リップシンク・マイク設定・母音の口の形と声の高さ補正・表情中の口の停止（マイク・トラッキング別）、トラッキングの ON/OFF・入力元（MediaPipe / OpenSeeFace）・ポート・鏡像・体の動かし方と強さ・視線の強さ・まばたきのトラッキングの ON/OFF・腕と手の ON/OFF・トラッカーのパス・カメラ名、表示言語・UI の大きさ・ダークモード・軽量モード・プロセスの優先度・X3D でキャッシュの無い側のコアで動かすか・P コア / E コアの選択（`HybridCoreSelection`）・描画に使う GPU（優先設定と直接指定の GPU 名）・アップデート確認の ON/OFF）。`ResetToDefaults` で同じインスタンスのまま既定値へ戻す（ウィンドウサイズ・最後のアバターは保持） |
 | `UiLanguage` | 操作パネルの表示言語（Auto = 0: OS に合わせる / English = 1 / Japanese = 2 / Korean = 3 / ChineseSimplified = 4 / ChineseTraditional = 5、設定に数値で保存するため並びは変えない） |
 | `TrackingSource` | トラッキングの入力元（MediaPipe = 0 / OpenSeeFace = 1、設定に数値で保存） |
 | `BodyMotion` | 頭の位置に合わせた体の動かし方（Lean = 0: 足を固定して背骨・胸を傾ける / Move = 1: 腰ごと移動 / LeanAndMove = 2、設定に数値で保存） |
@@ -134,7 +134,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `BlendShapeOverlay` | BlendShape の検索と、元の値（表情等）を保ったままの上乗せ書き込み（`BlendShapeLimiter` の上限で切って書き、上限で切った固定の値は切る前の値を元の値として読む） |
 | `BlendShapeLimiter` | アバターごとの BlendShape の上限。読込時に全 `SkinnedMeshRenderer` の BlendShape を列挙し、記録済みの上限（パス + 名前）を当てる。表情・まばたき等より先に初期化し、`BlendShapeOverlay` の生成（まばたき・口パク・パーフェクトシンク）と `ExpressionController` の対象解決が `MarkFace` で「顔」として登録する（一覧の区分だけで、上限の効き方は同じ）。`BlendShapeOverlay` と `ExpressionController` は書き込む前に `Limit` を通す。どの処理も書かない固定の値は LateUpdate の最後（実行順 10000）に上限で切り、上限を緩めると切る前の値へ戻す。表示中のアバターの分だけを静的に参照する |
 | `BlinkController` | ランダム間隔の自動まばたき（ON/OFF 可）。外部入力（トラッキング、左右別）があればそちらを優先。設定により表情（`ExpressionController.Current`）中はどちらも止める。止めていた後（表情・外部入力・OFF）は再開時点から次のまばたきを予約し直す（止めている間に過ぎた予定ですぐ閉じない）。両目用とウインク用 BlendShape の振り分け |
-| `LipSyncController` | マイク音量 × 母音の重みを Viseme `aa` / `ih` / `ou` / `E` / `oh`（同名の BlendShape はまとめる、無い母音は `aa` で代用）へ、JawFlap 方式は口開閉 BlendShape へ上乗せ。外部入力（トラッキングの口の開き）はマイク音量と大きい方を開き具合に使い、声が出ている間はマイクの母音で配る（無音なら `aa`） |
+| `LipSyncController` | マイク音量 × 母音の重みを Viseme `aa` / `ih` / `ou` / `E` / `oh`（同名の BlendShape はまとめる、無い母音は `aa` で代用）へ、JawFlap 方式は口開閉 BlendShape へ上乗せ。外部入力（トラッキングの口の開き）はマイク音量と大きい方を開き具合に使い、声が出ている間はマイクの母音で配る（無音なら `aa`）。設定により表情（`ExpressionController.Current`）中はマイク分・外部入力分をそれぞれ止める |
 | `MicrophoneInput` | マイクのループ録音と音量（RMS、ゲート・感度・平滑化）、声が出ている間の母音推定（`VowelAnalyzer`）と重みの平滑化。デバイス切替・切断時の再開 |
 | `VowelAnalyzer` | 約 11kHz へ間引き → 高域強調・ハミング窓 → LPC（12 次、Levinson-Durbin）の包絡から F1 / F2 を求め、母音（あいうえお）の代表値との対数周波数の距離で重み（合計 1）を出す。声の高さ補正は代表値に掛ける倍率 |
 | `PhysBoneSimulator` | アバターの全 PhysBone を 60Hz 固定ステップで更新。ON/OFF、粒子数上限 |
@@ -178,7 +178,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `KeyCombo` | 仮想キーと Ctrl / Alt / Shift の組み合わせ（完全一致で判定。キー自体が修飾キーならその種類は条件から外す。表示は `Ctrl+Alt+N` 形式） |
 | `KeyCapture` | 割り当て待ち（毎フレームのキーの状態から組み合わせを決める。修飾キーは押して離すと単独、Esc でやめる。開始時に押していたキーは無視） |
 | `GlobalKeyboard` | ウィンドウが前面に無くても読めるキーの状態（`GetAsyncKeyState`。キーは奪わない）と、仮想キーの表示名（記号キーは `GetKeyNameText` でキーボード配列の名前） |
-| `FaceSection` | Face タブ（PhysBone、Auto blink、表情中のまばたき停止、Lip sync、マイク選択・感度・メーター） |
+| `FaceSection` | Face タブ（PhysBone、Auto blink、表情中のまばたき停止、Lip sync、表情中の口の停止（マイク・トラッキングの 2 つのトグル）、マイク選択・感度・メーター） |
 | `ShapeKeySection` | Shape keys タブ（BlendShape の上限。顔（まばたき・口・表情・パーフェクトシンクで動くもの）/ その他の切り替え・検索・上限付きだけの表示。全件を専用のスクロール欄に出し、見えている行だけを描く（行の高さ固定、上下は空白で高さだけ確保）。絞り込み結果は条件・上限付きの数・顔の数が変わったときだけ作り直し、表示名は `BlendShapeLimiter` が列挙時に作る。変えたらアバターごとに記録。口パク中に揺れる Face タブの母音表示と分けるため別タブ） |
 | `TrackingSection` | Tracking タブ（ON/OFF、入力元の切替（入力元ごとのスイッチを縦に並べ、右（前回の描画で測った行の幅に収まらない言語ではスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（MediaPipe は腕・手の ON/OFF で高 / 中、OpenSeeFace は中、スマートフォンからの受信は低）を表示）、腕と手の ON/OFF と状態、まばたきのトラッキングの ON/OFF、表情反映の ON/OFF・しきい値・表情ごとの割り当て（Auto / None / プリセット）と判定中の表情、カメラ選択・一覧更新・再起動、同梱版が無いときのトラッカーのパス、ポート、受信状態 / Mirror、体の動かし方と強さ、視線 / キャリブレーションの案内と頭の移動量 / Raw view と顔の数値） |
 | `DisplaySection` | Display タブ（カメラの FOV・リセット、背景・背景色（ベージュに戻すボタン）、解像度プリセット、ライトのプリセット・環境光・太陽光の強さ・色温度・向き） |
