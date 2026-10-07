@@ -144,6 +144,11 @@
   <p class="note ko">원본 아바타는 변경되지 않습니다. 표정·립싱크·눈 깜빡임·흔들림·Constraint 설정도 함께 내보내집니다.</p>
   <p class="note zh-hans">不会修改原始虚拟形象。表情、口型同步、眨眼、物理摆动和 Constraint 的设置也会一并导出。</p>
   <p class="note zh-hant">不會修改原始虛擬形象。表情、口型同步、眨眼、物理擺動和 Constraint 的設定也會一併匯出。</p>
+  <p class="note ja">シーン上で非アクティブ（チェックを外した）オブジェクトは、子も含めて書き出されません。表示したい衣装・小物はアクティブにしてから書き出してください。</p>
+  <p class="note en">Objects that are inactive in the scene (unchecked) are not exported, including their children. Make outfits and accessories you want to show active before exporting.</p>
+  <p class="note ko">씬에서 비활성(체크 해제)인 오브젝트는 자식을 포함해 내보내지지 않습니다. 표시하고 싶은 의상·소품은 활성화한 뒤 내보내세요.</p>
+  <p class="note zh-hans">场景中未激活（取消勾选）的对象及其子对象不会被导出。想要显示的服装和小物请先激活再导出。</p>
+  <p class="note zh-hant">場景中未啟用（取消勾選）的物件及其子物件不會被匯出。想要顯示的服裝和小物請先啟用再匯出。</p>
   <p class="note ja">ブレンドシェイプは Unity のシーンで設定した値のまま書き出されます（<span class="ui">シーンのブレンドシェイプの値を優先する</span>、既定 ON）。
     衣装の切り替えに合わせて縮小用ブレンドシェイプを FX で動かしている場合などは、OFF にすると VRChat に入ったときの初期状態の値で書き出します。</p>
   <p class="note en">Blend shapes are exported with the values set in your Unity scene (<span class="ui">Keep blend shape values from the scene</span>, on by default).
@@ -499,11 +504,11 @@
         <span class="ko"><span class="ui">트래킹 사용</span>을 켜면 포함된 트래커가 자동으로 시작되어 머리 방향·눈 깜빡임·입·시선 (MediaPipe에서는 팔·손도)이 움직입니다.</span>
         <span class="zh-hans">打开 <span class="ui">启用追踪</span> 后，内置追踪器会自动启动，驱动头部朝向、眨眼、嘴部和视线（MediaPipe 还包括手臂和手）。</span>
         <span class="zh-hant">開啟 <span class="ui">啟用追蹤</span> 後，內建追蹤器會自動啟動，驅動頭部朝向、眨眼、嘴部和視線（MediaPipe 還包括手臂和手）。</span></li>
-    <li><span class="ja"><span class="ui">入力元</span> は、縦に並んだスイッチのどれか 1 つを ON にして選びます。各行の右（幅が足りないときはスイッチの下）に推奨（MediaPipe）・非推奨（iFacialMocap）と PC 負荷の目安（低・中・高）が出ます。MediaPipe は <span class="ui">腕・手</span> を OFF にすると軽くなり、iPhone などから受け取る入力元は推定をスマートフォン側で行うため PC の負荷は低めです。</span>
-        <span class="en">Pick the <span class="ui">Source</span> by turning on one of the switches listed vertically. Each row shows (on the right, or under the switch when there is not enough room) whether it is recommended (MediaPipe) or not recommended (iFacialMocap), and a rough PC load (low / medium / high). MediaPipe gets lighter with <span class="ui">Arms / hands</span> off, and sources received from an iPhone or similar keep the PC load low because the phone does the tracking.</span>
-        <span class="ko"><span class="ui">입력 소스</span>는 세로로 나열된 스위치 중 하나를 켜서 고릅니다. 각 줄 오른쪽 (폭이 부족하면 스위치 아래)에 권장 (MediaPipe)·비권장 (iFacialMocap)과 PC 부하 기준 (낮음·보통·높음)이 표시됩니다. MediaPipe는 <span class="ui">팔·손</span>을 끄면 가벼워지고, iPhone 등에서 받는 입력 소스는 스마트폰에서 추정하므로 PC 부하가 낮습니다.</span>
-        <span class="zh-hans"><span class="ui">输入源</span> 通过打开纵向排列的开关之一来选择。每行右侧（宽度不足时在开关下方）会显示推荐（MediaPipe）/ 不推荐（iFacialMocap）以及电脑负载参考（低 / 中 / 高）。MediaPipe 关闭 <span class="ui">手臂 / 手</span> 后会更轻，从 iPhone 等接收的输入源由手机进行追踪，因此电脑负载较低。</span>
-        <span class="zh-hant"><span class="ui">輸入來源</span> 透過開啟縱向排列的開關之一來選擇。每列右側（寬度不足時在開關下方）會顯示推薦（MediaPipe）/ 不推薦（iFacialMocap）以及電腦負載參考（低 / 中 / 高）。MediaPipe 關閉 <span class="ui">手臂 / 手</span> 後會更輕，從 iPhone 等接收的輸入來源由手機進行追蹤，因此電腦負載較低。</span></li>
+    <li><span class="ja"><span class="ui">入力元</span> は、縦に並んだスイッチのどれか 1 つを ON にして選びます。各行の右（幅が足りないときはスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（低・中・高）が出ます。MediaPipe は <span class="ui">腕・手</span> を OFF にすると軽くなり、iPhone などから受け取る入力元は推定をスマートフォン側で行うため PC の負荷は低めです。</span>
+        <span class="en">Pick the <span class="ui">Source</span> by turning on one of the switches listed vertically. Each row shows (on the right, or under the switch when there is not enough room) whether it is recommended (MediaPipe) and a rough PC load (low / medium / high). MediaPipe gets lighter with <span class="ui">Arms / hands</span> off, and sources received from an iPhone or similar keep the PC load low because the phone does the tracking.</span>
+        <span class="ko"><span class="ui">입력 소스</span>는 세로로 나열된 스위치 중 하나를 켜서 고릅니다. 각 줄 오른쪽 (폭이 부족하면 스위치 아래)에 권장 (MediaPipe)과 PC 부하 기준 (낮음·보통·높음)이 표시됩니다. MediaPipe는 <span class="ui">팔·손</span>을 끄면 가벼워지고, iPhone 등에서 받는 입력 소스는 스마트폰에서 추정하므로 PC 부하가 낮습니다.</span>
+        <span class="zh-hans"><span class="ui">输入源</span> 通过打开纵向排列的开关之一来选择。每行右侧（宽度不足时在开关下方）会显示推荐（MediaPipe）以及电脑负载参考（低 / 中 / 高）。MediaPipe 关闭 <span class="ui">手臂 / 手</span> 后会更轻，从 iPhone 等接收的输入源由手机进行追踪，因此电脑负载较低。</span>
+        <span class="zh-hant"><span class="ui">輸入來源</span> 透過開啟縱向排列的開關之一來選擇。每列右側（寬度不足時在開關下方）會顯示推薦（MediaPipe）以及電腦負載參考（低 / 中 / 高）。MediaPipe 關閉 <span class="ui">手臂 / 手</span> 後會更輕，從 iPhone 等接收的輸入來源由手機進行追蹤，因此電腦負載較低。</span></li>
     <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
         <span class="en">Turn off <span class="ui">Track blinks</span> (on by default) to ignore your eye openness and use auto blink from the Face tab instead (perfect sync also leaves blinking alone).</span>
         <span class="ko"><span class="ui">눈 깜빡임 트래킹</span>(기본은 켜짐)을 끄면 눈의 개폐를 따라가지 않고 얼굴 탭의 자동 눈 깜빡임을 사용합니다 (퍼펙트 싱크에서도 눈 깜빡임만은 움직이지 않습니다).</span>
@@ -549,19 +554,19 @@
         <span class="zh-hant">將輸入來源設為 <span class="ui">iPhone / 外部應用程式（VMC，僅臉部）</span> 後，會代替相機，透過 VMC 協定從手機應用程式（如 iPhone 上的 Waidayo）接收臉部動作。
         請將電腦和手機連接到同一 Wi-Fi，並在應用程式的傳送目標中輸入追蹤分頁顯示的 <span class="ui">此電腦的 IP 位址</span> 和 <span class="ui">UDP 連接埠</span>（預設 39539）。
         首次會跳出 Windows 防火牆確認，請允許私人網路。傳送 ARKit 數值的應用程式還可使用完美同步和反映表情（手臂和手不會動）。</span></li>
-    <li><span class="ja">入力元を <span class="ui">iFacialMocap（iPhone、顔のみ、暫定）</span> にすると、iPhone の iFacialMocap から顔の動きを受け取ります（暫定対応で、アプリでの動作は未確認です）。
+    <li><span class="ja">入力元を <span class="ui">iFacialMocap（iPhone、顔のみ）</span> にすると、iPhone の iFacialMocap から顔の動きを受け取ります。
         PC と iPhone を同じ Wi-Fi につなぎ、iFacialMocap の画面上部に出る IP アドレスをトラッキングタブの <span class="ui">iPhone の IP アドレス</span> に入力してください（UDP ポート 49983 を使います）。
         初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。パーフェクトシンクと表情の反映も使えます（腕・手は動きません）。</span>
-        <span class="en">Set the source to <span class="ui">iFacialMocap (iPhone, face only, beta)</span> to receive your face movement from iFacialMocap on iPhone (beta support, not yet tested with the app).
+        <span class="en">Set the source to <span class="ui">iFacialMocap (iPhone, face only)</span> to receive your face movement from iFacialMocap on iPhone.
         Connect the PC and the iPhone to the same Wi-Fi, and enter the IP address shown at the top of iFacialMocap's screen in <span class="ui">iPhone IP address</span> in the Tracking tab (UDP port 49983 is used).
         The first time, Windows Firewall asks for permission; allow it on private networks. Perfect sync and facial expressions also work (arms and hands do not move).</span>
-        <span class="ko">입력 소스를 <span class="ui">iFacialMocap (iPhone, 얼굴만, 임시)</span>으로 하면 iPhone의 iFacialMocap에서 얼굴 움직임을 받습니다 (임시 지원이며 앱에서의 동작은 확인되지 않았습니다).
+        <span class="ko">입력 소스를 <span class="ui">iFacialMocap (iPhone, 얼굴만)</span>으로 하면 iPhone의 iFacialMocap에서 얼굴 움직임을 받습니다.
         PC와 iPhone을 같은 Wi-Fi에 연결하고, iFacialMocap 화면 위쪽에 나오는 IP 주소를 트래킹 탭의 <span class="ui">iPhone IP 주소</span>에 입력하세요 (UDP 포트 49983을 사용합니다).
         처음에는 Windows 방화벽 확인 창이 나오므로 개인 네트워크에서 허용하세요. 퍼펙트 싱크와 표정 반영도 사용할 수 있습니다 (팔·손은 움직이지 않습니다).</span>
-        <span class="zh-hans">将输入源设为 <span class="ui">iFacialMocap（iPhone，仅面部，暂定）</span> 后，会从 iPhone 上的 iFacialMocap 接收面部动作（暂定支持，尚未在应用中验证）。
+        <span class="zh-hans">将输入源设为 <span class="ui">iFacialMocap（iPhone，仅面部）</span> 后，会从 iPhone 上的 iFacialMocap 接收面部动作。
         请将电脑和 iPhone 连接到同一 Wi-Fi，并在追踪标签页的 <span class="ui">iPhone 的 IP 地址</span> 中输入 iFacialMocap 屏幕上方显示的 IP 地址（使用 UDP 端口 49983）。
         首次会弹出 Windows 防火墙确认，请允许专用网络。也可使用完美同步和反映表情（手臂和手不会动）。</span>
-        <span class="zh-hant">將輸入來源設為 <span class="ui">iFacialMocap（iPhone，僅臉部，暫定）</span> 後，會從 iPhone 上的 iFacialMocap 接收臉部動作（暫定支援，尚未在應用程式中驗證）。
+        <span class="zh-hant">將輸入來源設為 <span class="ui">iFacialMocap（iPhone，僅臉部）</span> 後，會從 iPhone 上的 iFacialMocap 接收臉部動作。
         請將電腦和 iPhone 連接到同一 Wi-Fi，並在追蹤分頁的 <span class="ui">iPhone 的 IP 位址</span> 中輸入 iFacialMocap 畫面上方顯示的 IP 位址（使用 UDP 連接埠 49983）。
         首次會跳出 Windows 防火牆確認，請允許私人網路。也可使用完美同步和反映表情（手臂和手不會動）。</span></li>
     <li><span class="ja">正面がずれたらカメラを見て、パネル下部の <span class="ui">リセット</span> の <span class="ui">顔の向き</span>（顔・上半身・視線）を押します。視線だけなら <span class="ui">視線</span>。</span>
