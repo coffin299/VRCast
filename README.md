@@ -2,6 +2,8 @@
 
 <p align="center"><img src="docs/images/vrcast-icon.png" alt="VRCast" width="160"></p>
 
+<p align="center"><img src="https://count.getloli.com/@VRCastCounterV1?theme=green&padding=7&offset=0&align=top&scale=1&pixelated=1&darkmode=0" alt="VRCast counter"></p>
+
 VRChat 向け 3D アバターを、Unity プロジェクトごとではなく **アバター単体に近い形** で動かす軽量スタンドアロン Runtime。
 VSeeFace のように簡単にアバターを表示・トラッキングし、OBS などの配信ソフトへ出力することを目指す。
 
