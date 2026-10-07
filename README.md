@@ -423,7 +423,7 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 │   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (一括 release.bat / package.bat / unitypackage.bat、同梱 README.txt)
 │   ├── Spout/                    Spout2 送信プラグインの取得スクリプト (fetch.ps1)
 │   ├── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
-│   └── VirtualCamera/            Windows 11 の仮想カメラ (Media Foundation、C++。build.ps1 で DLL をビルド)
+│   └── VirtualCamera/            Windows 11 の仮想カメラ (Media Foundation、C++。build.ps1 / build.bat で DLL をビルド)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
         ├── Branding/AppIcon.png  アプリアイコン (512px、ビルド時に設定)
@@ -499,9 +499,12 @@ Unity Editor を閉じてからリポジトリ直下で実行する:
 powershell -ExecutionPolicy Bypass -File .\Tools\VirtualCamera\build.ps1
 ```
 
+または `Tools\VirtualCamera\build.bat` をダブルクリック。配布 zip を `release.bat` で作る場合は、その中でビルドとコピーも行う。
+
 - `VRCast/Assets/Plugins/VRCastVirtualCamera/x86_64/VRCastVirtualCamera.dll` に置かれる（中間ファイルは一時フォルダ。CRT は静的リンク）。
 - 1 つの DLL に、Frame Server（Windows のカメラサービス）が読み込むメディアソースと、VRCast が P/Invoke で呼ぶ送信用の関数が入っている。
-- 見つからない場合もビルドは続行し、警告ログを出す（出力タブでこの方式を選べない）。
+- 見つからない場合も Unity のビルドは続行し、警告ログを出す（出力タブに「同梱されていません」と出て、この方式を選べない）。
+  配布 zip の作成（`package.bat`）は中止する。
 
 ### Spout2（KlakSpout）の同梱
 
@@ -529,12 +532,18 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Spout\fetch.ps1
 
 **一括（推奨）**: Unity で Windows ビルドをした後、`Tools\Package\release.bat` を実行すると、
 MediaPipe トラッカーのビルド → ビルド済みの `VRCast\Builds\Windows` の StreamingAssets へトラッカーを上書きコピー（Unity で再ビルドしなくても新しいトラッカーが入る）
+→ Windows 11 の仮想カメラ DLL のビルド → ビルドの `VRCast_Data\Plugins\x86_64` へコピー
 → 書き出しツールの unitypackage（`dist\`）→ 配布 zip を順に作る。開始時に VRCast.exe の有無と、ビルドのバージョンと書き出しツールのバージョンの不一致を確認する。
+
+- 仮想カメラ DLL のビルドには Visual Studio 2022 の「C++ によるデスクトップ開発」が要る。
+  Unity Editor が DLL を読み込んでいて上書きできないときは、既存の DLL を使って続行する（無ければ中止）。
 
 ```powershell
 .\Tools\Package\release.bat
 # トラッカーのビルドを省く（VRCast\Trackers にあるものを使う）
 .\Tools\Package\release.bat -SkipTracker
+# 仮想カメラ DLL のビルドを省く（Assets\Plugins\VRCastVirtualCamera にあるものをコピーする）
+.\Tools\Package\release.bat -SkipVirtualCamera
 ```
 
 **個別**: Windows ビルドの後、`Tools\Package\package.bat` をダブルクリック（またはリポジトリ直下から実行）:

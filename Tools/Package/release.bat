@@ -1,7 +1,9 @@
 @echo off
 rem Build the release files in one go (the Unity app build is done manually beforehand):
-rem   1. MediaPipe tracker  2. copy it into VRCast\Builds\Windows  3. exporter unitypackage  4. distribution zip
-rem Output goes to dist\. Options are passed to release.ps1 (for example: release.bat -SkipTracker).
+rem   1. MediaPipe tracker  2. copy it into VRCast\Builds\Windows
+rem   3. Windows 11 virtual camera DLL  4. copy it into VRCast\Builds\Windows
+rem   5. exporter unitypackage  6. distribution zip
+rem Output goes to dist\. Options are passed to release.ps1 (for example: release.bat -SkipTracker -SkipVirtualCamera).
 
 setlocal
 

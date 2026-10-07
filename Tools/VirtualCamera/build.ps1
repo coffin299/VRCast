@@ -8,6 +8,9 @@ $ErrorActionPreference = 'Stop'
 
 # Visual Studio の C++ ツールを探す
 $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio\Installer\vswhere.exe'
+if (-not (Test-Path $vswhere)) {
+    throw 'Visual Studio not found. Install Visual Studio 2022 with "Desktop development with C++".'
+}
 $vs = & $vswhere -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
 if (-not $vs) {
     throw 'Visual Studio with C++ tools not found.'

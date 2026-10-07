@@ -3,19 +3,24 @@
     Build everything for a release in one go (except the Unity app build):
       1. Build the MediaPipe tracker (Tools/MediaPipeTracker/build.ps1)
       2. Copy the new tracker into the existing Windows build (VRCast/Builds/Windows)
-      3. Pack the exporter into dist/VRCast-Converter-<version>.unitypackage
-      4. Package the distribution zip dist/VRCast-<version>-win64.zip
+      3. Build the Windows 11 virtual camera DLL (Tools/VirtualCamera/build.ps1)
+      4. Copy the DLL into the existing Windows build
+      5. Pack the exporter into dist/VRCast-Converter-<version>.unitypackage
+      6. Package the distribution zip dist/VRCast-<version>-win64.zip
     Build the app in Unity first (VRCast > Build > Windows x64).
 .PARAMETER PythonVersion
     Python version used to build the tracker (MediaPipe supports 3.9 - 3.12).
 .PARAMETER SkipTracker
     Skip step 1 and package the tracker that is already in VRCast/Trackers.
+.PARAMETER SkipVirtualCamera
+    Skip step 3 and package the DLL that is already in VRCast/Assets/Plugins/VRCastVirtualCamera.
 .PARAMETER BuildPath
     Folder that contains VRCast.exe. Defaults to VRCast/Builds/Windows in this repository.
 #>
 param(
     [string]$PythonVersion = "3.12",
     [switch]$SkipTracker,
+    [switch]$SkipVirtualCamera,
     [string]$BuildPath = ""
 )
 
@@ -26,6 +31,8 @@ $repository = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 if (-not $BuildPath) { $BuildPath = Join-Path $repository "VRCast\Builds\Windows" }
 $trackerSource = Join-Path $repository "VRCast\Trackers\MediaPipeTracker"
 $trackerTarget = Join-Path $BuildPath "VRCast_Data\StreamingAssets\MediaPipeTracker"
+$cameraSource = Join-Path $repository "VRCast\Assets\Plugins\VRCastVirtualCamera\x86_64\VRCastVirtualCamera.dll"
+$cameraTarget = Join-Path $BuildPath "VRCast_Data\Plugins\x86_64"
 
 function Write-Step([string]$message) {
     # Make each step easy to find in the console output
@@ -50,10 +57,10 @@ if ($appVersion -ne $converterVersion) {
 
 # 1. Tracker
 if ($SkipTracker) {
-    Write-Step "1/4 Tracker build skipped"
+    Write-Step "1/6 Tracker build skipped"
 }
 else {
-    Write-Step "1/4 Building the MediaPipe tracker (Python $PythonVersion)"
+    Write-Step "1/6 Building the MediaPipe tracker (Python $PythonVersion)"
     if (-not (Get-Command py -ErrorAction SilentlyContinue)) {
         throw "The 'py' launcher was not found. Install Python $PythonVersion.x from https://www.python.org/"
     }
@@ -61,7 +68,7 @@ else {
 }
 
 # 2. Replace the tracker inside the Unity build so the zip gets the new one without rebuilding in Unity
-Write-Step "2/4 Copying the tracker into the Windows build"
+Write-Step "2/6 Copying the tracker into the Windows build"
 if (Test-Path (Join-Path $trackerSource "vrcast_tracker.exe")) {
     if (Test-Path $trackerTarget) { Remove-Item $trackerTarget -Recurse -Force }
     Copy-Item $trackerSource $trackerTarget -Recurse
@@ -71,12 +78,36 @@ else {
     Write-Warning "vrcast_tracker.exe was not found in $trackerSource. The zip keeps the tracker from the Unity build (if any)."
 }
 
-# 3. Standalone exporter package (also put into the zip by step 4)
-Write-Step "3/4 Packing the exporter unitypackage"
+# 3. Windows 11 virtual camera DLL (needs Visual Studio with C++; a DLL locked by the Unity Editor keeps the old one)
+if ($SkipVirtualCamera) {
+    Write-Step "3/6 Virtual camera DLL build skipped"
+}
+else {
+    Write-Step "3/6 Building the Windows 11 virtual camera DLL"
+    try {
+        & (Join-Path $repository "Tools\VirtualCamera\build.ps1")
+    }
+    catch {
+        if (-not (Test-Path $cameraSource)) { throw }
+        Write-Warning "Build failed ($($_.Exception.Message)). Using the existing $cameraSource (close the Unity Editor to rebuild it)."
+    }
+}
+
+# 4. Put the DLL next to the other native plugins so the zip has it without rebuilding in Unity
+Write-Step "4/6 Copying the virtual camera DLL into the Windows build"
+if (-not (Test-Path $cameraSource)) {
+    throw "VRCastVirtualCamera.dll was not found in $(Split-Path $cameraSource). Run Tools\VirtualCamera\build.bat (Visual Studio with C++ is required)."
+}
+New-Item -ItemType Directory -Force -Path $cameraTarget | Out-Null
+Copy-Item $cameraSource $cameraTarget -Force
+Write-Host "Copied to $cameraTarget"
+
+# 5. Standalone exporter package (also put into the zip by step 6)
+Write-Step "5/6 Packing the exporter unitypackage"
 & (Join-Path $PSScriptRoot "unitypackage.ps1") -Version $converterVersion
 
-# 4. Distribution zip
-Write-Step "4/4 Packaging the distribution zip"
+# 6. Distribution zip
+Write-Step "6/6 Packaging the distribution zip"
 & (Join-Path $PSScriptRoot "package.ps1") -BuildPath $BuildPath
 
 Write-Step "Release build finished"

@@ -45,13 +45,15 @@ foreach ($path in $optional.Keys) {
         Write-Warning "Missing: $($optional[$path])"
     }
 }
-if (-not (Test-Path (Join-Path $BuildPath "VRCast_Data\Plugins\x86_64\VRCastVirtualCamera.dll"))) {
-    Write-Warning "Missing: Windows 11 virtual camera (run Tools\VirtualCamera\build.ps1, then rebuild in Unity)"
-}
 
 # Stop when the Spout2 plugin is missing (it only gets in through the Unity build; never ship a zip without it)
 if (-not (Test-Path (Join-Path $BuildPath "VRCast_Data\Plugins\x86_64\KlakSpout.dll"))) {
     throw "KlakSpout.dll was not found in the build. Run Tools\Spout\fetch.ps1, then rebuild in Unity (VRCast > Build > Windows x64)."
+}
+
+# Stop when the Windows 11 virtual camera DLL is missing (release.bat builds it and copies it into the build)
+if (-not (Test-Path (Join-Path $BuildPath "VRCast_Data\Plugins\x86_64\VRCastVirtualCamera.dll"))) {
+    throw "VRCastVirtualCamera.dll was not found in the build. Run Tools\Package\release.bat (or Tools\VirtualCamera\build.bat, then rebuild in Unity)."
 }
 
 # 書き出しツールのバージョン（ファイル名に入れる）: package.json の version

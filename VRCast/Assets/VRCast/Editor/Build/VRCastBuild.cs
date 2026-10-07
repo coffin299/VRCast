@@ -173,7 +173,7 @@ namespace VRCast.Editor.Build
             // Windows 11 の方式（Media Foundation）の DLL
             if (!File.Exists(MediaFoundationPluginPath))
             {
-                Debug.LogWarning("[VRCast][Build] VRCastVirtualCamera.dll not found. Run Tools/VirtualCamera/build.ps1 "
+                Debug.LogWarning("[VRCast][Build] VRCastVirtualCamera.dll not found. Run Tools/VirtualCamera/build.bat (Unity Editor closed) "
                     + "to enable the Windows 11 virtual camera method.");
             }
         }

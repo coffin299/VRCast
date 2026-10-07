@@ -100,3 +100,16 @@ OpenSeeFace (StreamingAssets/OpenSeeFace/, optional)
   Copyright Emiliana (emilianavt)
   BSD 2-Clause License
   https://github.com/emilianavt/OpenSeeFace
+
+-------------------------------------------------------------------------------
+Components built from this repository
+-------------------------------------------------------------------------------
+
+VRCast Virtual Camera (Plugins/x86_64/VRCastVirtualCamera.dll)
+  Built from Tools/VirtualCamera with Tools/VirtualCamera/build.ps1.
+  Windows 11 virtual camera (Media Foundation media source and sender).
+  Part of VRCast, Copyright 2026 coffin299, Apache License 2.0.
+
+  - Microsoft Visual C++ runtime (statically linked)
+    Copyright Microsoft Corporation
+    Redistributed under the Microsoft Visual Studio license terms
