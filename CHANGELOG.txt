@@ -4,6 +4,54 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.8.1 (2026-10-07)
+
+[日本語]
+- 表情を出している間はまばたきしない設定を追加（顔タブ。自動まばたきとトラッキングのまばたきの両方が止まり、表情の目の形が崩れません）
+- まばたきをトラッキングせず自動まばたきを使う設定を追加（トラッキングタブの「まばたきをトラッキング」を OFF）
+
+[English]
+- Added an option to stop blinking while an expression is shown (Face tab; stops both auto blink and blinks from face tracking so they do not distort the expression's eyes)
+- Added an option to use auto blink instead of tracking your blinks (turn off "Track blinks" in the Tracking tab)
+
+■ 1.7.1 (2026-10-07)
+
+[日本語]
+- 書き出しツールに「追加の表情」を追加（FX レイヤーに入っていない表情のアニメーションクリップやフォルダをドラッグして、表情として書き出せます。書き出す前に取り込めるかどうかと理由を一覧で確認できます。指定はアバターごとに保存）
+- 表情の反映で、ウインク・ジト目・ふくれっ面も検出できるように追加（割り当て先の表情が無いものは検出せず、ほかの表情の邪魔をしません）
+- 表情の反映のしきい値を表情ごとに設定できるように変更（トラッキングタブの各表情の割り当ての下にスライダー。これまでの共通の値は、動かすまでそのまま使われます）
+- 表情ごとにショートカットキーを割り当てられる機能を追加（ポーズタブでキーのボタンを押してからキーを押す。Ctrl+Alt+N のような同時押し、テンキー、記号キー、右 Ctrl などの単独、マウスのサイドボタンも可。Esc でやめる、リセットで外す。アバターごとに保存。既定で OBS などを操作中でも反応）
+- 数字キー（1〜9・0）で表情を切り替える固定の操作を削除（代わりに上のショートカットキーで好きなキーを割り当てられます）
+- 出力タブの仮想カメラの状態を表示言語で表示し、「準備できました。Discord などで VRCast Camera を選ぶと映ります」のように次の操作まで案内するよう変更
+- ボタン・ショートカットキーで選んだ表情を、トラッキングの表情の反映で上書きしないよう固定するように変更（同じ表情をもう一度選ぶか「自動検出に戻す」で元に戻ります）
+- Stream Deck や OSC アプリなどから表情を切り替えられる「外部から操作（OSC / HTTP）」を追加（新しい「OSC / HTTP」タブで ON。表示中のアバターの表情ごとのコマンドが一覧に並び、コピーできます。この PC からのみ接続できます）
+- 操作パネルの横幅を少し広げるよう変更
+
+[English]
+- Added "Additional expressions" to the exporter (drag expression animation clips or folders that are not in the FX layer to export them as expressions; you can check which clips can be used, and why not, before exporting; saved per avatar)
+- Added wink, half-closed eyes and pout to facial expression detection (expressions with nothing assigned are not detected, so they do not get in the way of the others)
+- Changed the facial expression threshold to be set per expression (a slider under each expression's assignment in the Tracking tab; your previous shared value is kept until you move a slider)
+- Added shortcut keys for each expression (in the Pose tab, press the key button and then a key; combinations such as Ctrl+Alt+N, the numeric keypad, symbol keys, keys such as Right Ctrl alone and mouse side buttons work; Esc cancels and Reset removes it; saved per avatar; by default they also work while you use OBS or other apps)
+- Removed the fixed number keys (1-9, 0) for switching expressions (assign any keys you like with the shortcut keys above instead)
+- Changed the virtual camera status in the Output tab to show in your language and tell you what to do next (for example, "Ready. Choose VRCast Camera in Discord, etc. to show the avatar")
+- Changed expressions chosen with a button or shortcut key to stay locked instead of being overridden by facial expression detection (choose the same expression again or press "Back to auto" to return)
+- Added "External control (OSC / HTTP)" to switch expressions from Stream Deck, OSC apps, etc. (turn it on in the new OSC / HTTP tab, which lists a command for each expression of the loaded avatar with a copy button; only this PC can connect)
+- Changed the control panel to be slightly wider
+
+■ 1.6.1 (2026-10-06)
+
+[日本語]
+- 新しい「シェイプキー」タブに BlendShape ごとの上限を設定できる機能を追加（まばたきで目が消える等の対策に。まばたき・口・表情で動く「顔」とそれ以外の「その他」に分けて表示し、アバターごとに保存）
+- 設定タブに、VRCast が NVIDIA のインスタントリプレイ（ShadowPlay）にゲームとして検知されないようにするボタンを追加（NVIDIA の PC のみ。押したときだけ設定し、元に戻すこともできます。非公式の設定のため効かないドライバーもあります）
+- 3D V-Cache が片方の CCD にだけある X3D の CPU（7950X3D / 9950X3D など）で、VRCast とトラッカーをキャッシュの無い側のコアで動かし、ゲームとコアを取り合わないようにする設定を追加（既定で ON、設定タブで OFF にできます）
+- P コアと E コアがある Intel の CPU で、VRCast とトラッカーを動かすコア（自動 / E コアのみ / P コアのみ）を選べる設定を追加
+
+[English]
+- Added per-blend-shape limits in a new Shape keys tab (for example, to stop the eyes disappearing when blinking; listed as "Face" for those moved by blink, mouth and expressions and "Others" for the rest, saved per avatar)
+- Added a button in the Settings tab to keep NVIDIA Instant Replay (ShadowPlay) from detecting VRCast as a game (NVIDIA PCs only; applied only when pressed and can be undone; unofficial, so it may not work on some drivers)
+- Added an option for X3D CPUs with 3D V-Cache on only one CCD (such as the 7950X3D / 9950X3D) to run VRCast and the tracker on the cores without the cache so they do not compete with games (on by default; can be turned off in the Settings tab)
+- Added a setting for Intel CPUs with P-cores and E-cores to choose which cores VRCast and the tracker run on (Auto / E-cores only / P-cores only)
+
 ■ 1.5.1 (2026-10-06)
 
 [日本語]

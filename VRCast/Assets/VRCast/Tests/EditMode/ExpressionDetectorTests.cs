@@ -82,6 +82,47 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Update_SkipsExpressionsOutsideCandidates()
+        {
+            // 割り当て先の無いウインクがより強くても、選べる笑顔を選ぶこと
+            var scores = new ExpressionScores { Smile = 0.5f, Wink = 0.9f };
+            int candidates = FaceExpressions.Bit(FaceExpression.Smile);
+            var detector = new ExpressionDetector();
+            FaceExpression result = FaceExpression.Neutral;
+            for (float elapsed = 0f; elapsed < 0.5f; elapsed += Frame)
+            {
+                result = detector.Update(scores, 0f, Threshold, Frame, candidates);
+            }
+
+            Assert.That(result, Is.EqualTo(FaceExpression.Smile));
+
+            // 選べる表情なら最も強いウインクを選ぶこと
+            Assert.That(Run(new ExpressionDetector(), scores, 0f, 0.5f), Is.EqualTo(FaceExpression.Wink));
+        }
+
+        [Test]
+        public void Update_PerExpressionThresholds()
+        {
+            // 同じ強さでも、しきい値を下げた表情だけが反映されること
+            var thresholds = new float[(int)FaceExpressions.Last + 1];
+            for (int i = 0; i < thresholds.Length; i++)
+            {
+                thresholds[i] = 0.6f;
+            }
+
+            thresholds[(int)FaceExpression.Pout] = 0.2f;
+            var scores = new ExpressionScores { Smile = 0.4f, Pout = 0.3f };
+            var detector = new ExpressionDetector();
+            FaceExpression result = FaceExpression.Neutral;
+            for (float elapsed = 0f; elapsed < 0.5f; elapsed += Frame)
+            {
+                result = detector.Update(scores, 0f, thresholds, Frame);
+            }
+
+            Assert.That(result, Is.EqualTo(FaceExpression.Pout));
+        }
+
+        [Test]
         public void Reset_ReturnsToNeutral()
         {
             // 判定中の表情を捨ててニュートラルに戻ること

@@ -18,6 +18,9 @@ namespace VRCast.Animations
         {
             _renderer = renderer;
             _index = index;
+
+            // まばたき・口パク・パーフェクトシンクで動かす BlendShape として、上限の一覧の「顔」に出す
+            BlendShapeLimiter.MarkFace(renderer, index);
         }
 
         /// <summary>
@@ -78,14 +81,14 @@ namespace VRCast.Animations
             }
 
             // 他の処理が書き換えていれば、その値を元の値として採用
-            float current = _renderer.GetBlendShapeWeight(_index);
+            float current = BlendShapeLimiter.Read(_renderer, _index);
             if (!Mathf.Approximately(current, _lastWritten))
             {
                 _base = current;
             }
 
-            // 元の値と上乗せ値の大きい方を書き込む
-            float weight = Mathf.Max(_base, Mathf.Clamp(overlay, 0f, 100f));
+            // 元の値と上乗せ値の大きい方を、アバターごとの上限で切って書き込む
+            float weight = BlendShapeLimiter.Limit(_renderer, _index, Mathf.Max(_base, Mathf.Clamp(overlay, 0f, 100f)));
             _renderer.SetBlendShapeWeight(_index, weight);
             _lastWritten = weight;
         }

@@ -43,9 +43,9 @@ namespace VRCast.UI
                 face.CalibrateGaze();
             }
 
-            // 表情をニュートラルへ（表情データがあるときのみ）
+            // 表情をニュートラルへ戻し、手動の固定も外す（表情データがあるときのみ）
             var expressions = _avatar.Get<ExpressionController>();
-            GUI.enabled = expressions != null && expressions.Current >= 0;
+            GUI.enabled = expressions != null && (expressions.Current >= 0 || expressions.IsManual);
             if (GUILayout.Button(Loc.T("Expression", "表情", "표정", "表情", "表情")))
             {
                 expressions.ResetToNeutral();
