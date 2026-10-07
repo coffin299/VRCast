@@ -45,6 +45,9 @@ namespace VRCast.Animations
         // まばたき開始時刻（負なら非まばたき中）
         private float _blinkStart = -1f;
 
+        // 自動まばたきを止めていたら true（再開時に予約し直し、止めている間に過ぎた予定ですぐ閉じないようにする）
+        private bool _autoSuspended;
+
         public bool IsAvailable => _overlays.Count > 0;
 
         /// <summary>
@@ -132,7 +135,7 @@ namespace VRCast.Animations
             // 表情中に止める設定なら、トラッキング・自動とも開いたまま（表情の目の形をそのまま見せる）
             if (IsPausedByExpression)
             {
-                _blinkStart = -1f;
+                SuspendAuto();
                 Write(0f, 0f);
                 return;
             }
@@ -140,7 +143,7 @@ namespace VRCast.Animations
             // 外部入力がある間はその値を使い、自動まばたきは止める
             if (_hasExternal)
             {
-                _blinkStart = -1f;
+                SuspendAuto();
                 Write(_externalLeft, _externalRight);
                 return;
             }
@@ -148,9 +151,16 @@ namespace VRCast.Animations
             // OFF の間は開いたまま（元の値）
             if (!_settings.autoBlink)
             {
-                _blinkStart = -1f;
+                SuspendAuto();
                 Write(0f, 0f);
                 return;
+            }
+
+            // 止めていた後は、再開した時点から次のまばたきを予約する
+            if (_autoSuspended)
+            {
+                _autoSuspended = false;
+                ScheduleNext();
             }
 
             // 予定時刻になったらまばたき開始
@@ -181,6 +191,13 @@ namespace VRCast.Animations
         // ニュートラル以外の表情を出していて、その間は止める設定なら true
         private bool IsPausedByExpression =>
             _settings.blinkPausedByExpression && _expressions != null && _expressions.Current >= 0;
+
+        private void SuspendAuto()
+        {
+            // 途中のまばたきをやめ、再開時に予約し直す印を付ける
+            _blinkStart = -1f;
+            _autoSuspended = true;
+        }
 
         private void Write(float left, float right)
         {
