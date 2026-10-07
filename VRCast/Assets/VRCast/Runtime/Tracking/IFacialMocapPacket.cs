@@ -5,7 +5,7 @@ using UnityEngine;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// iPhone の iFacialMocap が UDP で送るテキスト 1 パケットを FaceTrackingFrame に変換する（暫定対応。実機で未確認）。
+    /// iPhone の iFacialMocap が UDP で送るテキスト 1 パケットを FaceTrackingFrame に変換する。
     /// 形式: "eyeBlink_L-35|jawOpen-60|...|=head#回転x,回転y,回転z,位置x,位置y,位置z|rightEye#...|leftEye#...|"
     /// - 表情は ARKit 名（_L / _R）と 0〜100 の値（新しい形式の "名前&amp;値" も受け付ける）
     /// - head は ARKit（右手系）の回転角（度）。位置は単位が不明なため使わない

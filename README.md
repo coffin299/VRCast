@@ -49,7 +49,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | 視線（目ボーン）・左右別ウインク | 済 |
 | MediaPipe トラッカー（顔 + 腕・手・指、既定の入力元。OpenSeeFace と切替可） | 済 |
 | iPhone・外部アプリからの顔トラッキング（VMC プロトコル受信。Waidayo 等の ARKit の値） | 済 |
-| iFacialMocap からの顔トラッキング（独自形式の受信。アプリでの動作は未確認） | 暫定 |
+| iFacialMocap からの顔トラッキング（独自形式の受信） | 済 |
 | 表情反映（MediaPipe・VMC・iFacialMocap のみ。笑顔・驚き・怒り・悲しみ → 表情プリセット） | 済 |
 | パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit 名の BlendShape を直接動かす） | 済 |
 | 表示言語（英語 / 日本語 / 韓国語 / 中国語 簡体字・繁体字）・クレジットタブ | 済 |
@@ -89,6 +89,9 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 
 - 書き出されるのは Unity 標準コンポーネント（Transform / Animator / Renderer / MeshFilter）とそのメッシュ・マテリアル・シェーダー・テクスチャのみ。
 - VRChat コンポーネント・スクリプト・Animator Controller は書き出し用の複製から除去される（元のアバターは変更されない）。
+- シーン上で非アクティブ（インスペクターのチェックを外した）オブジェクトは子ごと書き出さない。
+  FX の初期状態で表示されるものや、Modular Avatar の衣装も含めて除く（表示させたいものはアクティブにしてから書き出す）。
+  EditorOnly タグのオブジェクトも子ごと除く。
 - 【ベータ版・暫定対応】Modular Avatar など NDMF ベースの非破壊改変ツールが入っている場合、除去の前に複製へ改変を適用する（VRChat へのアップロード時と同じ処理）。
   衣装の統合（Merge Armature）や追加した FX レイヤー（Merge Animator）も反映される。書き出し中に生成したアセットは終了後に削除する。
   NDMF の実行前に MA Merge Armature / Bone Proxy の設定を控え、NDMF で統合されなかった衣装・小物（NDMF 未導入や MA 内部の失敗）は、
@@ -252,7 +255,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 | MediaPipe（既定） | 顔 + 腕・手・指（**Arms / hands** で ON/OFF） | 推奨 / 高（腕・手 OFF で中） | `vrcast_tracker.exe`（[MediaPipe](https://ai.google.dev/edge/mediapipe) を使う同梱ツール） |
 | OpenSeeFace | 顔のみ | 中 | `facetracker.exe`（[OpenSeeFace](https://github.com/emilianavt/OpenSeeFace)） |
 | iPhone / external app (VMC) | 顔のみ（パーフェクトシンク・表情反映も可） | 低（推定はスマートフォン側） | なし（スマートフォン等のアプリから VMC プロトコルで受信） |
-| iFacialMocap（暫定） | 顔のみ（パーフェクトシンク・表情反映も可） | 非推奨 / 低 | なし（iPhone の iFacialMocap から受信） |
+| iFacialMocap | 顔のみ（パーフェクトシンク・表情反映も可） | 低 | なし（iPhone の iFacialMocap から受信） |
 
 1. **Enable tracking** を ON にすると、カメラ一覧を取得して先頭のカメラで自動起動する。
 2. `<` `>` でカメラをデバイス名で選ぶと起動し直す（カメラ名は保存され、次回起動時も同じカメラを使う）。
@@ -292,10 +295,10 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 - 外部アプリの入力元のときだけ全アドレス（`0.0.0.0`）で待ち受ける（受け取るのは顔の値だけで、操作のコマンドは受け付けない）。
 - 届かないときは Debug log タブで詳細ログを ON にすると、受け取ったメッセージの種類と、ARKit 名の数・頭の向きの有無が記録される。
 
-#### iFacialMocap（暫定対応）
+#### iFacialMocap
 
-入力元を **iFacialMocap (iPhone, face only, beta)** にすると、iPhone の [iFacialMocap](https://www.ifacialmocap.com/) から顔の値を受信する。
-公開されている形式をもとにした暫定対応で、アプリでの動作は未確認（頭の向きの軸・左右などは実機で調整が必要な可能性がある）。
+入力元を **iFacialMocap (iPhone, face only)** にすると、iPhone の [iFacialMocap](https://www.ifacialmocap.com/) から顔の値を受信する。
+頭の向きは ARKit の回転角を MediaPipe と同じ向き（映像基準）へ変換して使う。
 
 1. PC と iPhone を同じ Wi-Fi につなぎ、iPhone で iFacialMocap を開く。
 2. iFacialMocap の画面上部に出る IP アドレスを、パネルの **iPhone IP address** に入力する。

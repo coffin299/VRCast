@@ -144,8 +144,8 @@ namespace VRCast.UI
                     "OpenSeeFace（仅面部）", "OpenSeeFace（僅臉部）"),
                 Loc.T("iPhone / external app (VMC, face only)", "iPhone・外部アプリ（VMC、顔のみ）",
                     "iPhone·외부 앱 (VMC, 얼굴만)", "iPhone / 外部应用（VMC，仅面部）", "iPhone / 外部應用程式（VMC，僅臉部）"),
-                Loc.T("iFacialMocap (iPhone, face only, beta)", "iFacialMocap（iPhone、顔のみ、暫定）",
-                    "iFacialMocap (iPhone, 얼굴만, 임시)", "iFacialMocap（iPhone，仅面部，暂定）", "iFacialMocap（iPhone，僅臉部，暫定）"),
+                Loc.T("iFacialMocap (iPhone, face only)", "iFacialMocap（iPhone、顔のみ）",
+                    "iFacialMocap (iPhone, 얼굴만)", "iFacialMocap（iPhone，仅面部）", "iFacialMocap（iPhone，僅臉部）"),
             };
             // 注記を横に並べるかは Layout のときだけ決める（Layout と Repaint で要素の数を変えない）
             if (Event.current.type == EventType.Layout)
@@ -225,7 +225,7 @@ namespace VRCast.UI
 
         private void DrawSourceNote(TrackingSource source)
         {
-            // 推奨・非推奨（緑 / 黄の太字）と PC 負荷の目安
+            // 推奨（緑の太字）と PC 負荷の目安
             string tag = SourceTag(source, out GUIStyle tagStyle);
             if (tag != null)
             {
@@ -237,20 +237,15 @@ namespace VRCast.UI
 
         private static string SourceTag(TrackingSource source, out GUIStyle style)
         {
-            // MediaPipe は推奨、未検証の iFacialMocap は非推奨、それ以外は表記なし
-            UiTheme theme = UiTheme.Current;
-            switch (source)
+            // MediaPipe は推奨、それ以外は表記なし
+            if (source == TrackingSource.MediaPipe)
             {
-                case TrackingSource.MediaPipe:
-                    style = theme != null ? theme.Success : GUI.skin.label;
-                    return Loc.T("Recommended", "推奨", "권장", "推荐", "推薦");
-                case TrackingSource.IFacialMocap:
-                    style = theme != null ? theme.WarningText : GUI.skin.label;
-                    return Loc.T("Not recommended", "非推奨", "비권장", "不推荐", "不推薦");
-                default:
-                    style = null;
-                    return null;
+                style = UiTheme.Current != null ? UiTheme.Current.Success : GUI.skin.label;
+                return Loc.T("Recommended", "推奨", "권장", "推荐", "推薦");
             }
+
+            style = null;
+            return null;
         }
 
         private static GUIStyle LoadStyle => UiTheme.Current != null ? UiTheme.Current.Value : GUI.skin.label;
@@ -363,11 +358,11 @@ namespace VRCast.UI
         {
             // iFacialMocap の接続手順（こちらから iPhone へ送信開始の合図を送るため、iPhone の IP アドレスが要る）
             GuiControls.Hint(Loc.T(
-                "Open iFacialMocap on your iPhone and enter the IP address shown at the top of its screen below. Use the same Wi-Fi as this PC. (Beta: not yet tested with the app)",
-                "iPhone で iFacialMocap を開き、画面上部に表示される IP アドレスを下に入力してください。この PC と同じ Wi-Fi につないでください。（暫定対応: アプリでの動作は未確認です）",
-                "iPhone에서 iFacialMocap을 열고 화면 위쪽에 표시되는 IP 주소를 아래에 입력하세요. 이 PC와 같은 Wi-Fi에 연결하세요. (임시 지원: 앱에서의 동작은 확인되지 않았습니다)",
-                "在 iPhone 上打开 iFacialMocap，并在下方输入其屏幕上方显示的 IP 地址。请连接与此电脑相同的 Wi-Fi。（暂定支持：尚未在应用中验证）",
-                "在 iPhone 上開啟 iFacialMocap，並在下方輸入其畫面上方顯示的 IP 位址。請連接與此電腦相同的 Wi-Fi。（暫定支援：尚未在應用程式中驗證）"));
+                "Open iFacialMocap on your iPhone and enter the IP address shown at the top of its screen below. Use the same Wi-Fi as this PC.",
+                "iPhone で iFacialMocap を開き、画面上部に表示される IP アドレスを下に入力してください。この PC と同じ Wi-Fi につないでください。",
+                "iPhone에서 iFacialMocap을 열고 화면 위쪽에 표시되는 IP 주소를 아래에 입력하세요. 이 PC와 같은 Wi-Fi에 연결하세요.",
+                "在 iPhone 上打开 iFacialMocap，并在下方输入其屏幕上方显示的 IP 地址。请连接与此电脑相同的 Wi-Fi。",
+                "在 iPhone 上開啟 iFacialMocap，並在下方輸入其畫面上方顯示的 IP 位址。請連接與此電腦相同的 Wi-Fi。"));
 
             // iPhone の IP アドレス（前後の空白は除く。送信開始の合図は受信側が設定から読む）
             _settings.iFacialMocapAddress = GuiControls.TextField(

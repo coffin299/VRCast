@@ -577,6 +577,8 @@ namespace VRCast.Converter.Editor
                 "Missing Script");
             string editorOnly = L("EditorOnly objects", "EditorOnly オブジェクト", "EditorOnly 오브젝트", "EditorOnly 对象",
                 "EditorOnly 物件");
+            string inactive = L("inactive objects", "非アクティブのオブジェクト", "비활성 오브젝트", "未激活的对象",
+                "未啟用的物件");
 
             return
                 $"{exported}: {report.OutputPath}\n" +
@@ -593,7 +595,8 @@ namespace VRCast.Converter.Editor
                 $"Constraints: {report.ConstraintCount}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +
                 $"{missing}: {report.Strip.RemovedMissingScripts}, " +
-                $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}";
+                $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}, " +
+                $"{inactive}: {report.RemovedInactiveObjects}";
         }
     }
 }

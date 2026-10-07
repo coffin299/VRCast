@@ -56,14 +56,28 @@ namespace VRCast.Converter.Editor
             return result;
         }
 
+        /// <summary>
+        /// 非アクティブ（エディタでチェックを外した）オブジェクトを子ごと削除し、削除した数を返す（ルートは残す）。
+        /// FX の初期状態で表示されるものも含め、書き出しには一切含めない。
+        /// </summary>
+        public static int RemoveInactiveObjects(GameObject root)
+        {
+            return RemoveObjects(root, go => !go.activeSelf);
+        }
+
         private static int RemoveEditorOnlyObjects(GameObject root)
+        {
+            return RemoveObjects(root, go => go.CompareTag(EditorOnlyTag));
+        }
+
+        private static int RemoveObjects(GameObject root, System.Predicate<GameObject> match)
         {
             // 列挙中に破棄しないよう先に対象を集める
             var targets = new List<GameObject>();
             foreach (Transform t in root.GetComponentsInChildren<Transform>(true))
             {
                 // ルート自体は消さない
-                if (t.gameObject != root && t.CompareTag(EditorOnlyTag))
+                if (t.gameObject != root && match(t.gameObject))
                 {
                     targets.Add(t.gameObject);
                 }

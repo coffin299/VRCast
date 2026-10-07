@@ -8,9 +8,13 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - iFacialMocap で上を向くとアバターが下を向く（首の左右の傾きも逆になる）問題を修正
+- トラッキングの入力元の iFacialMocap から「暫定」「非推奨」の表記を削除
+- 書き出しツールで、シーン上で非アクティブにしたオブジェクトを子ごと書き出さないように変更（FX の初期状態で表示されるものも含めて除きます。除いた数は書き出し結果に表示）
 
 [English]
 - Fixed the avatar looking down when you look up with iFacialMocap (head tilt to the sides was also reversed)
+- Removed the "beta" and "Not recommended" labels from the iFacialMocap tracking source
+- Changed the exporter to never export objects that are inactive in the scene, including their children (even if the FX default state would show them; the number removed is shown in the export result)
 
 ■ 1.10.2 (2026-10-07)
 

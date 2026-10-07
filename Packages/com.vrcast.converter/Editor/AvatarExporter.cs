@@ -42,6 +42,7 @@ namespace VRCast.Converter.Editor
             public int ConstraintCount;
             public bool NdmfApplied;
             public int ModularAvatarFallbackFixes;
+            public int RemovedInactiveObjects;
             public ComponentStripper.Result Strip;
         }
 
@@ -122,6 +123,9 @@ namespace VRCast.Converter.Editor
                 clone = Object.Instantiate(source);
                 clone.name = source.name;
                 clone.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+
+                // エディタで非アクティブにしたものは書き出さない（FX の焼き込みで表示状態が変わる前、改変の適用前に消す）
+                report.RemovedInactiveObjects = ComponentStripper.RemoveInactiveObjects(clone);
 
                 // NDMF が MA コンポーネントを消す前に、衣装・小物の統合先を控える
                 ModularAvatarFallback.Plan maPlan = ModularAvatarFallback.Capture(clone);
