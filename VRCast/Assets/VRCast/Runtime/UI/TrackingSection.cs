@@ -27,6 +27,14 @@ namespace VRCast.UI
         private List<string> _localAddresses = new List<string>();
         private float _nextAddressRefresh;
 
+        // 入力元の行の幅（前回の描画で測った値。0 = 未計測）と、推奨・PC 負荷の注記をスイッチの右に並べるか
+        private float _sourceRowWidth;
+        private bool _sourceNoteInline;
+
+        // 注記をスイッチの下に出すときの字下げ（スイッチの幅）と、横に並べるときの最小の間隔
+        private const float SourceNoteIndent = 48f;
+        private const float SourceNoteGap = 12f;
+
         // iPhone の IP アドレスの入力欄の最大文字数（IPv4 の最長 15 文字に余裕を持たせる）
         private const int MaxAddressLength = 40;
 
@@ -121,6 +129,13 @@ namespace VRCast.UI
         {
             // 入力元ごとのスイッチを縦に並べ、ON にしたものへ切り替える（変更するとトラッカー・受信が起動し直す）
             GUILayout.Label(Loc.T("Source", "入力元", "입력 소스", "输入源", "輸入來源"));
+
+            // 見出しは行の幅いっぱいに広がるので、描画時にその幅を行の幅として測っておく
+            if (Event.current.type == EventType.Repaint)
+            {
+                _sourceRowWidth = GUILayoutUtility.GetLastRect().width;
+            }
+
             string[] labels =
             {
                 Loc.T("MediaPipe (face + hands)", "MediaPipe（顔 + 手）", "MediaPipe (얼굴 + 손)",
@@ -132,6 +147,12 @@ namespace VRCast.UI
                 Loc.T("iFacialMocap (iPhone, face only, beta)", "iFacialMocap（iPhone、顔のみ、暫定）",
                     "iFacialMocap (iPhone, 얼굴만, 임시)", "iFacialMocap（iPhone，仅面部，暂定）", "iFacialMocap（iPhone，僅臉部，暫定）"),
             };
+            // 注記を横に並べるかは Layout のときだけ決める（Layout と Repaint で要素の数を変えない）
+            if (Event.current.type == EventType.Layout)
+            {
+                _sourceNoteInline = SourceNotesFit(labels);
+            }
+
             for (int i = 0; i < labels.Length; i++)
             {
                 var source = (TrackingSource)i;
@@ -144,8 +165,24 @@ namespace VRCast.UI
                     _settings.trackingSource = source;
                 }
 
-                GUILayout.FlexibleSpace();
+                // 収まるときはスイッチの右端に、収まらないときはスイッチの下に字下げして出す
+                if (!_sourceNoteInline)
+                {
+                    GUILayout.EndHorizontal();
+                    GUILayout.BeginHorizontal();
+                    GUILayout.Space(SourceNoteIndent);
+                }
+                else
+                {
+                    GUILayout.FlexibleSpace();
+                }
+
                 DrawSourceNote(source);
+                if (!_sourceNoteInline)
+                {
+                    GUILayout.FlexibleSpace();
+                }
+
                 GUILayout.EndHorizontal();
             }
 
@@ -157,24 +194,77 @@ namespace VRCast.UI
                 "電腦負載為本機 CPU 負載的參考（低負載模式下會降低）"));
         }
 
-        private void DrawSourceNote(TrackingSource source)
+        private bool SourceNotesFit(string[] labels)
         {
-            // 推奨・非推奨（緑 / 黄の太字）
-            UiTheme theme = UiTheme.Current;
-            if (source == TrackingSource.MediaPipe)
+            // 未計測なら折り返す側にしておく（はみ出してタブ全体の幅が広がらないように）
+            if (_sourceRowWidth <= 0f)
             {
-                GUILayout.Label(Loc.T("Recommended", "推奨", "권장", "推荐", "推薦"),
-                    theme != null ? theme.Success : GUI.skin.label);
-            }
-            else if (source == TrackingSource.IFacialMocap)
-            {
-                GUILayout.Label(Loc.T("Not recommended", "非推奨", "비권장", "不推荐", "不推薦"),
-                    theme != null ? theme.WarningText : GUI.skin.label);
+                return false;
             }
 
+            // どれか 1 行でも収まらなければ、すべての行で折り返す（行ごとに揃わない見た目にしない）
+            for (int i = 0; i < labels.Length; i++)
+            {
+                var source = (TrackingSource)i;
+                float width = WidthOf(GUI.skin.toggle, labels[i]) + SourceNoteGap;
+                string tag = SourceTag(source, out GUIStyle tagStyle);
+                if (tag != null)
+                {
+                    width += WidthOf(tagStyle, tag);
+                }
+
+                width += WidthOf(LoadStyle, LoadText(source));
+                if (width > _sourceRowWidth)
+                {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        private void DrawSourceNote(TrackingSource source)
+        {
+            // 推奨・非推奨（緑 / 黄の太字）と PC 負荷の目安
+            string tag = SourceTag(source, out GUIStyle tagStyle);
+            if (tag != null)
+            {
+                GUILayout.Label(tag, tagStyle);
+            }
+
+            GUILayout.Label(LoadText(source), LoadStyle);
+        }
+
+        private static string SourceTag(TrackingSource source, out GUIStyle style)
+        {
+            // MediaPipe は推奨、未検証の iFacialMocap は非推奨、それ以外は表記なし
+            UiTheme theme = UiTheme.Current;
+            switch (source)
+            {
+                case TrackingSource.MediaPipe:
+                    style = theme != null ? theme.Success : GUI.skin.label;
+                    return Loc.T("Recommended", "推奨", "권장", "推荐", "推薦");
+                case TrackingSource.IFacialMocap:
+                    style = theme != null ? theme.WarningText : GUI.skin.label;
+                    return Loc.T("Not recommended", "非推奨", "비권장", "不推荐", "不推薦");
+                default:
+                    style = null;
+                    return null;
+            }
+        }
+
+        private static GUIStyle LoadStyle => UiTheme.Current != null ? UiTheme.Current.Value : GUI.skin.label;
+
+        private string LoadText(TrackingSource source)
+        {
             // PC 負荷の目安（スマートフォンから受信する入力元は推定をスマートフォン側で行うため軽い）
-            GUILayout.Label(Loc.T("PC load", "PC 負荷", "PC 부하", "电脑负载", "電腦負載") + ": " + DescribeLoad(source),
-                theme != null ? theme.Value : GUI.skin.label);
+            return Loc.T("PC load", "PC 負荷", "PC 부하", "电脑负载", "電腦負載") + ": " + DescribeLoad(source);
+        }
+
+        private static float WidthOf(GUIStyle style, string text)
+        {
+            // 1 行で描いたときの幅（余白を含む）
+            return style.CalcSize(new GUIContent(text)).x + style.margin.horizontal;
         }
 
         private string DescribeLoad(TrackingSource source)
