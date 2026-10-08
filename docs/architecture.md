@@ -144,6 +144,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ExpressionMapping` | 検出した表情（笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面）→ 表情プリセットの対応付け。設定に保存したプリセット名（空欄 = 自動、`<none>` = 割り当てなし）で解決し、無ければプリセット名のキーワードで推定。割り当て先がある表情のビット列（`Candidates`）も求める。表情ごとのしきい値の読み書き（未設定なら共通の `trackingExpressionThreshold`） |
 | `BlendShapeOverlay` | BlendShape の検索と、元の値（表情等）を保ったままの上乗せ書き込み（`BlendShapeLimiter` の上限で切って書き、上限で切った固定の値は切る前の値を元の値として読む） |
 | `BlendShapeLimiter` | アバターごとの BlendShape の上限。読込時に全 `SkinnedMeshRenderer` の BlendShape を列挙し、記録済みの上限（パス + 名前）を当てる。表情・まばたき等より先に初期化し、`BlendShapeOverlay` の生成（まばたき・口パク・パーフェクトシンク）と `ExpressionController` の対象解決が `MarkFace` で「顔」として登録する（一覧の区分だけで、上限の効き方は同じ）。`BlendShapeOverlay` と `ExpressionController` は書き込む前に `Limit` を通す。どの処理も書かない固定の値は LateUpdate の最後（実行順 10000）に上限で切り、上限を緩めると切る前の値へ戻す。表示中のアバターの分だけを静的に参照する |
+| `BlendShapeSync` | MA Blendshape Sync の再現（`metadata/blendshape_sync.json` があるアバターだけに付ける）。実行順 9000（まばたき・口パク・トラッキング・表情の書き込みの後、`BlendShapeLimiter` の前）に同期元の値を同期先へ写す（同期先の `Limit` を通し、変わったときだけ書く） |
 | `BlinkController` | ランダム間隔の自動まばたき（ON/OFF 可）。外部入力（トラッキング、左右別）があればそちらを優先。設定により表情（`ExpressionController.Current`）中はどちらも止める。止めていた後（表情・外部入力・OFF）は再開時点から次のまばたきを予約し直す（止めている間に過ぎた予定ですぐ閉じない）。両目用とウインク用 BlendShape の振り分け |
 | `LipSyncController` | マイク音量 × 母音の重みを Viseme `aa` / `ih` / `ou` / `E` / `oh`（同名の BlendShape はまとめる、無い母音は `aa` で代用）へ、JawFlap 方式は口開閉 BlendShape へ上乗せ。外部入力（トラッキングの口の開き）はマイク音量と大きい方を開き具合に使い、声が出ている間はマイクの母音で配る（無音なら `aa`）。設定により表情（`ExpressionController.Current`）中はマイク分・外部入力分をそれぞれ止める |
 | `MicrophoneInput` | マイクのループ録音と音量（RMS、ゲート・感度・平滑化）、声が出ている間の母音推定（`VowelAnalyzer`）と重みの平滑化。デバイス切替・切断時の再開 |
@@ -227,6 +228,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `PhysBoneExtractor` | `VRCPhysBone` / `VRCPhysBoneCollider` をリフレクションで読み PhysBoneSet へ変換 |
 | `ConstraintSet` | `metadata/constraints.json`（Constraint とソース）のモデルと検証 |
 | `ConstraintExtractor` | VRC Constraint（リフレクション）と Unity 標準 Constraint を ConstraintSet へ変換。アバター外のソース・範囲外の値は除外 |
+| `BlendShapeSyncSet` | `metadata/blendshape_sync.json`（MA Blendshape Sync の同期元・同期先）のモデルと検証 |
+| `BlendShapeSyncExtractor` | NDMF 実行前に MA Blendshape Sync（リフレクション。参照は MA の `AvatarObjectReference.Get`、無ければ `referencePath`）を Transform で控え、改変・除去の後のパスで BlendShapeSyncSet にする。消えたメッシュ・BlendShape、同じ同期先の重複は除外 |
 | `ReflectionUtility` | SDK 型をアセンブリ参照なしで読むためのフィールド取得（float / bool / Vector3）・型名検索・アバタールートからの相対パス |
 | `AvatarExporter` | 複製 → MA 設定の控え → NDMF 適用 → MA 未適用分の付け替え → 複製からメタデータ抽出 → FX 既定状態の焼き込み・表情抽出 → 除去 → 一時 Prefab → AssetBundle → ZIP の書き出し |
 | `NdmfProcessor` | NDMF（Modular Avatar 等）の `AvatarProcessor.ProcessAvatar` をリフレクションで複製に適用。書き出し中に `Assets/ZZZ_GeneratedAssets` へ増えた生成アセットだけを後始末 |
@@ -258,10 +261,11 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `OpenSeeFacePacketTests` | OpenSeeFace パケットの値の位置・四元数の座標変換・長さ不足・非有限値・長さ 0 四元数の拒否 |
 | `PerfectSyncBlendShapesTests` | ARKit 名の照合（大文字小文字・区切り記号・L / R 表記・FBX の接頭辞、無関係な名前の拒否）、Mirror による左右の対応、メッシュからの検出と書き込み・解除 |
 | `BlendShapeLimiterTests` | BlendShape の列挙と記録済みの上限の適用、上乗せを作った BlendShape だけが「顔」になること、上限付きだけを切る `Limit`、上乗せ書き込みが上限内に収まり解除で戻ること、書き出しとすべて解除 |
+| `BlendShapeSyncTests` | 同期元の値が同期先へ写ること、見つからないメッシュ・BlendShape の無視、同期先の上限 |
 | `TorsoPoseTests` | 正面で 0、ひねり・傾きの符号（通常 / 鏡像）、肩の欠け・肩幅不足の拒否、回転後の右向きが肩の線に一致 |
 | `MediaPipePacketTests` | MediaPipe JSON の頭の位置・回転の座標変換、目（左右入れ替え）・口・視線の BlendShape 割り当て、腕・手の左右入れ替えと可視度判定と x・y 反転、片手のみ、壊れた顔の部分無効化、表情の強さの合成、バージョン不一致・不正 JSON の拒否 |
 | `ExpressionDetectorTests` | 表情判定の保持時間・しきい値未満・ヒステリシス・最も強い表情の選択・発話中の笑顔の抑制・しきい値・リセット |
 | `ExpressionMappingTests` | プリセット名のキーワード推定（英語・日本語）、保存した名前の優先、空欄・他アバターの名前は推定へ、割り当てなし・ニュートラル |
 | `VrmMetadataBuilderTests` | VRM の表情の変換（重み・空の除外・同名の番号付け）、まばたき（最も多いメッシュ・ウインク・左右のみ・無し）、口の形（母音の位置・無し）、SpringBone の変換（関節の追従・ignore・pull / spring・半径のカーブ・カプセル・コライダー番号）、途切れた鎖・関節 1 つの除外 |
-| `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情・descriptor・physbones・constraints データの読込・不正時の空扱い |
+| `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情・descriptor・physbones・constraints・blendshape_sync データの読込・不正時の空扱い |
 | `ConstraintEvaluatorTests` | Constraint の重み付き平均・軸マスク・重み 0 の静止値・無効時の非適用・Parent のオフセット・Aim / LookAt の向き・評価順の並べ替え・検証 |

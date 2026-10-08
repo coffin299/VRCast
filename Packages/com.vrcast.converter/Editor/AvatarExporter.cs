@@ -40,6 +40,7 @@ namespace VRCast.Converter.Editor
             public bool HasWink;
             public int PhysBoneCount;
             public int ConstraintCount;
+            public int BlendShapeSyncCount;
             public bool NdmfApplied;
             public int ModularAvatarFallbackFixes;
             public int RemovedInactiveObjects;
@@ -129,6 +130,7 @@ namespace VRCast.Converter.Editor
 
                 // NDMF が MA コンポーネントを消す前に、衣装・小物の統合先を控える
                 ModularAvatarFallback.Plan maPlan = ModularAvatarFallback.Capture(clone);
+                BlendShapeSyncExtractor.Plan syncPlan = BlendShapeSyncExtractor.Capture(clone);
 
                 // Modular Avatar 等の改変を VRChat のアップロード時と同じく複製へ適用（NDMF が無ければ何もしない）
                 report.NdmfApplied = NdmfProcessor.Process(clone);
@@ -176,6 +178,10 @@ namespace VRCast.Converter.Editor
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
 
+                // BlendShape の同期（改変・除去の後のパスで。まばたき・口パク等の直接の書き込みにも同期させるため）
+                BlendShapeSyncSet blendShapeSync = BlendShapeSyncExtractor.Build(syncPlan);
+                report.BlendShapeSyncCount = blendShapeSync.bindings.Length;
+
                 // AssetBundle 化のため一時 Prefab として保存
                 AssetDatabase.CreateFolder(TempFolderParent, TempFolderName);
                 PrefabUtility.SaveAsPrefabAsset(clone, AvatarPackageLayout.PrefabAssetPath, out bool saved);
@@ -222,6 +228,11 @@ namespace VRCast.Converter.Editor
                 if (constraints.constraints.Length > 0)
                 {
                     metadata[AvatarPackageLayout.ConstraintsEntry] = constraints;
+                }
+
+                if (blendShapeSync.bindings.Length > 0)
+                {
+                    metadata[AvatarPackageLayout.BlendShapeSyncEntry] = blendShapeSync;
                 }
 
                 foreach (KeyValuePair<string, IMetadata> entry in metadata)

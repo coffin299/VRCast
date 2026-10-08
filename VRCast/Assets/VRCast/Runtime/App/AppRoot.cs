@@ -199,6 +199,12 @@ namespace VRCast.App
             var lipSync = avatar.Instance.AddComponent<LipSyncController>();
             lipSync.Initialize(root, avatar.Descriptor.lipSync, _microphone, _settings, expressions);
 
+            // Modular Avatar の Blendshape Sync（口のチェーン等を、直接書き込む口パク・まばたき・トラッキングにも追従させる）
+            if (avatar.BlendShapeSync.bindings.Length > 0)
+            {
+                avatar.Instance.AddComponent<BlendShapeSync>().Initialize(root, avatar.BlendShapeSync);
+            }
+
             // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
             var face = avatar.Instance.AddComponent<FaceTrackingDriver>();
             face.Initialize(avatar.Animator, _tracker, _tracker, blink, lipSync, expressions, _settings);

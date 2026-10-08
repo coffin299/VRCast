@@ -19,7 +19,8 @@ MyAvatar.vrcaster
     ├── expressions.json 表情プリセット（FX から抽出、表情が無ければ省略）
     ├── descriptor.json  リップシンク・まぶた設定（どちらも無ければ省略）
     ├── physbones.json   揺れもの（PhysBone・コライダー、無ければ省略）
-    └── constraints.json Constraint（VRC / Unity 標準、無ければ省略）
+    ├── constraints.json Constraint（VRC / Unity 標準、無ければ省略）
+    └── blendshape_sync.json BlendShape の同期（Modular Avatar の Blendshape Sync、無ければ省略）
 ```
 
 上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
@@ -219,6 +220,28 @@ VRC Constraint（`VRCPositionConstraint` / `VRCRotationConstraint` / `VRCScaleCo
 上限: constraints 512、1 つあたり sources 32、位置・スケール ±1000。アバター外を指すソース・範囲外の値を含む Constraint は
 Converter が除外する。Freeze To World は対象外（通常の Constraint として評価）。不正な場合は警告のみで Constraint 無しとして扱う。
 
+## metadata/blendshape_sync.json
+
+Modular Avatar の Blendshape Sync（同期先のメッシュの BlendShape を同期元に合わせる設定）。MA はビルド時にアニメーションへ
+同期先のカーブを書き足すだけなので、まばたき・口パク・トラッキングのように Runtime が直接書き込む値は同期されない。
+Runtime はこの一覧で毎フレーム同期元の値を同期先へ写す（同期先の上限は効く）。
+
+```json
+{
+    "bindings": [
+        { "sourcePath": "Body", "sourceBlendShape": "vrc.v_aa", "targetPath": "Accessory/Chain", "targetBlendShape": "vrc.v_aa" }
+    ]
+}
+```
+
+| フィールド | 内容 |
+| :--- | :--- |
+| `sourcePath` / `sourceBlendShape` | 同期元の SkinnedMeshRenderer（アバタールートからの相対パス）と BlendShape 名 |
+| `targetPath` / `targetBlendShape` | 同期先（MA のコンポーネントを付けたメッシュ）と BlendShape 名（MA で未指定なら同期元と同じ名前） |
+
+上限: bindings 4096。Converter は改変の適用後に無くなったメッシュ・BlendShape、同じ同期先の重複を除く。
+Remap カーブは対象外（値をそのまま写す）。不正な場合は警告のみで同期無しとして扱う。
+
 ## avatar.bundle
 
 - アバター Prefab を 1 つだけ含む。アセットパスは固定で `Assets/__VRCastExport/avatar.prefab`。
@@ -227,7 +250,7 @@ Converter が除外する。Freeze To World は対象外（通常の Constraint 
 - Animator Controller は含めない（VRChat 固有の StateMachineBehaviour を含むため）。表情等は Milestone 3 で metadata 化する。
   代わりに FX レイヤーの初期状態（小物トグル・初期表情等）を書き出し時に GameObject / Renderer の有効状態、BlendShape、マテリアル差し替えへ焼き込む（Transform・ポーズは変更しない。BlendShape は既定ではシーン上の値を優先する）。
 - VRChat コンポーネント（Avatar Descriptor, PhysBone, Constraint 等）・自作 MonoBehaviour は含めない。
-  Runtime で使う設定は Converter が `metadata/*.json` に変換する（Descriptor・PhysBone・Constraint）。
+  Runtime で使う設定は Converter が `metadata/*.json` に変換する（Descriptor・PhysBone・Constraint・MA Blendshape Sync）。
 
 ## Runtime 側の検証
 

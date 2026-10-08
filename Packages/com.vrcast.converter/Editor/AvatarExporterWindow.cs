@@ -593,6 +593,7 @@ namespace VRCast.Converter.Editor
                 $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +
                 $"PhysBones: {report.PhysBoneCount}\n" +
                 $"Constraints: {report.ConstraintCount}\n" +
+                $"Blendshape Sync (MA): {report.BlendShapeSyncCount}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +
                 $"{missing}: {report.Strip.RemovedMissingScripts}, " +
                 $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}, " +

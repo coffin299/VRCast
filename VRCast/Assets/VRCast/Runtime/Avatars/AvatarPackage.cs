@@ -24,10 +24,15 @@ namespace VRCast.Avatars
         // Constraint 設定（無い・不正な場合は空）
         public ConstraintSet Constraints { get; }
 
+        // BlendShape の同期（Modular Avatar の Blendshape Sync。無い・不正な場合は空）
+        public BlendShapeSyncSet BlendShapeSync { get; }
+
         public AvatarPackage(
             AvatarManifest manifest, string sourcePath, string bundlePath,
-            ExpressionSet expressions, AvatarDescriptorData descriptor, PhysBoneSet physBones, ConstraintSet constraints)
+            ExpressionSet expressions, AvatarDescriptorData descriptor, PhysBoneSet physBones, ConstraintSet constraints,
+            BlendShapeSyncSet blendShapeSync)
         {
+            BlendShapeSync = blendShapeSync ?? new BlendShapeSyncSet();
             Manifest = manifest;
             SourcePath = sourcePath;
             BundlePath = bundlePath;

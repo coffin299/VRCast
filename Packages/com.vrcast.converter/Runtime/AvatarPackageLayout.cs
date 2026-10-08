@@ -32,6 +32,9 @@ namespace VRCast.AvatarFormat
         // 任意エントリ: Constraint（位置・回転・親子・Aim 等）
         public const string ConstraintsEntry = MetadataPrefix + "constraints.json";
 
+        // 任意エントリ: BlendShape の同期（Modular Avatar の Blendshape Sync）
+        public const string BlendShapeSyncEntry = MetadataPrefix + "blendshape_sync.json";
+
         // metadata 1 ファイルの上限サイズ（1 MiB）
         public const long MaxMetadataBytes = 1024 * 1024;
 

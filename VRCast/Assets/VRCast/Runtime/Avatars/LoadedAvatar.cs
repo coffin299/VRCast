@@ -30,6 +30,9 @@ namespace VRCast.Avatars
         public PhysBoneSet PhysBones { get; }
         public ConstraintSet Constraints { get; }
 
+        // BlendShape の同期（.vrcaster の Modular Avatar の Blendshape Sync。VRM は空）
+        public BlendShapeSyncSet BlendShapeSync { get; private set; } = new BlendShapeSyncSet();
+
         // .vrcaster の manifest（VRM は null）
         public AvatarManifest Manifest { get; }
 
@@ -44,6 +47,7 @@ namespace VRCast.Avatars
         {
             _bundle = bundle;
             Manifest = package.Manifest;
+            BlendShapeSync = package.BlendShapeSync;
         }
 
         public LoadedAvatar(GameObject instance, string sourcePath, VrmAvatarData vrm)

@@ -295,6 +295,42 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Extract_WithBlendShapeSync_ParsesBindings()
+        {
+            // 顔の口の BlendShape をチェーンへ同期する設定を同梱
+            var sync = new BlendShapeSyncSet
+            {
+                bindings = new[]
+                {
+                    new BlendShapeSyncBinding
+                    {
+                        sourcePath = "Body", sourceBlendShape = "vrc.v_aa", targetPath = "Chain", targetBlendShape = "mouth",
+                    },
+                },
+            };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.BlendShapeSyncEntry, JsonUtility.ToJson(sync));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.BlendShapeSync.bindings, Has.Length.EqualTo(1));
+            Assert.That(package.BlendShapeSync.bindings[0].targetBlendShape, Is.EqualTo("mouth"));
+        }
+
+        [Test]
+        public void Extract_BlendShapeSyncWithoutName_IgnoredAsEmpty()
+        {
+            // BlendShape 名の無い同期を含む blendshape_sync.json は全体が空扱いになること
+            var sync = new BlendShapeSyncSet { bindings = new[] { new BlendShapeSyncBinding { sourcePath = "Body" } } };
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.BlendShapeSyncEntry, JsonUtility.ToJson(sync));
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.BlendShapeSync.bindings, Is.Empty);
+        }
+
+        [Test]
         public void Extract_WithoutExpressions_ReturnsEmpty()
         {
             string path = WritePackage(CreateManifest(DummyBundle), DummyBundle);

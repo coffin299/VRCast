@@ -114,6 +114,9 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 - PhysBone / PhysBone Collider の主要パラメーターを `metadata/physbones.json` に書き出す（Runtime で近似的に揺らす）。
 - VRC Constraint と Unity 標準の Constraint を `metadata/constraints.json` に書き出す（Runtime で毎フレーム評価。手に持たせた小物等が追従する）。
   アバター外を指すソースと Freeze To World は対象外。
+- Modular Avatar の **Blendshape Sync** を `metadata/blendshape_sync.json` に書き出す（NDMF の実行前に控え、改変後のパスで書く）。
+  MA はアニメーションにしか同期を書き足さないため、Runtime が毎フレーム同期元の値を同期先へ写し、
+  口に付いたチェーンなどを口パク・まばたき・トラッキング・表情に追従させる（同期先の BlendShape の上限は効く。Remap カーブは未対応）。
 - 書き出し先は Windows スタンドアロン用 AssetBundle。Android (Quest) ビルドターゲットのプロジェクトでは切替に時間がかかる。
 
 ### 2. VRCast.exe で表示する

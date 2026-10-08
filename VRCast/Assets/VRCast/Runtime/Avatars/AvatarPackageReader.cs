@@ -60,6 +60,7 @@ namespace VRCast.Avatars
                     var descriptor = ReadMetadata<AvatarDescriptorData>(zip, AvatarPackageLayout.DescriptorEntry);
                     var physBones = ReadMetadata<PhysBoneSet>(zip, AvatarPackageLayout.PhysBonesEntry);
                     var constraints = ReadMetadata<ConstraintSet>(zip, AvatarPackageLayout.ConstraintsEntry);
+                    var blendShapeSync = ReadMetadata<BlendShapeSyncSet>(zip, AvatarPackageLayout.BlendShapeSyncEntry);
 
                     // bundle をキャッシュへ展開（ハッシュ検証込み）
                     string bundlePath = ExtractBundle(zip, manifest, cacheRoot);
@@ -71,7 +72,8 @@ namespace VRCast.Avatars
                             $"Unity version mismatch: package {manifest.unityVersion}, runtime {Application.unityVersion}.");
                     }
 
-                    return new AvatarPackage(manifest, info.FullName, bundlePath, expressions, descriptor, physBones, constraints);
+                    return new AvatarPackage(manifest, info.FullName, bundlePath, expressions, descriptor, physBones, constraints,
+                        blendShapeSync);
                 }
             }
             catch (InvalidDataException e)
