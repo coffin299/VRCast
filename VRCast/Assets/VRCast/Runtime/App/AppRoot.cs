@@ -8,7 +8,6 @@ using VRCast.Cameras;
 using VRCast.Core;
 using VRCast.Dynamics;
 using VRCast.Output;
-using VRCast.PerfectSync;
 using VRCast.Platform;
 using VRCast.Remote;
 using VRCast.Rendering;
@@ -148,12 +147,6 @@ namespace VRCast.App
                 return;
             }
 
-            // パーフェクトシンクの作成モード中の顔のアップは記録しない（抜けると元の視点に戻る）
-            if (PerfectSyncSculptor.IsOpen)
-            {
-                return;
-            }
-
             // 視点が変わったときだけ記録する（保存は終了時）
             CameraPose pose = _orbit.Pose;
             if (!pose.SameAs(_recordedPose))
@@ -194,14 +187,10 @@ namespace VRCast.App
             Transform root = avatar.Instance.transform;
             avatar.Instance.AddComponent<PoseController>().Initialize(avatar.Animator, _settings);
 
-            // VRCast で作ったパーフェクトシンクの形状（メッシュを差し替えるので、BlendShape を参照する処理より先に加える）
-            var customPerfectSync = avatar.Instance.AddComponent<CustomPerfectSync>();
-            customPerfectSync.Initialize(root, avatar.SourcePath, avatar.PerfectSync);
-
             // BlendShape の上限（このアバターで前回付けたもの）。表情・まばたき等は書き込む前にこれを通し、
             // 初期化時に自分の BlendShape を「顔」として登録するので、それらより先に作る
-            var limiter = avatar.Instance.AddComponent<BlendShapeLimiter>();
-            limiter.Initialize(root, _settings.GetBlendShapeLimits(avatar.SourcePath));
+            avatar.Instance.AddComponent<BlendShapeLimiter>().Initialize(
+                root, _settings.GetBlendShapeLimits(avatar.SourcePath));
             var expressions = avatar.Instance.AddComponent<ExpressionController>();
             expressions.Initialize(root, avatar.Expressions);
             expressions.LoadHotkeys(_settings.GetExpressionHotkeys(avatar.SourcePath), _settings);
@@ -213,14 +202,6 @@ namespace VRCast.App
             // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
             var face = avatar.Instance.AddComponent<FaceTrackingDriver>();
             face.Initialize(avatar.Animator, _tracker, blink, lipSync, expressions, _settings);
-
-            // 作成モードで形状を作り直したら、上限の一覧を作り直してから ARKit 名の対象を探し直す
-            // （探し直しで新しい形状が「顔」として登録されるため、この順にする）
-            customPerfectSync.Rebuilt += () =>
-            {
-                limiter.Rescan();
-                face.RefreshPerfectSync();
-            };
 
             // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);

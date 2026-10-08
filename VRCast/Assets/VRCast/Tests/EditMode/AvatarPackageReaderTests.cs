@@ -1,10 +1,12 @@
 using System;
-using System.Collections.Generic;
 using System.IO;
+using System.IO.Compression;
+using System.Security.Cryptography;
 using NUnit.Framework;
 using UnityEngine;
 using VRCast.AvatarFormat;
 using VRCast.Avatars;
+using CompressionLevel = System.IO.Compression.CompressionLevel;
 
 namespace VRCast.Tests
 {
@@ -15,7 +17,7 @@ namespace VRCast.Tests
     public class AvatarPackageReaderTests
     {
         // ダミー bundle の中身
-        private static readonly byte[] DummyBundle = PackageTestFiles.DummyBundle;
+        private static readonly byte[] DummyBundle = { 1, 2, 3, 4, 5, 6, 7, 8 };
 
         private string _directory;
         private string _cacheRoot;
@@ -307,8 +309,6 @@ namespace VRCast.Tests
         [TestCase("metadata/", true)]
         [TestCase("metadata/physbones.json", true)]
         [TestCase("metadata/constraints.json", true)]
-        [TestCase("metadata/perfectsync.json", true)]
-        [TestCase("metadata/perfectsync_eyeBlinkLeft.json", true)]
         [TestCase("metadata/sub/x.json", false)]
         [TestCase("metadata/x.txt", false)]
         [TestCase("../manifest.json", false)]
@@ -322,19 +322,52 @@ namespace VRCast.Tests
 
         private static AvatarManifest CreateManifest(byte[] bundle)
         {
-            return PackageTestFiles.CreateManifest(bundle);
+            // bundle の内容から正しいハッシュとサイズを設定
+            using (SHA256 sha = SHA256.Create())
+            {
+                return new AvatarManifest
+                {
+                    name = "TestAvatar",
+                    unityVersion = Application.unityVersion,
+                    bundleSha256 = BitConverter.ToString(sha.ComputeHash(bundle)).Replace("-", string.Empty).ToLowerInvariant(),
+                    bundleSize = bundle.Length,
+                };
+            }
         }
 
         private string WritePackage(
             AvatarManifest manifest, byte[] bundle, string extraEntry = null, string extraContent = "\0")
         {
-            // 追加エントリは 1 つまで（不正名や metadata の検証用）
             string path = Path.Combine(_directory, "test" + AvatarPackageLayout.Extension);
-            var extras = extraEntry != null
-                ? new[] { new KeyValuePair<string, string>(extraEntry, extraContent) }
-                : null;
-            PackageTestFiles.Write(path, manifest, bundle, extras);
+            using (FileStream stream = File.Create(path))
+            using (var zip = new ZipArchive(stream, ZipArchiveMode.Create))
+            {
+                // manifest（null の場合は省略）
+                if (manifest != null)
+                {
+                    WriteEntry(zip, AvatarPackageLayout.ManifestEntry, System.Text.Encoding.UTF8.GetBytes(JsonUtility.ToJson(manifest)));
+                }
+
+                // bundle 本体
+                WriteEntry(zip, AvatarPackageLayout.BundleEntry, bundle);
+
+                // 追加エントリ（不正名や metadata の検証用）
+                if (extraEntry != null)
+                {
+                    WriteEntry(zip, extraEntry, System.Text.Encoding.UTF8.GetBytes(extraContent));
+                }
+            }
+
             return path;
+        }
+
+        private static void WriteEntry(ZipArchive zip, string name, byte[] data)
+        {
+            // 無圧縮でエントリを書き込む（Exporter と同じ形式）
+            using (Stream entry = zip.CreateEntry(name, CompressionLevel.NoCompression).Open())
+            {
+                entry.Write(data, 0, data.Length);
+            }
         }
     }
 }

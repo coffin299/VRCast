@@ -19,9 +19,7 @@ MyAvatar.vrcaster
     ├── expressions.json 表情プリセット（FX から抽出、表情が無ければ省略）
     ├── descriptor.json  リップシンク・まぶた設定（どちらも無ければ省略）
     ├── physbones.json   揺れもの（PhysBone・コライダー、無ければ省略）
-    ├── constraints.json Constraint（VRC / Unity 標準、無ければ省略）
-    ├── perfectsync.json VRCast で作ったパーフェクトシンクの形状の目次（VRCast が追記。無ければ省略）
-    └── perfectsync_<ARKit 名>.json  形状ごとの頂点の差分（同上）
+    └── constraints.json Constraint（VRC / Unity 標準、無ければ省略）
 ```
 
 上記以外のエントリ（サブディレクトリ、`.json` 以外の metadata、`..` / `\` / `:` を含む名前）を含むパッケージは拒否される。
@@ -220,47 +218,6 @@ VRC Constraint（`VRCPositionConstraint` / `VRCRotationConstraint` / `VRCScaleCo
 
 上限: constraints 512、1 つあたり sources 32、位置・スケール ±1000。アバター外を指すソース・範囲外の値を含む Constraint は
 Converter が除外する。Freeze To World は対象外（通常の Constraint として評価）。不正な場合は警告のみで Constraint 無しとして扱う。
-
-## metadata/perfectsync.json / perfectsync_&lt;名前&gt;.json
-
-VRCast の作成モードで作ったパーフェクトシンクの形状（ARKit 名の BlendShape）。Converter は書かず、VRCast が保存時に既存の
-`.vrcaster` へ追記する（manifest・bundle・他の metadata はそのまま。初回は元のファイルを `.bak` として残す）。
-旧 Runtime は `metadata/<名前>.json` を許可し、知らない metadata を読まないため、**formatVersion は 0 のまま**で後方互換を保つ。
-詳細は [perfect-sync-editor.md](perfect-sync-editor.md)。
-
-```json
-{
-    "version": 1,
-    "meshes": [
-        { "path": "Body", "vertexCount": 24510, "vertexHash": "0123456789abcdef" }
-    ],
-    "shapes": ["jawOpen", "eyeBlinkLeft"]
-}
-```
-
-```json
-{
-    "name": "jawOpen",
-    "meshes": [
-        { "mesh": 0, "indices": "base64…", "deltas": "base64…" }
-    ]
-}
-```
-
-| フィールド | 内容 |
-| :--- | :--- |
-| `version` | この節の版（`1`）。違えば Runtime は形状を無視する |
-| `meshes[].path` | 差分を当てる SkinnedMeshRenderer のアバタールートからの相対パス。最大 16 |
-| `meshes[].vertexCount` / `vertexHash` | 保存時の頂点数（1〜1,000,000）と、頂点位置を 0.1 mm に丸めた FNV-1a 64 bit（小文字 16 進 16 桁）。一致しないメッシュには当てない |
-| `shapes` | 形状名（英字で始まる英数字、64 文字以内、重複なし）。最大 64。名前ごとに `perfectsync_<名前>.json` がある |
-| `name` | 形状名（目次と同じ） |
-| `meshes[].mesh` | 目次の `meshes` の位置 |
-| `meshes[].indices` | 動かす頂点の番号（int32 LE、昇順、頂点数未満）の base64 |
-| `meshes[].deltas` | 位置の差分（メッシュ空間、half float の x, y, z、各 ±10 m 以内）の base64。法線の差分は読み込み時に再計算する |
-
-形状は元のメッシュの複製に BlendShape（重み 100 のフレーム 1 つ）として加える。元から同じ ARKit 名を持つメッシュには加えない。
-読み込むには対象メッシュが Read/Write 有効である必要がある（Converter の「顔メッシュを編集可能にする」）。
-不正な目次は警告のみで形状無し、不正な形状ファイルはその形状だけを飛ばす。
 
 ## avatar.bundle
 

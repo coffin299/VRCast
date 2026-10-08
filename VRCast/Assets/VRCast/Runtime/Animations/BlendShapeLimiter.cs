@@ -63,15 +63,6 @@ namespace VRCast.Animations
         public int FaceCount { get; private set; }
 
         /// <summary>
-        /// 一覧を作り直した回数（Rescan のたびに増える。一覧を控えている側が作り直しに気付くため）。
-        /// </summary>
-        public int Version { get; private set; }
-
-        // 列挙の起点と、読み込み時に渡された保存済みの上限（Rescan で新しく見つかった BlendShape に当てる）
-        private Transform _root;
-        private List<BlendShapeLimit> _savedLimits = new List<BlendShapeLimit>();
-
-        /// <summary>
         /// 顔として動かす BlendShape として登録する（まばたき・口パク・パーフェクトシンクの上乗せと、表情プリセットの対象）。
         /// 一覧の「顔」に出すための区別で、上限の効き方は変わらない。
         /// </summary>
@@ -126,70 +117,9 @@ namespace VRCast.Animations
         public void Initialize(Transform root, List<BlendShapeLimit> limits)
         {
             _active = this;
-            _root = root;
-            _savedLimits = limits ?? new List<BlendShapeLimit>();
 
-            // 全メッシュの BlendShape を列挙し、記録済みの上限を当てる
-            Enumerate();
-            ApplySavedLimits(null);
-        }
-
-        /// <summary>
-        /// メッシュの差し替え（パーフェクトシンクの形状の追加・削除）の後に一覧を作り直す。
-        /// 同じパス・名前の BlendShape は上限と「顔」の区別を引き継ぎ、新しく見つかったものには保存済みの上限を当てる。
-        /// </summary>
-        public void Rescan()
-        {
-            // 今の上限と区別をパス・名前で控える
-            var previous = new Dictionary<(string, string), Shape>();
-            foreach (Shape shape in _shapes)
-            {
-                previous[(shape.Path, shape.Name)] = shape;
-            }
-
-            // 上限で切っていた固定の値を戻す（差し替えで無くなった BlendShape は除く）
-            foreach (Shape shape in _limited)
-            {
-                if (!float.IsNaN(shape.Original) && shape.Renderer != null && shape.Renderer.sharedMesh != null
-                    && shape.Index < shape.Renderer.sharedMesh.blendShapeCount)
-                {
-                    shape.Renderer.SetBlendShapeWeight(shape.Index, shape.Original);
-                }
-            }
-
-            // 列挙し直す
-            _shapes.Clear();
-            _limited.Clear();
-            _lookup.Clear();
-            FaceCount = 0;
-            Enumerate();
-
-            // 引き継ぎ（前から有ったもの）
-            foreach (Shape shape in _shapes)
-            {
-                if (!previous.TryGetValue((shape.Path, shape.Name), out Shape old))
-                {
-                    continue;
-                }
-
-                if (old.IsFace)
-                {
-                    shape.IsFace = true;
-                    FaceCount++;
-                }
-
-                SetMax(shape, old.Max);
-            }
-
-            // 新しく見つかったものには保存済みの上限
-            ApplySavedLimits(previous);
-            Version++;
-        }
-
-        private void Enumerate()
-        {
             // 全メッシュの BlendShape を列挙
-            foreach (SkinnedMeshRenderer renderer in _root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
             {
                 // メッシュの無いレンダラーは対象外
                 Mesh mesh = renderer.sharedMesh;
@@ -198,7 +128,7 @@ namespace VRCast.Animations
                     continue;
                 }
 
-                string path = PathOf(renderer.transform, _root);
+                string path = PathOf(renderer.transform, root);
                 string meshName = renderer.name;
                 for (int index = 0; index < mesh.blendShapeCount; index++)
                 {
@@ -211,18 +141,10 @@ namespace VRCast.Animations
                     _lookup[(renderer, index)] = shape;
                 }
             }
-        }
 
-        private void ApplySavedLimits(Dictionary<(string, string), Shape> skip)
-        {
-            // 記録済みの上限を当てる（見つからない BlendShape・引き継いだものは無視）
-            foreach (BlendShapeLimit limit in _savedLimits)
+            // 記録済みの上限を当てる（見つからない BlendShape は無視）
+            foreach (BlendShapeLimit limit in limits)
             {
-                if (skip != null && skip.ContainsKey((limit.path, limit.blendShape)))
-                {
-                    continue;
-                }
-
                 Shape shape = _shapes.Find(s => s.Path == limit.path && s.Name == limit.blendShape);
                 if (shape != null)
                 {
@@ -316,12 +238,9 @@ namespace VRCast.Animations
             }
         }
 
-        /// <summary>
-        /// ルートからの相対パス（"Body" や "Armature/Hips/Hair"。ルート自身は空）。
-        /// </summary>
-        public static string PathOf(Transform target, Transform root)
+        private static string PathOf(Transform target, Transform root)
         {
-            // 親をたどって名前を集め、ルート側から並べる
+            // ルートからの相対パス（"Body" や "Armature/Hips/Hair"。ルート自身は空）
             var names = new List<string>();
             for (Transform node = target; node != null && node != root; node = node.parent)
             {

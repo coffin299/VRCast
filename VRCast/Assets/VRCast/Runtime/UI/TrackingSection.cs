@@ -45,19 +45,15 @@ namespace VRCast.UI
         // 表情ごとに「自動」で推定されるプリセットの位置（FaceExpression の値で引く、-1 = なし）
         private readonly int[] _expressionGuesses = new int[(int)FaceExpressions.Last + 1];
 
-        // パーフェクトシンクの作成モード（入口を出す）
-        private readonly PerfectSyncEditorSection _perfectSyncEditor;
-
         public TrackingSection(
             AvatarSession session, IFaceTrackingProvider tracker, TrackerProcess process,
-            TrackingSkeletonView skeleton, AppSettings settings, PerfectSyncEditorSection perfectSyncEditor)
+            TrackingSkeletonView skeleton, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
             _tracker = tracker;
             _process = process;
             _skeleton = skeleton;
             _settings = settings;
-            _perfectSyncEditor = perfectSyncEditor;
             SyncFromSettings();
         }
 
@@ -506,9 +502,6 @@ namespace VRCast.UI
                     $"少于 {min} 个，只驱动找到的 BlendShape，并同时使用表情反映",
                     $"少於 {min} 個，只驅動找到的 BlendShape，並同時使用表情反映"));
             }
-
-            // 足りない形状を VRCast で作る入口
-            _perfectSyncEditor.DrawEntry();
         }
 
         private void DrawExpressions()

@@ -15,7 +15,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Start / Perfect sync setup / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits）で
+    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタンと動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
@@ -46,7 +46,6 @@ namespace VRCast.UI
         private enum Tab
         {
             Start,
-            PerfectSync,
             Avatar,
             Pose,
             Face,
@@ -82,7 +81,6 @@ namespace VRCast.UI
         private SettingsSection _settingsSection;
         private LogSection _logSection;
         private CreditsSection _creditsSection;
-        private PerfectSyncEditorSection _perfectSyncEditor;
         private ResetBar _resetBar;
         private PerformanceBar _performanceBar;
 
@@ -93,9 +91,6 @@ namespace VRCast.UI
         private bool _visible = true;
         private Tab _tab = Tab.Start;
         private readonly Vector2[] _scroll = new Vector2[TabCount];
-
-        // パーフェクトシンクの作成の画面のスクロール位置
-        private Vector2 _editorScroll;
 
         // タブの内容の幅（前回の描画で測った見えている幅。0 = 未計測）
         private float _contentWidth;
@@ -120,9 +115,8 @@ namespace VRCast.UI
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
             _animationSection = new AnimationSection(session, settings);
             _faceSection = new FaceSection(session, microphone, settings);
-            _perfectSyncEditor = new PerfectSyncEditorSection(session, orbit);
             _shapeKeySection = new ShapeKeySection(session, settings);
-            _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings, _perfectSyncEditor);
+            _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering, settings);
             _outputSection = new OutputSection(virtualCamera, spout);
             _remoteSection = new RemoteSection(session, remote, settings);
@@ -214,8 +208,8 @@ namespace VRCast.UI
             var position = new Vector2(mouse.x / scale, (Screen.height - mouse.y) / scale);
             _orbit.InputBlocked = _visible && _windowRect.Contains(position);
 
-            // カメラの固定を反映（設定のリセットにも追従するよう毎フレーム）。パーフェクトシンクの作成中は顔を回して見るため固定しない
-            _orbit.Locked = _settings.cameraLocked && !_perfectSyncEditor.IsOpen;
+            // カメラの固定を反映（設定のリセットにも追従するよう毎フレーム）
+            _orbit.Locked = _settings.cameraLocked;
         }
 
         private void SetVisible(bool visible)
@@ -291,28 +285,16 @@ namespace VRCast.UI
         {
             DrawHeader();
 
-            // パーフェクトシンクの作成中はタブを隠し、作成の画面だけを出す（擬似的な画面の切り替え）
-            bool editing = _perfectSyncEditor.IsOpen;
             GUILayout.BeginHorizontal();
-            if (!editing)
-            {
-                DrawSidebar();
-            }
+            DrawSidebar();
 
             // 選択中のタブの内容（横スクロールバーは出さない）
-            ref Vector2 scroll = ref editing ? ref _editorScroll : ref _scroll[(int)_tab];
-            scroll = GUILayout.BeginScrollView(scroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
+            _scroll[(int)_tab] = GUILayout.BeginScrollView(
+                _scroll[(int)_tab], false, false, GUIStyle.none, GUI.skin.verticalScrollbar);
 
             // 内容の幅を見えている幅に固定する（ボタンの多い行は右へはみ出さず、行の中で縮む）
             GUILayout.BeginVertical(_contentWidth > 0f ? GUILayout.Width(_contentWidth) : GUILayout.ExpandWidth(true));
-            if (editing)
-            {
-                _perfectSyncEditor.Draw();
-            }
-            else
-            {
-                DrawContent();
-            }
+            DrawContent();
             GUILayout.EndVertical();
             GUILayout.EndScrollView();
 
@@ -409,14 +391,11 @@ namespace VRCast.UI
         {
             GUILayout.BeginVertical(_theme.Sidebar, GUILayout.Width(SidebarWidth), GUILayout.ExpandHeight(true));
 
-            // 押したタブを選択（選択中はアクセント色）。名前の長いタブは折り返し、他のタブより低くしない
+            // 押したタブを選択（選択中はアクセント色）
             for (int i = 0; i < TabCount; i++)
             {
                 var tab = (Tab)i;
-                bool selected = tab == Tab.PerfectSync
-                    ? GUILayout.Toggle(_tab == tab, TabLabel(tab), _theme.WrappingTab, GUILayout.MinHeight(_theme.Tab.fixedHeight))
-                    : GUILayout.Toggle(_tab == tab, TabLabel(tab), _theme.Tab);
-                if (selected && _tab != tab)
+                if (GUILayout.Toggle(_tab == tab, TabLabel(tab), _theme.Tab) && _tab != tab)
                 {
                     _tab = tab;
                 }
@@ -433,9 +412,6 @@ namespace VRCast.UI
             {
                 case Tab.Start:
                     _startSection.Draw();
-                    break;
-                case Tab.PerfectSync:
-                    _perfectSyncEditor.DrawTab();
                     break;
                 case Tab.Avatar:
                     _avatarSection.Draw();
@@ -480,9 +456,6 @@ namespace VRCast.UI
             {
                 case Tab.Start:
                     return Loc.T("Start", "はじめに", "시작하기", "开始", "開始");
-                case Tab.PerfectSync:
-                    return Loc.T("Perfect sync setup (BETA)", "パーフェクトシンク\n設定(BETA)", "퍼펙트 싱크 설정(BETA)",
-                        "完美同步设置(BETA)", "完美同步設定(BETA)");
                 case Tab.Avatar:
                     return Loc.T("Avatar", "アバター", "아바타", "虚拟形象", "虛擬形象");
                 case Tab.Pose:

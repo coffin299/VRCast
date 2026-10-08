@@ -293,23 +293,6 @@ Tracking インターフェースを完成させ、Provider を 1 種類だけ�
 - 対応アバターで眉・頬・口の形（笑顔・口すぼめ・頬ふくらまし等）が追従すること、片目を閉じたとき正しい側が閉じること（Mirror ON/OFF の両方）
 - 非対応アバターでは従来どおり（まばたき・口・表情プリセット）に動くこと、OFF にすると元の表情へ戻ること
 
-### 追加: パーフェクトシンクの形状の作成モード（未リリース）
-
-設計は [perfect-sync-editor.md](perfect-sync-editor.md)。
-
-- Converter: 「顔メッシュを編集可能にする（パーフェクトシンク）」（`EditableFaceMeshes`、既定 ON）で顔のメッシュを Read/Write 有効の複製にして書き出す
-- 形式: `metadata/perfectsync.json`（目次）と `metadata/perfectsync_<ARKit 名>.json`（差分）。formatVersion は 0 のまま（旧 Runtime は読み飛ばす）
-- Runtime: `CustomPerfectSync` が読み込み時に照合（パス・頂点数・頂点ハッシュ）して BlendShape として加え、`BlendShapeLimiter.Rescan` と `FaceTrackingDriver.RefreshPerfectSync` で一覧・対象を作り直す
-- 編集: `PerfectSyncSculptor`（ブラシ 5 種・左右対称・既存 BlendShape の合成・左右反転コピー・Undo 30 回・トラッキングでの確認）、`SculptMeshData`（継ぎ目の統合・対称の相手・スキニング行列）
-- 保存: `AvatarPackageWriter` が形状のエントリだけを差し替え、初回は `.bak` を残す
-- UI: 作成中はタブを隠して作成画面だけを出す（擬似的な画面の切り替え）。入口は「はじめに」の下のパーフェクトシンク設定(BETA) タブと Tracking タブ
-
-確認項目:
-
-- ARKit 名を持たないアバターで形状を作り、保存 → 読み込み直しで形状が戻り、パーフェクトシンクで動くこと
-- 保存したファイルを旧版の VRCast で開けること（形状は使われない）、`.bak` が元のファイルと同じであること
-- 継ぎ目（UV の境界）が割れないこと、左右対称が正しい側に効くこと、終了でカメラ・トラッキングが元に戻ること
-
 ## Milestone 6 — OSC
 
 OSC 受信・送信、Parameter Mapping（Milestone 3 から移した Animator Parameter を含む）。OSC 無効でも基本表示は動作すること。

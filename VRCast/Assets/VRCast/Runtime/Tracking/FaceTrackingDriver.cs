@@ -158,11 +158,6 @@ namespace VRCast.Tracking
         public bool IsTracking { get; private set; }
 
         /// <summary>
-        /// true の間は受信していないものとして扱う（パーフェクトシンク作成モードで顔を正面・無表情に保つ）。
-        /// </summary>
-        public bool Suspended { get; set; }
-
-        /// <summary>
         /// 正面位置からの頭の位置の差分（平滑化・鏡像適用済み、Provider の単位。UI での強さ調整用）。
         /// </summary>
         public Vector3 HeadOffset => _currentOffset;
@@ -218,16 +213,6 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// ARKit 名の BlendShape を探し直す（パーフェクトシンク作成モードで形状を追加・削除した後）。
-        /// </summary>
-        public void RefreshPerfectSync()
-        {
-            // 前の対象へ書いた値を戻してから作り直す
-            _perfectSync?.Release();
-            _perfectSync = PerfectSyncBlendShapes.Create(transform);
-        }
-
-        /// <summary>
         /// 現在の頭の向き・位置（上半身の傾きの基準）・視線を正面とする（VSeeFace の Calibrate 相当）。
         /// </summary>
         public void Calibrate()
@@ -262,9 +247,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 有効かつ受信中のときだけ値を使う（作成モードで止めている間は使わない）
-            bool received = !Suspended && _settings.trackingEnabled && _provider != null
-                && _provider.TryGetFrame(out _lastFrame);
+            // 有効かつ受信中のときだけ値を使う
+            bool received = _settings.trackingEnabled && _provider != null && _provider.TryGetFrame(out _lastFrame);
 
             // 無効化中や入力元・カメラの変更後は、次に映ったときに正面を取り直す
             // （顔を見失っただけなら正面は保持する。再検出直後の不正確な向きで取り直すと以後ずっとずれるため）

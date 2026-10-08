@@ -43,7 +43,6 @@ namespace VRCast.Converter.Editor
             public bool NdmfApplied;
             public int ModularAvatarFallbackFixes;
             public int RemovedInactiveObjects;
-            public int EditableFaceMeshes;
             public ComponentStripper.Result Strip;
         }
 
@@ -93,10 +92,9 @@ namespace VRCast.Converter.Editor
         /// <summary>
         /// keepSceneBlendShapes が true なら、FX の初期状態ではなくシーン上の BlendShape の値を書き出す。
         /// extraExpressionClips は FX に無い表情として追加するクリップ（BlendShape だけを動かすものを取り込む）。
-        /// editableFaceMeshes が true なら、VRCast のパーフェクトシンク作成モード用に顔まわりのメッシュを読み取り可能にする。
         /// </summary>
         public static Report Export(GameObject source, string outputPath, bool keepSceneBlendShapes = true,
-            IReadOnlyList<AnimationClip> extraExpressionClips = null, bool editableFaceMeshes = true)
+            IReadOnlyList<AnimationClip> extraExpressionClips = null)
         {
             // 事前検証に失敗したら例外で中断
             string error = Validate(source);
@@ -178,16 +176,8 @@ namespace VRCast.Converter.Editor
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
 
-                // 一時 Prefab と、読み取り可能にしたメッシュの複製の置き場所
-                AssetDatabase.CreateFolder(TempFolderParent, TempFolderName);
-
-                // パーフェクトシンク作成モードで頂点を読めるよう、顔まわりのメッシュを読み取り可能な複製へ差し替える
-                if (editableFaceMeshes)
-                {
-                    report.EditableFaceMeshes = EditableFaceMeshes.Apply(clone, descriptorData, tempFolder);
-                }
-
                 // AssetBundle 化のため一時 Prefab として保存
+                AssetDatabase.CreateFolder(TempFolderParent, TempFolderName);
                 PrefabUtility.SaveAsPrefabAsset(clone, AvatarPackageLayout.PrefabAssetPath, out bool saved);
                 if (!saved)
                 {
