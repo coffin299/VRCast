@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- トラッキングタブに「顔の左右を入れ替える」を追加（閉じた目・ウインクが頭の傾きや腕と逆側になるときに ON にすると、顔（まばたき・パーフェクトシンク・視線）だけが入れ替わります。既定は OFF）
+
+[English]
+- Added "Swap face left / right" to the Tracking tab (turn it on if the closed eye or wink is on the wrong side compared with your head tilt and arms; only the face (blink, perfect sync, gaze) is swapped; off by default)
+
 ■ 1.12.3 (2026-10-08)
 
 [日本語]

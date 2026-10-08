@@ -440,8 +440,8 @@ namespace VRCast.Tracking
             }
             else
             {
-                // 鏡像モードでは本人の右目がアバターの左目
-                bool mirror = _settings.trackingMirror;
+                // 鏡像モードでは本人の右目がアバターの左目（顔の左右の入れ替えも反映）
+                bool mirror = _settings.FaceMirror;
                 SetBlink(mirror ? personRight : personLeft, mirror ? personLeft : personRight);
             }
 
@@ -459,7 +459,7 @@ namespace VRCast.Tracking
             // 動作中は毎フレーム書き、使わない間は元の値へ戻す（一度だけ）
             if (IsPerfectSyncActive)
             {
-                _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.trackingMirror,
+                _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.FaceMirror,
                     Time.deltaTime, _settings.trackingBlink);
             }
             else
@@ -660,10 +660,10 @@ namespace VRCast.Tracking
                 _gazeCalibrated = true;
             }
 
-            // 正面からの角度差（±180° の折り返しを考慮）。鏡像モードは左右反転
+            // 正面からの角度差（±180° の折り返しを考慮）。鏡像モード（顔の左右の入れ替えも反映）は左右反転
             float yaw = Mathf.DeltaAngle(_neutralGaze.x, _lastFrame.Gaze.x);
             float pitch = Mathf.DeltaAngle(_neutralGaze.y, _lastFrame.Gaze.y);
-            if (_settings.trackingMirror)
+            if (_settings.FaceMirror)
             {
                 yaw = -yaw;
             }

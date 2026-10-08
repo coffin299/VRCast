@@ -198,6 +198,9 @@ namespace VRCast.Core
         public int trackingPort = DefaultTrackingPort;
         public bool trackingMirror = true;
 
+        // 顔（まばたき・ウインク・パーフェクトシンク・視線）の左右だけを入れ替える（頭の傾き・体・腕と左右が合わないとき用）
+        public bool trackingSwapFaceSides;
+
         // 外部アプリ（VMC プロトコル）の受信ポート（同梱トラッカーの trackingPort とは別。LAN から受信する）
         public int vmcPort = DefaultVmcPort;
 
@@ -253,6 +256,11 @@ namespace VRCast.Core
 
         // デバッグログタブの詳細ログ（トラッキングの受信統計・状態の変化など。調査時だけ ON にする想定で既定は OFF）
         public bool detailedLogging;
+
+        /// <summary>
+        /// 顔（まばたき・パーフェクトシンク・視線）に使う鏡像の向き。顔の左右の入れ替えが ON なら鏡像設定と逆。
+        /// </summary>
+        public bool FaceMirror => trackingMirror != trackingSwapFaceSides;
 
         /// <summary>
         /// テーマに合った背景色の既定値を返す。

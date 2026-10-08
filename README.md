@@ -348,6 +348,8 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
   - **Lean + move**: 両方
 - 目の動きは目ボーン（Humanoid の LeftEye / RightEye）に反映される。強さは **Eye gaze**（0 で無効）。
 - 片目を閉じるとウインクする（ウインク用 BlendShape を書き出し時に推定できたアバターのみ。無い場合は両目同時のまばたき）。
+- **Swap face left / right**（顔の左右を入れ替える、Motion 欄、既定 OFF）: 閉じた目・ウインクが頭の傾きや腕と逆側になるときに ON にする。
+  顔（まばたき・ウインク・パーフェクトシンク・視線、Raw view の目）だけを鏡像設定と逆にし、頭の向き・体・腕は **Mirror** のまま（[Issue #9](https://github.com/coffin299/VRCast/issues/9)）。
 - **Track blinks**（まばたきをトラッキング、既定 ON）を OFF にすると目の開閉は使わず、Face タブの自動まばたきに任せる（パーフェクトシンクの eyeBlink も動かさない）。
 - トラッキング中は自動まばたきより優先し、口の開き具合はマイクの音量と大きい方を使い、声が出ている間の口の形はマイクの母音判定に従う（カメラの開きで「あ」に潰れない）。途絶すると 0.5 秒で元の動作に戻る。
 - **Facial expressions**（表情反映、MediaPipe のみ、既定 ON）: Web カメラで検出した表情（Smile 笑顔 / Surprise 驚き / Angry 怒り / Sad 悲しみ / Wink ウインク / Half-closed eyes ジト目 / Pout ふくれっ面）に合わせて、

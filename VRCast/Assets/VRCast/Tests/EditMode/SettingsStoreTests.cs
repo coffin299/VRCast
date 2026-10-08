@@ -41,6 +41,26 @@ namespace VRCast.Tests
             Assert.That(settings.windowWidth, Is.EqualTo(new AppSettings().windowWidth));
         }
 
+        [TestCase(false, false, false)]
+        [TestCase(true, false, true)]
+        [TestCase(false, true, true)]
+        [TestCase(true, true, false)]
+        public void FaceMirror_SwapsOnlyWhenRequested(bool mirror, bool swap, bool expected)
+        {
+            // 鏡像と顔の左右の入れ替えの組み合わせ
+            var settings = new AppSettings { trackingMirror = mirror, trackingSwapFaceSides = swap };
+
+            // 入れ替えが ON のときだけ鏡像と逆になること
+            Assert.That(settings.FaceMirror, Is.EqualTo(expected));
+        }
+
+        [Test]
+        public void Defaults_DoNotSwapFaceSides()
+        {
+            // 既定では顔の左右を入れ替えないこと（従来どおり）
+            Assert.That(new AppSettings().trackingSwapFaceSides, Is.False);
+        }
+
         [Test]
         public void SaveThenLoad_RoundTripsValues()
         {

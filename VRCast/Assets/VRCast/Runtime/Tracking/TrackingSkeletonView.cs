@@ -279,9 +279,10 @@ namespace VRCast.Tracking
             Vector3 front = center + head * new Vector3(0f, 0f, HeadHalfSize.z);
             Line(front, front + head * Vector3.forward * NoseLength, ArmWidth, CenterColor);
 
-            // 目: 本人の右目は通常アバターの右（+x）、鏡像では左。線の向き = 視線、長さ = 目の開き
-            float rightSide = _mirror ? -1f : 1f;
-            float yaw = _mirror ? -face.Gaze.x : face.Gaze.x;
+            // 目: 本人の右目は通常アバターの右（+x）、鏡像では左（顔の左右の入れ替えも反映）。線の向き = 視線、長さ = 目の開き
+            bool faceMirror = _settings.FaceMirror;
+            float rightSide = faceMirror ? -1f : 1f;
+            float yaw = faceMirror ? -face.Gaze.x : face.Gaze.x;
             Quaternion gaze = head * Quaternion.Euler(-face.Gaze.y, yaw, 0f);
             DrawEye(center, head, rightSide, face.EyeOpenRight, gaze, RightColor);
             DrawEye(center, head, -rightSide, face.EyeOpenLeft, gaze, LeftColor);

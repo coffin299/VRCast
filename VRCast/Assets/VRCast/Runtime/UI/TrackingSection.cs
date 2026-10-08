@@ -744,6 +744,17 @@ namespace VRCast.UI
                 Loc.T("Mirror (move like a mirror)", "ミラー（鏡のように動かす）", "미러 (거울처럼 움직이기)",
                     "镜像（像镜子一样移动）", "鏡像（像鏡子一樣移動）"));
 
+            // 顔（まばたき・ウインク・パーフェクトシンク・視線）の左右だけを入れ替える（頭の傾き・腕はそのまま）
+            _settings.trackingSwapFaceSides = GUILayout.Toggle(
+                _settings.trackingSwapFaceSides,
+                Loc.T("Swap face left / right", "顔の左右を入れ替える", "얼굴 좌우 바꾸기", "交换面部左右", "交換臉部左右"));
+            GuiControls.Hint(Loc.T(
+                "Turn on if the closed eye or wink is on the wrong side compared with your head tilt and arms. Only the face (blink, perfect sync, gaze) is swapped.",
+                "閉じた目・ウインクが頭の傾きや腕と逆側になるときに ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わります。",
+                "감은 눈·윙크가 머리 기울기나 팔과 반대쪽이 될 때 켭니다. 얼굴 (눈 깜빡임·퍼펙트 싱크·시선)만 바뀝니다.",
+                "当闭上的眼睛或单眼眨眼与头部倾斜、手臂方向相反时开启。只交换面部（眨眼、完美同步、视线）。",
+                "當閉上的眼睛或單眼眨眼與頭部傾斜、手臂方向相反時開啟。只交換臉部（眨眼、完美同步、視線）。"));
+
             // 頭の位置に合わせた体の動かし方（傾き / 体全体の移動 / 両方）と強さ
             string[] labels =
             {
