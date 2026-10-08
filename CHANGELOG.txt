@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- パネル下部の動作状況が折り返して 2 行に見える問題を修正
+- パネル下部にアンケート欄を追加（次に対応してほしい機能などを募集しています。GitHub の Issue か Google フォームから自由に書けます）
+
+[English]
+- Fixed the performance stats at the bottom of the panel wrapping onto a second line
+- Added a survey box at the bottom of the panel (we're collecting ideas for what to support next; write anything on GitHub Issues or in the Google Form)
+
 ■ 1.12.3 (2026-10-08)
 
 [日本語]

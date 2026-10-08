@@ -139,6 +139,10 @@ namespace VRCast.UI
         // スクロールバーの幅
         private const int ScrollbarWidth = 8;
 
+        // アンケート欄の枠の太さ（px）と、地に混ぜるアクセント色の割合
+        private const int SurveyBorder = 2;
+        private const float SurveyTint = 0.12f;
+
         // 生成したテクスチャ（破棄用）
         private readonly List<Texture2D> _textures = new List<Texture2D>();
 
@@ -172,10 +176,19 @@ namespace VRCast.UI
         // カード内の小見出し（アクセント色の太字、上に余白）
         public GUIStyle SubTitle { get; private set; }
         public GUIStyle Hint { get; private set; }
+
+        // パネル下部の動作状況（1 行。折り返すと 2 行になって二重に見える）
+        public GUIStyle Stats { get; private set; }
         public GUIStyle KeyHint { get; private set; }
         public GUIStyle Value { get; private set; }
         public GUIStyle Centered { get; private set; }
         public GUIStyle Card { get; private set; }
+
+        // パネル下部のアンケート欄（アクセント色の枠のカード・見出しのバッジ・本文・目立つボタン）
+        public GUIStyle SurveyCard { get; private set; }
+        public GUIStyle SurveyBadge { get; private set; }
+        public GUIStyle SurveyText { get; private set; }
+        public GUIStyle AccentButton { get; private set; }
         public GUIStyle Sidebar { get; private set; }
         public GUIStyle Tab { get; private set; }
 
@@ -291,6 +304,14 @@ namespace VRCast.UI
             SubTitle.normal.textColor = Accent;
             Hint = new GUIStyle(Skin.label) { fontSize = 12 };
             Hint.normal.textColor = TextDim;
+
+            // 動作状況は長い 1 行。本文の折り返しを引き継ぐと幅が足りないとき 2 行になり、二重表示に見える
+            Stats = new GUIStyle(Hint)
+            {
+                wordWrap = false,
+                clipping = TextClipping.Clip,
+                stretchHeight = false,
+            };
 
             // 見出し行のキー操作の案内（目立つようアクセント色の太字）
             KeyHint = new GUIStyle(Skin.label)
@@ -421,6 +442,24 @@ namespace VRCast.UI
             };
             Card.normal.background = Rounded(CardColor, CardRadius);
 
+            // アンケート欄（広告欄のように目立たせる。アクセント色の枠と、アクセント色を少し混ぜた地）
+            SurveyCard = new GUIStyle
+            {
+                border = Offset(CardRadius + 1),
+                padding = new RectOffset(12, 12, 8, 10),
+                margin = new RectOffset(0, 0, 6, 2),
+            };
+            SurveyCard.normal.background = RoundedOutline(
+                Color.Lerp(CardColor, Accent, SurveyTint), Accent, CardRadius, SurveyBorder);
+            SurveyBadge = new GUIStyle(SubTitle) { wordWrap = false };
+            SurveyBadge.margin.top = 0;
+            SurveyText = new GUIStyle(Skin.label) { fontSize = 12 };
+
+            // 塗りつぶしのアクセント色のボタン（アンケートへの誘導など、押してほしい操作）
+            AccentButton = new GUIStyle(Skin.button) { fontStyle = FontStyle.Bold };
+            SetStates(AccentButton, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius),
+                Rounded(Accent, ControlRadius), OnAccent);
+
             // 左のタブ列
             Sidebar = new GUIStyle
             {
@@ -478,6 +517,19 @@ namespace VRCast.UI
             // 角の半径 + 伸縮する中央 2px の正方形
             int size = radius * 2 + 4;
             return Paint(size, size, (x, y) => Over(Color.clear, color, RoundedCoverage(x, y, 0f, 0f, size, size, radius)));
+        }
+
+        private Texture2D RoundedOutline(Color fill, Color outline, int radius, int thickness)
+        {
+            // 枠の色の角丸の上に、枠の太さだけ内側へ縮めた地の色の角丸を重ねる
+            int size = radius * 2 + 4;
+            return Paint(size, size, (x, y) =>
+            {
+                Color under = Over(Color.clear, outline, RoundedCoverage(x, y, 0f, 0f, size, size, radius));
+                float inner = RoundedCoverage(x, y, thickness, thickness, size - thickness * 2f, size - thickness * 2f,
+                    radius - thickness);
+                return Over(under, fill, inner);
+            });
         }
 
         private Texture2D Switch(bool on)

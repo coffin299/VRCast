@@ -9,7 +9,7 @@ namespace VRCast.UI
 {
     /// <summary>
     /// パネルの一番下に常に表示する動作状況（描画の fps・VRCast の CPU・GPU の処理時間・トラッカーの CPU・トラッキングの受信レート）。
-    /// 表示は英語のみ。1 秒ごとにまとめて計測し直し、設定の showPerformanceStats で ON/OFF する。
+    /// 表示は英語の 1 行のみ。1 秒ごとにまとめて計測し直し、設定の showPerformanceStats で ON/OFF する。
     /// </summary>
     public class PerformanceBar
     {
@@ -38,6 +38,9 @@ namespace VRCast.UI
 
         private string _text = "Measuring...";
 
+        // 次の Layout で表示へ反映する計測結果（Repaint 中に文字を変えると、折り返しの高さと描画が食い違う）
+        private string _pendingText;
+
         public PerformanceBar(AppSettings settings, IFaceTrackingProvider tracker, TrackerProcess trackerProcess)
         {
             _settings = settings;
@@ -55,7 +58,14 @@ namespace VRCast.UI
                 {
                     // 表示し直したら古い値を出さず計測からやり直す
                     _windowFrame = -1;
+                    _pendingText = null;
                     _text = "Measuring...";
+                }
+                else if (_pendingText != null)
+                {
+                    // 計測結果は Layout でだけ表示へ出す（このフレームの Repaint と同じ文字列にする）
+                    _text = _pendingText;
+                    _pendingText = null;
                 }
 
                 _visible = visible;
@@ -72,7 +82,7 @@ namespace VRCast.UI
                 Sample();
             }
 
-            GUILayout.Label(_text, UiTheme.Current.Hint);
+            GUILayout.Label(_text, UiTheme.Current.Stats);
         }
 
         private void Sample()
@@ -103,7 +113,7 @@ namespace VRCast.UI
                 return;
             }
 
-            _text = Format(frames / elapsed, elapsed * 1000f / frames);
+            _pendingText = Format(frames / elapsed, elapsed * 1000f / frames);
             StartWindow(now);
         }
 
