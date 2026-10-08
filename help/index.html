@@ -538,11 +538,11 @@
         <span class="ko"><span class="ui">트래킹 사용</span>을 켜면 포함된 트래커가 자동으로 시작되어 머리 방향·눈 깜빡임·입·시선 (MediaPipe에서는 팔·손도)이 움직입니다.</span>
         <span class="zh-hans">打开 <span class="ui">启用追踪</span> 后，内置追踪器会自动启动，驱动头部朝向、眨眼、嘴部和视线（MediaPipe 还包括手臂和手）。</span>
         <span class="zh-hant">開啟 <span class="ui">啟用追蹤</span> 後，內建追蹤器會自動啟動，驅動頭部朝向、眨眼、嘴部和視線（MediaPipe 還包括手臂和手）。</span></li>
-    <li><span class="ja">MediaPipe で <span class="ui">腕・手</span> が ON のときは、<span class="ui">上半身のひねり・傾き（肩）</span>（既定は ON）で両肩の向きに合わせて上半身をひねったり左右に傾けたりします。肩が映っていない間は頭の位置で傾けます。</span>
-        <span class="en">With MediaPipe and <span class="ui">Arms / hands</span> on, <span class="ui">Upper body twist / tilt (shoulders)</span> (on by default) twists and tilts the upper body to match your shoulders. While your shoulders are not visible, it leans with your head position as before.</span>
-        <span class="ko">MediaPipe에서 <span class="ui">팔·손</span>이 켜져 있으면 <span class="ui">상체 비틀기·기울기 (어깨)</span>(기본은 켜짐)로 양 어깨 방향에 맞춰 상체를 비틀거나 좌우로 기울입니다. 어깨가 보이지 않는 동안은 머리 위치로 기울입니다.</span>
-        <span class="zh-hans">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 开启时，<span class="ui">上半身扭转 / 倾斜（肩部）</span>（默认开启）会根据双肩的朝向扭转或左右倾斜上半身。未拍到肩部时按头部位置倾斜。</span>
-        <span class="zh-hant">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 開啟時，<span class="ui">上半身扭轉 / 傾斜（肩部）</span>（預設開啟）會依雙肩的朝向扭轉或左右傾斜上半身。未拍到肩部時依頭部位置傾斜。</span></li>
+    <li><span class="ja">MediaPipe で <span class="ui">腕・手</span> が ON のときは、<span class="ui">上半身のひねり・傾き（肩）</span>（既定は ON）で両肩の向きに合わせて上半身をひねったり左右に傾けたりします。肩が映っていない間は頭の位置で傾けます。ひねらせたくないときは <span class="ui">上半身のひねりを固定</span> を ON にすると、左右の傾きだけが動きます。</span>
+        <span class="en">With MediaPipe and <span class="ui">Arms / hands</span> on, <span class="ui">Upper body twist / tilt (shoulders)</span> (on by default) twists and tilts the upper body to match your shoulders. While your shoulders are not visible, it leans with your head position as before. Turn on <span class="ui">Lock upper body twist</span> to keep only the side tilt.</span>
+        <span class="ko">MediaPipe에서 <span class="ui">팔·손</span>이 켜져 있으면 <span class="ui">상체 비틀기·기울기 (어깨)</span>(기본은 켜짐)로 양 어깨 방향에 맞춰 상체를 비틀거나 좌우로 기울입니다. 어깨가 보이지 않는 동안은 머리 위치로 기울입니다. 비틀지 않게 하려면 <span class="ui">상체 비틀기 고정</span>을 켜면 좌우 기울기만 움직입니다.</span>
+        <span class="zh-hans">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 开启时，<span class="ui">上半身扭转 / 倾斜（肩部）</span>（默认开启）会根据双肩的朝向扭转或左右倾斜上半身。未拍到肩部时按头部位置倾斜。不想扭转时，开启 <span class="ui">固定上半身扭转</span> 即可只保留左右倾斜。</span>
+        <span class="zh-hant">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 開啟時，<span class="ui">上半身扭轉 / 傾斜（肩部）</span>（預設開啟）會依雙肩的朝向扭轉或左右傾斜上半身。未拍到肩部時依頭部位置傾斜。不想扭轉時，開啟 <span class="ui">固定上半身扭轉</span> 即可只保留左右傾斜。</span></li>
     <li><span class="ja"><span class="ui">入力元</span> は、縦に並んだスイッチのどれか 1 つを ON にして選びます。各行の右（幅が足りないときはスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（低・中・高）が出ます。MediaPipe は <span class="ui">腕・手</span> を OFF にすると軽くなり、iPhone などから受け取る入力元は推定をスマートフォン側で行うため PC の負荷は低めです。</span>
         <span class="en">Pick the <span class="ui">Source</span> by turning on one of the switches listed vertically. Each row shows (on the right, or under the switch when there is not enough room) whether it is recommended (MediaPipe) and a rough PC load (low / medium / high). MediaPipe gets lighter with <span class="ui">Arms / hands</span> off, and sources received from an iPhone or similar keep the PC load low because the phone does the tracking.</span>
         <span class="ko"><span class="ui">입력 소스</span>는 세로로 나열된 스위치 중 하나를 켜서 고릅니다. 각 줄 오른쪽 (폭이 부족하면 스위치 아래)에 권장 (MediaPipe)과 PC 부하 기준 (낮음·보통·높음)이 표시됩니다. MediaPipe는 <span class="ui">팔·손</span>을 끄면 가벼워지고, iPhone 등에서 받는 입력 소스는 스마트폰에서 추정하므로 PC 부하가 낮습니다.</span>
@@ -743,11 +743,17 @@
             <span class="zh-hans">切换显示语言，在任意标签页中都可使用</span>
             <span class="zh-hant">切換顯示語言，在任意分頁中都可使用</span></td></tr>
     <tr><td><span class="ja">パネル下部のリセット</span><span class="en">Reset bar (panel bottom)</span><span class="ko">패널 아래쪽 초기화</span><span class="zh-hans">面板底部的重置</span><span class="zh-hant">面板底部的重設</span></td>
-        <td><span class="ja">顔の向き / 視線 / 表情（ニュートラル）/ カメラ。どのタブを開いていても押せます</span>
-            <span class="en">Head / Gaze / Expression (neutral) / Camera, available from every tab</span>
-            <span class="ko">얼굴 방향 / 시선 / 표정 (무표정) / 카메라. 어느 탭에서든 누를 수 있습니다</span>
-            <span class="zh-hans">头部朝向 / 视线 / 表情（无表情）/ 相机，在任意标签页中都可使用</span>
-            <span class="zh-hant">頭部朝向 / 視線 / 表情（無表情）/ 相機，在任意分頁中都可使用</span></td></tr>
+        <td><span class="ja">顔の向き / 視線 / 表情（ニュートラル）/ カメラ。どのタブを開いていても押せます（ボタンの下段に割り当て中のショートカットキーを表示）</span>
+            <span class="en">Head / Gaze / Expression (neutral) / Camera, available from every tab (each button shows its shortcut key on the second line)</span>
+            <span class="ko">얼굴 방향 / 시선 / 표정 (무표정) / 카메라. 어느 탭에서든 누를 수 있습니다 (버튼 아래 줄에 할당된 단축키 표시)</span>
+            <span class="zh-hans">头部朝向 / 视线 / 表情（无表情）/ 相机，在任意标签页中都可使用（按钮第二行显示已分配的快捷键）</span>
+            <span class="zh-hant">頭部朝向 / 視線 / 表情（無表情）/ 相機，在任意分頁中都可使用（按鈕第二行顯示已分配的快捷鍵）</span></td></tr>
+    <tr><td><span class="ja">テンキー 1〜4</span><span class="en">Numpad 1–4</span><span class="ko">숫자 키패드 1~4</span><span class="zh-hans">小键盘 1～4</span><span class="zh-hant">數字鍵台 1～4</span></td>
+        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）。パネルを隠していても使え、<span class="ui">設定</span> タブの <span class="ui">ショートカットキー（リセット）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
+            <span class="en">Resets (1 Head / 2 Gaze / 3 Expression / 4 Camera). Works while the panel is hidden; change or remove the keys in <span class="ui">Shortcut keys (reset)</span> in the <span class="ui">Settings</span> tab (NumLock on; <span class="ui">Also work when VRCast is in the background</span> is on by default). If a key is the same as an expression shortcut, a warning is shown and the expression takes priority</span>
+            <span class="ko">초기화 (1 얼굴 방향 / 2 시선 / 3 표정 / 4 카메라). 패널을 숨겨도 사용할 수 있으며 <span class="ui">설정</span> 탭의 <span class="ui">단축키 (초기화)</span>에서 변경·해제할 수 있습니다 (NumLock 켜짐. <span class="ui">VRCast가 뒤에 있을 때도 사용</span>은 기본 켜짐). 표정 단축키와 같은 키로 하면 경고가 나오고 표정이 우선됩니다</span>
+            <span class="zh-hans">重置（1 头部朝向 / 2 视线 / 3 表情 / 4 相机）。隐藏面板时也可使用，可在 <span class="ui">设置</span> 标签页的 <span class="ui">快捷键（重置）</span> 中更改或清除（需开启 NumLock；<span class="ui">VRCast 在后台时也可使用</span> 默认开启）。若与表情快捷键相同，会显示警告且表情优先</span>
+            <span class="zh-hant">重設（1 頭部朝向 / 2 視線 / 3 表情 / 4 相機）。隱藏面板時也可使用，可在 <span class="ui">設定</span> 分頁的 <span class="ui">快捷鍵（重設）</span> 中變更或清除（需開啟 NumLock；<span class="ui">VRCast 在背景時也可使用</span> 預設開啟）。若與表情快捷鍵相同，會顯示警告且表情優先</span></td></tr>
     <tr><td><span class="ja">右ドラッグ</span><span class="en">Right-drag</span><span class="ko">오른쪽 드래그</span><span class="zh-hans">右键拖动</span><span class="zh-hant">右鍵拖曳</span></td>
         <td><span class="ja">カメラを回転</span><span class="en">Rotate the camera</span><span class="ko">카메라 회전</span><span class="zh-hans">旋转相机</span><span class="zh-hant">旋轉相機</span></td></tr>
     <tr><td><span class="ja">中ドラッグ</span><span class="en">Middle-drag</span><span class="ko">가운데 드래그</span><span class="zh-hans">中键拖动</span><span class="zh-hant">中鍵拖曳</span></td>
