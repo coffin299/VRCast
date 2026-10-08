@@ -344,6 +344,39 @@ namespace VRCast.UI
                     : Loc.T("Arms / hands: not visible (idle pose)", "腕・手: 映っていません（待機ポーズ）",
                         "팔·손: 보이지 않음 (대기 포즈)", "手臂 / 手：未拍到（待机姿势）", "手臂 / 手：未拍到（待機姿勢）"));
             }
+
+            // 上半身の向き（両肩の線）は腕・手の体の推定を使うため、腕・手が ON のときだけ選べる
+            if (_settings.trackingHands)
+            {
+                DrawTorso();
+            }
+        }
+
+        private void DrawTorso()
+        {
+            _settings.trackingTorso = GUILayout.Toggle(
+                _settings.trackingTorso,
+                Loc.T("Upper body twist / tilt (shoulders)", "上半身のひねり・傾き（肩）", "상체 비틀기·기울기 (어깨)",
+                    "上半身扭转 / 倾斜（肩部）", "上半身扭轉 / 傾斜（肩部）"));
+
+            // 無効時は状態を出さない
+            if (!_settings.trackingTorso)
+            {
+                return;
+            }
+
+            // 両肩が映っていれば肩の線で動かし、映っていない間は頭の位置による傾きのまま
+            var face = _avatar.Get<FaceTrackingDriver>();
+            if (face != null && face.IsTracking)
+            {
+                GuiControls.Hint(face.IsTrackingTorso
+                    ? Loc.T("Upper body: following your shoulders", "上半身: 肩に合わせて動かしています",
+                        "상체: 어깨에 맞춰 움직이는 중", "上半身：正在跟随肩部", "上半身：正在跟隨肩部")
+                    : Loc.T("Upper body: shoulders not visible (uses head position)",
+                        "上半身: 肩が映っていません（頭の位置で傾けます）",
+                        "상체: 어깨가 보이지 않음 (머리 위치로 기울임)",
+                        "上半身：未拍到肩部（按头部位置倾斜）", "上半身：未拍到肩部（依頭部位置傾斜）"));
+            }
         }
 
         private void DrawVmcConnection()

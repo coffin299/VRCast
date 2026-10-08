@@ -10,6 +10,9 @@ namespace VRCast.Tracking
     {
         // 肩・肘・手首が映っていて腕の向きを使えるなら true
         public bool HasArm;
+
+        // 肩が映っていて位置を使えるなら true（両肩がそろえば上半身の向きに使う。肘・手首が隠れていてもよい）
+        public bool HasShoulder;
         public Vector3 Shoulder;
         public Vector3 Elbow;
         public Vector3 Wrist;

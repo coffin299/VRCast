@@ -201,7 +201,7 @@ namespace VRCast.App
 
             // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
             var face = avatar.Instance.AddComponent<FaceTrackingDriver>();
-            face.Initialize(avatar.Animator, _tracker, blink, lipSync, expressions, _settings);
+            face.Initialize(avatar.Animator, _tracker, _tracker, blink, lipSync, expressions, _settings);
 
             // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);

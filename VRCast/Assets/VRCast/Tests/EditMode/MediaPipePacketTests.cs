@@ -167,6 +167,10 @@ namespace VRCast.Tests
             Assert.That(body.Left.HasArm, Is.True);
             Assert.That(body.Right.HasArm, Is.False);
             Assert.That(Vector3.Distance(body.Left.Elbow, new Vector3(0.1f, -0.2f, 0.3f)), Is.LessThan(1e-5f));
+
+            // 手首が隠れていても肩は使えること
+            Assert.That(body.Left.HasShoulder, Is.True);
+            Assert.That(body.Right.HasShoulder, Is.True);
         }
 
         [Test]

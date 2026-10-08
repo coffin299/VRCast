@@ -216,6 +216,9 @@ namespace VRCast.Core
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
 
+        // 上半身の向き（両肩の線から背骨・胸のひねり・左右の傾き。腕・手が ON のときだけ。MediaPipe のみ）
+        public bool trackingTorso = true;
+
         // パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
         public bool trackingPerfectSync = true;
 

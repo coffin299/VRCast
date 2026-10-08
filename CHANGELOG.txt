@@ -8,9 +8,11 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - トラッキングタブに「顔の左右を入れ替える」を追加（閉じた目・ウインクが頭の傾きや腕と逆側になるときに ON にすると、顔（まばたき・パーフェクトシンク・視線）だけが入れ替わります。既定は OFF）
+- MediaPipe で腕・手を ON にしているとき、両肩の向きに合わせて上半身をひねったり左右に傾けたりする「上半身のひねり・傾き（肩）」を追加（既定は ON。肩が映っていない間は従来どおり頭の位置で傾けます）
 
 [English]
 - Added "Swap face left / right" to the Tracking tab (turn it on if the closed eye or wink is on the wrong side compared with your head tilt and arms; only the face (blink, perfect sync, gaze) is swapped; off by default)
+- Added "Upper body twist / tilt (shoulders)", which twists and tilts the upper body to match your shoulders when using MediaPipe with arms / hands on (on by default; while your shoulders are not visible, the body leans with your head position as before)
 
 ■ 1.12.3 (2026-10-08)
 

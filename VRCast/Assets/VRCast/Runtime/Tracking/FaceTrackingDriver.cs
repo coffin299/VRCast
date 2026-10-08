@@ -7,6 +7,7 @@ namespace VRCast.Tracking
     /// <summary>
     /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、頭の位置は背骨・胸の傾き（前後・左右）と
     /// 腰の移動（前後・左右・上下、足も一緒に動く）のどちらかまたは両方、
+    /// 両肩（MediaPipe の体）が映っていれば上半身のひねり・左右の傾きを肩の線から背骨・胸へ、
     /// 視線は目ボーン、まばたき（左右別）・口は既存コントローラーへ外部入力として渡す。
     /// 表情（MediaPipe のみ）は判定結果が変わったときだけ、割り当てた表情プリセットへ切り替える。
     /// 揺れもの（PhysBoneSimulator）が回転後の頭を基準に計算できるよう、他の LateUpdate より先に実行する。
@@ -43,6 +44,12 @@ namespace VRCast.Tracking
         private const float MoveMetersPerUnit = 0.1f;
         private const float MaxMoveDistance = 0.3f;
 
+        // 肩の線による上半身のひねりの上限（度。左右の傾きの上限は MaxLeanAngle）と追従速度（1 秒あたり。肩の奥行きは揺れやすいので遅め）、
+        // 肩が映った・消えたときに頭の位置による傾きとの間を切り替える秒数
+        private const float MaxTorsoYaw = 35f;
+        private const float TorsoSmoothing = 8f;
+        private const float TorsoFadeSeconds = 0.3f;
+
         // 左右の閉じ具合の差がこれ未満なら平均する（検出のぶれで片目だけ閉じないように）
         private const float WinkThreshold = 0.3f;
 
@@ -55,6 +62,7 @@ namespace VRCast.Tracking
         private const float GazeFreezeClosed = 0.5f;
 
         private IFaceTrackingProvider _provider;
+        private IBodyTrackingProvider _body;
         private BlinkController _blink;
         private LipSyncController _lipSync;
         private ExpressionController _expressions;
@@ -104,6 +112,14 @@ namespace VRCast.Tracking
         private bool _calibrated;
         private Quaternion _current = Quaternion.identity;
         private Vector3 _currentOffset;
+
+        // 肩の線の正面（キャリブレーション後に最初に両肩が映ったときの角度。x = ひねり、y = 傾き）と、
+        // それを取ったときの鏡像設定、平滑化済みの正面からの角度、頭の位置による傾きとの混ぜ具合（0〜1）
+        private Vector2 _torsoNeutral;
+        private bool _torsoCalibrated;
+        private bool _torsoMirror;
+        private Vector2 _torsoAngles;
+        private float _torsoWeight;
 
         // 正面を取ったときの入力元とカメラ（変わったら以前の正面は基準が違うため取り直す）
         private TrackingSource _calibratedSource;
@@ -163,6 +179,11 @@ namespace VRCast.Tracking
         public Vector3 HeadOffset => _currentOffset;
 
         /// <summary>
+        /// 両肩が映っていて、肩の線で上半身の向きを動かしている最中なら true。
+        /// </summary>
+        public bool IsTrackingTorso { get; private set; }
+
+        /// <summary>
         /// 表情反映が動作中なら true（MediaPipe で受信中、設定 ON、表情データあり）。
         /// </summary>
         public bool IsDetectingExpression { get; private set; }
@@ -173,10 +194,11 @@ namespace VRCast.Tracking
         public FaceExpression DetectedExpression => _detector.Current;
 
         public void Initialize(
-            Animator animator, IFaceTrackingProvider provider, BlinkController blink, LipSyncController lipSync,
-            ExpressionController expressions, AppSettings settings)
+            Animator animator, IFaceTrackingProvider provider, IBodyTrackingProvider body, BlinkController blink,
+            LipSyncController lipSync, ExpressionController expressions, AppSettings settings)
         {
             _provider = provider;
+            _body = body;
             _blink = blink;
             _lipSync = lipSync;
             _expressions = expressions;
@@ -221,6 +243,9 @@ namespace VRCast.Tracking
             _calibrated = IsTracking;
             _neutral = _lastFrame.HeadRotation;
             _neutralPosition = _lastFrame.HeadPosition;
+
+            // 肩の線は次に両肩が映ったときに取り直す
+            _torsoCalibrated = false;
             CalibrateGaze();
         }
 
@@ -510,9 +535,11 @@ namespace VRCast.Tracking
             float blend = 1f - Mathf.Exp(-HeadSmoothing * Time.deltaTime);
             _current = Quaternion.Slerp(_current, target, blend);
             _currentOffset = Vector3.Lerp(_currentOffset, targetOffset, blend);
+            UpdateTorso(usable);
 
             // 無効化後に正面へ戻り切ったらボーンを触らない（待機ポーズ等の変更を妨げない）
-            bool settled = Quaternion.Angle(_current, Quaternion.identity) < 0.01f && _currentOffset.sqrMagnitude < 1e-6f;
+            bool settled = Quaternion.Angle(_current, Quaternion.identity) < 0.01f && _currentOffset.sqrMagnitude < 1e-6f
+                && _torsoWeight <= 0f;
             if (!_settings.trackingEnabled && settled)
             {
                 _current = Quaternion.identity;
@@ -531,8 +558,8 @@ namespace VRCast.Tracking
             BodyMotion motion = _settings.trackingBodyMotion;
             MoveHips(motion != BodyMotion.Lean);
 
-            // 上半身の傾きを背骨・胸で分担（移動のみのモードでは傾けない）
-            Quaternion lean = motion != BodyMotion.Move ? CalculateLean(_currentOffset) : Quaternion.identity;
+            // 上半身の傾き（移動のみのモードでは頭の位置では傾けない）と肩の線による向きを背骨・胸で分担
+            Quaternion lean = CalculateLean(_currentOffset, motion != BodyMotion.Move);
             float torsoShare = _spine != null && _chest != null ? 0.5f : 1f;
             RotateInAvatarSpace(_spine, Quaternion.Slerp(Quaternion.identity, lean, torsoShare));
             RotateInAvatarSpace(_chest, Quaternion.Slerp(Quaternion.identity, lean, torsoShare));
@@ -590,13 +617,57 @@ namespace VRCast.Tracking
             return offset;
         }
 
-        private Quaternion CalculateLean(Vector3 offset)
+        private Quaternion CalculateLean(Vector3 offset, bool fromHead)
         {
-            // 前後の移動は前後の傾き（X 軸まわり）、左右の移動は横の傾き（Z 軸まわり）へ
-            float degreesPerUnit = LeanDegreesPerUnit * _settings.trackingBodyLean;
+            // 前後の移動は前後の傾き（X 軸まわり）、左右の移動は横の傾き（Z 軸まわり）へ（頭の位置で傾けないモードは 0）
+            float degreesPerUnit = fromHead ? LeanDegreesPerUnit * _settings.trackingBodyLean : 0f;
             float pitch = Mathf.Clamp(-offset.z * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
             float roll = Mathf.Clamp(offset.x * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
-            return Quaternion.Euler(pitch, 0f, roll);
+
+            // 両肩が映っている間は、横の傾きを肩の線に置き換え（頭の位置と二重に傾けない）、ひねりを加える。
+            // 前後の傾きは肩の奥行きが不安定なため頭の位置のまま
+            Quaternion torso = TorsoPose.ToRotation(_torsoAngles);
+            Quaternion head = Quaternion.Euler(pitch, 0f, roll);
+            Quaternion withoutRoll = Quaternion.Euler(pitch, 0f, 0f);
+            return Quaternion.Slerp(head, withoutRoll * torso, _torsoWeight);
+        }
+
+        private void UpdateTorso(bool usable)
+        {
+            // 設定 ON・腕を受信できる入力元で腕・手 ON・頭が使えるときだけ、両肩が映っていれば向きを求める
+            bool enabled = usable && _settings.trackingTorso && _settings.trackingHands
+                && TrackingSourceInfo.HasArms(_settings.trackingSource);
+            Vector2 angles = Vector2.zero;
+            bool has = enabled && _body != null && _body.TryGetBody(out BodyTrackingFrame body)
+                && TorsoPose.TryGetAngles(body, _settings.trackingMirror, out angles);
+
+            // 鏡像設定が変わったら左右の基準が変わるため正面を取り直す
+            if (_torsoMirror != _settings.trackingMirror)
+            {
+                _torsoMirror = _settings.trackingMirror;
+                _torsoCalibrated = false;
+            }
+
+            // キャリブレーション後に最初に映った肩の線を正面とする（カメラが斜めでも正面で 0 になるように）
+            if (has && !_torsoCalibrated)
+            {
+                _torsoNeutral = angles;
+                _torsoCalibrated = true;
+            }
+
+            // 正面からの角度差を上限に収め、平滑化して追従（頭の位置の傾きから戻ってきた直後は補間せず合わせる）
+            if (has)
+            {
+                var target = new Vector2(
+                    Mathf.Clamp(Mathf.DeltaAngle(_torsoNeutral.x, angles.x), -MaxTorsoYaw, MaxTorsoYaw),
+                    Mathf.Clamp(Mathf.DeltaAngle(_torsoNeutral.y, angles.y), -MaxLeanAngle, MaxLeanAngle));
+                float blend = 1f - Mathf.Exp(-TorsoSmoothing * Time.deltaTime);
+                _torsoAngles = _torsoWeight > 0f ? Vector2.Lerp(_torsoAngles, target, blend) : target;
+            }
+
+            // 映っている間は肩の線へ、消えたら頭の位置による傾きへ徐々に切り替える（最後の値を保持したまま）
+            _torsoWeight = Mathf.MoveTowards(_torsoWeight, has ? 1f : 0f, Time.deltaTime / TorsoFadeSeconds);
+            IsTrackingTorso = has;
         }
 
         private Quaternion CalculateHeadDelta()

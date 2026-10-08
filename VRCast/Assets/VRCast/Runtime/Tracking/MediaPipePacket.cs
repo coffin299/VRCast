@@ -179,6 +179,7 @@ namespace VRCast.Tracking
             {
                 HasArm = visibility[shoulder] >= MinVisibility && visibility[elbow] >= MinVisibility
                     && visibility[wrist] >= MinVisibility,
+                HasShoulder = visibility[shoulder] >= MinVisibility,
                 Shoulder = ToUnity(points, shoulder),
                 Elbow = ToUnity(points, elbow),
                 Wrist = ToUnity(points, wrist),
