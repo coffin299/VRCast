@@ -2,6 +2,20 @@
 
 <p align="center"><img src="docs/images/vrcast-icon.png" alt="VRCast" width="160"></p>
 
+<p align="center">
+  <a href="https://deepwiki.com/coffin299/VRCast"><img src="https://deepwiki.com/badge.svg" alt="Ask DeepWiki"></a>
+  <a href="https://github.com/coffin299/VRCast/releases/latest"><img src="https://img.shields.io/github/v/release/coffin299/VRCast?label=release" alt="Latest release"></a>
+  <a href="https://github.com/coffin299/VRCast/releases"><img src="https://img.shields.io/github/downloads/coffin299/VRCast/total?label=downloads" alt="Downloads"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/coffin299/VRCast" alt="License"></a>
+</p>
+
+<p align="center">
+  <img src="https://img.shields.io/badge/platform-Windows%2010%20%7C%2011-0078D6?logo=windows" alt="Platform">
+  <img src="https://img.shields.io/badge/Unity-2022.3-000000?logo=unity" alt="Unity 2022.3">
+  <a href="https://coffin299.github.io/VRCast/"><img src="https://img.shields.io/badge/website-coffin299.github.io-2ea44f" alt="Website"></a>
+  <a href="https://coffin299.booth.pm/items/8933317"><img src="https://img.shields.io/badge/BOOTH-download-fc4d50" alt="BOOTH"></a>
+</p>
+
 <p align="center"><img src="https://count.getloli.com/@VRCastCounterV1?theme=green&padding=7&offset=0&align=top&scale=1&pixelated=1&darkmode=0" alt="VRCast counter"></p>
 
 VRChat 向け 3D アバターを、Unity プロジェクトごとではなく **アバター単体に近い形** で動かす軽量スタンドアロン Runtime。
