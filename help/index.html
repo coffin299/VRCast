@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>VRCast Help - Export, OBS, virtual camera and tracking | VRCast ヘルプ・使い方</title>
-<meta name="description" content="How to use VRCast: export your VRChat avatar to .vrcaster in Unity, load it, show it in OBS with a transparent background, use the VRCast Camera virtual camera and webcam tracking. VRCast の使い方・OBS 設定・トラッキング。">
+<meta name="description" content="How to use VRCast: export your VRChat avatar to .vrcaster in Unity (or load a VRM file as is), load it, show it in OBS with a transparent background, use the VRCast Camera virtual camera and webcam tracking. VRCast の使い方・OBS 設定・トラッキング。">
 <meta name="robots" content="index, follow, max-image-preview:large">
 <meta name="theme-color" content="#e6dbc7">
 <link rel="canonical" href="https://coffin299.github.io/VRCast/help/">
@@ -85,6 +85,11 @@
         <span class="ko"><code>.vrcaster</code> 파일을 VRCast 창에 드래그 앤 드롭</span>
         <span class="zh-hans">将 <code>.vrcaster</code> 文件拖放到 VRCast 窗口</span>
         <span class="zh-hant">將 <code>.vrcaster</code> 檔案拖放到 VRCast 視窗</span></li>
+    <li><span class="ja">VRM（<code>.vrm</code>、VRoid など）なら書き出し不要で、そのままドラッグ＆ドロップ（<a href="#vrm">VRM について</a>）</span>
+        <span class="en">For VRM (<code>.vrm</code>, e.g. VRoid), skip exporting and drag and drop it as is (<a href="#vrm">about VRM</a>)</span>
+        <span class="ko">VRM(<code>.vrm</code>, VRoid 등)은 내보낼 필요 없이 그대로 드래그 앤 드롭 (<a href="#vrm">VRM에 대해</a>)</span>
+        <span class="zh-hans">VRM（<code>.vrm</code>，如 VRoid）无需导出，直接拖放即可（<a href="#vrm">关于 VRM</a>）</span>
+        <span class="zh-hant">VRM（<code>.vrm</code>，如 VRoid）無需匯出，直接拖放即可（<a href="#vrm">關於 VRM</a>）</span></li>
     <li><span class="ja"><span class="ui">はじめに</span> タブの <span class="ui">透過にする</span> を押す</span>
         <span class="en">Press <span class="ui">Make transparent</span> in the <span class="ui">Start</span> tab</span>
         <span class="ko"><span class="ui">시작하기</span> 탭의 <span class="ui">투명하게 하기</span>를 누르기</span>
@@ -204,11 +209,11 @@
 <section id="load">
   <h2><span class="ja">2. VRCast で読み込む</span><span class="en">2. Load it in VRCast</span><span class="ko">2. VRCast에서 불러오기</span><span class="zh-hans">2. 在 VRCast 中加载</span><span class="zh-hant">2. 在 VRCast 中載入</span></h2>
   <ul>
-    <li><span class="ja"><code>.vrcaster</code> ファイルを VRCast のウィンドウにドラッグ＆ドロップすると読み込まれます。</span>
-        <span class="en">Drag and drop a <code>.vrcaster</code> file onto the VRCast window.</span>
-        <span class="ko"><code>.vrcaster</code> 파일을 VRCast 창에 드래그 앤 드롭하면 불러옵니다.</span>
-        <span class="zh-hans">将 <code>.vrcaster</code> 文件拖放到 VRCast 窗口即可加载。</span>
-        <span class="zh-hant">將 <code>.vrcaster</code> 檔案拖放到 VRCast 視窗即可載入。</span></li>
+    <li><span class="ja"><code>.vrcaster</code> または <code>.vrm</code> ファイルを VRCast のウィンドウにドラッグ＆ドロップすると読み込まれます。</span>
+        <span class="en">Drag and drop a <code>.vrcaster</code> or <code>.vrm</code> file onto the VRCast window.</span>
+        <span class="ko"><code>.vrcaster</code> 또는 <code>.vrm</code> 파일을 VRCast 창에 드래그 앤 드롭하면 불러옵니다.</span>
+        <span class="zh-hans">将 <code>.vrcaster</code> 或 <code>.vrm</code> 文件拖放到 VRCast 窗口即可加载。</span>
+        <span class="zh-hant">將 <code>.vrcaster</code> 或 <code>.vrm</code> 檔案拖放到 VRCast 視窗即可載入。</span></li>
     <li><span class="ja">または <span class="ui">はじめに</span> タブの <span class="ui">ファイルを選ぶ...</span>、
         <span class="ui">アバター</span> タブの <span class="ui">参照...</span> で選べます。</span>
         <span class="en">Or use <span class="ui">Choose file...</span> in the <span class="ui">Start</span> tab, or
@@ -235,11 +240,35 @@
         <span class="zh-hant"><span class="ui">虛擬形象</span> 分頁的 <span class="ui">最近使用的虛擬形象</span> 中最多列出 10 個最近使用的虛擬形象，點擊即可切換（點擊 <span class="ui">×</span> 從清單移除）。
           相機、燈光、虛擬形象亮度、待機姿勢和身體朝向會依虛擬形象分別記住，切換時恢復。</span></li>
   </ul>
-  <p class="note warn ja"><code>.vrcaster</code> 以外のファイル（画像や unitypackage など）は読み込めません。エラーが表示された場合は書き出し直してください。</p>
-  <p class="note warn en">Only <code>.vrcaster</code> files can be loaded (not images, unitypackages, etc.). If you see an error, export the avatar again.</p>
-  <p class="note warn ko"><code>.vrcaster</code> 이외의 파일 (이미지나 unitypackage 등)은 불러올 수 없습니다. 오류가 표시되면 다시 내보내세요.</p>
-  <p class="note warn zh-hans">只能加载 <code>.vrcaster</code> 文件（不能加载图片或 unitypackage 等）。如果显示错误，请重新导出。</p>
-  <p class="note warn zh-hant">只能載入 <code>.vrcaster</code> 檔案（不能載入圖片或 unitypackage 等）。如果顯示錯誤，請重新匯出。</p>
+  <p class="note warn ja"><code>.vrcaster</code> と <code>.vrm</code> 以外のファイル（画像や unitypackage など）は読み込めません。<code>.vrcaster</code> でエラーが表示された場合は書き出し直してください。</p>
+  <p class="note warn en">Only <code>.vrcaster</code> and <code>.vrm</code> files can be loaded (not images, unitypackages, etc.). If a <code>.vrcaster</code> shows an error, export the avatar again.</p>
+  <p class="note warn ko"><code>.vrcaster</code>와 <code>.vrm</code> 이외의 파일 (이미지나 unitypackage 등)은 불러올 수 없습니다. <code>.vrcaster</code>에서 오류가 표시되면 다시 내보내세요.</p>
+  <p class="note warn zh-hans">只能加载 <code>.vrcaster</code> 和 <code>.vrm</code> 文件（不能加载图片或 unitypackage 等）。如果 <code>.vrcaster</code> 显示错误，请重新导出。</p>
+  <p class="note warn zh-hant">只能載入 <code>.vrcaster</code> 和 <code>.vrm</code> 檔案（不能載入圖片或 unitypackage 等）。如果 <code>.vrcaster</code> 顯示錯誤，請重新匯出。</p>
+
+  <h3 id="vrm"><span class="ja">VRM を読み込む</span><span class="en">Loading VRM</span><span class="ko">VRM 불러오기</span><span class="zh-hans">加载 VRM</span><span class="zh-hant">載入 VRM</span></h3>
+  <ul>
+    <li><span class="ja">VRM 0.x / 1.0 の <code>.vrm</code>（VRoid Studio などで作ったもの）は、Unity での書き出しをせずにそのまま読み込めます。</span>
+        <span class="en">VRM 0.x / 1.0 <code>.vrm</code> files (e.g. made with VRoid Studio) load as they are, without exporting in Unity.</span>
+        <span class="ko">VRM 0.x / 1.0의 <code>.vrm</code>(VRoid Studio 등으로 만든 것)은 Unity에서 내보내지 않고 그대로 불러올 수 있습니다.</span>
+        <span class="zh-hans">VRM 0.x / 1.0 的 <code>.vrm</code>（如用 VRoid Studio 制作）无需在 Unity 中导出即可直接加载。</span>
+        <span class="zh-hant">VRM 0.x / 1.0 的 <code>.vrm</code>（如用 VRoid Studio 製作）無需在 Unity 中匯出即可直接載入。</span></li>
+    <li><span class="ja">VRM の表情（喜怒哀楽・驚き・独自の表情）、まばたき・ウインク、あいうえおの口の形、揺れもの（SpringBone）を VRCast の表情・自動まばたき・口パク・揺れものとして使います。</span>
+        <span class="en">The VRM's expressions (happy, angry, sad, relaxed, surprised and custom ones), blink / wink, A-I-U-E-O mouth shapes and spring bones are used for VRCast's expressions, auto blink, lip sync and physics.</span>
+        <span class="ko">VRM의 표정(기쁨·분노·슬픔·편안·놀람·사용자 표정), 눈 깜빡임·윙크, 아이우에오 입 모양, 흔들림(SpringBone)을 VRCast의 표정·자동 눈 깜빡임·립싱크·흔들림으로 사용합니다.</span>
+        <span class="zh-hans">VRM 的表情（喜、怒、哀、乐、惊讶及自定义表情）、眨眼和单眼眨眼、A-I-U-E-O 口型以及摇摆骨骼（SpringBone）会用于 VRCast 的表情、自动眨眼、口型同步和摇摆效果。</span>
+        <span class="zh-hant">VRM 的表情（喜、怒、哀、樂、驚訝及自訂表情）、眨眼和單眼眨眼、A-I-U-E-O 口型以及搖擺骨骼（SpringBone）會用於 VRCast 的表情、自動眨眼、口型同步和搖擺效果。</span></li>
+    <li><span class="ja"><span class="ui">アバター</span> タブに VRM のバージョン（0.x / 1.0）と作者が表示されます。</span>
+        <span class="en">The <span class="ui">Avatar</span> tab shows the VRM version (0.x / 1.0) and author.</span>
+        <span class="ko"><span class="ui">아바타</span> 탭에 VRM 버전(0.x / 1.0)과 제작자가 표시됩니다.</span>
+        <span class="zh-hans"><span class="ui">虚拟形象</span> 标签页会显示 VRM 版本（0.x / 1.0）和作者。</span>
+        <span class="zh-hant"><span class="ui">虛擬形象</span> 分頁會顯示 VRM 版本（0.x / 1.0）和作者。</span></li>
+  </ul>
+  <p class="note ja">マテリアルの色を変える表情、VRM のコンストレイント、目のボーンが無いモデルの視線（BlendShape 方式）は反映されません。VRM に書かれた利用条件を守って使ってください。</p>
+  <p class="note en">Expressions that change material colors, VRM constraints, and eye movement on models without eye bones (BlendShape look-at) are not supported. Follow the terms of use written in the VRM.</p>
+  <p class="note ko">머티리얼 색을 바꾸는 표정, VRM의 컨스트레인트, 눈 본이 없는 모델의 시선(BlendShape 방식)은 반영되지 않습니다. VRM에 적힌 이용 조건을 지켜 사용하세요.</p>
+  <p class="note zh-hans">不支持改变材质颜色的表情、VRM 的约束，以及没有眼睛骨骼的模型的视线（BlendShape 方式）。请遵守 VRM 中写明的使用条件。</p>
+  <p class="note zh-hant">不支援改變材質顏色的表情、VRM 的約束，以及沒有眼睛骨骼的模型的視線（BlendShape 方式）。請遵守 VRM 中寫明的使用條件。</p>
 </section>
 
 <section id="obs">

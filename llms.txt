@@ -4,6 +4,8 @@
 
 The avatar is exported once from the Unity project that contains it (Unity 2022.3.22f1, VCC projects are fine) to a `.vrcaster` file. After that, VRCast.exe loads the file by drag and drop; Unity, VCC and VRChat do not need to run. VRCast is not an official VRChat Inc. tool.
 
+VRM avatars (`.vrm`, VRM 0.x / 1.0, e.g. made with VRoid Studio) load directly without exporting; their expressions, blink, A-I-U-E-O mouth shapes and spring bones are used.
+
 Key facts:
 
 - Platform: Windows 10 / 11 (x64). Price: free.
@@ -20,6 +22,7 @@ Key facts:
 - [Overview](https://coffin299.github.io/VRCast/): features, three steps, requirements and FAQ
 - [Help](https://coffin299.github.io/VRCast/help/): full usage guide
 - [Export your avatar](https://coffin299.github.io/VRCast/help/#export)
+- [Load a VRM](https://coffin299.github.io/VRCast/help/#vrm)
 - [Show in OBS](https://coffin299.github.io/VRCast/help/#obs)
 - [Virtual camera](https://coffin299.github.io/VRCast/help/#vcam)
 - [Tracking](https://coffin299.github.io/VRCast/help/#tracking)

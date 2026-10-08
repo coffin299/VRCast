@@ -36,7 +36,7 @@
   "@type": "SoftwareApplication",
   "name": "VRCast",
   "url": "https://coffin299.github.io/VRCast/",
-  "description": "A Windows app that shows a VRChat 3D avatar on its own and sends it to OBS, Discord and Zoom without opening Unity or VRChat. Export the avatar once to a .vrcaster file in Unity, then use webcam tracking (MediaPipe / OpenSeeFace), A-I-U-E-O lip sync, facial expressions, a transparent background for OBS Game Capture and the VRCast Camera virtual camera.",
+  "description": "A Windows app that shows a VRChat 3D avatar on its own and sends it to OBS, Discord and Zoom without opening Unity or VRChat. Export the avatar once to a .vrcaster file in Unity (VRM 0.x / 1.0 files load directly), then use webcam tracking (MediaPipe / OpenSeeFace), A-I-U-E-O lip sync, facial expressions, a transparent background for OBS Game Capture and the VRCast Camera virtual camera.",
   "applicationCategory": "MultimediaApplication",
   "operatingSystem": "Windows 10, Windows 11 (x64)",
   "inLanguage": ["ja", "en", "ko", "zh-Hans", "zh-Hant"],
@@ -150,6 +150,11 @@
     只需将虚拟形象导出为 <code>.vrcaster</code> 文件一次，之后无需启动 Unity 或 VCC 即可使用。</p>
   <p class="zh-hant">VRCast 是一款 Windows 應用程式，可單獨顯示 VRChat 用的 3D 虛擬形象，並輸出到 OBS 等直播軟體或 Discord / Zoom。
     只需將虛擬形象匯出為 <code>.vrcaster</code> 檔案一次，之後無需啟動 Unity 或 VCC 即可使用。</p>
+  <p class="ja">VRoid などの VRM（<code>.vrm</code>、VRM 0.x / 1.0）は書き出し不要で、そのまま読み込めます。</p>
+  <p class="en">VRM avatars (<code>.vrm</code>, VRM 0.x / 1.0, e.g. from VRoid) load as they are, with no export needed.</p>
+  <p class="ko">VRoid 등의 VRM(<code>.vrm</code>, VRM 0.x / 1.0)은 내보낼 필요 없이 그대로 불러올 수 있습니다.</p>
+  <p class="zh-hans">VRoid 等的 VRM（<code>.vrm</code>，VRM 0.x / 1.0）无需导出，可直接加载。</p>
+  <p class="zh-hant">VRoid 等的 VRM（<code>.vrm</code>，VRM 0.x / 1.0）無需匯出，可直接載入。</p>
   <div class="flow">
     <span class="box"><span class="ja">VRChat アバター（Unity）</span><span class="en">VRChat avatar (Unity)</span><span class="ko">VRChat 아바타 (Unity)</span><span class="zh-hans">VRChat 虚拟形象（Unity）</span><span class="zh-hant">VRChat 虛擬形象（Unity）</span></span>
     <span class="arrow">→</span>
@@ -268,7 +273,12 @@
         <span class="en">Export your avatar to <code>.vrcaster</code> in Unity (<a href="help/#export">how</a>)</span>
         <span class="ko">Unity에서 아바타를 <code>.vrcaster</code>로 내보내기 (<a href="help/#export">방법</a>)</span>
         <span class="zh-hans">在 Unity 中将虚拟形象导出为 <code>.vrcaster</code>（<a href="help/#export">步骤</a>）</span>
-        <span class="zh-hant">在 Unity 中將虛擬形象匯出為 <code>.vrcaster</code>（<a href="help/#export">步驟</a>）</span></li>
+        <span class="zh-hant">在 Unity 中將虛擬形象匯出為 <code>.vrcaster</code>（<a href="help/#export">步驟</a>）</span><br>
+        <span class="ja">VRM（<code>.vrm</code>）ならこの手順は不要（<a href="help/#vrm">VRM について</a>）</span>
+        <span class="en">Skip this step for VRM (<code>.vrm</code>) (<a href="help/#vrm">about VRM</a>)</span>
+        <span class="ko">VRM(<code>.vrm</code>)은 이 단계가 필요 없음 (<a href="help/#vrm">VRM에 대해</a>)</span>
+        <span class="zh-hans">VRM（<code>.vrm</code>）无需此步骤（<a href="help/#vrm">关于 VRM</a>）</span>
+        <span class="zh-hant">VRM（<code>.vrm</code>）無需此步驟（<a href="help/#vrm">關於 VRM</a>）</span></li>
     <li><span class="ja">VRCast のウィンドウにドラッグ＆ドロップして、背景を透過にする</span>
         <span class="en">Drag and drop it onto VRCast and make the background transparent</span>
         <span class="ko">VRCast 창에 드래그 앤 드롭하고 배경을 투명하게 하기</span>
@@ -291,6 +301,11 @@
         <span class="ko">내보내기: 아바타가 들어 있는 Unity 2022.3.22f1 프로젝트 (VCC 프로젝트 가능)</span>
         <span class="zh-hans">导出：包含虚拟形象的 Unity 2022.3.22f1 项目（VCC 项目亦可）</span>
         <span class="zh-hant">匯出：包含虛擬形象的 Unity 2022.3.22f1 專案（VCC 專案亦可）</span></li>
+    <li><span class="ja">VRM（0.x / 1.0）: 書き出し不要（Unity も不要）</span>
+        <span class="en">VRM (0.x / 1.0): no export needed (no Unity needed)</span>
+        <span class="ko">VRM (0.x / 1.0): 내보내기 불필요 (Unity 불필요)</span>
+        <span class="zh-hans">VRM（0.x / 1.0）：无需导出（无需 Unity）</span>
+        <span class="zh-hant">VRM（0.x / 1.0）：無需匯出（無需 Unity）</span></li>
     <li><span class="ja">トラッキング: Web カメラ（任意）</span><span class="en">Tracking: a webcam (optional)</span><span class="ko">트래킹: 웹캠 (선택)</span><span class="zh-hans">追踪：摄像头（可选）</span><span class="zh-hant">追蹤：網路攝影機（選用）</span></li>
   </ul>
 </section>
@@ -303,6 +318,12 @@
   <p class="ko">아바타를 <code>.vrcaster</code>로 내보낼 때만 아바타가 들어 있는 Unity 프로젝트를 사용합니다. 방송 중에는 Unity도 VRChat도 실행하지 않습니다.</p>
   <p class="zh-hans">只有将虚拟形象导出为 <code>.vrcaster</code> 时需要使用包含该虚拟形象的 Unity 项目。直播时无需启动 Unity 或 VRChat。</p>
   <p class="zh-hant">只有將虛擬形象匯出為 <code>.vrcaster</code> 時需要使用包含該虛擬形象的 Unity 專案。直播時無需啟動 Unity 或 VRChat。</p>
+  <h3><span class="ja">VRM（VRoid など）は使えますか？</span><span class="en">Can I use VRM (e.g. VRoid)?</span><span class="ko">VRM(VRoid 등)을 사용할 수 있나요?</span><span class="zh-hans">可以使用 VRM（如 VRoid）吗？</span><span class="zh-hant">可以使用 VRM（如 VRoid）嗎？</span></h3>
+  <p class="ja">はい。VRM 0.x / 1.0 の <code>.vrm</code> をそのままドラッグ＆ドロップで読み込めます。表情・まばたき・口パク・揺れものにも対応しています（<a href="help/#vrm">詳しく</a>）。</p>
+  <p class="en">Yes. Drag and drop a VRM 0.x / 1.0 <code>.vrm</code> file as is. Expressions, blinking, lip sync and spring bones work too (<a href="help/#vrm">details</a>).</p>
+  <p class="ko">네. VRM 0.x / 1.0의 <code>.vrm</code>을 그대로 드래그 앤 드롭하여 불러올 수 있습니다. 표정·눈 깜빡임·립싱크·흔들림도 지원합니다 (<a href="help/#vrm">자세히</a>).</p>
+  <p class="zh-hans">可以。直接拖放 VRM 0.x / 1.0 的 <code>.vrm</code> 文件即可加载，也支持表情、眨眼、口型同步和摇摆效果（<a href="help/#vrm">详情</a>）。</p>
+  <p class="zh-hant">可以。直接拖放 VRM 0.x / 1.0 的 <code>.vrm</code> 檔案即可載入，也支援表情、眨眼、口型同步和搖擺效果（<a href="help/#vrm">詳情</a>）。</p>
   <h3><span class="ja">料金はかかりますか？</span><span class="en">Is it free?</span><span class="ko">요금이 드나요?</span><span class="zh-hans">收费吗？</span><span class="zh-hant">需要付費嗎？</span></h3>
   <p class="ja">無料です。Apache License 2.0 のオープンソースで、<a href="https://github.com/coffin299/VRCast/releases">GitHub</a> と <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a> からダウンロードできます。</p>
   <p class="en">Yes. It is open source under the Apache License 2.0 and can be downloaded from <a href="https://github.com/coffin299/VRCast/releases">GitHub</a> or <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a>.</p>
