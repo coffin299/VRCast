@@ -4,23 +4,19 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
-
-[日本語]
-- トラッキングタブに「顔の左右を入れ替える」を追加（閉じた目・ウインクが頭の傾きや腕と逆側になるときに ON にすると、顔（まばたき・パーフェクトシンク・視線）だけが入れ替わります。既定は OFF）
-- MediaPipe で腕・手を ON にしているとき、両肩の向きに合わせて上半身をひねったり左右に傾けたりする「上半身のひねり・傾き（肩）」を追加（既定は ON。肩が映っていない間は従来どおり頭の位置で傾けます）
-
-[English]
-- Added "Swap face left / right" to the Tracking tab (turn it on if the closed eye or wink is on the wrong side compared with your head tilt and arms; only the face (blink, perfect sync, gaze) is swapped; off by default)
-- Added "Upper body twist / tilt (shoulders)", which twists and tilts the upper body to match your shoulders when using MediaPipe with arms / hands on (on by default; while your shoulders are not visible, the body leans with your head position as before)
-
 ■ 1.12.3 (2026-10-08)
 
 [日本語]
 - VRM ファイル（VRM 0.x / 1.0。VRoid Studio などで作ったもの）を変換せずにそのまま読み込める機能を追加（表情・まばたき・口パク・揺れものに対応。ドラッグ＆ドロップ・参照ボタン・起動引数で .vrm を指定できます）
+- トラッキングタブに「顔の左右を入れ替える」を追加（閉じた目・ウインクが頭の傾きや腕と逆側になるときに ON にすると、顔（まばたき・パーフェクトシンク・視線）だけが入れ替わります。既定は OFF）
+- MediaPipe で腕・手を ON にしているとき、両肩の向きに合わせて上半身をひねったり左右に傾けたりする「上半身のひねり・傾き（肩）」を追加（既定は ON。肩が映っていない間は従来どおり頭の位置で傾けます。「上半身のひねりを固定」で左右の傾きだけにもできます）
+- リセット（顔の向き・視線・表情・カメラ）のショートカットキーを追加（既定はテンキーの 1〜4。設定タブで変更・解除できます。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます。パネル下部のリセットボタンに割り当て中のキーを表示します）
 
 [English]
 - Added loading VRM files (VRM 0.x / 1.0, e.g. made with VRoid Studio) directly without converting, including expressions, blinking, lip sync and spring bones (drag and drop, the Browse button and the launch option all accept .vrm)
+- Added "Swap face left / right" to the Tracking tab (turn it on if the closed eye or wink is on the wrong side compared with your head tilt and arms; only the face (blink, perfect sync, gaze) is swapped; off by default)
+- Added "Upper body twist / tilt (shoulders)", which twists and tilts the upper body to match your shoulders when using MediaPipe with arms / hands on (on by default; while your shoulders are not visible, the body leans with your head position as before; "Lock upper body twist" keeps only the side tilt)
+- Added shortcut keys for the resets (head, gaze, expression, camera; numeric keypad 1–4 by default, changeable or removable in the Settings tab; if a key is the same as an expression shortcut, a warning is shown and the expression takes priority; the reset buttons at the bottom of the panel show the assigned key)
 
 ■ 1.11.3 (2026-10-07)
 

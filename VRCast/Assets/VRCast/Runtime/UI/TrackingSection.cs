@@ -365,6 +365,11 @@ namespace VRCast.UI
                 return;
             }
 
+            // ひねりだけを正面に固定する（左右の傾きは肩に合わせたまま）
+            _settings.trackingTorsoLockTwist = GUILayout.Toggle(
+                _settings.trackingTorsoLockTwist,
+                Loc.T("Lock upper body twist", "上半身のひねりを固定", "상체 비틀기 고정", "固定上半身扭转", "固定上半身扭轉"));
+
             // 両肩が映っていれば肩の線で動かし、映っていない間は頭の位置による傾きのまま
             var face = _avatar.Get<FaceTrackingDriver>();
             if (face != null && face.IsTracking)

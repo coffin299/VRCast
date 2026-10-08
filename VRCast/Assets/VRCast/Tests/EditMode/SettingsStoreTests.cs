@@ -62,6 +62,66 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void ResetHotkeys_DefaultToNumpad1To4()
+        {
+            // 既定はテンキーの 1〜4（顔の向き・視線・表情・カメラの順）
+            var settings = new AppSettings();
+            for (int i = 0; i < ResetHotkey.ActionCount; i++)
+            {
+                Assert.That(settings.GetResetHotkey((ResetAction)i), Is.EqualTo(new KeyCombo(0x61 + i, false, false, false)));
+            }
+        }
+
+        [Test]
+        public void SetResetHotkey_SameCombo_UnassignsOtherAction()
+        {
+            // カメラのキー（テンキー 4）を顔の向きにも割り当てる
+            var settings = new AppSettings();
+            KeyCombo numpad4 = settings.GetResetHotkey(ResetAction.Camera);
+            settings.SetResetHotkey(ResetAction.Head, numpad4);
+
+            // 顔の向きに移り、カメラは未割り当てになること
+            Assert.That(settings.GetResetHotkey(ResetAction.Head), Is.EqualTo(numpad4));
+            Assert.That(settings.GetResetHotkey(ResetAction.Camera).IsAssigned, Is.False);
+        }
+
+        [Test]
+        public void TryFindResetHotkey_FindsAssignedAndIgnoresUnassigned()
+        {
+            var settings = new AppSettings();
+
+            // 割り当て済みの組み合わせはそのリセットが見つかること
+            Assert.That(settings.TryFindResetHotkey(new KeyCombo(0x62, false, false, false), out ResetAction action),
+                Is.True);
+            Assert.That(action, Is.EqualTo(ResetAction.Gaze));
+
+            // 修飾キーが違う組み合わせと、未割り当ては見つからないこと
+            Assert.That(settings.TryFindResetHotkey(new KeyCombo(0x62, true, false, false), out _), Is.False);
+            settings.SetResetHotkey(ResetAction.Expression, KeyCombo.None);
+            Assert.That(settings.TryFindResetHotkey(KeyCombo.None, out _), Is.False);
+        }
+
+        [Test]
+        public void Load_MissingOrDuplicateResetHotkeys_AreNormalized()
+        {
+            // 視線だけ、しかも顔の向きと同じキーを 2 件記録した設定（手編集・旧版を想定）
+            var saved = new AppSettings();
+            var head = new ResetHotkey { action = ResetAction.Head };
+            head.SetCombo(new KeyCombo(0x70, false, false, false));
+            var gaze = new ResetHotkey { action = ResetAction.Gaze };
+            gaze.SetCombo(new KeyCombo(0x70, false, false, false));
+            saved.resetHotkeys = new System.Collections.Generic.List<ResetHotkey> { head, gaze };
+            _store.Save(saved);
+
+            // 読み込むと全ての種類がそろい、重複は後の方が外れ、欠けた種類は既定のキーになること
+            AppSettings loaded = _store.Load();
+            Assert.That(loaded.resetHotkeys.Count, Is.EqualTo(ResetHotkey.ActionCount));
+            Assert.That(loaded.GetResetHotkey(ResetAction.Head), Is.EqualTo(new KeyCombo(0x70, false, false, false)));
+            Assert.That(loaded.GetResetHotkey(ResetAction.Gaze).IsAssigned, Is.False);
+            Assert.That(loaded.GetResetHotkey(ResetAction.Camera), Is.EqualTo(ResetHotkey.DefaultCombo(ResetAction.Camera)));
+        }
+
+        [Test]
         public void SaveThenLoad_RoundTripsValues()
         {
             // 既定値と異なる値を保存

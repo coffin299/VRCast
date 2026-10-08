@@ -120,10 +120,14 @@ namespace VRCast.UI
             _displaySection = new DisplaySection(orbit, rendering, settings);
             _outputSection = new OutputSection(virtualCamera, spout);
             _remoteSection = new RemoteSection(session, remote, settings);
-            _settingsSection = new SettingsSection(settings, rendering, updates, ResetAllSettings);
+            _settingsSection = new SettingsSection(session, settings, rendering, updates, ResetAllSettings);
             _logSection = new LogSection(trackerProcess, tracker, settings);
             _creditsSection = new CreditsSection();
-            _resetBar = new ResetBar(session, orbit);
+
+            // リセットはパネル下部のボタンとショートカットキー（パネルを隠していても動く）で共用する
+            var resetActions = new ResetActions(session, orbit);
+            _resetBar = new ResetBar(resetActions, settings);
+            gameObject.AddComponent<ResetHotkeyListener>().Initialize(resetActions, session, settings);
             _performanceBar = new PerformanceBar(settings, tracker, trackerProcess);
 
             // ウィンドウへのドロップで読み込む
@@ -197,7 +201,7 @@ namespace VRCast.UI
             LogBuffer.DetailEnabled = _settings.detailedLogging;
 
             // 表示切替（隠すと背景も透過）。表情のキーの割り当て中は、押したキーでパネルを消さない
-            if (Input.GetKeyDown(ToggleKey) && !ExpressionController.HotkeysSuspended)
+            if (Input.GetKeyDown(ToggleKey) && !HotkeyPoller.Suspended)
             {
                 SetVisible(!_visible);
             }

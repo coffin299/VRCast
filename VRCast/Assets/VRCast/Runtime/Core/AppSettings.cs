@@ -219,6 +219,9 @@ namespace VRCast.Core
         // 上半身の向き（両肩の線から背骨・胸のひねり・左右の傾き。腕・手が ON のときだけ。MediaPipe のみ）
         public bool trackingTorso = true;
 
+        // 上半身のひねり（縦軸まわり）を正面に固定する（左右の傾きは肩の線のまま）
+        public bool trackingTorsoLockTwist;
+
         // パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
         public bool trackingPerfectSync = true;
 
@@ -238,6 +241,10 @@ namespace VRCast.Core
 
         // 表情のショートカットキーを、VRCast のウィンドウが前面に無いときも使う（OBS などを操作中でも切り替えられる）
         public bool expressionHotkeysInBackground = true;
+
+        // リセット（顔の向き・視線・表情・カメラ）のショートカットキー（アプリ全体。既定はテンキー 1〜4）と、背面でも使うか
+        public List<ResetHotkey> resetHotkeys = ResetHotkey.Defaults();
+        public bool resetHotkeysInBackground = true;
 
         // 外部（Stream Deck・OSC アプリ等）からの表情の操作。127.0.0.1 の OSC（UDP）と HTTP で待ち受ける（既定 OFF）
         public bool remoteControlEnabled;
@@ -391,6 +398,96 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// リセットのショートカットキーを返す（未割り当ては None）。
+        /// </summary>
+        public KeyCombo GetResetHotkey(ResetAction action)
+        {
+            ResetHotkey hotkey = resetHotkeys?.Find(item => item != null && item.action == action);
+            return hotkey != null ? hotkey.Combo : KeyCombo.None;
+        }
+
+        /// <summary>
+        /// リセットにキーの組み合わせを割り当てる（None で解除）。同じ組み合わせを使っていたほかのリセットからは外す。
+        /// </summary>
+        public void SetResetHotkey(ResetAction action, KeyCombo combo)
+        {
+            // 使えないキーは割り当てない（未割り当ては解除として受け付ける）
+            if (combo.IsAssigned && !VirtualKeys.IsAssignable(combo.VirtualKey))
+            {
+                return;
+            }
+
+            NormalizeResetHotkeys();
+            foreach (ResetHotkey hotkey in resetHotkeys)
+            {
+                // 対象には書き込み、1 つの組み合わせで 1 つのリセットだけを行うようほかの同じ組み合わせは外す
+                if (hotkey.action == action)
+                {
+                    hotkey.SetCombo(combo);
+                }
+                else if (combo.IsAssigned && hotkey.Combo.Equals(combo))
+                {
+                    hotkey.SetCombo(KeyCombo.None);
+                }
+            }
+        }
+
+        /// <summary>
+        /// その組み合わせを割り当てたリセットを探す。見つかれば true（未割り当ての組み合わせは false）。
+        /// </summary>
+        public bool TryFindResetHotkey(KeyCombo combo, out ResetAction action)
+        {
+            action = ResetAction.Head;
+            ResetHotkey hotkey = combo.IsAssigned
+                ? resetHotkeys?.Find(item => item != null && item.Combo.Equals(combo))
+                : null;
+            if (hotkey != null)
+            {
+                action = hotkey.action;
+            }
+
+            return hotkey != null;
+        }
+
+        /// <summary>
+        /// リセットのショートカットキーを既定（テンキー 1〜4）に戻す。
+        /// </summary>
+        public void ResetResetHotkeys()
+        {
+            resetHotkeys = ResetHotkey.Defaults();
+        }
+
+        private void NormalizeResetHotkeys()
+        {
+            // 壊れた値・未知の種類・重複を捨て、使えないキーは未割り当てにする
+            var normalized = new List<ResetHotkey>(ResetHotkey.ActionCount);
+            var used = new HashSet<KeyCombo>();
+            for (int i = 0; i < ResetHotkey.ActionCount; i++)
+            {
+                var action = (ResetAction)i;
+                ResetHotkey hotkey = resetHotkeys?.Find(item => item != null && item.action == action);
+
+                // 記録の無い種類（旧版の設定・手編集）は既定のキーで補う
+                if (hotkey == null)
+                {
+                    hotkey = new ResetHotkey { action = action };
+                    hotkey.SetCombo(ResetHotkey.DefaultCombo(action));
+                }
+
+                // 使えないキーと、先の種類と同じ組み合わせは未割り当てにする
+                KeyCombo combo = hotkey.Combo;
+                if (combo.IsAssigned && (!VirtualKeys.IsAssignable(combo.VirtualKey) || !used.Add(combo)))
+                {
+                    hotkey.SetCombo(KeyCombo.None);
+                }
+
+                normalized.Add(hotkey);
+            }
+
+            resetHotkeys = normalized;
+        }
+
+        /// <summary>
         /// 最近使ったアバターのパスを新しい順に返す（最大 MaxRecentAvatars 件）。
         /// </summary>
         public List<string> RecentAvatars()
@@ -503,6 +600,9 @@ namespace VRCast.Core
                 entry.expressionHotkeys ??= new List<ExpressionHotkey>();
                 entry.expressionHotkeys.RemoveAll(hotkey => hotkey == null || !hotkey.IsValid);
             }
+
+            // リセットのショートカットキーは種類ごとに 1 つへそろえる（旧版の設定には無いので既定のキーになる）
+            NormalizeResetHotkeys();
 
             // 未知の表示言語は OS 準拠へ
             if (!Enum.IsDefined(typeof(UiLanguage), uiLanguage))

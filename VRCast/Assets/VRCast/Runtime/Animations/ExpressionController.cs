@@ -17,12 +17,6 @@ namespace VRCast.Animations
         // ログのカテゴリ名
         private const string LogCategory = "Expression";
 
-        // キーの割り当て中にショートカットを止めたフレーム（割り当てるキーで表情が変わらないように）
-        private static int _suspendedFrame = int.MinValue / 2;
-
-        // 仮想キーが押されているか（毎フレームの判定でデリゲートを作り直さないように控える）
-        private static readonly System.Func<int, bool> IsKeyDown = GlobalKeyboard.IsDown;
-
         // 切り替えにかける秒数（BlendShape が 0 から 100 まで変わる時間。差が小さいほど早く終わる）
         private const float FadeSeconds = 0.2f;
 
@@ -57,9 +51,9 @@ namespace VRCast.Animations
         // 目標へ向けて変化中なら true
         private bool _fading;
 
-        // ショートカットキー（先頭 = ニュートラル、以降はプリセットの並び。None = 未割り当て）と、前のフレームで押されていたか
+        // ショートカットキー（先頭 = ニュートラル、以降はプリセットの並び。None = 未割り当て）と押下判定
         private KeyCombo[] _hotkeys = { KeyCombo.None };
-        private bool[] _hotkeyWasDown = { false };
+        private readonly HotkeyPoller _hotkeyPoller = new HotkeyPoller();
 
         // 背面でも反応するかの設定（未設定なら前面のときだけ）
         private AppSettings _settings;
@@ -74,19 +68,6 @@ namespace VRCast.Animations
         public bool IsManual { get; private set; }
 
         public IReadOnlyList<string> Names => _names;
-
-        /// <summary>
-        /// キーの割り当て中なら true（前のフレームまでに止められた。パネルの Tab 切替もこれを見て止める）。
-        /// </summary>
-        public static bool HotkeysSuspended => _suspendedFrame >= Time.frameCount - 1;
-
-        /// <summary>
-        /// このフレームと次のフレームのショートカットを止める（割り当て中は毎フレーム呼ぶ）。
-        /// </summary>
-        public static void SuspendHotkeys()
-        {
-            _suspendedFrame = Time.frameCount;
-        }
 
         public void Initialize(Transform root, ExpressionSet expressions)
         {
@@ -117,7 +98,6 @@ namespace VRCast.Animations
 
             // ショートカットキーはニュートラルとプリセットの数だけ（すべて未割り当て）
             _hotkeys = new KeyCombo[_names.Count + 1];
-            _hotkeyWasDown = new bool[_names.Count + 1];
 
             // EditorOnly 等で除去されたメッシュを指す値は無視される
             if (unresolved > 0)
@@ -317,34 +297,33 @@ namespace VRCast.Animations
             _hotkeys[slot] = combo;
         }
 
-        private void HandleHotkeys()
+        /// <summary>
+        /// その組み合わせを割り当てたプリセット（-1 = ニュートラル）を探す。見つかれば true（未割り当ての組み合わせは false）。
+        /// </summary>
+        public bool TryFindHotkey(KeyCombo combo, out int presetIndex)
         {
-            // 前面のときだけ VRCast 内のテキスト入力を気にする（背面では入力欄に文字は入らない）
-            bool focused = Application.isFocused;
-            bool background = _settings != null && _settings.expressionHotkeysInBackground;
-            bool blocked = HotkeysSuspended || (focused && GUIUtility.keyboardControl != 0);
+            presetIndex = -1;
 
-            // Windows のキーの状態を、前面か背面でも使う設定のときだけ読む
-            bool active = GlobalKeyboard.IsSupported && (focused || background);
-
-            int pressed = -2;
-            for (int i = 0; i < _hotkeys.Length; i++)
+            // 未割り当ては探さない
+            if (!combo.IsAssigned)
             {
-                // 押された瞬間（前のフレームは離れていた）だけ反応する。押しっぱなしで繰り返さない
-                bool down = active && _hotkeys[i].IsDown(IsKeyDown);
-                if (down && !_hotkeyWasDown[i] && !blocked && pressed == -2)
-                {
-                    pressed = i - 1;
-                }
-
-                // 止めている間も押下状態は追い続ける（割り当て直後に、離すまで反応しないように）
-                _hotkeyWasDown[i] = down;
+                return false;
             }
 
-            // 押された組み合わせの表情（-1 = ニュートラル）で固定する（固定中の表情のキーをもう一度押すと自動検出へ戻す）
-            if (pressed != -2)
+            // 先頭はニュートラル、以降はプリセットの並び
+            int slot = System.Array.IndexOf(_hotkeys, combo);
+            presetIndex = slot - 1;
+            return slot >= 0;
+        }
+
+        private void HandleHotkeys()
+        {
+            // 押された組み合わせの表情（先頭 = ニュートラル）で固定する（固定中の表情のキーをもう一度押すと自動検出へ戻す）
+            bool background = _settings != null && _settings.expressionHotkeysInBackground;
+            int pressed = _hotkeyPoller.Poll(_hotkeys, background);
+            if (pressed >= 0)
             {
-                Select(pressed, true);
+                Select(pressed - 1, true);
             }
         }
 

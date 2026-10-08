@@ -3,7 +3,6 @@ using UnityEngine;
 using VRCast.Animations;
 using VRCast.Avatars;
 using VRCast.Core;
-using VRCast.Platform;
 
 namespace VRCast.UI
 {
@@ -33,16 +32,8 @@ namespace VRCast.UI
         private ExpressionController _expressions;
         private IdleMotionController _idleMotion;
 
-        // 仮想キーの押下と表示名（描画のたびにデリゲートを作り直さないように控える）
-        private static readonly System.Func<int, bool> IsKeyDown = GlobalKeyboard.IsDown;
-        private static readonly System.Func<int, string> KeyName = GlobalKeyboard.KeyName;
-
-        // キーの割り当て中か、その対象（-1 = ニュートラル）、最後に表情の一覧を描いたフレーム、最後にキーを読んだフレーム
-        private bool _capturing;
-        private int _captureTarget;
-        private int _lastDrawFrame = -1;
-        private int _lastPollFrame = -1;
-        private KeyCapture _keyCapture = new KeyCapture();
+        // 表情のショートカットキーの割り当て（対象 = プリセット、-1 = ニュートラル）
+        private readonly KeyCaptureSession _capture = new KeyCaptureSession();
 
         public AnimationSection(AvatarSession session, AppSettings settings)
         {
@@ -79,7 +70,7 @@ namespace VRCast.UI
                 BuildLabels();
 
                 // 別のアバターの表情へ割り当てないよう、割り当て中ならやめる
-                _capturing = false;
+                _capture.Cancel();
             }
 
             return _avatar.HasAvatar;
@@ -201,11 +192,16 @@ namespace VRCast.UI
                     "이 아바타에는 표정 데이터가 없습니다.",
                     "此虚拟形象没有表情数据。", "此虛擬形象沒有表情資料。"));
                 GuiControls.EndCard();
-                _capturing = false;
+                _capture.Cancel();
                 return;
             }
 
-            HandleCapture();
+            // 割り当てが決まったら表情に割り当てて記録する
+            if (_capture.Update(out int target, out KeyCombo captured))
+            {
+                _expressions.SetHotkey(target, captured);
+                SaveHotkeys();
+            }
 
             // 手動で選んだ表情の扱い
             GuiControls.Hint(Loc.T(
@@ -216,12 +212,8 @@ namespace VRCast.UI
                 "透過按鈕、快捷鍵或外部操作選擇的表情會被固定，不會被自動偵測改變。再次選擇同一表情即可恢復自動偵測。"));
 
             // 割り当て中はやり方を、それ以外は使い方を案内する
-            GuiControls.Hint(_capturing
-                ? Loc.T("Press the key to assign (with Ctrl / Alt / Shift if you like). To use Ctrl, Alt or Shift alone, press and release it. Esc to cancel (Tab cannot be used).",
-                    "割り当てるキーを押してください（Ctrl・Alt・Shift と同時押しも可）。Ctrl・Alt・Shift だけを使うときは押して離します。Esc でやめます（Tab は使えません）。",
-                    "할당할 키를 누르세요 (Ctrl·Alt·Shift와 동시에 눌러도 됩니다). Ctrl·Alt·Shift만 쓰려면 눌렀다 떼세요. Esc로 취소합니다 (Tab은 사용할 수 없습니다).",
-                    "请按下要分配的键（也可同时按 Ctrl / Alt / Shift）。单独使用 Ctrl / Alt / Shift 时请按下后松开。按 Esc 取消（不能使用 Tab）。",
-                    "請按下要分配的鍵（也可同時按 Ctrl / Alt / Shift）。單獨使用 Ctrl / Alt / Shift 時請按下後放開。按 Esc 取消（不能使用 Tab）。")
+            GuiControls.Hint(_capture.IsCapturing
+                ? KeyCaptureSession.AssignHint
                 : Loc.T("Click a key button to assign a shortcut key. Any key works, including combinations such as Ctrl+Alt+N, the numeric keypad (with NumLock on), symbol keys, left / right Ctrl alone and mouse side buttons. Saved per avatar.",
                     "キーのボタンを押すとショートカットキーを割り当てられます。Ctrl+Alt+N のような組み合わせ、テンキー（NumLock ON で区別）、記号キー、右 Ctrl などの単独、マウスのサイドボタンも使えます。アバターごとに保存されます。",
                     "키 버튼을 누르면 단축키를 할당할 수 있습니다. Ctrl+Alt+N 같은 조합, 숫자 키패드 (NumLock 켜짐에서 구별), 기호 키, 오른쪽 Ctrl 등의 단독 키, 마우스 사이드 버튼도 사용할 수 있습니다. 아바타별로 저장됩니다.",
@@ -280,21 +272,8 @@ namespace VRCast.UI
             }
 
             // キーのボタン（押すと割り当て開始、割り当て中の行をもう一度押すとやめる）
-            bool capturingThis = _capturing && _captureTarget == preset;
             KeyCombo combo = _expressions.GetHotkey(preset);
-            string keyLabel = capturingThis
-                ? Loc.T("Press a key…", "キーを押す…", "키를 누르세요…", "请按键…", "請按鍵…")
-                : combo.IsAssigned
-                    ? combo.Describe(KeyName)
-                    : Loc.T("Unassigned", "未割り当て", "미할당", "未分配", "未分配");
-            if (GUILayout.Button(keyLabel, GUILayout.Width(KeyButtonWidth)))
-            {
-                _capturing = !capturingThis;
-                _captureTarget = preset;
-
-                // 割り当て待ちは毎回まっさらから始める（前回の押下状態を引き継がない）
-                _keyCapture = new KeyCapture();
-            }
+            _capture.DrawKeyButton(preset, combo, KeyButtonWidth);
 
             // リセット（割り当てを外す。未割り当てなら押せない）
             GUI.enabled = combo.IsAssigned;
@@ -306,48 +285,17 @@ namespace VRCast.UI
 
             GUI.enabled = true;
             GUILayout.EndHorizontal();
-        }
 
-        private void HandleCapture()
-        {
-            // 別のタブにいた・パネルを隠していた等で描画が途切れていたら、割り当てをやめる
-            bool interrupted = Time.frameCount - _lastDrawFrame > 1;
-            _lastDrawFrame = Time.frameCount;
-            if (!_capturing || interrupted)
+            // リセットのショートカットキーと同じなら警告（表情が優先され、そのリセットはこのキーでは動かない）
+            if (_settings.TryFindResetHotkey(combo, out ResetAction action))
             {
-                _capturing = false;
-                return;
-            }
-
-            // 割り当て中は、押したキーで表情が変わったりパネルが消えたりしないようにする
-            ExpressionController.SuspendHotkeys();
-
-            // 割り当て中のキー入力は、ほかの GUI に渡さない
-            Event current = Event.current;
-            if (current.type == EventType.KeyDown || current.type == EventType.KeyUp)
-            {
-                current.Use();
-            }
-
-            // キーの状態は 1 フレームに 1 回だけ読む（OnGUI はイベントごとに何度も呼ばれる）
-            if (_lastPollFrame == Time.frameCount)
-            {
-                return;
-            }
-
-            _lastPollFrame = Time.frameCount;
-
-            // Esc でやめ、組み合わせが決まったら割り当てて終わる（Windows のキーの状態で読むので、テンキーや記号キーも区別できる）
-            switch (_keyCapture.Poll(IsKeyDown))
-            {
-                case KeyCapture.Status.Cancelled:
-                    _capturing = false;
-                    break;
-                case KeyCapture.Status.Captured:
-                    _expressions.SetHotkey(_captureTarget, _keyCapture.Result);
-                    SaveHotkeys();
-                    _capturing = false;
-                    break;
+                GuiControls.Warning(string.Format(Loc.T(
+                        "⚠ Same key as the \"{0}\" reset shortcut. This expression takes priority (change it in Settings).",
+                        "⚠ リセット「{0}」のショートカットキーと同じです。表情が優先されます（設定タブで変更できます）。",
+                        "⚠ 「{0}」 초기화 단축키와 같습니다. 표정이 우선됩니다 (설정 탭에서 변경할 수 있습니다).",
+                        "⚠ 与“{0}”重置快捷键相同。表情优先（可在设置标签页中更改）。",
+                        "⚠ 與「{0}」重設快捷鍵相同。表情優先（可在設定分頁中變更）。"),
+                    ResetActions.Label(action)));
             }
         }
 

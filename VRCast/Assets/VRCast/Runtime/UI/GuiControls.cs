@@ -202,6 +202,15 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// 注意の 1 行（黄色の太字。設定の競合など、動くが意図と違うかもしれない状態）。
+        /// </summary>
+        public static void Warning(string text)
+        {
+            UiTheme theme = UiTheme.Current;
+            GUILayout.Label(text, theme == null ? GUI.skin.label : theme.WarningText);
+        }
+
+        /// <summary>
         /// ラベル + ボタンの 1 行を描画し、ボタンが押されたら true。
         /// </summary>
         public static bool LabeledButton(string label, string text)

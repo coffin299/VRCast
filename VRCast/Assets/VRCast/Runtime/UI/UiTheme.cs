@@ -306,7 +306,8 @@ namespace VRCast.UI
             Centered = new GUIStyle(Skin.label) { alignment = TextAnchor.MiddleCenter };
             Success = new GUIStyle(Skin.label) { fontStyle = FontStyle.Bold, wordWrap = false };
             Success.normal.textColor = SuccessColor;
-            WarningText = new GUIStyle(Success);
+            // 注意は文が長くなるので折り返す
+            WarningText = new GUIStyle(Success) { wordWrap = true };
             WarningText.normal.textColor = WarningColor;
             ErrorText = new GUIStyle(Success);
             ErrorText.normal.textColor = DangerColor;

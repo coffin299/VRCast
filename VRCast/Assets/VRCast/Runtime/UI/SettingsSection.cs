@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VRCast.Animations;
+using VRCast.Avatars;
 using VRCast.Core;
 using VRCast.Platform;
 using VRCast.Rendering;
@@ -8,7 +10,7 @@ using VRCast.Rendering;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Settings タブ（表示言語、UI の大きさ、テーマ（ライト / ダーク）、軽量モード・プロセスの優先度・描画に使う GPU、
+    /// Settings タブ（表示言語、UI の大きさ、テーマ（ライト / ダーク）、リセットのショートカットキー、軽量モード・プロセスの優先度・描画に使う GPU、
     /// NVIDIA ShadowPlay に検知させない設定（NVIDIA の PC のみ）、アップデートの確認、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
     /// </summary>
     public class SettingsSection
@@ -22,10 +24,18 @@ namespace VRCast.UI
         // GPU の一覧（初回表示時に取得）
         private List<GpuAdapter> _adapters;
 
+        // リセットのショートカットキーの行のボタン幅
+        private const float KeyButtonWidth = 120f;
+        private const float ClearButtonWidth = 70f;
+
+        private readonly AvatarComponentCache _avatar;
         private readonly AppSettings _settings;
         private readonly RenderingController _rendering;
         private readonly UpdateChecker _updates;
         private readonly Action _resetAll;
+
+        // リセットのショートカットキーの割り当て（対象 = ResetAction）
+        private readonly KeyCaptureSession _capture = new KeyCaptureSession();
 
         // リセットの確認中か、直前にリセットしたか
         private bool _confirmingReset;
@@ -37,8 +47,10 @@ namespace VRCast.UI
         private bool _overlayRestartPending;
 
         /// <param name="resetAll">全設定を既定値に戻して各機能へ反映する処理</param>
-        public SettingsSection(AppSettings settings, RenderingController rendering, UpdateChecker updates, Action resetAll)
+        public SettingsSection(AvatarSession session, AppSettings settings, RenderingController rendering,
+            UpdateChecker updates, Action resetAll)
         {
+            _avatar = new AvatarComponentCache(session);
             _settings = settings;
             _rendering = rendering;
             _updates = updates;
@@ -50,6 +62,7 @@ namespace VRCast.UI
             DrawLanguage();
             DrawScale();
             DrawTheme();
+            DrawResetHotkeys();
             DrawPerformance();
             DrawNvidiaOverlay();
             DrawUpdates();
@@ -118,6 +131,89 @@ namespace VRCast.UI
                 "如果未在显示标签页中更改背景色，背景色会随主题切换",
                 "若未在顯示分頁中變更背景色，背景色會隨主題切換"));
             GuiControls.EndCard();
+        }
+
+        private void DrawResetHotkeys()
+        {
+            GuiControls.BeginCard(Loc.T("Shortcut keys (reset)", "ショートカットキー（リセット）", "단축키 (초기화)",
+                "快捷键（重置）", "快捷鍵（重設）"));
+
+            // 割り当てが決まったら記録する（同じ組み合わせのほかのリセットは外れる。保存は終了時）
+            if (_capture.Update(out int target, out KeyCombo captured))
+            {
+                _settings.SetResetHotkey((ResetAction)target, captured);
+            }
+
+            // 割り当て中はやり方を、それ以外は使い方を案内する
+            GuiControls.Hint(_capture.IsCapturing
+                ? KeyCaptureSession.AssignHint
+                : Loc.T(
+                    "Runs the same resets as the buttons at the bottom of the panel, even while the panel is hidden. " +
+                    "The defaults are numeric keypad 1–4 (NumLock on). Click a key button to change it.",
+                    "パネル下部のリセットのボタンと同じ操作を、パネルを隠していてもキーで行えます。" +
+                    "既定はテンキーの 1〜4（NumLock ON）です。キーのボタンを押すと変更できます。",
+                    "패널 아래의 초기화 버튼과 같은 동작을 패널을 숨긴 상태에서도 키로 실행합니다. " +
+                    "기본값은 숫자 키패드 1~4 (NumLock 켜짐)입니다. 키 버튼을 누르면 변경할 수 있습니다.",
+                    "可用按键执行与面板底部重置按钮相同的操作，隐藏面板时也有效。默认为小键盘 1～4（NumLock 开启）。点击按键按钮即可更改。",
+                    "可用按鍵執行與面板底部重設按鈕相同的操作，隱藏面板時也有效。預設為數字鍵台 1～4（NumLock 開啟）。點擊按鍵按鈕即可變更。"));
+
+            // 表情の割り当てと比べるため、表示中のアバターの表情を取る（アバターが替わったときだけ取り直す）
+            _avatar.Refresh();
+            var expressions = _avatar.Get<ExpressionController>();
+            for (int i = 0; i < ResetHotkey.ActionCount; i++)
+            {
+                DrawResetHotkeyRow((ResetAction)i, expressions);
+            }
+
+            // 背面でも使うか（OBS などを操作中でもリセットできる）
+            _settings.resetHotkeysInBackground = GUILayout.Toggle(_settings.resetHotkeysInBackground,
+                Loc.T("Also work when VRCast is in the background", "VRCast が背面にあるときも使う",
+                    "VRCast가 뒤에 있을 때도 사용", "VRCast 在后台时也可使用", "VRCast 在背景時也可使用"));
+
+            // 既定（テンキー 1〜4）へ戻す
+            if (GUILayout.Button(Loc.T("Restore default keys", "既定のキーに戻す", "기본 키로 되돌리기", "恢复默认按键",
+                    "恢復預設按鍵"), GUILayout.ExpandWidth(false)))
+            {
+                _capture.Cancel();
+                _settings.ResetResetHotkeys();
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawResetHotkeyRow(ResetAction action, ExpressionController expressions)
+        {
+            GUILayout.BeginHorizontal();
+
+            // リセットの名前、キーのボタン（押すと割り当て開始、割り当て中の行をもう一度押すとやめる）
+            GUILayout.Label(ResetActions.Label(action), GuiControls.Shrinkable);
+            KeyCombo combo = _settings.GetResetHotkey(action);
+            _capture.DrawKeyButton((int)action, combo, KeyButtonWidth);
+
+            // 割り当てを外す（未割り当てなら押せない）
+            GUI.enabled = combo.IsAssigned;
+            if (GUILayout.Button(Loc.T("Clear", "解除", "해제", "清除", "清除"), GUILayout.Width(ClearButtonWidth)))
+            {
+                _settings.SetResetHotkey(action, KeyCombo.None);
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+
+            // 表示中のアバターの表情と同じキーなら警告（表情が優先され、このリセットはキーでは動かない）
+            if (expressions != null && expressions.TryFindHotkey(combo, out int preset))
+            {
+                string name = preset >= 0 && preset < expressions.Names.Count
+                    ? expressions.Names[preset]
+                    : Loc.T("Neutral", "ニュートラル", "무표정", "无表情", "無表情");
+                GuiControls.Warning(string.Format(Loc.T(
+                        "⚠ Same key as the expression \"{0}\". The expression takes priority, so this reset does not run.",
+                        "⚠ 表情「{0}」と同じキーです。表情が優先され、このリセットは動きません。",
+                        "⚠ 표정 「{0}」과(와) 같은 키입니다. 표정이 우선되어 이 초기화는 동작하지 않습니다.",
+                        "⚠ 与表情“{0}”的按键相同。表情优先，此重置不会执行。",
+                        "⚠ 與表情「{0}」的按鍵相同。表情優先，此重設不會執行。"),
+                    name));
+            }
         }
 
         private void DrawPerformance()

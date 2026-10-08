@@ -655,11 +655,13 @@ namespace VRCast.Tracking
                 _torsoCalibrated = true;
             }
 
-            // 正面からの角度差を上限に収め、平滑化して追従（頭の位置の傾きから戻ってきた直後は補間せず合わせる）
+            // 正面からの角度差を上限に収め、平滑化して追従（頭の位置の傾きから戻ってきた直後は補間せず合わせる）。
+            // ひねりを固定する設定なら、ひねりは正面（0）へ戻す
             if (has)
             {
+                float twist = _settings.trackingTorsoLockTwist ? 0f : Mathf.DeltaAngle(_torsoNeutral.x, angles.x);
                 var target = new Vector2(
-                    Mathf.Clamp(Mathf.DeltaAngle(_torsoNeutral.x, angles.x), -MaxTorsoYaw, MaxTorsoYaw),
+                    Mathf.Clamp(twist, -MaxTorsoYaw, MaxTorsoYaw),
                     Mathf.Clamp(Mathf.DeltaAngle(_torsoNeutral.y, angles.y), -MaxLeanAngle, MaxLeanAngle));
                 float blend = 1f - Mathf.Exp(-TorsoSmoothing * Time.deltaTime);
                 _torsoAngles = _torsoWeight > 0f ? Vector2.Lerp(_torsoAngles, target, blend) : target;
