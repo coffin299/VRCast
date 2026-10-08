@@ -538,6 +538,11 @@
         <span class="ko"><span class="ui">트래킹 사용</span>을 켜면 포함된 트래커가 자동으로 시작되어 머리 방향·눈 깜빡임·입·시선 (MediaPipe에서는 팔·손도)이 움직입니다.</span>
         <span class="zh-hans">打开 <span class="ui">启用追踪</span> 后，内置追踪器会自动启动，驱动头部朝向、眨眼、嘴部和视线（MediaPipe 还包括手臂和手）。</span>
         <span class="zh-hant">開啟 <span class="ui">啟用追蹤</span> 後，內建追蹤器會自動啟動，驅動頭部朝向、眨眼、嘴部和視線（MediaPipe 還包括手臂和手）。</span></li>
+    <li><span class="ja">MediaPipe で <span class="ui">腕・手</span> が ON のときは、<span class="ui">上半身のひねり・傾き（肩）</span>（既定は ON）で両肩の向きに合わせて上半身をひねったり左右に傾けたりします。肩が映っていない間は頭の位置で傾けます。</span>
+        <span class="en">With MediaPipe and <span class="ui">Arms / hands</span> on, <span class="ui">Upper body twist / tilt (shoulders)</span> (on by default) twists and tilts the upper body to match your shoulders. While your shoulders are not visible, it leans with your head position as before.</span>
+        <span class="ko">MediaPipe에서 <span class="ui">팔·손</span>이 켜져 있으면 <span class="ui">상체 비틀기·기울기 (어깨)</span>(기본은 켜짐)로 양 어깨 방향에 맞춰 상체를 비틀거나 좌우로 기울입니다. 어깨가 보이지 않는 동안은 머리 위치로 기울입니다.</span>
+        <span class="zh-hans">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 开启时，<span class="ui">上半身扭转 / 倾斜（肩部）</span>（默认开启）会根据双肩的朝向扭转或左右倾斜上半身。未拍到肩部时按头部位置倾斜。</span>
+        <span class="zh-hant">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 開啟時，<span class="ui">上半身扭轉 / 傾斜（肩部）</span>（預設開啟）會依雙肩的朝向扭轉或左右傾斜上半身。未拍到肩部時依頭部位置傾斜。</span></li>
     <li><span class="ja"><span class="ui">入力元</span> は、縦に並んだスイッチのどれか 1 つを ON にして選びます。各行の右（幅が足りないときはスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（低・中・高）が出ます。MediaPipe は <span class="ui">腕・手</span> を OFF にすると軽くなり、iPhone などから受け取る入力元は推定をスマートフォン側で行うため PC の負荷は低めです。</span>
         <span class="en">Pick the <span class="ui">Source</span> by turning on one of the switches listed vertically. Each row shows (on the right, or under the switch when there is not enough room) whether it is recommended (MediaPipe) and a rough PC load (low / medium / high). MediaPipe gets lighter with <span class="ui">Arms / hands</span> off, and sources received from an iPhone or similar keep the PC load low because the phone does the tracking.</span>
         <span class="ko"><span class="ui">입력 소스</span>는 세로로 나열된 스위치 중 하나를 켜서 고릅니다. 각 줄 오른쪽 (폭이 부족하면 스위치 아래)에 권장 (MediaPipe)과 PC 부하 기준 (낮음·보통·높음)이 표시됩니다. MediaPipe는 <span class="ui">팔·손</span>을 끄면 가벼워지고, iPhone 등에서 받는 입력 소스는 스마트폰에서 추정하므로 PC 부하가 낮습니다.</span>
@@ -548,6 +553,11 @@
         <span class="ko"><span class="ui">눈 깜빡임 트래킹</span>(기본은 켜짐)을 끄면 눈의 개폐를 따라가지 않고 얼굴 탭의 자동 눈 깜빡임을 사용합니다 (퍼펙트 싱크에서도 눈 깜빡임만은 움직이지 않습니다).</span>
         <span class="zh-hans">关闭 <span class="ui">追踪眨眼</span>（默认开启）后，不再跟随眼睛开合，改用面部标签的自动眨眼（完美同步也不驱动眨眼）。</span>
         <span class="zh-hant">關閉 <span class="ui">追蹤眨眼</span>（預設開啟）後，不再跟隨眼睛開合，改用臉部分頁的自動眨眼（完美同步也不驅動眨眼）。</span></li>
+    <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
+        <span class="en">If the closed eye or wink appears on the wrong side compared with your head tilt and arms, turn on <span class="ui">Swap face left / right</span> under <span class="ui">Motion</span> (off by default). Only the face (blink, perfect sync, gaze) is swapped; head and arms keep following <span class="ui">Mirror</span>.</span>
+        <span class="ko">감은 눈·윙크가 머리 기울기나 팔과 반대쪽이 될 때는 <span class="ui">움직임</span> 항목의 <span class="ui">얼굴 좌우 바꾸기</span>(기본은 꺼짐)를 켭니다. 얼굴 (눈 깜빡임·퍼펙트 싱크·시선)만 바뀌고, 머리 방향과 팔은 <span class="ui">미러</span> 설정 그대로입니다.</span>
+        <span class="zh-hans">如果闭上的眼睛或单眼眨眼与头部倾斜、手臂方向相反，请开启 <span class="ui">动作</span> 栏中的 <span class="ui">交换面部左右</span>（默认关闭）。只交换面部（眨眼、完美同步、视线），头部朝向和手臂仍按 <span class="ui">镜像</span> 设置。</span>
+        <span class="zh-hant">如果閉上的眼睛或單眼眨眼與頭部傾斜、手臂方向相反，請開啟 <span class="ui">動作</span> 欄中的 <span class="ui">交換臉部左右</span>（預設關閉）。只交換臉部（眨眼、完美同步、視線），頭部朝向和手臂仍依 <span class="ui">鏡像</span> 設定。</span></li>
     <li><span class="ja">MediaPipe・iPhone・外部アプリ（VMC）・iFacialMocap では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面を検出してアバターの表情に切り替えます（割り当て先の表情が無いものは検出しません）。
         表情ごとの <span class="ui">しきい値</span> で反応のしやすさ（低いほど反応しやすい。<span class="ui">生データ表示</span> 中に出る表情の値が目安）を、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
         <span class="en">With MediaPipe, iPhone / external apps (VMC) and iFacialMocap, <span class="ui">Facial expressions</span> (on by default) detects your smile, surprise, anger, sadness, wink, half-closed eyes and pout and switches the avatar's expression (expressions with nothing assigned are not detected).
