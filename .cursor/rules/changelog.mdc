@@ -30,7 +30,8 @@ alwaysApply: true
 
 1. 「■ 未リリース / Unreleased」を「■ x.y.z (YYYY-MM-DD)」に書き換える。
 2. 同じバージョンに合わせる: `VRCast/Assets/VRCast/Editor/Build/VRCastBuild.cs` の `AppVersion`、
-   `Packages/com.vrcast.converter/package.json` の `version`。
+   `Packages/com.vrcast.converter/package.json` の `version`、
+ `README.md` の「現在の状態」にある「**バージョン x.y.z（製品版）**」。
 3. 修正だけなら z、機能追加なら y、互換性が壊れる変更なら x を上げる。
 4. 配布 zip は `Tools\Package\package.bat`（`CHANGELOG.txt` は自動で同梱される）。
 5. 配布 zip を公開したら、`webpage` ブランチ（作業フォルダ `../VRCast-webpage`）の `version.json` の `version` を同じバージョンにする
