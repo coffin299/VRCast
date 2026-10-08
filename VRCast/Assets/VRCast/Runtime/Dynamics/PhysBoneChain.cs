@@ -10,12 +10,12 @@ namespace VRCast.Dynamics
     /// </summary>
     internal sealed class PhysBoneChain
     {
-        // パラメーター → 物理量の換算係数（見た目で調整した近似値）
+        // パラメーター → 物理量の換算係数（見た目で調整した近似値。Momentum・重力は VRM の揺れものの変換でも使う）
         private const float PullStrength = 0.1f;
         private const float StiffnessStrength = 0.1f;
-        private const float MinMomentum = 0.6f;
-        private const float MaxMomentum = 0.95f;
-        private const float GravityAcceleration = 9.81f;
+        internal const float MinMomentum = 0.6f;
+        internal const float MaxMomentum = 0.95f;
+        internal const float GravityAcceleration = 9.81f;
 
         // ゼロ除算を避けるための最小長
         private const float Epsilon = 1e-8f;

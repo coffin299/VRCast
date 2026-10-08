@@ -70,12 +70,12 @@ namespace VRCast.Platform
         /// </summary>
         /// <param name="title">ダイアログのタイトル</param>
         /// <param name="filterName">種類の表示名（例: "VRCast avatar"）</param>
-        /// <param name="extension">拡張子（例: ".vrcaster"）</param>
+        /// <param name="extensions">拡張子（例: ".vrcaster"）。複数ならどれかに当てはまるファイルを表示し、先頭を既定にする</param>
         /// <param name="initialPath">最初に開くフォルダを決めるパス（ファイル・フォルダ・空可）</param>
-        public static string OpenFile(string title, string filterName, string extension, string initialPath)
+        public static string OpenFile(string title, string filterName, string[] extensions, string initialPath)
         {
-            // 非対応環境では開かない
-            if (!IsSupported)
+            // 非対応環境・拡張子の指定が無ければ開かない
+            if (!IsSupported || extensions == null || extensions.Length == 0)
             {
                 return null;
             }
@@ -85,7 +85,9 @@ namespace VRCast.Platform
             try
             {
                 Marshal.WriteInt16(buffer, 0);
-                string pattern = "*" + extension;
+
+                // 「*.vrcaster;*.vrm」の形で絞り込む
+                string pattern = string.Join(";", Array.ConvertAll(extensions, extension => "*" + extension));
                 var dialog = new OpenFileName
                 {
                     structSize = Marshal.SizeOf(typeof(OpenFileName)),
@@ -97,7 +99,7 @@ namespace VRCast.Platform
                     initialDirectory = ResolveDirectory(initialPath),
                     title = title,
                     flags = Flags,
-                    defaultExtension = extension.TrimStart('.'),
+                    defaultExtension = extensions[0].TrimStart('.'),
                 };
 
                 // キャンセル・エラー時は false

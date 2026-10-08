@@ -128,7 +128,7 @@ namespace VRCast.Animations
                     continue;
                 }
 
-                string path = PathOf(renderer.transform, root);
+                string path = TransformPath.Of(renderer.transform, root);
                 string meshName = renderer.name;
                 for (int index = 0; index < mesh.blendShapeCount; index++)
                 {
@@ -236,19 +236,6 @@ namespace VRCast.Animations
             {
                 _active = null;
             }
-        }
-
-        private static string PathOf(Transform target, Transform root)
-        {
-            // ルートからの相対パス（"Body" や "Armature/Hips/Hair"。ルート自身は空）
-            var names = new List<string>();
-            for (Transform node = target; node != null && node != root; node = node.parent)
-            {
-                names.Add(node.name);
-            }
-
-            names.Reverse();
-            return string.Join("/", names);
         }
     }
 }

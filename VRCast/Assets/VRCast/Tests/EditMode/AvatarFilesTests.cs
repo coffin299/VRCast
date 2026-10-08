@@ -26,21 +26,40 @@ namespace VRCast.Tests
             Assert.IsFalse(AvatarFiles.IsPackage(path));
         }
 
-        [Test]
-        public void FindPackage_MixedFiles_ReturnsFirstPackage()
+        [TestCase(@"C:\Avatars\Test.vrm")]
+        [TestCase(@"C:\Avatars\Test.VRM")]
+        public void IsVrm_VrmExtension_ReturnsTrue(string path)
         {
-            string[] paths = { @"C:\a.png", @"C:\b.vrcaster", @"C:\c.vrcaster" };
+            // 大文字小文字を問わず .vrm は対象で、読み込めるファイルでもある
+            Assert.IsTrue(AvatarFiles.IsVrm(path));
+            Assert.IsTrue(AvatarFiles.IsSupported(path));
+            Assert.IsFalse(AvatarFiles.IsPackage(path));
+        }
 
-            // 対象外を飛ばして最初の .vrcaster を返す
-            Assert.AreEqual(@"C:\b.vrcaster", AvatarFiles.FindPackage(paths));
+        [TestCase(@"C:\Avatars\Test.vrm.zip")]
+        [TestCase(@"C:\Avatars\Test.glb")]
+        [TestCase(null)]
+        public void IsSupported_OtherPaths_ReturnsFalse(string path)
+        {
+            // .vrcaster / .vrm 以外は対象外
+            Assert.IsFalse(AvatarFiles.IsSupported(path));
         }
 
         [Test]
-        public void FindPackage_NoPackage_ReturnsNull()
+        public void FindSupported_MixedFiles_ReturnsFirstSupported()
+        {
+            string[] paths = { @"C:\a.png", @"C:\b.vrm", @"C:\c.vrcaster" };
+
+            // 対象外を飛ばして最初の読み込めるファイルを返す
+            Assert.AreEqual(@"C:\b.vrm", AvatarFiles.FindSupported(paths));
+        }
+
+        [Test]
+        public void FindSupported_NoSupported_ReturnsNull()
         {
             // 対象が無ければ null（null の一覧も同様）
-            Assert.IsNull(AvatarFiles.FindPackage(new[] { @"C:\a.png", @"C:\folder" }));
-            Assert.IsNull(AvatarFiles.FindPackage(null));
+            Assert.IsNull(AvatarFiles.FindSupported(new[] { @"C:\a.png", @"C:\folder" }));
+            Assert.IsNull(AvatarFiles.FindSupported(null));
         }
     }
 }

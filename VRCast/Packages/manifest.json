@@ -1,7 +1,9 @@
 {
   "dependencies": {
     "com.vrcast.converter": "file:../../Packages/com.vrcast.converter",
-    "com.unity.test-framework": "1.1.33",
+    "com.vrmc.gltf": "https://github.com/vrm-c/UniVRM.git?path=/Packages/UniGLTF#v0.131.3",
+    "com.vrmc.vrm": "https://github.com/vrm-c/UniVRM.git?path=/Packages/VRM10#v0.131.3",
+    "com.unity.test-framework": "1.4.6",
     "com.unity.modules.animation": "1.0.0",
     "com.unity.modules.assetbundle": "1.0.0",
     "com.unity.modules.audio": "1.0.0",

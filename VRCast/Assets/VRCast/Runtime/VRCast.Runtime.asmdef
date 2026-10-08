@@ -2,7 +2,10 @@
     "name": "VRCast.Runtime",
     "rootNamespace": "VRCast",
     "references": [
-        "VRCast.AvatarFormat"
+        "VRCast.AvatarFormat",
+        "UniGLTF",
+        "UniGLTF.Utils",
+        "VRM10"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],

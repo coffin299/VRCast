@@ -5,6 +5,7 @@ using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 using VRCast.Core;
 using VRCast.Output;
 using VRCast.Tracking;
@@ -37,11 +38,14 @@ namespace VRCast.Editor.Build
         private const string ProductName = "VRCast";
 
         // アプリのバージョン（CHANGELOG.txt と converter の package.json の version に合わせる）
-        private const string AppVersion = "1.11.3";
+        private const string AppVersion = "1.12.3";
 
         // 初回起動時のウィンドウサイズ（以降は settings.json の値を使う）
         private const int DefaultWidth = 1280;
         private const int DefaultHeight = 720;
+
+        // VRM の読み込みで Shader.Find するシェーダー（MToon・Unlit・PBR）。ビルドに含めないとマゼンタになる
+        private static readonly string[] VrmShaderNames = { "VRM10/MToon10", "UniGLTF/UniUnlit", "Standard" };
 
         [MenuItem("VRCast/Build/Windows x64")]
         public static void BuildWindows()
@@ -99,6 +103,9 @@ namespace VRCast.Editor.Build
 
             // アプリアイコンを設定
             ApplyAppIcon();
+
+            // VRM 用のシェーダーを常に含める
+            IncludeVrmShaders();
 
             // 前回の出力を消してから出す（Mono でビルドした出力が残っていると IL2CPP のビルドが拒否される）
             CleanOutputFolder();
@@ -204,6 +211,43 @@ namespace VRCast.Editor.Build
             // 既定アイコン（全プラットフォーム共通。Windows は各サイズをここから生成する）に設定
             var icon = AssetDatabase.LoadAssetAtPath<Texture2D>(AppIconPath);
             PlayerSettings.SetIcons(NamedBuildTarget.Unknown, new[] { icon }, IconKind.Any);
+        }
+
+        private static void IncludeVrmShaders()
+        {
+            // Graphics 設定の「Always Included Shaders」を直接編集する
+            var graphics = new SerializedObject(GraphicsSettings.GetGraphicsSettings());
+            SerializedProperty list = graphics.FindProperty("m_AlwaysIncludedShaders");
+
+            foreach (string name in VrmShaderNames)
+            {
+                // パッケージが無い等で見つからなければ警告だけ出して続行
+                Shader shader = Shader.Find(name);
+                if (shader == null)
+                {
+                    Debug.LogWarning($"[VRCast][Build] Shader not found: {name}. VRM avatars using it will appear magenta.");
+                    continue;
+                }
+
+                // 登録済みなら何もしない
+                bool registered = false;
+                for (int i = 0; i < list.arraySize; i++)
+                {
+                    registered |= list.GetArrayElementAtIndex(i).objectReferenceValue == shader;
+                }
+
+                if (registered)
+                {
+                    continue;
+                }
+
+                // 末尾に追加
+                list.InsertArrayElementAtIndex(list.arraySize);
+                list.GetArrayElementAtIndex(list.arraySize - 1).objectReferenceValue = shader;
+                Debug.Log($"[VRCast][Build] Added to Always Included Shaders: {name}");
+            }
+
+            graphics.ApplyModifiedPropertiesWithoutUndo();
         }
 
         private static void EnsureMainScene()

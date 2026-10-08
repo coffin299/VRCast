@@ -70,6 +70,14 @@ namespace VRCast.Avatars
             // 同一 bundle の二重読込は Unity がエラーにするため先に解放
             Unload();
 
+            // VRM は展開せず直接読み込む
+            if (AvatarFiles.IsVrm(packagePath))
+            {
+                yield return VrmLoader.Load(packagePath, transform, OnLoaded, OnError);
+                FinishLoading(packagePath);
+                yield break;
+            }
+
             // パッケージを検証・展開（失敗理由は UI に表示）
             AvatarPackage package = null;
             try
@@ -87,10 +95,15 @@ namespace VRCast.Avatars
                 yield return AvatarLoader.Load(package, transform, OnLoaded, OnError);
             }
 
+            FinishLoading(packagePath);
+        }
+
+        private void FinishLoading(string path)
+        {
             // エラーはログにも残す
             if (LastError != null)
             {
-                VRCastLog.Error(LogCategory, $"Failed to load '{packagePath}': {LastError}");
+                VRCastLog.Error(LogCategory, $"Failed to load '{path}': {LastError}");
             }
 
             IsLoading = false;

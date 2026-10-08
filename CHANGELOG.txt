@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.12.3 (2026-10-08)
+
+[日本語]
+- VRM ファイル（VRM 0.x / 1.0。VRoid Studio などで作ったもの）を変換せずにそのまま読み込める機能を追加（表情・まばたき・口パク・揺れものに対応。ドラッグ＆ドロップ・参照ボタン・起動引数で .vrm を指定できます）
+
+[English]
+- Added loading VRM files (VRM 0.x / 1.0, e.g. made with VRoid Studio) directly without converting, including expressions, blinking, lip sync and spring bones (drag and drop, the Browse button and the launch option all accept .vrm)
+
 ■ 1.11.3 (2026-10-07)
 
 [日本語]

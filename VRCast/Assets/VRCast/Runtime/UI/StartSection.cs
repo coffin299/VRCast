@@ -77,17 +77,17 @@ namespace VRCast.UI
             GuiControls.BeginStep(1, Loc.T("Load your avatar", "アバターを読み込む", "아바타 불러오기",
                 "加载虚拟形象", "載入虛擬形象"), _session.Current != null);
             GuiControls.Hint(Loc.T(
-                "Drag and drop a .vrcaster file onto this window, or choose one with the button below.",
-                ".vrcaster ファイルをこのウィンドウにドラッグ＆ドロップするか、下のボタンで選んでください。",
-                ".vrcaster 파일을 이 창에 드래그 앤 드롭하거나 아래 버튼으로 선택하세요.",
-                "将 .vrcaster 文件拖放到此窗口，或使用下方按钮选择。",
-                "將 .vrcaster 檔案拖放到此視窗，或使用下方按鈕選擇。"));
+                "Drag and drop a .vrcaster or .vrm file onto this window, or choose one with the button below.",
+                ".vrcaster または .vrm ファイルをこのウィンドウにドラッグ＆ドロップするか、下のボタンで選んでください。",
+                ".vrcaster 또는 .vrm 파일을 이 창에 드래그 앤 드롭하거나 아래 버튼으로 선택하세요.",
+                "将 .vrcaster 或 .vrm 文件拖放到此窗口，或使用下方按钮选择。",
+                "將 .vrcaster 或 .vrm 檔案拖放到此視窗，或使用下方按鈕選擇。"));
             GuiControls.Hint(Loc.T(
-                "To make a .vrcaster file, export your avatar in Unity with the VRCast converter (see help).",
-                ".vrcaster ファイルは、Unity でアバターを VRCast 変換ツールから書き出して作ります（ヘルプ参照）。",
-                ".vrcaster 파일은 Unity에서 VRCast 변환 도구로 아바타를 내보내 만듭니다 (도움말 참조).",
-                ".vrcaster 文件需在 Unity 中使用 VRCast 转换工具导出虚拟形象来制作（参见帮助）。",
-                ".vrcaster 檔案需在 Unity 中使用 VRCast 轉換工具匯出虛擬形象來製作（請參閱說明）。"));
+                "VRM files (VRoid etc.) load as they are. For VRChat avatars, export a .vrcaster file in Unity with the VRCast converter (see help).",
+                "VRM ファイル（VRoid など）はそのまま読み込めます。VRChat アバターは、Unity で VRCast 変換ツールから .vrcaster ファイルを書き出してください（ヘルプ参照）。",
+                "VRM 파일(VRoid 등)은 그대로 불러올 수 있습니다. VRChat 아바타는 Unity에서 VRCast 변환 도구로 .vrcaster 파일을 내보내세요 (도움말 참조).",
+                "VRM 文件（VRoid 等）可直接加载。VRChat 虚拟形象需在 Unity 中使用 VRCast 转换工具导出 .vrcaster 文件（参见帮助）。",
+                "VRM 檔案（VRoid 等）可直接載入。VRChat 虛擬形象需在 Unity 中使用 VRCast 轉換工具匯出 .vrcaster 檔案（請參閱說明）。"));
 
             GUILayout.BeginHorizontal();
 
@@ -124,7 +124,7 @@ namespace VRCast.UI
             else if (_session.Current != null)
             {
                 GuiControls.Hint(Loc.T("Loaded: ", "読み込み済み: ", "불러옴: ", "已加载：", "已載入：")
-                    + _session.Current.Manifest.name);
+                    + _session.Current.Name);
             }
 
             GuiControls.EndCard();

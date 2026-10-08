@@ -39,7 +39,7 @@ namespace VRCast.Core
     }
 
     /// <summary>
-    /// アバター（.vrcaster のパス）ごとの記録。カメラの視点と見た目の設定（hasLook が false なら未記録）、
+    /// アバター（.vrcaster / .vrm のパス）ごとの記録。カメラの視点と見た目の設定（hasLook が false なら未記録）、
     /// BlendShape の上限（制限しているものだけ）、表情のショートカットキー（割り当てたものだけ）。
     /// </summary>
     [Serializable]

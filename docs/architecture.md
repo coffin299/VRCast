@@ -29,6 +29,8 @@ flowchart LR
   pkg --> reader["AvatarPackageReader"]
   reader --> loader["AvatarLoader"]
   loader --> session["AvatarSession"]
+  vrm["MyAvatar.vrm (VRM 0.x / 1.0)"] --> vrmLoader["VrmLoader (UniVRM)"]
+  vrmLoader --> session
   session --> ui["MainPanel / OrbitCameraController"]
 ```
 
@@ -38,6 +40,7 @@ flowchart LR
 flowchart LR
   converterEditor["VRCast.Converter.Editor (Editor only)"] --> format["VRCast.AvatarFormat"]
   runtime["VRCast.Runtime"] --> format
+  runtime --> univrm["UniGLTF / VRM10 (UniVRM)"]
   editor["VRCast.Editor (Editor only)"] --> runtime
   tests["VRCast.Tests.EditMode (Editor only)"] --> runtime
   tests --> format
@@ -47,7 +50,7 @@ flowchart LR
 | :--- | :--- | :--- | :--- |
 | `VRCast.AvatarFormat` | `Packages/com.vrcast.converter/Runtime` | 全て | なし |
 | `VRCast.Converter.Editor` | `Packages/com.vrcast.converter/Editor` | Editor のみ | `VRCast.AvatarFormat` |
-| `VRCast.Runtime` | `VRCast/Assets/VRCast/Runtime` | 全て | `VRCast.AvatarFormat` |
+| `VRCast.Runtime` | `VRCast/Assets/VRCast/Runtime` | 全て | `VRCast.AvatarFormat`, `UniGLTF`, `UniGLTF.Utils`, `VRM10` |
 | `VRCast.Editor` | `VRCast/Assets/VRCast/Editor` | Editor のみ | `VRCast.Runtime` |
 | `VRCast.Tests.EditMode` | `VRCast/Assets/VRCast/Tests/EditMode` | Editor のみ | `VRCast.Runtime`, `VRCast.AvatarFormat`, Test Framework |
 
@@ -59,6 +62,10 @@ flowchart LR
 - VRChat SDK への依存は `VRCast.Converter.Editor` に限定する。現状はアセンブリ参照を持たず、リフレクションで型名・フィールド名から読む（SDK 無しでもコンパイル可能）。Runtime プロジェクトには VRChat SDK を導入しない。
 - Runtime プロジェクトは `com.vrcast.converter` をローカルパス（`file:../../Packages/com.vrcast.converter`）で参照する。
 - 新しい Package を追加する場合は、理由と Runtime への影響をこのドキュメントに追記する。
+  - UniVRM（`com.vrmc.gltf` / `com.vrmc.vrm`、v0.131.3、MIT）: `.vrm`（0.x / 1.0）を変換なしで読み込むため Runtime が参照する。
+    使うのは読み込み（`Vrm10.LoadPathAsync`）と MToon10 / UniUnlit シェーダーのみで、UniVRM の揺れもの・表情・視線の処理は
+    読込直後に止めてコンポーネントごと除去し、VRCast の `PhysBoneSimulator` / `ExpressionController` 等で動かす。
+    シェーダーはビルドで除かれないよう `VRCastBuild` が Always Included Shaders に追加する。
 - 外部バイナリ: トラッキングは別プロセスのトラッカーを同梱して起動し、UDP（`127.0.0.1`）で受信する
   （推論で描画を止めない・トラッカーの異常終了が Runtime に波及しない）。どちらもリポジトリには含めずビルド前に配置する。
   - 既定: MediaPipe トラッカー（`Tools/MediaPipeTracker/vrcast_tracker.py`、MediaPipe は Apache-2.0）を PyInstaller で exe 化し、
@@ -82,7 +89,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | :--- | :--- | :--- |
 | `Core/` | ログ、設定、起動処理 | Milestone 0 (済) |
 | `App/` | 起動時の各機能の生成と結線 | Milestone 1 (済) |
-| `Avatars/` | `.vrcaster` 検証・展開・読込・生成 | Milestone 1 (済) |
+| `Avatars/` | `.vrcaster` 検証・展開・読込・生成、`.vrm` の読込と metadata への変換 | Milestone 1 (済) |
 | `Cameras/` | カメラ操作 | Milestone 1 (済) |
 | `UI/` | IMGUI 操作パネル | Milestone 1 (済) |
 | `Rendering/` | 背景透過、解像度、ライティング | Milestone 2 (済) |
@@ -115,8 +122,12 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `AppRoot` | シーン読込後に `AvatarSession` / `OrbitCameraController` / `RenderingController` / `ProcessTuner` / `VirtualCameraOutput` / `SpoutOutput` / `MicrophoneInput` / `TrackingReceiver` / `TrackingSkeletonView` / `TrackerProcess` / `FileDropReceiver` / `RemoteControl` / `MainPanel` を生成して結線。読込完了時にアバターへ `PoseController` / `BlendShapeLimiter` / `ExpressionController` / `BlinkController` / `LipSyncController` / `FaceTrackingDriver` / `HandTrackingDriver` / `IdleMotionController` / `ConstraintSolver` / `PhysBoneSimulator` を付与。起動引数 `--avatar` または前回のアバターを自動読込。Windows ビルドではウィンドウのタイトルを「VRCast バージョン」に変更（`productName` は保存先フォルダに使われるため変えない） |
 | `AvatarPackageReader` | `.vrcaster` の構造・サイズ・manifest・ハッシュを検証し、bundle を `temporaryCachePath/avatars/<sha256>/` に展開。`metadata/*.json`（expressions / descriptor / physbones / constraints）を読み込み（不正なら空） |
 | `AvatarLoader` | bundle を非同期読込してアバターを生成し、許可リスト外コンポーネントを除去 |
-| `LoadedAvatar` | 生成済みアバターと bundle の組。`Dispose` で両方解放。フレーミング用境界（Humanoid は骨格基準、それ以外は Renderer 基準） |
-| `AvatarSession` | 表示中アバター 1 体の Load / Reload / Unload と状態（読込中・エラー） |
+| `VrmLoader` | `.vrm` をサイズ確認（`AvatarPackageReader.MaxPackageBytes` まで）後に UniVRM（`Vrm10.LoadPathAsync`、0.x は 1.0 へ変換）で非同期読込。`Vrm10Instance` を止めて表情・まばたき・口の形・SpringBone を `VrmAvatarData` へ写し、初期姿勢へ戻してから `RuntimeGltfInstance`（メッシュ・テクスチャ・マテリアルの所有者。破棄時に解放）以外の許可リスト外コンポーネントを除去 |
+| `VrmAvatarData` / `VrmAvatarInfo` | VRM から変換した metadata（`ExpressionSet` / `AvatarDescriptorData` / `PhysBoneSet`）と表示用の情報（名前・VRM の版・作者）、UniVRM に依存しない変換前の中間データ（表情の BlendShape、SpringBone の関節・コライダー） |
+| `VrmMetadataBuilder` | 中間データから metadata を作る（UniVRM 非依存でテスト可能）。表情は重み ×100・BlendShape の無い表情は除外・同名は番号付け。まばたきは最も多く使うメッシュ（両目が無ければ左右）、口は aa / ih / ou / ee / oh を Viseme の あ・い・う・え・お へ。SpringBone は直接の子で続く関節を 1 本の PhysBone にし（他の子は ignore）、stiffness・dragForce・gravityPower・hitRadius を pull・spring・gravity・radius へ換算（関節ごとに違えばカーブ）、カプセル・平面コライダーも変換 |
+| `TransformPath` | アバタールートからの相対パス |
+| `LoadedAvatar` | 生成済みアバターと bundle の組（VRM は bundle 無し、`Vrm` に VRM の情報）。`Dispose` で両方解放。フレーミング用境界（Humanoid は骨格基準、それ以外は Renderer 基準） |
+| `AvatarSession` | 表示中アバター 1 体の Load / Reload / Unload と状態（読込中・エラー）。拡張子で `.vrcaster`（`AvatarPackageReader` → `AvatarLoader`）と `.vrm`（`VrmLoader`）を振り分け |
 | `OrbitCameraController` | 注視点中心の回転・パン・ズーム、境界の高さ・幅が収まる距離へのフレーミング、FOV。視点（`CameraPose`: 注視点・距離・向き・画角）の取得と適用（`Pose` / `SetPose`。Reset の戻り先は変えない） |
 | `CameraPose` / `AvatarLook` / `AvatarEntry` / `BlendShapeLimit` | アバターごとのカメラの視点と見た目（ライト・アバターの明るさ・待機ポーズ・体の向き）、BlendShape の上限（上限を付けたものだけ、パス + 名前 + 最大値）。`AppSettings.avatarCameras`（以前の設定ファイルとの互換のため名前据え置き）に `.vrcaster` のパス（大文字・小文字を区別しない）をキーとして保存し、使うたびに末尾へ移して最近使った 50 体分まで保持。新しい順の先頭 10 件を Avatar タブの「最近使ったアバター」に表示（× で記録ごと削除）。`AppRoot` がアバター読込時に、見た目 → 画角 → フレーミング → 保存済みの視点の順に戻し、以降は変わったときだけ記録（読込中・アンロード後は記録しない）。見た目が未記録のアバターは読込時の設定をそのまま使う。全設定のリセットでは消さない |
 | `RenderingController` | 描画のフレームレート（VSync を止めて上限を明示。通常 60fps / 軽量モード 30fps）、ダークモードの切り替え（背景色が切り替え前のテーマの既定色のときだけ新しいテーマの既定色へ）、背景（非透過 = 背景色、透過 = 背景色 + alpha 0。ウィンドウ表示は alpha を無視し、ゲームキャプチャは alpha で抜くため OBS には映らない）、パネルを隠している間は設定に関係なく透過（`ForceTransparent`、保存しない）、ウィンドウ解像度、太陽光（ディレクショナルライトの強さ・色温度・向き。向きはカメラ正面基準）、環境光（ライティングデータを焼かないため `RenderSettings` の単色環境光と SH を直接設定）、ライティングのプリセット（`LightingPreset`）、アバターの明るさ（`AvatarMaterials` 経由）を設定値に従って適用 |
@@ -163,11 +174,11 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `LogSection` | Debug log タブ。環境の要約（バージョン・OS・CPU・GPU・トラッカー / 受信の状態・カメラ一覧）と `LogBuffer` のログを、重要度（DEBUG / INFO / WARN / ERROR、件数付き）・カテゴリ・検索文字列・並び順で絞り込んで表示（最新 300 件まで。エラーはスタックトレースの先頭数行。まとめた行は ×N）。詳細ログのスイッチ。一覧は Layout イベントの時だけ、ログの追加では 0.25 秒に 1 回まで作り直す（Layout と Repaint で要素数を変えない）。表示中のログを環境と一緒にコピー、消去、Player.log のフォルダをエクスプローラーで開く |
 | `CreditsSection` | Credits タブ（開発者・協力者のリンク、開発者の Twitch チャンネルを開く応援カード、ライセンス・NOTICE は GitHub のファイルを開くボタン）。各行は `GuiControls.LabeledButton`（固定幅ラベル + ボタン） |
 | `AvatarSection` | Avatar タブ（ドロップ・Browse・パス入力による読み込み、Reload / Unload、最近使ったアバター 10 件への切り替えと削除、読込状態・アバター情報）。読み込む前に空・拡張子違い・存在しないファイルを確認し、表示言語に合わせたエラーを出す |
-| `AvatarFiles` | 読み込み対象（拡張子 `.vrcaster`）の判定と、複数パスからの最初の対象の選択 |
+| `AvatarFiles` | 読み込み対象（拡張子 `.vrcaster` / `.vrm`）の判定と、複数パスからの最初の対象の選択 |
 | `UpdateChecker` | 起動時（設定 ON のとき）に `https://coffin299.github.io/VRCast/version.json`（`webpage` ブランチ）を `UnityWebRequest` で 1 回取得し、`VersionUtility` で `Application.version` と比較。失敗は静かに諦める。更新履歴は `ChangelogUrl`（GitHub の `CHANGELOG.txt`）を開く。ダウンロードページは GitHub（`url`）と BOOTH（`boothUrl`）の 2 つで、それぞれ許可した接頭辞の URL のみ使い、それ以外は既定のページを開く。入手先のボタンは `UpdateDownloadButtons` で通知と Settings が共有 |
 | `UnityWindow` | メインスレッドの Unity のプレイヤーウィンドウ（`UnityWndClass`）のハンドルを探す。タイトルの変更（`SetWindowTextW`） |
 | `FileDropReceiver` | Windows のスタンドアロン実行時に Unity のウィンドウへ `DragAcceptFiles` でドロップを許可し、メインスレッドの `WH_GETMESSAGE` フックで `WM_DROPFILES` を取り出してパスを `Update` で通知 |
-| `FileDialog` | Windows の「ファイルを開く」ダイアログ（`GetOpenFileNameW`、モーダル） |
+| `FileDialog` | Windows の「ファイルを開く」ダイアログ（`GetOpenFileNameW`、モーダル。複数の拡張子を 1 つのフィルターで指定） |
 | `AnimationSection` | Pose タブ（向き・待機ポーズ、表情。表情ごとに 1 行で「表情ボタン・キーの割り当てボタン（押すと割り当て待ち、Esc でやめる）・リセット」。割り当てはアバターごとに `AppSettings.SetExpressionHotkeys` へ記録）。表情ボタンは固定中の表情を押し直すと自動検出へ戻し、固定中は「自動検出に戻す」を出す |
 | `ExpressionHotkey` | アバターごとの表情のショートカットキー（プリセット名・Windows の仮想キー番号・Ctrl / Alt / Shift。ニュートラルは `<neutral>`） |
 | `RemoteControl` | 外部操作（設定で ON のときだけ）。OSC（UDP）と HTTP を `127.0.0.1` にのみ bind し、スレッドを使わず Update でポーリングして表示中のアバターの `ExpressionController` を操作。HTTP は `Origin` / 別サイトの `Sec-Fetch-Site` 付き（Web ページからの送信）を 403 で拒否し、CORS ヘッダーは付けない。bind 失敗は 3 秒ごとに再試行 |
@@ -226,7 +237,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 
 | クラス | 責務 |
 | :--- | :--- |
-| `VRCastBuild` | Windows x64 ビルド。`Main.unity` がなければ生成してビルド対象に登録。同梱トラッカー（MediaPipe / OpenSeeFace）・仮想カメラ（UnityCapture）が未配置なら警告。`Branding/AppIcon.png` を無圧縮で取り込み既定アイコンに設定。色空間を VRChat と同じ Linear に設定。バージョン（`AppVersion`、`CHANGELOG.txt` と converter の `package.json` に合わせる）を `bundleVersion` に設定。配布用 zip はビルド後に `Tools/Package/package.bat` で作る（ビルド一式 + LICENSE / NOTICE / CHANGELOG / README.txt + 書き出しツールの unitypackage（`Tools/Package/unitypackage.ps1`、Unity 不要、`.meta` の GUID のまま `Assets/VRCast/Converter` へ）、配布不要フォルダは除外） |
+| `VRCastBuild` | Windows x64 ビルド。`Main.unity` がなければ生成してビルド対象に登録。VRM 用シェーダー（MToon10 / UniUnlit / Standard）を Always Included Shaders へ追加。同梱トラッカー（MediaPipe / OpenSeeFace）・仮想カメラ（UnityCapture）が未配置なら警告。`Branding/AppIcon.png` を無圧縮で取り込み既定アイコンに設定。色空間を VRChat と同じ Linear に設定。バージョン（`AppVersion`、`CHANGELOG.txt` と converter の `package.json` に合わせる）を `bundleVersion` に設定。配布用 zip はビルド後に `Tools/Package/package.bat` で作る（ビルド一式 + LICENSE / NOTICE / CHANGELOG / README.txt + 書き出しツールの unitypackage（`Tools/Package/unitypackage.ps1`、Unity 不要、`.meta` の GUID のまま `Assets/VRCast/Converter` へ）、配布不要フォルダは除外） |
 | `BundledTrackerCopier` | Windows ビルド後処理（`IPostprocessBuildWithReport`）。`Trackers/` の `MediaPipeTracker/` / `OpenSeeFace/` を `(exe 名)_Data/StreamingAssets/` へコピーする（前回分は削除してから）。メニュー・Build Settings・`-executeMethod` のどれでも動く |
 
 ## Tests (EditMode)
@@ -244,5 +255,6 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `MediaPipePacketTests` | MediaPipe JSON の頭の位置・回転の座標変換、目（左右入れ替え）・口・視線の BlendShape 割り当て、腕・手の左右入れ替えと可視度判定と x・y 反転、片手のみ、壊れた顔の部分無効化、表情の強さの合成、バージョン不一致・不正 JSON の拒否 |
 | `ExpressionDetectorTests` | 表情判定の保持時間・しきい値未満・ヒステリシス・最も強い表情の選択・発話中の笑顔の抑制・しきい値・リセット |
 | `ExpressionMappingTests` | プリセット名のキーワード推定（英語・日本語）、保存した名前の優先、空欄・他アバターの名前は推定へ、割り当てなし・ニュートラル |
+| `VrmMetadataBuilderTests` | VRM の表情の変換（重み・空の除外・同名の番号付け）、まばたき（最も多いメッシュ・ウインク・左右のみ・無し）、口の形（母音の位置・無し）、SpringBone の変換（関節の追従・ignore・pull / spring・半径のカーブ・カプセル・コライダー番号）、途切れた鎖・関節 1 つの除外 |
 | `AvatarPackageReaderTests` | 正常展開、キャッシュ再利用、ハッシュ不一致・manifest 欠落・未対応バージョン・パストラバーサル・非 ZIP の拒否、エントリ名判定、表情・descriptor・physbones・constraints データの読込・不正時の空扱い |
 | `ConstraintEvaluatorTests` | Constraint の重み付き平均・軸マスク・重み 0 の静止値・無効時の非適用・Parent のオフセット・Aim / LookAt の向き・評価順の並べ替え・検証 |

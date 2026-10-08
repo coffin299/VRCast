@@ -8,11 +8,11 @@ VRChat 向け 3D アバターを、Unity プロジェクトごとではなく **
 VSeeFace のように簡単にアバターを表示・トラッキングし、OBS などの配信ソフトへ出力することを目指す。
 
 ```text
-VRChat アバター (Unity / VCC プロジェクト)
-        ↓  com.vrcast.converter (Editor 専用パッケージ)
-MyAvatar.vrcaster
-        ↓
-VRCast.exe (Runtime)
+VRChat アバター (Unity / VCC プロジェクト)          VRM アバター (VRoid など)
+        ↓  com.vrcast.converter (Editor 専用パッケージ)      │
+MyAvatar.vrcaster                                   MyAvatar.vrm（変換不要）
+        ↓                                                │
+VRCast.exe (Runtime)  ←──────────────────────────────────┘
         ↓
 OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom など)
 ```
@@ -37,6 +37,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | アバター書き出し (`VRCast > Avatar Exporter`) | 済 |
 | FX レイヤー既定状態の焼き込み（小物トグルの初期 ON/OFF） | 済 |
 | `.vrcaster` 読み込み・表示・オービットカメラ・最小 UI | 済 |
+| VRM（0.x / 1.0）の直接読み込み（UniVRM。表情・まばたき・口の形・揺れものを変換） | 済 |
 | Humanoid 骨格基準のカメラフレーミング | 済 |
 | 背景透過・解像度プリセット・ライト調整 | 済 |
 | 待機ポーズ（既定は気を付け。腕を下ろす・肘の曲げ） | 済 |
@@ -67,9 +68,12 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 - アバターの書き出し: Unity **2022.3.22f1**（VRChat SDK と同一バージョン）
 - VRCast 本体の開発: Unity **2022.3 LTS の最新版**（2022.3.62f3 以降。AssetBundle を読めるよう 2022.3 系列にとどめる。Unity 6 は不可）
   - ビルドは IL2CPP。Unity Hub で「Windows Build Support (IL2CPP)」モジュールと、Visual Studio の「C++ によるデスクトップ開発」ワークロードを入れておく
+  - VRM の読み込みに使う UniVRM（`com.vrmc.gltf` / `com.vrmc.vrm`、v0.131.3）は Package Manager が GitHub から取得するため、Git が必要
 - Render Pipeline: Built-in
 
 ## 使い方
+
+VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、そのまま「2. VRCast.exe で表示する」へ進める（「VRM を読み込む場合」を参照）。
 
 ### 1. アバターを .vrcaster に書き出す
 
@@ -114,15 +118,27 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 
 ### 2. VRCast.exe で表示する
 
-- `.vrcaster` ファイルを VRCast のウィンドウへドラッグ＆ドロップすると読み込む（複数ドロップした場合は最初の `.vrcaster`）。
+- `.vrcaster` / `.vrm` ファイルを VRCast のウィンドウへドラッグ＆ドロップすると読み込む（複数ドロップした場合は最初の対応ファイル）。
 - または Avatar タブの **Browse...** でファイルを選ぶか、入力欄にパスを入力して **Load**（前後の `"` は自動で除去）。
 - Avatar タブの **最近使ったアバター** に直前に使ったアバターが最大 10 件並び、クリックで切り替えられる（× で一覧から外す。記憶した設定も消える）。
   カメラの視点・ライト・アバターの明るさ・待機ポーズ・体の向きはアバターごとに記憶され、切り替え時（再起動後も含む）に戻る。
-- `.vrcaster` 以外のファイル・存在しないファイルは読み込まず、表示言語でエラーを表示する
+- `.vrcaster` / `.vrm` 以外のファイル・存在しないファイルは読み込まず、表示言語でエラーを表示する
   （パネルを隠していてもドロップに失敗したときは表示される）。
 - VRCast を管理者として実行している場合、Windows の制限によりエクスプローラーからのドロップは受け付けられない（Browse を使う）。
-- 起動引数でも指定可能: `VRCast.exe --avatar "C:\path\MyAvatar.vrcaster"`
+- 起動引数でも指定可能: `VRCast.exe --avatar "C:\path\MyAvatar.vrcaster"`（`.vrm` も可）
 - 最後に読み込んだアバターは次回起動時に自動で読み込まれる。
+
+#### VRM を読み込む場合
+
+- VRM 0.x / 1.0 に対応（UniVRM で読み込み、0.x は 1.0 へ変換して扱う）。Avatar タブの状態に `VRM 1.0` / `VRM 0.x` と作者を表示する。
+- VRM の設定を `.vrcaster` の metadata と同じ形へ変換し、トラッキング・待機ポーズ・カメラ出力などは `.vrcaster` と同じように使える。
+  - 感情（Happy / Angry / Sad / Relaxed / Surprised）と独自の表情 → 表情プリセット（Pose タブ・ショートカットキー・トラッキングの表情反映）
+  - `blink` / `blinkLeft` / `blinkRight` → 自動まばたき・ウインク、`aa` / `ih` / `ou` / `ee` / `oh` → マイクの口パク（あいうえお）
+  - SpringBone（揺れもの）とコライダー → PhysBone の近似（Display タブの揺れもの ON/OFF も有効）
+- まばたき・口の形は 1 つのメッシュの BlendShape だけを使う（最も多く使われているメッシュ）。重みは 100 で動かす（BlendShape の上限で調整できる）。
+- マテリアルの色・UV を変える表情は反映されない（BlendShape を動かさない表情は一覧に出ない）。VRM の Node Constraint・視線の BlendShape 方式（目ボーンの無いモデル）は未対応。
+- 見た目は MToon（UniVRM の MToon10）で描画する。ビルド時に `VRCastBuild` が MToon・UniUnlit・Standard を Always Included Shaders に追加する。
+- VRM に書かれた利用条件（アバターの使用許可・商用利用など）を守って使うこと。
 
 | 操作 | 内容 |
 | :--- | :--- |
@@ -597,9 +613,10 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 ## アバターの扱いについて
 
 - `.vrcaster` は利用者本人がローカルで使うための変換データであり、アバターの再配布を目的としない。
-  各アバターの利用規約に従うこと。
+  各アバターの利用規約（VRM はファイルに書かれた利用条件）に従うこと。
 - Runtime はアバターを **データとしてのみ** 扱い、アバター内の任意コードは実行しない。
   読込時にパッケージ構造・サイズ・ハッシュを検証し、許可リスト外のコンポーネントを除去する。
+  VRM はサイズ（1 GiB まで）を確認して UniVRM で読み込み、UniVRM のコンポーネントは表情・揺れもの等を変換した後に除去する。
 
 ## License
 

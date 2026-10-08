@@ -14,7 +14,7 @@ namespace VRCast.Dynamics
         private const string LogCategory = "PhysBone";
 
         // 固定タイムステップと 1 フレームの最大ステップ数（低 FPS 時の暴走防止）
-        private const float TimeStep = 1f / 60f;
+        internal const float TimeStep = 1f / 60f;
         private const int MaxSubSteps = 3;
 
         // アバター 1 体あたりの粒子数上限（負荷対策）

@@ -248,3 +248,5 @@ Converter が除外する。Freeze To World は対象外（通常の Constraint 
 - 別系列の Unity との互換性はない（書き出しは 2022.3.22f1、Runtime は同じ 2022.3 系列の最新 LTS。系列が違えば読込時に警告）。
 - シェーダーバリアントが bundle ビルド時に削られるとマゼンタ表示になる。
 - bundle の中身は Unity 依存のため、将来別フォーマット（glTF/VRM 等）へ移行する可能性がある。
+- VRM（`.vrm`）は `.vrcaster` を経由せず Runtime が直接読み込む（`VrmLoader`）。表情・まぶた・リップシンク・SpringBone は
+  読込時に上記 metadata と同じ型（`ExpressionSet` / `AvatarDescriptorData` / `PhysBoneSet`）へ変換し、同じ `Validate` を通す。

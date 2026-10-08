@@ -6,7 +6,8 @@ using Object = UnityEngine.Object;
 namespace VRCast.Avatars
 {
     /// <summary>
-    /// シーンに生成済みのアバターと、その AssetBundle の組。Dispose で両方を解放する。
+    /// シーンに生成済みのアバターと、その読み込み元（.vrcaster の AssetBundle または VRM）の組。
+    /// Dispose でアバターと読み込んだアセットを解放する。
     /// </summary>
     public sealed class LoadedAvatar : IDisposable
     {
@@ -16,11 +17,12 @@ namespace VRCast.Avatars
         private const float WidthRatio = 0.5f;
         private const float DepthRatio = 0.3f;
 
+        // .vrcaster の bundle（VRM は null。VRM のアセットはアバター本体の破棄と一緒に解放される）
         private AssetBundle _bundle;
 
         public GameObject Instance { get; private set; }
         public Animator Animator { get; }
-        public AvatarManifest Manifest { get; }
+        public string Name { get; }
         public string SourcePath { get; }
         public int RendererCount { get; }
         public ExpressionSet Expressions { get; }
@@ -28,18 +30,39 @@ namespace VRCast.Avatars
         public PhysBoneSet PhysBones { get; }
         public ConstraintSet Constraints { get; }
 
+        // .vrcaster の manifest（VRM は null）
+        public AvatarManifest Manifest { get; }
+
+        // VRM の情報（.vrcaster は null）
+        public VrmAvatarInfo Vrm { get; }
+
         public bool IsHumanoid => Animator != null && Animator.isHuman;
 
         public LoadedAvatar(GameObject instance, AssetBundle bundle, AvatarPackage package)
+            : this(instance, package.Manifest.name, package.SourcePath, package.Expressions, package.Descriptor,
+                package.PhysBones, package.Constraints)
         {
-            Instance = instance;
             _bundle = bundle;
             Manifest = package.Manifest;
-            SourcePath = package.SourcePath;
-            Expressions = package.Expressions;
-            Descriptor = package.Descriptor;
-            PhysBones = package.PhysBones;
-            Constraints = package.Constraints;
+        }
+
+        public LoadedAvatar(GameObject instance, string sourcePath, VrmAvatarData vrm)
+            : this(instance, vrm.Info.name, sourcePath, vrm.Expressions, vrm.Descriptor, vrm.PhysBones, new ConstraintSet())
+        {
+            Vrm = vrm.Info;
+        }
+
+        private LoadedAvatar(
+            GameObject instance, string name, string sourcePath, ExpressionSet expressions,
+            AvatarDescriptorData descriptor, PhysBoneSet physBones, ConstraintSet constraints)
+        {
+            Instance = instance;
+            Name = name;
+            SourcePath = sourcePath;
+            Expressions = expressions;
+            Descriptor = descriptor;
+            PhysBones = physBones;
+            Constraints = constraints;
 
             // ルートの Animator と描画対象数を記録
             Animator = instance.GetComponent<Animator>();
@@ -128,7 +151,7 @@ namespace VRCast.Avatars
 
         public void Dispose()
         {
-            // 生成したオブジェクトを破棄
+            // 生成したオブジェクトを破棄（VRM はこれで読み込んだメッシュ・テクスチャ等も解放される）
             if (Instance != null)
             {
                 Object.Destroy(Instance);
