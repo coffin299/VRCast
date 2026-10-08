@@ -11,12 +11,14 @@ Newest first. Each version is written in Japanese, then English.
 - トラッキングタブに「顔の左右を入れ替える」を追加（閉じた目・ウインクが頭の傾きや腕と逆側になるときに ON にすると、顔（まばたき・パーフェクトシンク・視線）だけが入れ替わります。既定は OFF）
 - MediaPipe で腕・手を ON にしているとき、両肩の向きに合わせて上半身をひねったり左右に傾けたりする「上半身のひねり・傾き（肩）」を追加（既定は ON。肩が映っていない間は従来どおり頭の位置で傾けます。「上半身のひねりを固定」で左右の傾きだけにもできます）
 - リセット（顔の向き・視線・表情・カメラ）のショートカットキーを追加（既定はテンキーの 1〜4。設定タブで変更・解除できます。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます。パネル下部のリセットボタンに割り当て中のキーを表示します）
+- 生データ表示をアバターの大きさに合わせて描くように変更（切り替えてもカメラを動かさずに見られます）。両肩が映っていれば背骨と上半身の向き（緑の箱）・その角度も表示します
 
 [English]
 - Added loading VRM files (VRM 0.x / 1.0, e.g. made with VRoid Studio) directly without converting, including expressions, blinking, lip sync and spring bones (drag and drop, the Browse button and the launch option all accept .vrm)
 - Added "Swap face left / right" to the Tracking tab (turn it on if the closed eye or wink is on the wrong side compared with your head tilt and arms; only the face (blink, perfect sync, gaze) is swapped; off by default)
 - Added "Upper body twist / tilt (shoulders)", which twists and tilts the upper body to match your shoulders when using MediaPipe with arms / hands on (on by default; while your shoulders are not visible, the body leans with your head position as before; "Lock upper body twist" keeps only the side tilt)
 - Added shortcut keys for the resets (head, gaze, expression, camera; numeric keypad 1–4 by default, changeable or removable in the Settings tab; if a key is the same as an expression shortcut, a warning is shown and the expression takes priority; the reset buttons at the bottom of the panel show the assigned key)
+- Changed Raw view to be drawn at the avatar's size, so you no longer need to move the camera when switching; while both shoulders are visible it also shows the spine, the upper body direction (green box) and its angles
 
 ■ 1.11.3 (2026-10-07)
 

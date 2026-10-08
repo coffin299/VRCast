@@ -216,11 +216,8 @@ namespace VRCast.App
             // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化）
             avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);
 
-            // 確認用の表示はアバターの腰の位置・向きに描く（非 Humanoid は足元基準）
-            Transform hips = avatar.Animator != null && avatar.Animator.isHuman
-                ? avatar.Animator.GetBoneTransform(HumanBodyBones.Hips)
-                : null;
-            _skeleton.SetAnchor(root, hips);
+            // 確認用の表示はアバターの腰の位置・向き・大きさに合わせて描く（非 Humanoid は足元基準・実寸）
+            _skeleton.SetAnchor(root, avatar.Animator);
 
             // アバターの明るさ（マテリアルの色の倍率）を反映
             _rendering.SetAvatar(avatar.Instance);

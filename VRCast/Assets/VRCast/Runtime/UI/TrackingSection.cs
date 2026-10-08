@@ -851,6 +851,15 @@ namespace VRCast.UI
                 _skeleton.Visible, Loc.T("Raw view (skeleton instead of avatar)", "生データ表示（アバターの代わりに骨格）",
                     "원시 데이터 표시 (아바타 대신 골격)", "原始数据显示（以骨架代替虚拟形象）",
                     "原始資料顯示（以骨架代替虛擬形象）"));
+            if (_skeleton.Visible)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Drawn at the avatar's size. The green box is the upper body direction from your shoulders (gray when not used for the avatar).",
+                    "アバターの大きさに合わせて描きます。緑の箱は両肩から求めた上半身の向きです（アバターに使わない設定では灰色）。",
+                    "아바타 크기에 맞춰 그립니다. 초록 상자는 양어깨로 구한 상체 방향입니다 (아바타에 쓰지 않는 설정에서는 회색).",
+                    "按虚拟形象的大小绘制。绿色方框是由双肩求得的上半身朝向（不用于虚拟形象的设置下为灰色）。",
+                    "依虛擬形象的大小繪製。綠色方框是由雙肩求得的上半身朝向（不用於虛擬形象的設定下為灰色）。"));
+            }
 
             // 表示中は顔の値も数値で出す（受信中のみ）
             if (_skeleton.Visible && _tracker.TryGetFrame(out FaceTrackingFrame face))
@@ -859,6 +868,14 @@ namespace VRCast.UI
                     + $" L {face.EyeOpenLeft:F2}  R {face.EyeOpenRight:F2}    "
                     + Loc.T("Mouth", "口", "입", "嘴", "嘴") + $" {face.MouthOpen:F2}");
                 GuiControls.Hint(Loc.T("Gaze", "視線", "시선", "视线", "視線") + $" x {face.Gaze.x:F1}  y {face.Gaze.y:F1}");
+
+                // 両肩が映っていれば上半身の向き（緑の箱。正面の補正前の生の角度）
+                if (_skeleton.TryGetTorsoAngles(out Vector2 torso))
+                {
+                    GuiControls.Hint(Loc.T("Upper body", "上半身", "상체", "上半身", "上半身")
+                        + $" {Loc.T("twist", "ひねり", "비틀기", "扭转", "扭轉")} {torso.x:F1}°  "
+                        + $"{Loc.T("tilt", "傾き", "기울기", "倾斜", "傾斜")} {torso.y:F1}°");
+                }
 
                 // 表情の強さ（MediaPipe・VMC・iFacialMocap のみ。しきい値調整の目安）
                 if (face.HasExpression)

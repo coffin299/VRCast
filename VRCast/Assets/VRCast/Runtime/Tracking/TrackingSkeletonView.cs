@@ -4,8 +4,9 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// 受信したトラッキング値を平滑化・補正せずに線で描く確認用の表示（腕・手の点、頭の向き、視線、目と口の開き）。
-    /// 表示中はカメラの描画対象からアバターを外し、アバターの腰の位置にアバターと同じ向き・鏡像設定で描く。
+    /// 受信したトラッキング値を平滑化・補正せずに線で描く確認用の表示（腕・手の点、背骨と上半身の向き、頭の向き、視線、目と口の開き）。
+    /// 表示中はカメラの描画対象からアバターを外し、アバターの腰の位置にアバターと同じ向き・鏡像設定で、
+    /// アバターの大きさ（腰から頭までの長さ）に合わせて拡大・縮小して描く（表示を切り替えてもカメラを動かさずに済むように）。
     /// </summary>
     public class TrackingSkeletonView : MonoBehaviour
     {
@@ -32,11 +33,21 @@ namespace VRCast.Tracking
         private static readonly Vector3 DefaultNeck = new Vector3(0f, 0.45f, 0f);
         private static readonly Vector3 DefaultHips = new Vector3(0f, 1f, 0f);
 
-        // 色（本人の左・右、可視度不足の腕、胴・頭）
+        // 上半身の箱の半分の大きさと、背骨上の位置（腰 0 〜 首 1）（m）
+        private static readonly Vector3 ChestHalfSize = new Vector3(0.13f, 0.1f, 0.07f);
+        private const float ChestHeight = 0.65f;
+
+        // 人の腰から頭のボーンまでの標準の長さ（m）と、アバターに合わせる倍率の範囲
+        private const float ReferenceHipsToHead = 0.6f;
+        private const float MinScale = 0.1f;
+        private const float MaxScale = 10f;
+
+        // 色（本人の左・右、可視度不足の腕・使わない上半身、胴・頭、アバターに使う上半身の向き）
         private static readonly Color LeftColor = new Color(0.3f, 0.7f, 1f);
         private static readonly Color RightColor = new Color(1f, 0.55f, 0.2f);
         private static readonly Color LowVisibilityColor = new Color(0.5f, 0.5f, 0.5f);
         private static readonly Color CenterColor = new Color(0.9f, 0.9f, 0.9f);
+        private static readonly Color TorsoColor = new Color(0.45f, 0.9f, 0.45f);
 
         // 手の線（MediaPipe Hand Landmarker の番号の組。各指と手のひら）
         private static readonly int[] HandLines =
@@ -56,6 +67,9 @@ namespace VRCast.Tracking
         private Material _material;
         private Transform _avatarRoot;
         private Transform _hips;
+
+        // アバターの大きさに合わせる倍率（1 = 実寸。アバターの読込時に決める）
+        private float _scale = 1f;
 
         // 頭の箱の 8 隅（毎フレームの確保を避けて使い回す）
         private readonly Vector3[] _corners = new Vector3[8];
@@ -103,12 +117,31 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// 描画の基準にするアバター（向き）と腰のボーン（位置、無ければ null）を設定する。
+        /// 描画の基準にするアバター（向き）と、腰の位置・大きさを取る Animator（非 Humanoid・null なら足元基準の実寸）を設定する。
         /// </summary>
-        public void SetAnchor(Transform avatarRoot, Transform hips)
+        public void SetAnchor(Transform avatarRoot, Animator animator)
         {
             _avatarRoot = avatarRoot;
-            _hips = hips;
+
+            // Humanoid なら腰と頭のボーンを使う
+            bool human = animator != null && animator.isHuman;
+            _hips = human ? animator.GetBoneTransform(HumanBodyBones.Hips) : null;
+            Transform head = human ? animator.GetBoneTransform(HumanBodyBones.Head) : null;
+
+            // 腰から頭までの長さを人の標準と比べた倍率（読込直後に測る。測れなければ実寸）
+            _scale = _hips != null && head != null
+                ? Mathf.Clamp(Vector3.Distance(_hips.position, head.position) / ReferenceHipsToHead, MinScale, MaxScale)
+                : 1f;
+        }
+
+        /// <summary>
+        /// 受信中の両肩から求めた上半身のひねり・傾き（度、正面の補正前）。両肩が映っていなければ false。
+        /// </summary>
+        public bool TryGetTorsoAngles(out Vector2 angles)
+        {
+            angles = Vector2.zero;
+            return _body != null && _body.TryGetBody(out BodyTrackingFrame body)
+                && TorsoPose.TryGetAngles(body, _settings.trackingMirror, out angles);
         }
 
         private void LateUpdate()
@@ -186,7 +219,7 @@ namespace VRCast.Tracking
             }
             else
             {
-                _origin = hasAvatar ? _avatarRoot.position + _rotation * DefaultHips : DefaultHips;
+                _origin = hasAvatar ? _avatarRoot.position + _rotation * (DefaultHips * _scale) : DefaultHips;
             }
 
             // 鏡像設定と、線をカメラへ向けるための視点
@@ -209,18 +242,19 @@ namespace VRCast.Tracking
                 DrawArm(body.Right, hasRight, RightColor);
             }
 
-            // 首: 両肩が映っていれば肩の中点（肩の線も描く）、無ければ既定位置
+            // 首: 両肩が映っていれば肩の中点（肩の線・背骨・上半身の向きも描く）、無ければ既定位置
             Vector3 neck;
             if (hasLeft && hasRight)
             {
                 Vector3 left = ToWorld(body.Left.Shoulder);
                 Vector3 right = ToWorld(body.Right.Shoulder);
-                Line(left, right, ArmWidth, CenterColor);
+                Line(left, right, Scaled(ArmWidth), CenterColor);
                 neck = (left + right) * 0.5f;
+                DrawTorso(body, neck);
             }
             else
             {
-                neck = _origin + _rotation * DefaultNeck;
+                neck = _origin + _rotation * (DefaultNeck * _scale);
             }
 
             // 頭・視線・目・口（顔を受信中のみ）
@@ -228,6 +262,35 @@ namespace VRCast.Tracking
             {
                 DrawHead(face, neck);
             }
+        }
+
+        private void DrawTorso(BodyTrackingFrame body, Vector3 neck)
+        {
+            // 背骨: 腰（体の点の原点）から首へ
+            Joint(_origin, CenterColor);
+            Line(_origin, neck, Scaled(ArmWidth), CenterColor);
+
+            // 上半身の向き: 肩の線から求めたひねり・傾き（補正前の生の角度）。肩幅が狭すぎて求まらなければ描かない
+            if (!TorsoPose.TryGetAngles(body, _mirror, out Vector2 angles))
+            {
+                return;
+            }
+
+            // ひねりを固定する設定ならひねりは 0（アバターと同じ）。アバターに使わない設定（上半身 OFF・腕と手 OFF）は灰色
+            if (_settings.trackingTorsoLockTwist)
+            {
+                angles.x = 0f;
+            }
+
+            bool used = _settings.trackingTorso && _settings.trackingHands;
+            Color color = used ? TorsoColor : LowVisibilityColor;
+            Quaternion chest = _rotation * TorsoPose.ToRotation(angles);
+            Vector3 center = Vector3.Lerp(_origin, neck, ChestHeight);
+            DrawBox(center, chest, ChestHalfSize * _scale, color);
+
+            // 胸の正面の向き
+            Vector3 front = center + chest * new Vector3(0f, 0f, ChestHalfSize.z * _scale);
+            Line(front, front + chest * Vector3.forward * Scaled(NoseLength), Scaled(ArmWidth), color);
         }
 
         private static bool HasPose(ArmTrackingData data)
@@ -245,8 +308,8 @@ namespace VRCast.Tracking
                 Vector3 shoulder = ToWorld(data.Shoulder);
                 Vector3 elbow = ToWorld(data.Elbow);
                 Vector3 wrist = ToWorld(data.Wrist);
-                Line(shoulder, elbow, ArmWidth, armColor);
-                Line(elbow, wrist, ArmWidth, armColor);
+                Line(shoulder, elbow, Scaled(ArmWidth), armColor);
+                Line(elbow, wrist, Scaled(ArmWidth), armColor);
                 Joint(shoulder, armColor);
                 Joint(elbow, armColor);
                 Joint(wrist, armColor);
@@ -262,7 +325,7 @@ namespace VRCast.Tracking
             for (int i = 0; i < HandLines.Length; i += 2)
             {
                 Line(ToWorld(data.Hand[HandLines[i]] + offset), ToWorld(data.Hand[HandLines[i + 1]] + offset),
-                    HandWidth, color);
+                    Scaled(HandWidth), color);
             }
         }
 
@@ -271,13 +334,14 @@ namespace VRCast.Tracking
             // 頭の向き（アバタールート基準 → ワールド、鏡像設定に従う）と中心
             Quaternion local = _mirror ? TrackingMath.MirrorRotation(face.HeadRotation) : face.HeadRotation;
             Quaternion head = _rotation * local;
-            Vector3 center = neck + _rotation * Vector3.up * NeckLength;
-            Line(neck, center - head * new Vector3(0f, HeadHalfSize.y, 0f), ArmWidth, CenterColor);
-            DrawBox(center, head, HeadHalfSize, CenterColor);
+            Vector3 halfSize = HeadHalfSize * _scale;
+            Vector3 center = neck + _rotation * Vector3.up * Scaled(NeckLength);
+            Line(neck, center - head * new Vector3(0f, halfSize.y, 0f), Scaled(ArmWidth), CenterColor);
+            DrawBox(center, head, halfSize, CenterColor);
 
             // 鼻（顔の正面）
-            Vector3 front = center + head * new Vector3(0f, 0f, HeadHalfSize.z);
-            Line(front, front + head * Vector3.forward * NoseLength, ArmWidth, CenterColor);
+            Vector3 front = center + head * new Vector3(0f, 0f, halfSize.z);
+            Line(front, front + head * Vector3.forward * Scaled(NoseLength), Scaled(ArmWidth), CenterColor);
 
             // 目: 本人の右目は通常アバターの右（+x）、鏡像では左（顔の左右の入れ替えも反映）。線の向き = 視線、長さ = 目の開き
             bool faceMirror = _settings.FaceMirror;
@@ -288,17 +352,17 @@ namespace VRCast.Tracking
             DrawEye(center, head, -rightSide, face.EyeOpenLeft, gaze, LeftColor);
 
             // 口: 縦線の長さ = 開き
-            Vector3 mouth = center + head * MouthOffset;
+            Vector3 mouth = center + head * (MouthOffset * _scale);
             Joint(mouth, CenterColor);
-            Line(mouth, mouth - head * Vector3.up * (MouthLength * face.MouthOpen), ArmWidth, CenterColor);
+            Line(mouth, mouth - head * Vector3.up * (Scaled(MouthLength) * face.MouthOpen), Scaled(ArmWidth), CenterColor);
         }
 
         private void DrawEye(Vector3 center, Quaternion head, float side, float open, Quaternion gaze, Color color)
         {
             // 目の位置に印、そこから視線の向きへ開き具合の長さの線
-            Vector3 eye = center + head * new Vector3(EyeOffset.x * side, EyeOffset.y, EyeOffset.z);
+            Vector3 eye = center + head * (new Vector3(EyeOffset.x * side, EyeOffset.y, EyeOffset.z) * _scale);
             Joint(eye, color);
-            Line(eye, eye + gaze * Vector3.forward * (GazeLength * open), HandWidth, color);
+            Line(eye, eye + gaze * Vector3.forward * (Scaled(GazeLength) * open), Scaled(HandWidth), color);
         }
 
         private void DrawBox(Vector3 center, Quaternion rotation, Vector3 halfSize, Color color)
@@ -318,7 +382,7 @@ namespace VRCast.Tracking
                 {
                     if ((i & bit) == 0)
                     {
-                        Line(corners[i], corners[i | bit], HandWidth, color);
+                        Line(corners[i], corners[i | bit], Scaled(HandWidth), color);
                     }
                 }
             }
@@ -326,8 +390,14 @@ namespace VRCast.Tracking
 
         private Vector3 ToWorld(Vector3 cameraPoint)
         {
-            // カメラ基準（腰が原点）→ アバタールート基準 → ワールド
-            return _origin + _rotation * TrackingMath.ToAvatar(cameraPoint, _mirror);
+            // カメラ基準（腰が原点）→ アバタールート基準 → アバターの大きさに合わせてワールドへ
+            return _origin + _rotation * (TrackingMath.ToAvatar(cameraPoint, _mirror) * _scale);
+        }
+
+        private float Scaled(float length)
+        {
+            // 実寸の長さ・太さをアバターの大きさに合わせる
+            return length * _scale;
         }
 
         private void Line(Vector3 from, Vector3 to, float width, Color color)
@@ -350,8 +420,8 @@ namespace VRCast.Tracking
         private void Joint(Vector3 position, Color color)
         {
             // カメラに向いた正方形
-            Vector3 right = _cameraRight * JointSize;
-            Vector3 up = _cameraUp * JointSize;
+            Vector3 right = _cameraRight * Scaled(JointSize);
+            Vector3 up = _cameraUp * Scaled(JointSize);
             GL.Color(color);
             GL.Vertex(position - right - up);
             GL.Vertex(position - right + up);
