@@ -14,6 +14,7 @@
   <img src="https://img.shields.io/badge/Unity-2022.3-000000?logo=unity" alt="Unity 2022.3">
   <a href="https://coffin299.github.io/VRCast/"><img src="https://img.shields.io/badge/website-coffin299.github.io-2ea44f" alt="Website"></a>
   <a href="https://coffin299.booth.pm/items/8933317"><img src="https://img.shields.io/badge/BOOTH-download-fc4d50" alt="BOOTH"></a>
+  <a href="https://discord.gg/vM5RH52HdF"><img src="https://img.shields.io/discord/1558139661933879329?label=Discord&logo=discord&logoColor=white&color=5865F2" alt="Discord"></a>
 </p>
 
 <p align="center"><img src="https://count.getloli.com/@VRCastCounterV1?theme=green&padding=7&offset=0&align=top&scale=1&pixelated=1&darkmode=0" alt="VRCast counter"></p>
@@ -35,6 +36,7 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 - Web サイト（概要・ヘルプ、日本語 / 英語 / 韓国語 / 中国語 簡体字・繁体字。既定はブラウザの言語に合わせる。ライト / ダーク）: <https://coffin299.github.io/VRCast/>
   （ソースは [`webpage` ブランチ](https://github.com/coffin299/VRCast/tree/webpage)。GitHub Pages でブランチのルートを公開）
+- 公式 Discord（VRCast Community。質問・要望・不具合の報告など）: <https://discord.gg/vM5RH52HdF>
 
 ## 現在の状態
 
