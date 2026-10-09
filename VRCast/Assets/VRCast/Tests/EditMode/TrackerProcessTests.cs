@@ -108,5 +108,15 @@ namespace VRCast.Tests
                 TrackerProcess.DescribeExitCode(TrackingSource.OpenSeeFace, unchecked((int)0xC0000135)));
             Assert.That(TrackerProcess.DescribeExitCode(TrackingSource.OpenSeeFace, 2), Is.EqualTo("unknown"));
         }
+
+        [Test]
+        public void IsOutdatedTracker_DetectsUnknownArguments()
+        {
+            // 古いトラッカーが新しい引数を知らずに止まった出力だけを見分ける
+            Assert.That(TrackerProcess.IsOutdatedTracker(
+                "vrcast_tracker.exe: error: unrecognized arguments: --hand-every-frame"), Is.True);
+            Assert.That(TrackerProcess.IsOutdatedTracker("ERROR: camera 0 could not be opened"), Is.False);
+            Assert.That(TrackerProcess.IsOutdatedTracker(null), Is.False);
+        }
     }
 }

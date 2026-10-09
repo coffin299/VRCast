@@ -139,10 +139,10 @@ namespace VRCast.UI
         /// <summary>
         /// 取り返しのつかない操作用の赤いボタン。押されたら true。
         /// </summary>
-        public static bool DangerButton(string text)
+        public static bool DangerButton(string text, params GUILayoutOption[] options)
         {
             UiTheme theme = UiTheme.Current;
-            return GUILayout.Button(text, theme != null ? theme.Danger : GUI.skin.button);
+            return GUILayout.Button(text, theme != null ? theme.Danger : GUI.skin.button, options);
         }
 
         /// <summary>

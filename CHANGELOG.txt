@@ -9,6 +9,7 @@ Newest first. Each version is written in Japanese, then English.
 [日本語]
 - 新しいバージョンのお知らせの「今すぐ更新」ボタンを目立つ色に変更
 - パネル下部のアンケート欄を、ほかの欄と同じ色合いに変更
+- 最近使ったアバターの「×」を押したとき、すぐ消さずに「外しますか？」と確認するように変更（「外す」で一覧から外し、「やめる」で戻ります）
 - 最近使ったアバターを画像付きのタイルで並べる機能を追加（タイルの「画像」で PNG / JPG / GIF を設定。GIF はアニメーションします。表示中のアバターには画像をウィンドウにドロップしても設定できます）
 - 目を画面に向ける「カメラ目線」を追加（顔タブの「揺れもの / まばたき / 目線」・パネル下部のボタン・ショートカットキー（既定はテンキーの 5。設定タブで変更可）で切り替え。トラッキングを切っていても効きます）
 - 全身を映すアバター向けの「全身モード（足を固定）」を追加（足を床に付けたまま、腰も上半身の傾き・移動についていき、膝の曲げで吸収します）
@@ -23,6 +24,7 @@ Newest first. Each version is written in Japanese, then English.
 [English]
 - Made the "Update now" button in the new version notice stand out with the accent color
 - The survey box at the bottom of the panel now uses the same colors as the rest of the panel
+- Pressing "×" on a recent avatar now asks "Remove?" first instead of removing it right away ("Remove" removes it, "Cancel" goes back)
 - Added picture tiles for recent avatars ("Image" on a tile sets a PNG / JPG / GIF; GIFs are animated. You can also drop an image onto the window for the avatar being shown)
 - Added "Look at camera", which points the eyes at the screen (toggle it in "Physics / Blink / Gaze" in the Face tab, with the button at the bottom of the panel or its shortcut key, numeric keypad 5 by default and changeable in the Settings tab; works even with tracking off)
 - Added "Full body (keep feet planted)" for avatars shown in full: the feet stay on the floor while the hips follow the upper body's lean and movement, and the knees bend

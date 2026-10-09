@@ -64,7 +64,10 @@ namespace VRCast.UI
         private readonly HashSet<string> _missingRecent = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
         private float _existsCheckedAt = float.NegativeInfinity;
 
-        // 「×」で一覧から外すアバター（レイアウト計算と描画で項目数がずれないよう、次のレイアウト計算時に消す）
+        // 「×」を押して、外すかどうか確認中のアバター（null なら確認なし）
+        private string _confirmingForget;
+
+        // 確認で「外す」を押したアバター（レイアウト計算と描画で項目数がずれないよう、次のレイアウト計算時に消す）
         private string _pendingForget;
 
         public AvatarSection(AvatarSession session, AppSettings settings, string initialPath)
@@ -161,7 +164,7 @@ namespace VRCast.UI
 
         private void DrawRecent()
         {
-            // 前回「×」を押したアバターを、項目数が決まる前（レイアウト計算時）に消す（一覧の画像も消す）
+            // 前回確認で「外す」を押したアバターを、項目数が決まる前（レイアウト計算時）に消す（一覧の画像も消す）
             if (_pendingForget != null && Event.current.type == EventType.Layout)
             {
                 _thumbnails.Forget(_pendingForget);
@@ -200,11 +203,11 @@ namespace VRCast.UI
             }
 
             GuiControls.Hint(Loc.T(
-                "× removes the avatar from this list and forgets its camera, light, pose and image.",
-                "× で一覧から外します（記憶したカメラ・ライト・待機ポーズ・画像も消えます）。",
-                "×로 목록에서 제거합니다 (기억한 카메라·조명·대기 포즈·이미지도 지워집니다).",
-                "点击 × 从列表中移除（记住的相机、灯光、待机姿势和图片也会清除）。",
-                "點擊 × 從清單中移除（記住的相機、燈光、待機姿勢和圖片也會清除）。"));
+                "× then \"Remove\" removes the avatar from this list and forgets its camera, light, pose and image.",
+                "× を押してから「外す」で一覧から外します（記憶したカメラ・ライト・待機ポーズ・画像も消えます）。",
+                "× 를 누른 뒤 \"제거\"로 목록에서 제거합니다 (기억한 카메라·조명·대기 포즈·이미지도 지워집니다).",
+                "点击 × 后再点“移除”即可从列表中移除（记住的相机、灯光、待机姿势和图片也会清除）。",
+                "點擊 × 後再點「移除」即可從清單中移除（記住的相機、燈光、待機姿勢和圖片也會清除）。"));
             GuiControls.EndCard();
         }
 
@@ -251,6 +254,15 @@ namespace VRCast.UI
         {
             UiTheme theme = UiTheme.Current;
             bool missing = _missingRecent.Contains(path);
+            bool confirming = string.Equals(_confirmingForget, path, System.StringComparison.OrdinalIgnoreCase);
+
+            // 確認中に表示中になったアバターは外せないため確認をやめる（項目数が変わらないようレイアウト計算時に）
+            if (confirming && isCurrent && Event.current.type == EventType.Layout)
+            {
+                _confirmingForget = null;
+            }
+
+            confirming = confirming && !isCurrent;
             GUILayout.BeginVertical(GUILayout.Width(TileWidth));
 
             // 画像（無ければ「画像なし」）を押すと切り替える。表示中・ファイルが無いアバターは押せない
@@ -278,10 +290,15 @@ namespace VRCast.UI
                 GUI.color = color;
             }
 
-            // アバター名と、表示中・見つからないことの印（印が無くても行の高さをそろえる）
+            // アバター名と、外す確認・表示中・見つからないことの印（印が無くても行の高さをそろえる）
             GUILayout.Label(new GUIContent(Path.GetFileNameWithoutExtension(FileNameOf(path)), path), TileNameStyle(theme),
                 GUILayout.Width(TileWidth));
-            if (isCurrent)
+            if (confirming)
+            {
+                GUILayout.Label(Loc.T("Remove?", "外しますか？", "제거할까요?", "要移除吗？", "要移除嗎？"),
+                    theme != null ? theme.WarningText : GUI.skin.label, GUILayout.Width(TileWidth));
+            }
+            else if (isCurrent)
             {
                 GUILayout.Label(Loc.T("Showing", "表示中", "표시 중", "显示中", "顯示中"),
                     theme != null ? theme.Success : GUI.skin.label, GUILayout.Width(TileWidth));
@@ -297,7 +314,22 @@ namespace VRCast.UI
             }
 
             GUILayout.BeginHorizontal();
+            if (confirming)
+            {
+                DrawForgetConfirm(path);
+            }
+            else
+            {
+                DrawTileButtons(path, isCurrent);
+            }
 
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+            GUILayout.EndVertical();
+        }
+
+        private void DrawTileButtons(string path, bool isCurrent)
+        {
             // 一覧の画像を選ぶ
             GUI.enabled = FileDialog.IsSupported;
             if (GUILayout.Button(Loc.T("Image", "画像", "이미지", "图片", "圖片"), GuiControls.Shrinkable))
@@ -305,16 +337,30 @@ namespace VRCast.UI
                 BrowseThumbnail(path);
             }
 
-            // 一覧から外す（記憶したカメラ・ライト・画像等も消える）。表示中のアバターはすぐ記録し直されるため外せない
+            // 一覧から外す確認を出す（ほかのタイルの確認はやめる）。表示中のアバターはすぐ記録し直されるため外せない
             GUI.enabled = !_session.IsLoading && !isCurrent;
             if (GUILayout.Button("×", GuiControls.Shrinkable))
             {
+                _confirmingForget = path;
+            }
+        }
+
+        private void DrawForgetConfirm(string path)
+        {
+            // 外す（記憶したカメラ・ライト・画像等も消える）。読込中は表示中のアバターが変わりうるため押せない
+            GUI.enabled = !_session.IsLoading;
+            if (GuiControls.DangerButton(Loc.T("Remove", "外す", "제거", "移除", "移除"), GuiControls.Shrinkable))
+            {
                 _pendingForget = path;
+                _confirmingForget = null;
             }
 
+            // 確認をやめて元のボタンへ戻す
             GUI.enabled = true;
-            GUILayout.EndHorizontal();
-            GUILayout.EndVertical();
+            if (GUILayout.Button(Loc.T("Cancel", "やめる", "취소", "取消", "取消"), GuiControls.Shrinkable))
+            {
+                _confirmingForget = null;
+            }
         }
 
         private GUIStyle TileNameStyle(UiTheme theme)

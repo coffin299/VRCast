@@ -372,10 +372,14 @@ namespace VRCast.Tracking
                     Status = $"Tracker exited ({code}): {_lastOutput}";
                 }
 
-                // 終了コードの意味と動作時間を添える（起動直後の終了ならカメラ・DLL の問題の可能性が高い）
+                // 終了コードの意味と動作時間を添える（起動直後の終了ならカメラ・DLL の問題の可能性が高い）。
+                // 知らない引数で止まったならトラッカーが古い（Python の引数解析も終了コード 2 を返すため先に判定）
                 float seconds = Time.unscaledTime - _startTime;
+                string reason = IsOutdatedTracker(_lastOutput)
+                    ? "the tracker is older than VRCast (rebuild it with Tools/MediaPipeTracker/build.bat)"
+                    : DescribeExitCode(_startedSource, code);
                 VRCastLog.Warning(LogCategory,
-                    $"{Status} [{DescribeExitCode(_startedSource, code)}, ran {seconds:F1} s, " +
+                    $"{Status} [{reason}, ran {seconds:F1} s, " +
                     $"restarting in {RestartInterval:F0} s]");
                 return;
             }
@@ -438,6 +442,16 @@ namespace VRCast.Tracking
                 default:
                     return SmoothMediaPipeArgument;
             }
+        }
+
+        /// <summary>
+        /// トラッカーの最後の出力が「知らない引数」のエラー（VRCast より古いトラッカー）なら true。
+        /// </summary>
+        public static bool IsOutdatedTracker(string lastOutput)
+        {
+            // Python の argparse のエラー文
+            return !string.IsNullOrEmpty(lastOutput)
+                && lastOutput.IndexOf("unrecognized arguments", StringComparison.Ordinal) >= 0;
         }
 
         /// <summary>
