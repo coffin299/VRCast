@@ -19,6 +19,9 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 左右は MediaPipe の体のラベル（本人基準）、world 座標の x は MediaPipe の出力どおり（映像の右向き）。
 本人基準への変換は VRCast 側で行う。
 
+手が顔にかぶっている間（最長 FACE_COVER_MAX_HOLD 秒）は、頭の行列を隠れる前の値で止めて送る
+（Face Landmarker の推定が崩れて頭が暴れるのを防ぐ。顔を見失った場合は表情も隠れる前の値）。
+
 頭の行列・腕・手・可視度は One Euro フィルターで平滑化してから送る
 （止まっているときの細かい揺れを消し、速い動きでは遅れを抑える。CPU 負荷はほぼ無い）。
 
@@ -153,6 +156,13 @@ VISIBILITY_FILTER = (1.0, 0.0, 1.0)  # 可視度（0.5 付近のちらつきを�
 
 # 4x4 行列（行優先）の平行移動成分の位置
 MATRIX_TRANSLATION = (3, 7, 11)
+
+# 手が顔にかぶったとみなす重なり（画像上の顔の範囲のうち手の範囲が占める割合）。
+# かぶり始めは ENTER 以上、外れたのは RELEASE 未満で判定する（境目でのちらつき防止）
+FACE_COVER_ENTER = 0.1
+FACE_COVER_RELEASE = 0.05
+# かぶっている間、頭の向きを止めておく最長の秒数（手を当てたまま顔を動かす場合に備える）
+FACE_COVER_MAX_HOLD = 3.0
 
 
 def parse_arguments():
@@ -480,6 +490,83 @@ class Smoother:
         packet["arms"] = rounded(self._arms.apply(packet["arms"], now))
         packet["visibility"] = rounded(
             self._visibility.apply(packet["visibility"], now))
+
+
+def landmark_box(landmarks):
+    """画像上の点（正規化座標）を囲む範囲 (左, 上, 右, 下) を返す。"""
+    xs = [landmark.x for landmark in landmarks]
+    ys = [landmark.y for landmark in landmarks]
+    return min(xs), min(ys), max(xs), max(ys)
+
+
+def cover_ratio(face, hand):
+    """顔の範囲のうち手の範囲と重なる面積の割合（0〜1）を返す。"""
+    width = min(face[2], hand[2]) - max(face[0], hand[0])
+    height = min(face[3], hand[3]) - max(face[1], hand[1])
+    area = (face[2] - face[0]) * (face[3] - face[1])
+    # 重なりが無い・顔の範囲が潰れていれば 0
+    if width <= 0.0 or height <= 0.0 or area <= 0.0:
+        return 0.0
+    return width * height / area
+
+
+class FaceGuard:
+    """手が顔にかぶっている間、頭の向き（行列）を直前の値で止める。
+
+    手が顔に重なると Face Landmarker の推定が崩れ、頭が暴れたり顔を見失ったりする。
+    画像上の手の範囲と、隠れる前の顔の範囲との重なりで判定し、かぶっている間は
+    隠れる前の行列を送り続ける（顔を見失った場合は表情も隠れる前の値を送る）。
+    """
+
+    def __init__(self):
+        """隠れる前の顔の範囲・行列・表情と、かぶっているかの状態を持つ。"""
+        self._face_box = None
+        self._matrix = None
+        self._blendshapes = None
+        self._covered = False
+        self._covered_since = 0.0
+
+    def apply(self, packet, face_result, hand_result, now):
+        """送信フィールド（dict）の顔の値を、かぶっている間は書き換える。"""
+        detected = packet["face"]
+        # 顔が映っていれば今の範囲、見失っていれば隠れる前の範囲で判定する
+        face_box = (landmark_box(face_result.face_landmarks[0])
+                    if detected and face_result.face_landmarks
+                    else self._face_box)
+        overlap = self._overlap(face_box, hand_result)
+        # かぶり始めと外れたときで閾値を変える
+        threshold = FACE_COVER_RELEASE if self._covered else FACE_COVER_ENTER
+        covered = overlap >= threshold
+        # かぶり始めた時刻を記録する
+        if covered and not self._covered:
+            self._covered_since = now
+        self._covered = covered
+
+        # かぶっている間（長すぎない間）は隠れる前の値を送る
+        holding = (covered and self._matrix is not None
+                   and now - self._covered_since <= FACE_COVER_MAX_HOLD)
+        if holding:
+            packet["face"] = True
+            packet["matrix"] = list(self._matrix)
+            # 顔を見失っていれば表情も隠れる前の値にする
+            if not detected:
+                packet["blendshapes"] = list(self._blendshapes)
+            return
+
+        # 隠れていない顔の値を覚えておく
+        if detected:
+            self._face_box = face_box
+            self._matrix = list(packet["matrix"])
+            self._blendshapes = list(packet["blendshapes"])
+
+    @staticmethod
+    def _overlap(face_box, hand_result):
+        """顔の範囲と各手の範囲の重なりの最大値を返す（判定できなければ 0）。"""
+        # 顔の範囲が分からない・手を推定していなければ重なり無し
+        if face_box is None or hand_result is None:
+            return 0.0
+        return max((cover_ratio(face_box, landmark_box(hand))
+                    for hand in hand_result.hand_landmarks), default=0.0)
 
 
 def configure_output():
@@ -825,12 +912,15 @@ class Inference:
         stats.hand_runs += 1
 
 
-def build_packet(face_result, pose_result, hand_result, smoother, now):
+def build_packet(face_result, pose_result, hand_result, guard, smoother,
+                 now):
     """推定結果を平滑化して、送信する JSON のバイト列を作る。"""
     packet = {"v": PROTOCOL_VERSION}
     packet.update(face_fields(face_result))
     packet.update(pose_fields(pose_result))
     packet.update(assign_hands(hand_result, pose_result))
+    # 手が顔にかぶっている間は頭の向きを止める（平滑化の前に置き換える）
+    guard.apply(packet, face_result, hand_result, now)
     # 頭・腕・手・可視度の揺れを抑える
     smoother.apply(packet, now)
     # 区切りの空白を省いて小さくする
@@ -880,6 +970,7 @@ def run(arguments):
 
     last_timestamp = -1
     smoother = Smoother()
+    guard = FaceGuard()
     stats = Stats(arguments.status_interval, use_hands)
     inference = Inference((face, pose, hands), arguments.pose_every,
                           arguments.hand_search_every, stats,
@@ -994,7 +1085,7 @@ def run(arguments):
             try:
                 sender.sendto(
                     build_packet(face_result, pose_result, hand_result,
-                                 smoother, timestamp / 1000.0),
+                                 guard, smoother, timestamp / 1000.0),
                     target)
             except OSError as error:
                 # 受信側が未起動などの送信エラーは続行し、間隔を空けて警告する

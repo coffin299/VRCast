@@ -14,6 +14,7 @@ Newest first. Each version is written in Japanese, then English.
 - トラッカーの動作（MediaPipe）に「ぬるぬる（高負荷）」を追加し、既定に変更（手が映っている間は手を毎フレーム推定し、指がなめらかに動きます。今までの設定を使っている方は「なめらか」のままです）
 - 腕・手・指の動きを、トラッカーから届く値の間を補ってなめらかに動くように変更
 - MediaPipe で、一度見つけた手を見失いにくくし、指の動きが途切れにくいように変更
+- MediaPipe で、手が顔の前に来たときに頭の向きが暴れる問題を修正（手が顔にかぶっている間は、隠れる前の頭の向きを保ちます）
 - 書き出しツールで FaceEmo の表情を取り込む機能を追加（シーンに FaceEmo の設定があれば、モード名を表情名にして自動で書き出します。「アバターに適用」前でも可。小物の表示などは除き、ブレンドシェイプの部分だけを使います）
 - 「アバターの明るさ」を 0.1 まで下げられるように変更（これまでは 0.5 まで）
 - 非表示にしたオブジェクトの中に体のボーンがあるアバターで、首などが足元（原点）まで伸びる問題を修正（.vrcaster の書き出し直しが必要）
@@ -26,6 +27,7 @@ Newest first. Each version is written in Japanese, then English.
 - Added "Fluid (high load)" to the MediaPipe tracker mode and made it the default: hands are tracked every frame while visible, so fingers move smoothly (existing settings stay on "Smooth")
 - Arms, hands, and fingers now move smoothly by filling in between the values sent by the tracker
 - MediaPipe now keeps track of a hand once found, so finger movement drops out less often
+- Fixed the head jerking around in MediaPipe when a hand comes in front of the face (the head keeps its direction from before the face was covered)
 - Added FaceEmo support to the exporter: if the scene has FaceEmo set up for the avatar, its expressions are exported with the mode names (even before "Apply to avatar"; only the blend shape part is used, not accessory toggles)
 - "Avatar brightness" can now go down to 0.1 (previously 0.5)
 - Fixed parts such as the neck stretching down to the origin on avatars whose disabled objects contain body bones (re-export the .vrcaster)
