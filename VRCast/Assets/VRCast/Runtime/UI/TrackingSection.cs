@@ -840,17 +840,11 @@ namespace VRCast.UI
             _settings.trackingGaze = GuiControls.Slider(
                 Loc.T("Eye gaze", "視線の強さ", "시선 강도", "视线强度", "視線強度"),
                 _settings.trackingGaze, 0f, AppSettings.MaxTrackingGaze);
-
-            // カメラ目線（ショートカットキー・パネル下部のボタンでも切り替えられる）
-            _settings.trackingLookAtCamera = GUILayout.Toggle(
-                _settings.trackingLookAtCamera,
-                Loc.T("Look at camera", "カメラ目線", "카메라 시선", "看向镜头", "看向鏡頭"));
-            GuiControls.Hint(Loc.T(
-                "Points the eyes at the screen instead of following your gaze. Also toggled by the button at the bottom of the panel or its shortcut key (default: numeric keypad 5).",
-                "トラッキングの視線の代わりに、目を画面に向けます。パネル下部のボタンやショートカットキー（既定はテンキーの 5）でも切り替えられます。",
-                "트래킹 시선 대신 눈을 화면으로 향하게 합니다. 패널 아래 버튼이나 단축키 (기본값: 숫자 키패드 5)로도 전환할 수 있습니다.",
-                "眼睛看向画面，而不是跟随追踪的视线。也可用面板底部的按钮或快捷键（默认：小键盘 5）切换。",
-                "眼睛看向畫面，而不是跟隨追蹤的視線。也可用面板底部的按鈕或快捷鍵（預設：數字鍵台 5）切換。"));
+            GuiControls.Hint(Loc.T("To point the eyes at the screen, use Face tab > Look at camera",
+                "目を画面に向けるには、顔タブの「カメラ目線」を使います",
+                "눈을 화면으로 향하게 하려면 얼굴 탭의 \"카메라 시선\"을 사용합니다",
+                "要让眼睛看向画面，请使用面部标签页的“看向镜头”",
+                "要讓眼睛看向畫面，請使用臉部分頁的「看向鏡頭」"));
 
             // ウインク用 BlendShape が無いアバターは両目同時のみ（再エクスポートで推定される場合がある）
             var blink = _avatar.Get<BlinkController>();

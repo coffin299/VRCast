@@ -5,11 +5,12 @@ using VRCast.Audio;
 using VRCast.Avatars;
 using VRCast.Core;
 using VRCast.Dynamics;
+using VRCast.Tracking;
 
 namespace VRCast.UI
 {
     /// <summary>
-    /// Face タブ（揺れもの・自動まばたき・表情中のまばたき停止・マイクリップシンク・表情中の口の停止）。
+    /// Face タブ（揺れもの・自動まばたき・表情中のまばたき停止・カメラ目線・マイクリップシンク・表情中の口の停止）。
     /// </summary>
     public class FaceSection
     {
@@ -38,8 +39,8 @@ namespace VRCast.UI
 
         private void DrawPhysicsAndBlink()
         {
-            GuiControls.BeginCard(Loc.T("Physics / Blink", "揺れもの / まばたき", "흔들림 / 눈 깜빡임",
-                "物理摆动 / 眨眼", "物理擺動 / 眨眼"));
+            GuiControls.BeginCard(Loc.T("Physics / Blink / Gaze", "揺れもの / まばたき / 目線",
+                "흔들림 / 눈 깜빡임 / 시선", "物理摆动 / 眨眼 / 视线", "物理擺動 / 眨眼 / 視線"));
             _settings.physicsEnabled = GUILayout.Toggle(
                 _settings.physicsEnabled, Loc.T("PhysBone (approx.)", "揺れもの（PhysBone 近似）", "흔들림 (PhysBone 근사)",
                     "物理摆动（PhysBone 近似）", "物理擺動（PhysBone 近似）"));
@@ -73,7 +74,30 @@ namespace VRCast.UI
                     "눈꺼풀 BlendShape가 없습니다", "没有眼睑的 BlendShape", "沒有眼瞼的 BlendShape"));
             }
 
+            DrawGaze();
             GuiControls.EndCard();
+        }
+
+        private void DrawGaze()
+        {
+            // カメラ目線（トラッキングの有無によらず効く。ショートカットキー・パネル下部のボタンでも切り替えられる）
+            _settings.trackingLookAtCamera = GUILayout.Toggle(
+                _settings.trackingLookAtCamera,
+                Loc.T("Look at camera", "カメラ目線", "카메라 시선", "看向镜头", "看向鏡頭"));
+            GuiControls.Hint(Loc.T(
+                "Points the eyes at the screen (with or without tracking). Also toggled by the button at the bottom of the panel or its shortcut key (default: numeric keypad 5).",
+                "目を画面に向けます（トラッキングの有無によらず効きます）。パネル下部のボタンやショートカットキー（既定はテンキーの 5）でも切り替えられます。",
+                "눈을 화면으로 향하게 합니다 (트래킹 여부와 관계없이). 패널 아래 버튼이나 단축키 (기본값: 숫자 키패드 5)로도 전환할 수 있습니다.",
+                "让眼睛看向画面（无论是否追踪都有效）。也可用面板底部的按钮或快捷键（默认：小键盘 5）切换。",
+                "讓眼睛看向畫面（無論是否追蹤都有效）。也可用面板底部的按鈕或快捷鍵（預設：數字鍵台 5）切換。"));
+
+            // 目ボーンが無いアバターでは注記を付ける
+            var face = _avatar.Get<FaceTrackingDriver>();
+            if (_avatar.HasAvatar && (face == null || !face.HasEyes))
+            {
+                GuiControls.Hint(Loc.T("No eye bones", "目のボーンがありません", "눈 본이 없습니다", "没有眼睛骨骼",
+                    "沒有眼睛骨骼"));
+            }
         }
 
         private void DrawLipSync()

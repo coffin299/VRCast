@@ -4,7 +4,7 @@ namespace VRCast.UI
 {
     /// <summary>
     /// パネル下部に常に表示するアンケート欄（次に対応してほしい機能などの募集）。
-    /// 広告欄のように枠付きで目立たせ、GitHub の Issue か Google フォームへ誘導する。
+    /// ほかのカードと同じ見た目で、GitHub の Issue か Google フォームへ誘導する。
     /// </summary>
     public class SurveyBar
     {
@@ -27,13 +27,13 @@ namespace VRCast.UI
             // 回答先を横に並べる（幅が足りなければボタンが縮む）
             GUILayout.BeginHorizontal();
             if (GUILayout.Button(Loc.T("Write on GitHub Issues", "GitHub の Issue に書く", "GitHub Issue에 쓰기",
-                    "在 GitHub Issue 中填写", "在 GitHub Issue 中填寫"), theme.AccentButton, GuiControls.Shrinkable))
+                    "在 GitHub Issue 中填写", "在 GitHub Issue 中填寫"), GUI.skin.button, GuiControls.Shrinkable))
             {
                 Application.OpenURL(GitHubIssueUrl);
             }
 
             if (GUILayout.Button(Loc.T("Answer on Google Forms", "Google フォームで答える", "Google 폼으로 답하기",
-                    "通过 Google 表单填写", "透過 Google 表單填寫"), theme.AccentButton, GuiControls.Shrinkable))
+                    "通过 Google 表单填写", "透過 Google 表單填寫"), GUI.skin.button, GuiControls.Shrinkable))
             {
                 Application.OpenURL(GoogleFormUrl);
             }

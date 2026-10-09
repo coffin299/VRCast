@@ -174,6 +174,11 @@ namespace VRCast.Tracking
         public bool PausesExpressions => IsPerfectSyncActive && _perfectSync.IsAvailable;
 
         /// <summary>
+        /// 視線（トラッキング・カメラ目線）で動かす目ボーンがあれば true。
+        /// </summary>
+        public bool HasEyes => _leftEye != null || _rightEye != null;
+
+        /// <summary>
         /// トラッキング値を受信して適用中なら true。
         /// </summary>
         public bool IsTracking { get; private set; }
