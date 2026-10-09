@@ -51,6 +51,13 @@ namespace VRCast.Animations
         // 目標へ向けて変化中なら true
         private bool _fading;
 
+        // 今の表情（ニュートラルへ戻り切るまで）をトラッキングの表情反映が出したなら true
+        private bool _tracked;
+
+        // プリセットが触る BlendShape に上限をかけていない間なら true（変わったら全て書き直す）
+        private bool _exempt;
+        private bool _rewrite;
+
         // ショートカットキー（先頭 = ニュートラル、以降はプリセットの並び。None = 未割り当て）と押下判定
         private KeyCombo[] _hotkeys = { KeyCombo.None };
         private readonly HotkeyPoller _hotkeyPoller = new HotkeyPoller();
@@ -136,9 +143,13 @@ namespace VRCast.Animations
 
         /// <summary>
         /// 指定プリセットへ切り替える（FadeSeconds かけて変える）。範囲外はニュートラル扱い。
+        /// tracked はトラッキングの表情反映から出すとき true（設定により BlendShape の上限をかけない）。
         /// </summary>
-        public void Apply(int presetIndex)
+        public void Apply(int presetIndex, bool tracked = false)
         {
+            // 上限をかけるかは次の Update で反映する
+            _tracked = tracked;
+
             // まず全ての目標を読込時の値にする（前の表情の影響を消す）
             foreach (Slot slot in _slots)
             {
@@ -205,7 +216,28 @@ namespace VRCast.Animations
         private void Update()
         {
             HandleHotkeys();
+            UpdateExemption();
             Fade(Time.deltaTime);
+        }
+
+        private void UpdateExemption()
+        {
+            // トラッキングで出した表情で、設定 ON のときだけ上限をかけない（設定の切り替えもすぐ反映する）
+            bool exempt = _tracked && _settings != null && _settings.trackingExpressionsIgnoreLimits;
+            if (exempt == _exempt)
+            {
+                return;
+            }
+
+            // プリセットが触る全ての BlendShape を切り替え、今の値を新しい扱いで書き直す
+            _exempt = exempt;
+            foreach (Slot slot in _slots)
+            {
+                BlendShapeLimiter.SetExempt(slot.Renderer, slot.Index, exempt);
+            }
+
+            _rewrite = true;
+            _fading = true;
         }
 
         /// <summary>
@@ -337,11 +369,13 @@ namespace VRCast.Animations
 
             // 1 フレームで動かせる量（一定の速さで目標へ寄せる）
             float step = MaxWeight * deltaTime / FadeSeconds;
+            bool rewrite = _rewrite;
+            _rewrite = false;
             _fading = false;
             foreach (Slot slot in _slots)
             {
-                // 目標に着いている・破棄済みの Renderer は飛ばす
-                if (Mathf.Approximately(slot.Weight, slot.Goal) || slot.Renderer == null)
+                // 破棄済みの Renderer と、（上限の扱いを変えた直後以外は）目標に着いているものは飛ばす
+                if (slot.Renderer == null || (!rewrite && Mathf.Approximately(slot.Weight, slot.Goal)))
                 {
                     continue;
                 }
@@ -350,6 +384,12 @@ namespace VRCast.Animations
                 slot.Weight = Mathf.MoveTowards(slot.Weight, slot.Goal, step);
                 slot.Renderer.SetBlendShapeWeight(slot.Index, BlendShapeLimiter.Limit(slot.Renderer, slot.Index, slot.Weight));
                 _fading |= !Mathf.Approximately(slot.Weight, slot.Goal);
+            }
+
+            // ニュートラルへ戻り切ったら、読込時の値には再び上限をかける
+            if (!_fading && Current < 0)
+            {
+                _tracked = false;
             }
         }
     }

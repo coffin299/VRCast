@@ -88,7 +88,9 @@ namespace VRCast.Animations
             }
 
             // 元の値と上乗せ値の大きい方を、アバターごとの上限で切って書き込む
-            float weight = BlendShapeLimiter.Limit(_renderer, _index, Mathf.Max(_base, Mathf.Clamp(overlay, 0f, 100f)));
+            // （トラッキングの表情で上限をかけない間も、まばたき・口パク等の上乗せ分は上限で切る）
+            float weight = Mathf.Max(BlendShapeLimiter.Limit(_renderer, _index, _base),
+                BlendShapeLimiter.LimitAlways(_renderer, _index, Mathf.Clamp(overlay, 0f, 100f)));
             _renderer.SetBlendShapeWeight(_index, weight);
             _lastWritten = weight;
         }

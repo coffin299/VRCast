@@ -63,6 +63,18 @@ namespace VRCast.UI
                 "每个 BlendShape 可动到的最大值（100 = 不限制）。例如眨眼时眼睛消失时调低。按虚拟形象分别保存。",
                 "每個 BlendShape 可動到的最大值（100 = 不限制）。例如眨眼時眼睛消失時調低。依虛擬形象分別儲存。"));
 
+            // トラッキングの表情反映で出した表情は上限の対象外にする（全アバター共通の設定）
+            _settings.trackingExpressionsIgnoreLimits = GUILayout.Toggle(
+                _settings.trackingExpressionsIgnoreLimits,
+                Loc.T("Don't limit expressions from tracking", "トラッキングの表情には上限をかけない",
+                    "트래킹 표정에는 상한을 적용하지 않기", "不对追踪的表情应用上限", "不對追蹤的表情套用上限"));
+            GuiControls.Hint(Loc.T(
+                "Expressions switched by \"Facial expressions\" in the Tracking tab move fully. Expressions you pick yourself, blink, lip sync and perfect sync stay limited.",
+                "トラッキングタブの「表情を反映」で切り替わった表情は上限なしで動きます。手動で選んだ表情・まばたき・口パク・パーフェクトシンクには上限がかかります。",
+                "트래킹 탭의 \"표정 반영\"으로 바뀐 표정은 상한 없이 움직입니다. 직접 고른 표정·눈 깜빡임·립싱크·퍼펙트 싱크에는 상한이 적용됩니다.",
+                "由追踪标签页的“反映表情”切换的表情不受上限限制。手动选择的表情、眨眼、口型同步和完美同步仍受上限限制。",
+                "由追蹤分頁的「反映表情」切換的表情不受上限限制。手動選擇的表情、眨眼、口型同步和完美同步仍受上限限制。"));
+
             // アバター未表示なら一覧を出さない
             var limiter = _avatar.Get<BlendShapeLimiter>();
             if (limiter == null)

@@ -401,7 +401,7 @@ namespace VRCast.Tracking
                 return;
             }
 
-            _expressions.Apply(preset);
+            _expressions.Apply(preset, true);
             _autoPreset = preset;
         }
 
@@ -432,10 +432,11 @@ namespace VRCast.Tracking
 
         private void ReleaseAutoExpression()
         {
-            // 自動で当てた表情が残っているときだけニュートラルへ（手動で選び直した・固定中の表情は残す）
+            // 自動で当てた表情が残っているときだけニュートラルへ（手動で選び直した・固定中の表情は残す）。
+            // 戻る途中も表情反映の続きとして扱い、上限をかけないなら途中で値が跳ねないようにする
             if (_expressions != null && !_expressions.IsManual && _autoPreset >= 0 && _expressions.Current == _autoPreset)
             {
-                _expressions.ResetToNeutral();
+                _expressions.Apply(-1, true);
             }
 
             _autoPreset = -1;

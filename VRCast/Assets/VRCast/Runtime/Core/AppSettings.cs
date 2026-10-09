@@ -236,6 +236,9 @@ namespace VRCast.Core
 
         // 表情反映（MediaPipe・VMC・iFacialMocap のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;
+
+        // 表情反映で自動で出した表情には BlendShape の上限をかけない（手動の表情・まばたき・口パク・パーフェクトシンクは対象のまま）
+        public bool trackingExpressionsIgnoreLimits = true;
         public float trackingExpressionThreshold = 0.3f;
         public string expressionSmile = string.Empty;
         public string expressionSurprise = string.Empty;

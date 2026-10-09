@@ -7,6 +7,7 @@ namespace VRCast.Animations
     /// <summary>
     /// アバターごとの BlendShape の上限（まばたきで目が消える等、100 まで動かすと破綻する形の対策）。
     /// まばたき・口パク・表情・パーフェクトシンクは書き込む前に Limit を通す。
+    /// 設定により、トラッキングで自動で出した表情が動かしている間の BlendShape は上限をかけない（SetExempt）。
     /// どの処理も書かない固定の値は、全ての処理の後（LateUpdate の最後）に上限で切り、上限を緩めたら元の値へ戻す。
     /// </summary>
     [DefaultExecutionOrder(ExecutionOrder)]
@@ -32,6 +33,9 @@ namespace VRCast.Animations
 
             // 上限で切る前の固定の値（切っていなければ NaN。上限を緩めたときに戻す）
             public float Original = float.NaN;
+
+            // 上限をかけない間なら true（トラッキングで自動で出した表情が動かしている間）
+            public bool Exempt;
 
             /// <summary>
             /// 上限を付けているなら true。
@@ -79,9 +83,34 @@ namespace VRCast.Animations
         }
 
         /// <summary>
-        /// 書き込む値を上限で切る（上限の無い BlendShape・アバター未表示ならそのまま返す）。
+        /// 上限をかけないかを切り替える（トラッキングで自動で出した表情が動かす BlendShape 用）。
+        /// </summary>
+        public static void SetExempt(SkinnedMeshRenderer renderer, int index, bool exempt)
+        {
+            // アバター未表示・一覧に無い BlendShape は何もしない
+            if (_active != null && _active._lookup.TryGetValue((renderer, index), out Shape shape))
+            {
+                shape.Exempt = exempt;
+            }
+        }
+
+        /// <summary>
+        /// 書き込む値を上限で切る（上限の無い・上限をかけない間の BlendShape、アバター未表示ならそのまま返す）。
         /// </summary>
         public static float Limit(SkinnedMeshRenderer renderer, int index, float weight)
+        {
+            return Clamp(renderer, index, weight, true);
+        }
+
+        /// <summary>
+        /// 上限をかけない間の BlendShape でも上限で切る（まばたき・口パクなど、表情以外の上乗せ分に使う）。
+        /// </summary>
+        public static float LimitAlways(SkinnedMeshRenderer renderer, int index, float weight)
+        {
+            return Clamp(renderer, index, weight, false);
+        }
+
+        private static float Clamp(SkinnedMeshRenderer renderer, int index, float weight, bool allowExempt)
         {
             // 上限の無い BlendShape はそのまま
             if (_active == null || !_active._lookup.TryGetValue((renderer, index), out Shape shape))
@@ -91,7 +120,9 @@ namespace VRCast.Animations
 
             // 書き込む処理がある BlendShape は、その処理の値が正なので固定の値として戻さない
             shape.Original = float.NaN;
-            return Mathf.Min(weight, shape.Max);
+
+            // 上限をかけない間はそのまま（呼び出し側が許すときだけ）
+            return allowExempt && shape.Exempt ? weight : Mathf.Min(weight, shape.Max);
         }
 
         /// <summary>
@@ -209,8 +240,8 @@ namespace VRCast.Animations
         {
             foreach (Shape shape in _limited)
             {
-                // 破棄済みのメッシュは飛ばす
-                if (shape.Renderer == null)
+                // 破棄済みのメッシュ・上限をかけない間の BlendShape は飛ばす
+                if (shape.Renderer == null || shape.Exempt)
                 {
                     continue;
                 }

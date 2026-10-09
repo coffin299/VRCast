@@ -95,6 +95,38 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Exempt_SkipsLimitButNotLimitAlways()
+        {
+            // 上限をかけない間は Limit がそのまま返し、LimitAlways は切ること。戻せば Limit も切ること
+            BlendShapeLimiter limiter = CreateLimiter(new List<BlendShapeLimit>());
+            limiter.SetMax(limiter.Shapes[1], 40f);
+            BlendShapeLimiter.SetExempt(_face, 1, true);
+            Assert.That(BlendShapeLimiter.Limit(_face, 1, 100f), Is.EqualTo(100f));
+            Assert.That(BlendShapeLimiter.LimitAlways(_face, 1, 100f), Is.EqualTo(40f));
+
+            BlendShapeLimiter.SetExempt(_face, 1, false);
+            Assert.That(BlendShapeLimiter.Limit(_face, 1, 100f), Is.EqualTo(40f));
+        }
+
+        [Test]
+        public void Overlay_KeepsExemptBaseButLimitsOverlay()
+        {
+            // 上限をかけない表情の値は残し、上乗せ分だけを上限で切ること
+            BlendShapeLimiter limiter = CreateLimiter(new List<BlendShapeLimit>());
+            limiter.SetMax(limiter.Shapes[0], 50f);
+            BlendShapeLimiter.SetExempt(_face, 0, true);
+            BlendShapeOverlay overlay = BlendShapeOverlay.Create(_face, 0);
+
+            _face.SetBlendShapeWeight(0, 90f);
+            overlay.Write(0f);
+            Assert.That(_face.GetBlendShapeWeight(0), Is.EqualTo(90f).Within(0.01f));
+
+            _face.SetBlendShapeWeight(0, 0f);
+            overlay.Write(100f);
+            Assert.That(_face.GetBlendShapeWeight(0), Is.EqualTo(50f).Within(0.01f));
+        }
+
+        [Test]
         public void ExportAndClearAll_TrackLimitedShapes()
         {
             // 上限付きだけを書き出し、すべて解除で空になること
