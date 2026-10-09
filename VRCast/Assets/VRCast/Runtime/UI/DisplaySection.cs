@@ -43,6 +43,7 @@ namespace VRCast.UI
             DrawBackground();
             DrawResolution();
             DrawLight();
+            DrawOutline();
         }
 
         private void DrawCamera()
@@ -240,6 +241,43 @@ namespace VRCast.UI
             if (!Mathf.Approximately(pitch, _rendering.LightPitch))
             {
                 _rendering.LightPitch = pitch;
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawOutline()
+        {
+            GuiControls.BeginCard(Loc.T("Outline", "輪郭線", "윤곽선", "轮廓线", "輪廓線"));
+            GuiControls.Hint(Loc.T(
+                "Scales the avatar's outline (lilToon / MToon / Poiyomi / UTS). 1 = as set in the material, 0 = no outline. Remembered for each avatar.",
+                "アバターの輪郭線（lilToon / MToon / Poiyomi / UTS）の太さを変えます。1 = マテリアルのまま、0 = 輪郭線なし。アバターごとに記憶されます。",
+                "아바타 윤곽선 (lilToon / MToon / Poiyomi / UTS)의 굵기를 바꿉니다. 1 = 머티리얼 그대로, 0 = 윤곽선 없음. 아바타마다 기억됩니다.",
+                "调整虚拟形象轮廓线（lilToon / MToon / Poiyomi / UTS）的粗细。1 = 保持材质设置，0 = 无轮廓线。按虚拟形象分别记住。",
+                "調整虛擬形象輪廓線（lilToon / MToon / Poiyomi / UTS）的粗細。1 = 保持材質設定，0 = 無輪廓線。依虛擬形象分別記住。"));
+
+            // 太さの倍率（値が変わったときだけ反映）
+            float width = GuiControls.Slider(Loc.T("Thickness", "太さ", "굵기", "粗细", "粗細"),
+                _rendering.OutlineWidth, 0f, AppSettings.MaxOutlineWidth);
+            if (!Mathf.Approximately(width, _rendering.OutlineWidth))
+            {
+                _rendering.OutlineWidth = width;
+            }
+
+            // マテリアルのままの太さに戻す
+            if (GUILayout.Button(Loc.T("As in material (1)", "マテリアルのまま（1）", "머티리얼 그대로 (1)", "保持材质（1）", "保持材質（1）")))
+            {
+                _rendering.OutlineWidth = 1f;
+            }
+
+            // 輪郭線の無いアバター（または未対応のシェーダー）ではスライダーが効かないことを案内
+            if (!_rendering.HasAvatarOutline)
+            {
+                GuiControls.Hint(Loc.T("This avatar has no outline this slider can change.",
+                    "このアバターには、ここで太さを変えられる輪郭線がありません。",
+                    "이 아바타에는 여기서 굵기를 바꿀 수 있는 윤곽선이 없습니다.",
+                    "此虚拟形象没有可在此调整粗细的轮廓线。",
+                    "此虛擬形象沒有可在此調整粗細的輪廓線。"));
             }
 
             GuiControls.EndCard();

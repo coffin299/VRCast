@@ -162,6 +162,24 @@ namespace VRCast.Rendering
             }
         }
 
+        /// <summary>
+        /// アバターの輪郭線の太さ（マテリアルの太さの倍率。1 = そのまま、0 = 輪郭線なし）。
+        /// </summary>
+        public float OutlineWidth
+        {
+            get => _settings.outlineWidth;
+            set
+            {
+                _settings.outlineWidth = Mathf.Clamp(value, 0f, AppSettings.MaxOutlineWidth);
+                _avatarMaterials.ApplyOutline(_settings.outlineWidth);
+            }
+        }
+
+        /// <summary>
+        /// 表示中のアバターに太さを変えられる輪郭線があるか。
+        /// </summary>
+        public bool HasAvatarOutline => _avatarMaterials.HasOutline;
+
         public bool LowLoadMode
         {
             get => _settings.lowLoadMode;
@@ -195,7 +213,7 @@ namespace VRCast.Rendering
         }
 
         /// <summary>
-        /// 設定値を直接書き換えた後（全設定のリセット等）に、フレームレート・背景・太陽光・環境光・アバターの明るさを反映し直す。
+        /// 設定値を直接書き換えた後（全設定のリセット等）に、フレームレート・背景・太陽光・環境光・アバターの明るさ・輪郭線を反映し直す。
         /// </summary>
         public void ApplyAll()
         {
@@ -203,16 +221,23 @@ namespace VRCast.Rendering
             ApplyBackground();
             ApplyLight();
             ApplyAmbient();
-            _avatarMaterials.Apply(_settings.avatarBrightness);
+            ApplyAvatarMaterials();
         }
 
         /// <summary>
-        /// 読み込んだアバターのマテリアルを登録し、保存済みの明るさを反映する。
+        /// 読み込んだアバターのマテリアルを登録し、保存済みの明るさと輪郭線の太さを反映する。
         /// </summary>
         public void SetAvatar(GameObject instance)
         {
             _avatarMaterials.SetAvatar(instance);
+            ApplyAvatarMaterials();
+        }
+
+        private void ApplyAvatarMaterials()
+        {
+            // 明るさと輪郭線の太さはどちらも登録時の元の値に倍率を掛ける
             _avatarMaterials.Apply(_settings.avatarBrightness);
+            _avatarMaterials.ApplyOutline(_settings.outlineWidth);
         }
 
         /// <summary>

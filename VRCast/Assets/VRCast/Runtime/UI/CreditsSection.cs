@@ -3,7 +3,7 @@ using UnityEngine;
 namespace VRCast.UI
 {
     /// <summary>
-    /// Credits タブ（開発者・協力者のリンクと、GitHub のライセンス・NOTICE を開くボタン）。
+    /// Credits タブ（開発者・協力者のリンク（名前 = X、右に YouTube・Twitch 等）と、GitHub のライセンス・NOTICE を開くボタン）。
     /// </summary>
     public class CreditsSection
     {
@@ -14,13 +14,17 @@ namespace VRCast.UI
         private const string TwitchName = "coffinnoob299";
         private const string TwitchUrl = "https://www.twitch.tv/" + TwitchName;
 
-        // 開発者・協力者（役割の 5 言語表記、名前、リンク先）
+        // 協力者の役割（複数人で共用）
+        private static readonly Role Collaborator = new Role("Collaborator", "協力者", "협력자", "协力者", "協力者");
+
+        // 開発者・協力者（役割の 5 言語表記、名前、X のリンク先、名前の右に並べる他のリンク）
         private static readonly Person[] People =
         {
             new Person(new Role("Developer", "開発者", "개발자", "开发者", "開發者"),
                 "ごみぃ", "https://x.com/coffin299"),
-            new Person(new Role("Collaborator", "協力者", "협력자", "协力者", "協力者"),
-                "Arche_039", "https://x.com/Arche_039"),
+            new Person(Collaborator, "Arche_039", "https://x.com/Arche_039"),
+            new Person(Collaborator, "おけパ", "https://x.com/_okepa",
+                new Link("YouTube", "https://www.youtube.com/@okepa")),
         };
 
         // 役割の表記（Loc.T と同じ並び: 英語・日本語・韓国語・簡体字・繁体字）
@@ -46,17 +50,39 @@ namespace VRCast.UI
             public string Text => Loc.T(English, Japanese, Korean, ChineseSimplified, ChineseTraditional);
         }
 
+        // 名前の右に並べるリンク（ボタンの文字とリンク先）
+        private readonly struct Link
+        {
+            public readonly string Label;
+            public readonly string Url;
+
+            public Link(string label, string url)
+            {
+                Label = label;
+                Url = url;
+            }
+        }
+
         private readonly struct Person
         {
             public readonly Role Role;
-            public readonly string Name;
-            public readonly string Url;
 
-            public Person(Role role, string name, string url)
+            // 行に並べるボタンの文字（先頭 = 名前）と、それぞれのリンク先（先頭 = X）。毎フレーム作らないよう作成時にまとめる
+            public readonly string[] Buttons;
+            public readonly string[] Urls;
+
+            public Person(Role role, string name, string url, params Link[] links)
             {
                 Role = role;
-                Name = name;
-                Url = url;
+                Buttons = new string[links.Length + 1];
+                Urls = new string[links.Length + 1];
+                Buttons[0] = name;
+                Urls[0] = url;
+                for (int i = 0; i < links.Length; i++)
+                {
+                    Buttons[i + 1] = links[i].Label;
+                    Urls[i + 1] = links[i].Url;
+                }
             }
         }
 
@@ -90,12 +116,13 @@ namespace VRCast.UI
         {
             GuiControls.BeginCard(Loc.T("Credits", "クレジット", "크레딧", "致谢", "致謝"));
 
-            // 役割と名前（押すとリンク先を開く）
+            // 役割、名前（押すと X を開く）、その右に他のリンク（無い人は名前のボタンが行いっぱいに広がる）
             foreach (Person person in People)
             {
-                if (GuiControls.LabeledButton(person.Role.Text, person.Name))
+                int pressed = GuiControls.LabeledButtons(person.Role.Text, person.Buttons);
+                if (pressed >= 0)
                 {
-                    Application.OpenURL(person.Url);
+                    Application.OpenURL(person.Urls[pressed]);
                 }
             }
 

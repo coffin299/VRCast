@@ -3,7 +3,7 @@ using System;
 namespace VRCast.Core
 {
     /// <summary>
-    /// アバターごとに覚える見た目の設定（ライト・アバターの明るさ・待機ポーズ・向き）。
+    /// アバターごとに覚える見た目の設定（ライト・アバターの明るさ・輪郭線の太さ・待機ポーズ・向き）。
     /// 範囲の補正は適用後の AppSettings.Sanitize が行う。
     /// </summary>
     [Serializable]
@@ -18,6 +18,10 @@ namespace VRCast.Core
         public float poseArmDown;
         public float poseElbowBend;
         public float avatarYaw;
+
+        // 輪郭線の太さ。以前の版の記録には無く 0 と読まれるため、hasOutlineWidth が false なら既定（1）として扱う
+        public bool hasOutlineWidth;
+        public float outlineWidth;
 
         /// <summary>
         /// 現在の設定から取り出す。
@@ -35,6 +39,8 @@ namespace VRCast.Core
                 poseArmDown = settings.poseArmDown,
                 poseElbowBend = settings.poseElbowBend,
                 avatarYaw = settings.avatarYaw,
+                hasOutlineWidth = true,
+                outlineWidth = settings.outlineWidth,
             };
         }
 
@@ -52,6 +58,8 @@ namespace VRCast.Core
             settings.poseArmDown = poseArmDown;
             settings.poseElbowBend = poseElbowBend;
             settings.avatarYaw = avatarYaw;
+            // 記録の無い以前の版の見た目はマテリアルのままの太さにする
+            settings.outlineWidth = hasOutlineWidth ? outlineWidth : 1f;
             settings.Sanitize();
         }
 
@@ -60,7 +68,8 @@ namespace VRCast.Core
         /// </summary>
         public bool IsFinite => IsFiniteValue(lightIntensity) && IsFiniteValue(lightYaw) && IsFiniteValue(lightPitch)
             && IsFiniteValue(lightTemperature) && IsFiniteValue(ambientIntensity) && IsFiniteValue(avatarBrightness)
-            && IsFiniteValue(poseArmDown) && IsFiniteValue(poseElbowBend) && IsFiniteValue(avatarYaw);
+            && IsFiniteValue(poseArmDown) && IsFiniteValue(poseElbowBend) && IsFiniteValue(avatarYaw)
+            && IsFiniteValue(outlineWidth);
 
         /// <summary>
         /// 全要素が同じなら true（変化したときだけ記録するための比較）。
@@ -71,7 +80,8 @@ namespace VRCast.Core
                 && lightPitch == other.lightPitch && lightTemperature == other.lightTemperature
                 && ambientIntensity == other.ambientIntensity && avatarBrightness == other.avatarBrightness
                 && poseArmDown == other.poseArmDown && poseElbowBend == other.poseElbowBend
-                && avatarYaw == other.avatarYaw;
+                && avatarYaw == other.avatarYaw && hasOutlineWidth == other.hasOutlineWidth
+                && outlineWidth == other.outlineWidth;
         }
 
         private static bool IsFiniteValue(float value)

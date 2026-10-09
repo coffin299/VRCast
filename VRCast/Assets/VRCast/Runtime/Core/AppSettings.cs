@@ -29,6 +29,9 @@ namespace VRCast.Core
         public const float MinAvatarBrightness = 0.1f;
         public const float MaxAvatarBrightness = 10f;
 
+        // アバターの輪郭線の太さ（マテリアルの太さの倍率）の上限
+        public const float MaxOutlineWidth = 3f;
+
         // マイク感度・しきい値の範囲
         public const float MinMicGain = 0.1f;
         public const float MaxMicGain = 10f;
@@ -153,6 +156,9 @@ namespace VRCast.Core
 
         // アバターの明るさ（1 = マテリアルのまま。シェーダーの明るさ上限を超えて明るくする）
         public float avatarBrightness = 1f;
+
+        // アバターの輪郭線の太さ（1 = マテリアルのまま、0 = 輪郭線なし）
+        public float outlineWidth = 1f;
 
         // 待機ポーズ（0 = T ポーズのまま、1 = 腕を下ろし切る / 肘を曲げ切る）。既定は気を付け
         public float poseArmDown = 1f;
@@ -310,8 +316,9 @@ namespace VRCast.Core
                 return;
             }
 
-            // 既存の記録（見た目を含む）を末尾へ移し、無ければ新しく作る
-            AvatarEntry entry = TakeAvatarEntry(avatarPath) ?? new AvatarEntry { avatarPath = avatarPath };
+            // 既存の記録（見た目を含む）を末尾へ移し、無ければ今入れたものとして新しく作る
+            AvatarEntry entry = TakeAvatarEntry(avatarPath)
+                ?? new AvatarEntry { avatarPath = avatarPath, addedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() };
             entry.pose = pose;
             avatarCameras.Add(entry);
             TrimAvatarCameras();
@@ -564,6 +571,31 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// アバターを VRCast に入れた日時（UNIX 時刻の秒・UTC）を返す。記録が無い・不明なら 0。
+        /// </summary>
+        public long GetAvatarAddedAt(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0 ? avatarCameras[index].addedAt : 0;
+        }
+
+        /// <summary>
+        /// アバターを入れた日時を記録する（ドロップ・参照・パス入力で読み込んだとき。記録の無いアバターは初回の記録時に入る）。
+        /// onlyIfUnknown なら日時が不明な記録だけに入れる（以前の版の記録の補完用）。
+        /// </summary>
+        public void SetAvatarAddedAt(string avatarPath, long unixSeconds, bool onlyIfUnknown = false)
+        {
+            // 記録の無いアバター・負の日時は対象外。並び（最近使った順）は変えない
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0 || unixSeconds < 0 || (onlyIfUnknown && avatarCameras[index].addedAt > 0))
+            {
+                return;
+            }
+
+            avatarCameras[index].addedAt = unixSeconds;
+        }
+
+        /// <summary>
         /// アバターの記録（カメラの視点・見た目）を消し、最近使ったアバターの一覧からも外す。
         /// </summary>
         public void ForgetAvatar(string avatarPath)
@@ -650,6 +682,8 @@ namespace VRCast.Core
             foreach (AvatarEntry entry in avatarCameras)
             {
                 entry.hasLook &= entry.look.IsFinite;
+                // 入れた日時は負なら不明扱い（以前の版の記録は 0 = 不明）
+                entry.addedAt = Math.Max(0, entry.addedAt);
                 // BlendShape の上限は壊れたものを捨て、範囲内に制限する（旧版の設定には無いので空の一覧にする）
                 entry.blendShapeLimits ??= new List<BlendShapeLimit>();
                 entry.blendShapeLimits.RemoveAll(limit => limit == null || !limit.IsValid);
@@ -716,6 +750,8 @@ namespace VRCast.Core
             ambientIntensity = Mathf.Clamp(ambientIntensity, 0f, MaxAmbientIntensity);
             // アバターの明るさは範囲内に制限
             avatarBrightness = Mathf.Clamp(avatarBrightness, MinAvatarBrightness, MaxAvatarBrightness);
+            // 輪郭線の太さは 0〜上限に制限
+            outlineWidth = Mathf.Clamp(outlineWidth, 0f, MaxOutlineWidth);
             // ポーズの度合いは 0〜1 に制限
             poseArmDown = Mathf.Clamp01(poseArmDown);
             // 肘の曲げも同様

@@ -8,9 +8,17 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - シェイプキー設定タブに「トラッキングの表情には上限をかけない」を追加（既定 ON。トラッキングタブの「表情を反映」で切り替わった表情は BlendShape の上限なしで動きます。手動で選んだ表情・まばたき・口パクには今までどおり上限がかかります）
+- 最近使ったアバターのタイルに、入れた日時を表示する機能を追加（ドロップ・参照・読み込みボタンで読み込んだ日時。以前から使っているアバターはファイルの更新日時を表示します）
+- アンケート欄の下に公式 Discord のボタンを追加
+- クレジットに協力者「おけパ」さんを追加（名前のボタンで X、その右のボタンで YouTube を開きます）
+- 表示タブに「輪郭線」を追加（lilToon / MToon / Poiyomi / UTS のアバターの輪郭線を太く・細く・なしにできます。アバターごとに記憶されます）
 
 [English]
 - Added "Don't limit expressions from tracking" to the Shape key setup tab (on by default; expressions switched by "Facial expressions" in the Tracking tab move without the blend shape limits, while expressions you pick yourself, blink and lip sync stay limited)
+- Added the date each avatar was added to the recent avatar tiles (when it was loaded by drop, Browse or Load; avatars from before show the file's modified date)
+- Added an official Discord button below the survey box
+- Added collaborator "おけパ" to the credits (the name button opens X, and the button next to it opens YouTube)
+- Added "Outline" to the Display tab (make the outline of lilToon / MToon / Poiyomi / UTS avatars thicker, thinner or hidden; remembered for each avatar)
 
 ■ 1.14.6 (2026-10-09)
 

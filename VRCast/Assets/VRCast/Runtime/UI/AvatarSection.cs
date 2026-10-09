@@ -62,6 +62,10 @@ namespace VRCast.UI
 
         // ファイルが見つからない最近使ったアバターのパスと、最後に調べた時刻
         private readonly HashSet<string> _missingRecent = new HashSet<string>(System.StringComparer.OrdinalIgnoreCase);
+
+        // 最近使ったアバターを入れた日時の表示（ファイルの有無と一緒に作り直す。毎フレーム文字列を作らない）
+        private readonly Dictionary<string, string> _addedTexts =
+            new Dictionary<string, string>(System.StringComparer.OrdinalIgnoreCase);
         private float _existsCheckedAt = float.NegativeInfinity;
 
         // 「×」を押して、外すかどうか確認中のアバター（null なら確認なし）
@@ -106,9 +110,9 @@ namespace VRCast.UI
                 return false;
             }
 
-            // 入力欄にも反映して読み込む
+            // 入力欄にも反映して読み込む（入れた日時を記録する）
             _pathInput = package;
-            return TryLoad(package);
+            return TryLoad(package, true);
         }
 
         private void DrawLoader()
@@ -140,7 +144,7 @@ namespace VRCast.UI
             GUI.enabled = !_session.IsLoading;
             if (GUILayout.Button(Loc.T("Load", "読み込み", "불러오기", "加载", "載入"), GuiControls.Shrinkable))
             {
-                TryLoad(_pathInput);
+                TryLoad(_pathInput, true);
             }
 
             // 表示中のアバターがある場合のみ有効
@@ -182,15 +186,15 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Recent avatars", "最近使ったアバター", "최근 사용한 아바타", "最近使用的虚拟形象",
                 "最近使用的虛擬形象"));
             GuiControls.Hint(Loc.T(
-                "Click to switch. Camera, light and pose are remembered for each avatar. "
+                "Click to switch. Camera, light and pose are remembered for each avatar. The date is when you added it (drop / Browse / Load). "
                 + "\"Image\" sets a picture (PNG / JPG / GIF) for the list; you can also drop an image onto the window for the avatar being shown.",
-                "クリックで切り替えます。カメラ・ライト・待機ポーズはアバターごとに記憶されます。"
+                "クリックで切り替えます。カメラ・ライト・待機ポーズはアバターごとに記憶されます。日時は入れた（ドロップ・参照・読み込みボタン）日時です。"
                 + "「画像」で一覧の画像（PNG / JPG / GIF）を設定できます。表示中のアバターには、画像をウィンドウにドロップしても設定できます。",
-                "클릭하여 전환합니다. 카메라·조명·대기 포즈는 아바타마다 기억됩니다. "
+                "클릭하여 전환합니다. 카메라·조명·대기 포즈는 아바타마다 기억됩니다. 날짜는 넣은 (드롭·찾아보기·불러오기) 날짜입니다. "
                 + "\"이미지\"로 목록의 이미지(PNG / JPG / GIF)를 설정할 수 있습니다. 표시 중인 아바타는 이미지를 창에 드롭해도 설정됩니다.",
-                "点击即可切换。相机、灯光和待机姿势会按虚拟形象分别记住。"
+                "点击即可切换。相机、灯光和待机姿势会按虚拟形象分别记住。日期为加入（拖放、浏览、加载）的时间。"
                 + "用“图片”可设置列表中的图片（PNG / JPG / GIF）。也可将图片拖放到窗口，设置给正在显示的虚拟形象。",
-                "點擊即可切換。相機、燈光和待機姿勢會依虛擬形象分別記住。"
+                "點擊即可切換。相機、燈光和待機姿勢會依虛擬形象分別記住。日期為加入（拖放、瀏覽、載入）的時間。"
                 + "用「圖片」可設定清單中的圖片（PNG / JPG / GIF）。也可將圖片拖放到視窗，設定給正在顯示的虛擬形象。"));
 
             DrawTiles(recent);
@@ -292,6 +296,10 @@ namespace VRCast.UI
 
             // アバター名と、外す確認・表示中・見つからないことの印（印が無くても行の高さをそろえる）
             GUILayout.Label(new GUIContent(Path.GetFileNameWithoutExtension(FileNameOf(path)), path), TileNameStyle(theme),
+                GUILayout.Width(TileWidth));
+
+            // 入れた日時（新しい・古いが分かるように。まだ調べていなければ空行）
+            GUILayout.Label(_addedTexts.TryGetValue(path, out string added) ? added : " ", TileNameStyle(theme),
                 GUILayout.Width(TileWidth));
             if (confirming)
             {
@@ -421,14 +429,33 @@ namespace VRCast.UI
 
             _existsCheckedAt = Time.unscaledTime;
             _missingRecent.Clear();
+            _addedTexts.Clear();
             foreach (string path in recent)
             {
                 // 移動・削除されたファイルを記録
-                if (!File.Exists(path))
+                bool exists = File.Exists(path);
+                if (!exists)
                 {
                     _missingRecent.Add(path);
                 }
+
+                // 日時が不明な以前の版の記録は、ファイルの更新日時（書き出した日時）で補う
+                if (exists && _settings.GetAvatarAddedAt(path) <= 0)
+                {
+                    _settings.SetAvatarAddedAt(path,
+                        new System.DateTimeOffset(File.GetLastWriteTimeUtc(path)).ToUnixTimeSeconds(), true);
+                }
+
+                _addedTexts[path] = FormatAddedAt(_settings.GetAvatarAddedAt(path));
             }
+        }
+
+        private static string FormatAddedAt(long unixSeconds)
+        {
+            // 不明なら空行（タイルの高さはそろえる）。年は 2 桁にしてタイルの幅に収める
+            return unixSeconds > 0
+                ? System.DateTimeOffset.FromUnixTimeSeconds(unixSeconds).LocalDateTime.ToString("yy/MM/dd HH:mm")
+                : " ";
         }
 
         /// <summary>
@@ -450,11 +477,14 @@ namespace VRCast.UI
             if (path != null)
             {
                 _pathInput = path;
-                TryLoad(path);
+                TryLoad(path, true);
             }
         }
 
-        private bool TryLoad(string input)
+        /// <summary>
+        /// 確認してから読み込む。added はドロップ・参照・パス入力で入れたとき true（入れた日時を記録する。一覧からの切り替えは false）。
+        /// </summary>
+        private bool TryLoad(string input, bool added = false)
         {
             // 読込中は受け付けない
             if (_session.IsLoading)
@@ -481,6 +511,13 @@ namespace VRCast.UI
             {
                 _inputError = InputError.None;
                 _session.Load(path);
+
+                // 記録のあるアバターを入れ直したら日時を更新する（初めてのアバターは読込後の記録作成時に入る）
+                if (added)
+                {
+                    _settings.SetAvatarAddedAt(path, System.DateTimeOffset.UtcNow.ToUnixTimeSeconds());
+                    _existsCheckedAt = float.NegativeInfinity;
+                }
             }
 
             return _inputError == InputError.None;

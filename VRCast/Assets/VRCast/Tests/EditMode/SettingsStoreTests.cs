@@ -305,6 +305,7 @@ namespace VRCast.Tests
             {
                 lightIntensity = 2f, lightYaw = 10f, lightPitch = 20f, lightTemperature = 5000f, ambientIntensity = 1.5f,
                 avatarBrightness = 2f, poseArmDown = 0.5f, poseElbowBend = 0.3f, avatarYaw = 15f,
+                hasOutlineWidth = true, outlineWidth = 0.5f,
             };
             saved.SetAvatarCamera("C:/Avatars/A.vrcaster", pose);
             saved.SetAvatarLook("C:/Avatars/A.vrcaster", look);
@@ -345,6 +346,25 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void AvatarLook_OutlineWidth_OldRecordUsesMaterialAndNewIsClamped()
+        {
+            var settings = new AppSettings { outlineWidth = 2f };
+
+            // 輪郭線の太さの無い以前の版の記録はマテリアルのまま（1）になること
+            new AvatarLook { avatarBrightness = 1f }.ApplyTo(settings);
+            Assert.That(settings.outlineWidth, Is.EqualTo(1f));
+
+            // 記録のある太さは 0 も含めて書き戻され、上限を超えたら補正されること
+            new AvatarLook { avatarBrightness = 1f, hasOutlineWidth = true, outlineWidth = 0f }.ApplyTo(settings);
+            Assert.That(settings.outlineWidth, Is.EqualTo(0f));
+            new AvatarLook { avatarBrightness = 1f, hasOutlineWidth = true, outlineWidth = 99f }.ApplyTo(settings);
+            Assert.That(settings.outlineWidth, Is.EqualTo(AppSettings.MaxOutlineWidth));
+
+            // 現在の設定から取り出した見た目は太さの記録ありになること
+            Assert.That(AvatarLook.From(settings).hasOutlineWidth, Is.True);
+        }
+
+        [Test]
         public void RecentAvatars_ReturnsNewestFirstUpToLimit()
         {
             var settings = new AppSettings();
@@ -376,6 +396,25 @@ namespace VRCast.Tests
             settings.ForgetAvatar("c:/avatars/a.vrcaster");
             Assert.That(settings.RecentAvatars(), Is.EqualTo(new[] { "C:/Avatars/B.vrcaster" }));
             Assert.That(settings.TryGetAvatarCamera("C:/Avatars/A.vrcaster", out _), Is.False);
+        }
+
+        [Test]
+        public void AvatarAddedAt_SetOnFirstRecordAndUpdatedOnlyWhenAsked()
+        {
+            // 初めて記録したときに今の日時が入り、視点を記録し直しても変わらないこと
+            var settings = new AppSettings();
+            settings.SetAvatarCamera("C:/Avatars/A.vrcaster", new CameraPose { distance = 2f });
+            long first = settings.GetAvatarAddedAt("c:/avatars/a.vrcaster");
+            Assert.That(first, Is.GreaterThan(0));
+            settings.SetAvatarAddedAt("C:/Avatars/A.vrcaster", 100);
+            settings.SetAvatarCamera("C:/Avatars/A.vrcaster", new CameraPose { distance = 3f });
+            Assert.That(settings.GetAvatarAddedAt("C:/Avatars/A.vrcaster"), Is.EqualTo(100));
+
+            // 不明なときだけ補う指定では、日時のある記録は変えないこと。記録の無いアバターは 0 のまま
+            settings.SetAvatarAddedAt("C:/Avatars/A.vrcaster", 200, true);
+            Assert.That(settings.GetAvatarAddedAt("C:/Avatars/A.vrcaster"), Is.EqualTo(100));
+            settings.SetAvatarAddedAt("C:/Avatars/None.vrcaster", 300);
+            Assert.That(settings.GetAvatarAddedAt("C:/Avatars/None.vrcaster"), Is.EqualTo(0));
         }
 
         [Test]

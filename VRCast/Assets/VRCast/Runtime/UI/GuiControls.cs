@@ -223,6 +223,27 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// ラベル + 横に並べた複数のボタンの 1 行を描画し、押されたボタンの番号を返す（押されなければ -1）。
+        /// </summary>
+        public static int LabeledButtons(string label, IReadOnlyList<string> texts)
+        {
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, GUILayout.Width(LabelWidth));
+            int pressed = -1;
+            for (int i = 0; i < texts.Count; i++)
+            {
+                // 幅は行の中で分け合う（数が多いほど 1 つが狭くなる）
+                if (GUILayout.Button(texts[i], Shrinkable))
+                {
+                    pressed = i;
+                }
+            }
+
+            GUILayout.EndHorizontal();
+            return pressed;
+        }
+
+        /// <summary>
         /// value をクリップボードへコピーするボタン（押した直後だけ「コピー済み」と表示）。
         /// </summary>
         public static void CopyButton(string value)
