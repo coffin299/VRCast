@@ -4,7 +4,7 @@ using VRCast.Core;
 namespace VRCast.UI
 {
     /// <summary>
-    /// パネル下部に常に表示するリセットボタン（顔の向き・視線・表情・カメラ）。
+    /// パネル下部に常に表示するリセットボタン（顔の向き・視線・表情・カメラ）と、カメラ目線の切り替え。
     /// 配信中によく使う操作を、どのタブを開いていても押せるようにする（ショートカットキーと同じ ResetActions を使う）。
     /// ボタンの 2 行目に割り当て中のショートカットキーを出す。
     /// </summary>
@@ -25,12 +25,16 @@ namespace VRCast.UI
             GUILayout.Label(Loc.T("Reset", "リセット", "초기화", "重置", "重設"), UiTheme.Current.Hint,
                 GUILayout.ExpandWidth(false));
 
-            // 種類の順にボタンを並べ、実行できない状態のものは押せなくする
+            // 種類の順にボタンを並べ、実行できない状態のものは押せなくする。切り替えは ON の間押し込んだ見た目にする
             for (int i = 0; i < ResetHotkey.ActionCount; i++)
             {
                 var action = (ResetAction)i;
                 GUI.enabled = _actions.CanRun(action);
-                if (GUILayout.Button(ButtonLabel(action)))
+                bool pressed = ResetActions.IsToggle(action)
+                    ? GUILayout.Toggle(_actions.IsOn(action), ButtonLabel(action), GUI.skin.button, GuiControls.Shrinkable)
+                        != _actions.IsOn(action)
+                    : GUILayout.Button(ButtonLabel(action), GuiControls.Shrinkable);
+                if (pressed)
                 {
                     _actions.Run(action);
                 }

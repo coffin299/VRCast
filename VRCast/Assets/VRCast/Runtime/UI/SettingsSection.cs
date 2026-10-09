@@ -135,8 +135,8 @@ namespace VRCast.UI
 
         private void DrawResetHotkeys()
         {
-            GuiControls.BeginCard(Loc.T("Shortcut keys (reset)", "ショートカットキー（リセット）", "단축키 (초기화)",
-                "快捷键（重置）", "快捷鍵（重設）"));
+            GuiControls.BeginCard(Loc.T("Shortcut keys (reset / look at camera)", "ショートカットキー（リセット・カメラ目線）",
+                "단축키 (초기화·카메라 시선)", "快捷键（重置·看向镜头）", "快捷鍵（重設·看向鏡頭）"));
 
             // 割り当てが決まったら記録する（同じ組み合わせのほかのリセットは外れる。保存は終了時）
             if (_capture.Update(out int target, out KeyCombo captured))
@@ -148,14 +148,14 @@ namespace VRCast.UI
             GuiControls.Hint(_capture.IsCapturing
                 ? KeyCaptureSession.AssignHint
                 : Loc.T(
-                    "Runs the same resets as the buttons at the bottom of the panel, even while the panel is hidden. " +
-                    "The defaults are numeric keypad 1–4 (NumLock on). Click a key button to change it.",
-                    "パネル下部のリセットのボタンと同じ操作を、パネルを隠していてもキーで行えます。" +
-                    "既定はテンキーの 1〜4（NumLock ON）です。キーのボタンを押すと変更できます。",
-                    "패널 아래의 초기화 버튼과 같은 동작을 패널을 숨긴 상태에서도 키로 실행합니다. " +
-                    "기본값은 숫자 키패드 1~4 (NumLock 켜짐)입니다. 키 버튼을 누르면 변경할 수 있습니다.",
-                    "可用按键执行与面板底部重置按钮相同的操作，隐藏面板时也有效。默认为小键盘 1～4（NumLock 开启）。点击按键按钮即可更改。",
-                    "可用按鍵執行與面板底部重設按鈕相同的操作，隱藏面板時也有效。預設為數字鍵台 1～4（NumLock 開啟）。點擊按鍵按鈕即可變更。"));
+                    "Runs the same resets and look-at-camera toggle as the buttons at the bottom of the panel, even while the panel is hidden. " +
+                    "The defaults are numeric keypad 1–5 (NumLock on). Click a key button to change it.",
+                    "パネル下部のリセット・カメラ目線のボタンと同じ操作を、パネルを隠していてもキーで行えます。" +
+                    "既定はテンキーの 1〜5（NumLock ON）です。キーのボタンを押すと変更できます。",
+                    "패널 아래의 초기화·카메라 시선 버튼과 같은 동작을 패널을 숨긴 상태에서도 키로 실행합니다. " +
+                    "기본값은 숫자 키패드 1~5 (NumLock 켜짐)입니다. 키 버튼을 누르면 변경할 수 있습니다.",
+                    "可用按键执行与面板底部重置、看向镜头按钮相同的操作，隐藏面板时也有效。默认为小键盘 1～5（NumLock 开启）。点击按键按钮即可更改。",
+                    "可用按鍵執行與面板底部重設、看向鏡頭按鈕相同的操作，隱藏面板時也有效。預設為數字鍵台 1～5（NumLock 開啟）。點擊按鍵按鈕即可變更。"));
 
             // 表情の割り当てと比べるため、表示中のアバターの表情を取る（アバターが替わったときだけ取り直す）
             _avatar.Refresh();
@@ -170,7 +170,7 @@ namespace VRCast.UI
                 Loc.T("Also work when VRCast is in the background", "VRCast が背面にあるときも使う",
                     "VRCast가 뒤에 있을 때도 사용", "VRCast 在后台时也可使用", "VRCast 在背景時也可使用"));
 
-            // 既定（テンキー 1〜4）へ戻す
+            // 既定（テンキー 1〜5）へ戻す
             if (GUILayout.Button(Loc.T("Restore default keys", "既定のキーに戻す", "기본 키로 되돌리기", "恢复默认按键",
                     "恢復預設按鍵"), GUILayout.ExpandWidth(false)))
             {

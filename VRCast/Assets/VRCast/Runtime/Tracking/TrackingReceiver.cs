@@ -58,6 +58,7 @@ namespace VRCast.Tracking
         private float _faceTime = float.NegativeInfinity;
         private BodyTrackingFrame _latestBody;
         private float _bodyTime = float.NegativeInfinity;
+        private int _bodySequence;
 
         // 受信レート計測（1 秒ごとに更新）
         private int _framesThisSecond;
@@ -356,6 +357,7 @@ namespace VRCast.Tracking
                 _statFaces++;
             }
 
+            body.Sequence = ++_bodySequence;
             _latestBody = body;
             _bodyTime = now;
 

@@ -568,6 +568,10 @@ namespace VRCast.Converter.Editor
                 "씬의 블렌드셰이프 우선", "优先场景 BlendShape", "優先場景 BlendShape");
             string expressions = L("Expressions", "表情", "표정", "表情", "表情");
             string extraExpressions = L("added clips", "追加したクリップ", "추가한 클립", "追加的剪辑", "追加的剪輯");
+            // FaceEmo の設定があったときだけ件数を出す
+            string faceEmo = report.FaceEmoClips > 0
+                ? $"FaceEmo: {report.FaceEmoExpressionCount} / {report.FaceEmoClips}, "
+                : string.Empty;
             string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
             string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");
             string wink = L("wink", "ウインク", "윙크", "眨单眼", "眨單眼");
@@ -589,7 +593,7 @@ namespace VRCast.Converter.Editor
                 $"{baked}: {report.BakedFxClips}\n" +
                 $"{sceneBlendShapes}: {report.KeptSceneBlendShapes}\n" +
                 $"{expressions}: {report.ExpressionCount} " +
-                $"({extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips})\n" +
+                $"({faceEmo}{extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips})\n" +
                 $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +
                 $"PhysBones: {report.PhysBoneCount}\n" +
                 $"Constraints: {report.ConstraintCount}\n" +

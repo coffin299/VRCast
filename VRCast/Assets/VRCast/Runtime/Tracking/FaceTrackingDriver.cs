@@ -44,6 +44,9 @@ namespace VRCast.Tracking
         private const float MoveMetersPerUnit = 0.1f;
         private const float MaxMoveDistance = 0.3f;
 
+        // 全身モードで腰が受け持つ上半身の傾きの割合（残りは背骨・胸。足は FootPlanter が固定する）
+        private const float HipsLeanShare = 0.4f;
+
         // 肩の線による上半身のひねりの上限（度。左右の傾きの上限は MaxLeanAngle）と追従速度（1 秒あたり。肩の奥行きは揺れやすいので遅め）、
         // 肩が映った・消えたときに頭の位置による傾きとの間を切り替える秒数
         private const float MaxTorsoYaw = 35f;
@@ -85,10 +88,12 @@ namespace VRCast.Tracking
         // 表情ごとのしきい値（FaceExpression の値で引く。毎フレーム設定から詰め直す）
         private readonly float[] _thresholds = new float[(int)FaceExpressions.Last + 1];
 
-        // 腰ボーンと読込時の位置（体全体の移動用）、前フレームに動かしたかどうか
+        // 腰ボーンと読込時の位置・回転（体全体の移動・全身モードの傾き用）、前フレームに動かした・回したかどうか
         private Transform _hips;
         private Vector3 _hipsRest;
+        private Quaternion _hipsRestRotation;
         private bool _hipsMoved;
+        private bool _hipsRotated;
 
         // 背骨・胸・首・頭ボーンと、読込時（待機ポーズ適用後）の回転
         private Transform _spine;
@@ -216,6 +221,7 @@ namespace VRCast.Tracking
             // 腰は体全体の移動に使う
             _hips = animator.GetBoneTransform(HumanBodyBones.Hips);
             _hipsRest = _hips != null ? _hips.localPosition : Vector3.zero;
+            _hipsRestRotation = RestOf(_hips);
 
             // 首・胸が無いアバターは残りのボーンで回転させる（任意ボーンは null）
             _spine = animator.GetBoneTransform(HumanBodyBones.Spine);
@@ -544,7 +550,8 @@ namespace VRCast.Tracking
             {
                 _current = Quaternion.identity;
                 _currentOffset = Vector3.zero;
-                MoveHips(false);
+                MoveHips(false, false);
+                RotateHips(Quaternion.identity, false);
                 return;
             }
 
@@ -554,13 +561,17 @@ namespace VRCast.Tracking
             RestoreRest(_neck, _neckRest);
             _head.localRotation = _headRest;
 
-            // 体全体の移動（腰を動かす。足も一緒に動く）
+            // 体全体の移動（腰を動かす。全身モードでは足を固定したまま膝で吸収し、それ以外は足も一緒に動く）
             BodyMotion motion = _settings.trackingBodyMotion;
-            MoveHips(motion != BodyMotion.Lean);
+            bool plantFeet = _settings.trackingPlantFeet && _hips != null;
+            MoveHips(motion != BodyMotion.Lean, plantFeet);
 
-            // 上半身の傾き（移動のみのモードでは頭の位置では傾けない）と肩の線による向きを背骨・胸で分担
+            // 上半身の傾き（移動のみのモードでは頭の位置では傾けない）と肩の線による向きを、
+            // 全身モードでは腰にも分け（下半身がついていく）、残りを背骨・胸で分担
             Quaternion lean = CalculateLean(_currentOffset, motion != BodyMotion.Move);
-            float torsoShare = _spine != null && _chest != null ? 0.5f : 1f;
+            float hipsShare = plantFeet ? HipsLeanShare : 0f;
+            RotateHips(Quaternion.Slerp(Quaternion.identity, lean, hipsShare), plantFeet);
+            float torsoShare = (_spine != null && _chest != null ? 0.5f : 1f) * (1f - hipsShare);
             RotateInAvatarSpace(_spine, Quaternion.Slerp(Quaternion.identity, lean, torsoShare));
             RotateInAvatarSpace(_chest, Quaternion.Slerp(Quaternion.identity, lean, torsoShare));
 
@@ -581,7 +592,7 @@ namespace VRCast.Tracking
             }
         }
 
-        private void MoveHips(bool move)
+        private void MoveHips(bool move, bool plantFeet)
         {
             // 腰が無い、または動かさないモードで前フレームも動かしていなければ触らない
             if (_hips == null || (!move && !_hipsMoved))
@@ -594,7 +605,27 @@ namespace VRCast.Tracking
             _hipsMoved = move;
             if (move)
             {
-                _hips.position += transform.rotation * CalculateMove(_currentOffset);
+                // 足を固定している間は、立った姿勢より上へは上げない（脚が届かず足が浮くため。下げる分は膝で曲げる）
+                Vector3 offset = CalculateMove(_currentOffset);
+                offset.y = plantFeet ? Mathf.Min(offset.y, 0f) : offset.y;
+                _hips.position += transform.rotation * offset;
+            }
+        }
+
+        private void RotateHips(Quaternion rotation, bool rotate)
+        {
+            // 腰が無い、または回さない状態で前フレームも回していなければ触らない
+            if (_hips == null || (!rotate && !_hipsRotated))
+            {
+                return;
+            }
+
+            // 読込時の回転へ戻し、回すときだけアバタールート基準の回転を加える
+            _hips.localRotation = _hipsRestRotation;
+            _hipsRotated = rotate;
+            if (rotate)
+            {
+                RotateInAvatarSpace(_hips, rotation);
             }
         }
 
@@ -695,8 +726,17 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 目標の視線（途絶時・正面の未設定時・再検出直後は正面、目を閉じている間・視線なしのフレームは直前の値を保持）
-            if (!IsHeadUsable(received))
+            // 頭の向き（アバター基準の頭の回転）。目はこれを基準に左右・上下へ回す
+            Quaternion headFrame = transform.rotation * _current;
+
+            // 目標の視線。カメラ目線ならカメラの方向（トラッキングの有無によらない）、
+            // それ以外は途絶時・正面の未設定時・再検出直後は正面、目を閉じている間・視線なしのフレームは直前の値を保持
+            Camera view = _settings.trackingLookAtCamera ? Camera.main : null;
+            if (view != null)
+            {
+                _gazeTarget = CalculateGazeTo(view.transform.position, headFrame);
+            }
+            else if (!IsHeadUsable(received))
             {
                 _gazeTarget = Vector2.zero;
             }
@@ -708,20 +748,33 @@ namespace VRCast.Tracking
             float blend = 1f - Mathf.Exp(-EyeSmoothing * Time.deltaTime);
             _currentGaze = Vector2.Lerp(_currentGaze, _gazeTarget, blend);
 
-            // 無効化後に正面へ戻り切ったらボーンを触らない
-            if (!_settings.trackingEnabled && _currentGaze.sqrMagnitude < 1e-4f)
+            // 無効化後に正面へ戻り切ったらボーンを触らない（カメラ目線の間は動かし続ける）
+            if (!_settings.trackingEnabled && view == null && _currentGaze.sqrMagnitude < 1e-4f)
             {
                 _currentGaze = Vector2.zero;
                 return;
             }
 
-            // 読込時の回転へ戻し、頭の向き（アバター基準の頭の回転）を基準に左右・上下へ回す
+            // 読込時の回転へ戻してから回す
             RestoreRest(_leftEye, _leftEyeRest);
             RestoreRest(_rightEye, _rightEyeRest);
-            Quaternion headFrame = transform.rotation * _current;
             Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
             RotateInFrame(_leftEye, headFrame, look);
             RotateInFrame(_rightEye, headFrame, look);
+        }
+
+        private Vector2 CalculateGazeTo(Vector3 point, Quaternion headFrame)
+        {
+            // 両目の中間から見た点の方向を頭の向き基準にする（寄り目にならないよう両目で同じ角度を使う）
+            Vector3 eyes = _leftEye != null && _rightEye != null
+                ? (_leftEye.position + _rightEye.position) * 0.5f
+                : (_leftEye != null ? _leftEye : _rightEye).position;
+            Vector3 direction = Quaternion.Inverse(headFrame) * (point - eyes);
+
+            // 左右（Y 軸まわり）と上下の角度にし、白目をむかない範囲に制限する
+            float yaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
+            float pitch = Mathf.Atan2(direction.y, new Vector2(direction.x, direction.z).magnitude) * Mathf.Rad2Deg;
+            return new Vector2(Mathf.Clamp(yaw, -MaxEyeYaw, MaxEyeYaw), Mathf.Clamp(pitch, -MaxEyePitch, MaxEyePitch));
         }
 
         private Vector2 CalculateGaze()

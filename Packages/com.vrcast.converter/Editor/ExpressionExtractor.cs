@@ -8,7 +8,7 @@ using VRCast.AvatarFormat;
 namespace VRCast.Converter.Editor
 {
     /// <summary>
-    /// FX コントローラーと追加指定のクリップから「BlendShape だけを動かすクリップ」を表情プリセットとして抽出する。
+    /// 表情ツール（FaceEmo）・FX コントローラー・追加指定のクリップから「BlendShape だけを動かすクリップ」を表情プリセットとして抽出する。
     /// 0 秒時点の値を使い、重みがすべて 0 のクリップ（リセット用）は除外する。
     /// </summary>
     public static class ExpressionExtractor
@@ -23,30 +23,70 @@ namespace VRCast.Converter.Editor
         {
             public ExpressionSet Set;
             public int ExtraAdded;
+            public int NamedAdded;
+        }
+
+        /// <summary>
+        /// 表情ツール（FaceEmo 等）で名前が付いている表情クリップ。
+        /// </summary>
+        public struct NamedClip
+        {
+            public AnimationClip Clip;
+            public string Name;
         }
 
         /// <param name="controller">FX コントローラー（無ければ null）</param>
         /// <param name="extraClips">FX に無い表情として追加するクリップ（無ければ null）</param>
-        public static Result Extract(AnimatorController controller, IReadOnlyList<AnimationClip> extraClips = null)
+        /// <param name="namedClips">
+        /// 表情ツールの表情（無ければ null）。FX より優先し、BlendShape 以外のカーブは無視して取り込む
+        /// </param>
+        public static Result Extract(AnimatorController controller, IReadOnlyList<AnimationClip> extraClips = null,
+            IReadOnlyList<NamedClip> namedClips = null)
         {
             var presets = new List<ExpressionPreset>();
             var usedNames = new HashSet<string>();
             var usedClips = new HashSet<AnimationClip>();
+            // 表情ツールのクリップ名（NDMF が FX 用に複製した同名クリップを二重に入れないため）
+            var namedSources = new HashSet<string>();
+
+            int namedAdded = 0;
+            if (namedClips != null)
+            {
+                foreach (NamedClip named in namedClips)
+                {
+                    // 同じクリップ・上限超えは飛ばす
+                    if (named.Clip == null || !usedClips.Add(named.Clip) || presets.Count >= ExpressionSet.MaxPresets)
+                    {
+                        continue;
+                    }
+
+                    namedSources.Add(named.Clip.name);
+                    // 名前が無ければクリップ名、重なれば番号を付ける
+                    string name = string.IsNullOrWhiteSpace(named.Name) ? named.Clip.name : named.Name.Trim();
+                    ExpressionPreset preset = TryCreatePreset(named.Clip, UniqueName(name, usedNames), true);
+                    if (preset != null)
+                    {
+                        presets.Add(preset);
+                        namedAdded++;
+                    }
+                }
+            }
 
             // コントローラー内の全クリップ（重複は Unity 側で除去済み）
             if (controller != null)
             {
                 foreach (AnimationClip clip in controller.animationClips)
                 {
-                    // 同名クリップは最初の 1 つのみ採用し、上限で打ち切る
-                    if (clip == null || !usedNames.Add(clip.name) || presets.Count >= ExpressionSet.MaxPresets)
+                    // 表情ツール分と同名クリップは最初の 1 つのみ採用し、上限で打ち切る
+                    if (clip == null || usedClips.Contains(clip) || namedSources.Contains(clip.name)
+                        || !usedNames.Add(clip.name) || presets.Count >= ExpressionSet.MaxPresets)
                     {
                         continue;
                     }
 
                     // 追加指定に同じクリップがあっても二重に入れない
                     usedClips.Add(clip);
-                    ExpressionPreset preset = TryCreatePreset(clip, clip.name);
+                    ExpressionPreset preset = TryCreatePreset(clip, clip.name, false);
                     if (preset != null)
                     {
                         presets.Add(preset);
@@ -66,7 +106,7 @@ namespace VRCast.Converter.Editor
                     }
 
                     // 別のクリップと名前が重なるときは番号を付けて区別する
-                    ExpressionPreset preset = TryCreatePreset(clip, UniqueName(clip.name, usedNames));
+                    ExpressionPreset preset = TryCreatePreset(clip, UniqueName(clip.name, usedNames), false);
                     if (preset != null)
                     {
                         presets.Add(preset);
@@ -77,7 +117,12 @@ namespace VRCast.Converter.Editor
 
             // 名前順で並べて UI 上で探しやすくする
             presets.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
-            return new Result { Set = new ExpressionSet { presets = presets.ToArray() }, ExtraAdded = extraAdded };
+            return new Result
+            {
+                Set = new ExpressionSet { presets = presets.ToArray() },
+                ExtraAdded = extraAdded,
+                NamedAdded = namedAdded,
+            };
         }
 
         private static string UniqueName(string name, HashSet<string> usedNames)
@@ -97,14 +142,14 @@ namespace VRCast.Converter.Editor
         /// </summary>
         public static ClipCheck Check(AnimationClip clip)
         {
-            return Read(clip, null);
+            return Read(clip, null, false);
         }
 
-        private static ExpressionPreset TryCreatePreset(AnimationClip clip, string name)
+        private static ExpressionPreset TryCreatePreset(AnimationClip clip, string name, bool blendShapesOnly)
         {
             // 取り込めるクリップだけプリセットにする
             var values = new List<BlendShapeValue>();
-            if (Read(clip, values) != ClipCheck.Expression)
+            if (Read(clip, values, blendShapesOnly) != ClipCheck.Expression)
             {
                 return null;
             }
@@ -112,16 +157,22 @@ namespace VRCast.Converter.Editor
             return new ExpressionPreset { name = name, values = values.ToArray() };
         }
 
-        private static ClipCheck Read(AnimationClip clip, List<BlendShapeValue> values)
+        /// <param name="blendShapesOnly">true なら BlendShape 以外のカーブを無視する（表情ツールの小物の表示等）</param>
+        private static ClipCheck Read(AnimationClip clip, List<BlendShapeValue> values, bool blendShapesOnly)
         {
             // マテリアル差し替え等の参照カーブを含むクリップは表情ではない
-            if (AnimationUtility.GetObjectReferenceCurveBindings(clip).Length > 0)
+            if (!blendShapesOnly && AnimationUtility.GetObjectReferenceCurveBindings(clip).Length > 0)
             {
                 return ClipCheck.HasOtherCurves;
             }
 
             // カーブが無い・多すぎるクリップは対象外
             EditorCurveBinding[] bindings = AnimationUtility.GetCurveBindings(clip);
+            if (blendShapesOnly)
+            {
+                bindings = Array.FindAll(bindings, IsBlendShape);
+            }
+
             if (bindings.Length == 0)
             {
                 return ClipCheck.NoCurves;
@@ -136,8 +187,7 @@ namespace VRCast.Converter.Editor
             foreach (EditorCurveBinding binding in bindings)
             {
                 // BlendShape 以外のカーブが 1 つでもあれば対象外
-                if (binding.type != typeof(SkinnedMeshRenderer)
-                    || !binding.propertyName.StartsWith(BlendShapePrefix, StringComparison.Ordinal))
+                if (!IsBlendShape(binding))
                 {
                     return ClipCheck.HasOtherCurves;
                 }
@@ -156,6 +206,13 @@ namespace VRCast.Converter.Editor
 
             // すべて 0 のクリップはリセット用とみなして除外
             return hasNonZero ? ClipCheck.Expression : ClipCheck.AllZero;
+        }
+
+        private static bool IsBlendShape(EditorCurveBinding binding)
+        {
+            // SkinnedMeshRenderer の blendShape.* カーブだけが表情
+            return binding.type == typeof(SkinnedMeshRenderer)
+                && binding.propertyName.StartsWith(BlendShapePrefix, StringComparison.Ordinal);
         }
     }
 

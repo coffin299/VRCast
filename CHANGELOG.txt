@@ -4,14 +4,36 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- 「アバターの明るさ」を 0.1 まで下げられるように変更（これまでは 0.5 まで）
+- 書き出しツールで FaceEmo の表情を取り込む機能を追加（シーンに FaceEmo の設定があれば、モード名を表情名にして自動で書き出します。「アバターに適用」前でも可。小物の表示などは除き、ブレンドシェイプの部分だけを使います）
+- トラッカーの動作（MediaPipe）に「ぬるぬる（高負荷）」を追加し、既定に変更（手が映っている間は手を毎フレーム推定し、指がなめらかに動きます。今までの設定を使っている方は「なめらか」のままです）
+- 腕・手・指の動きを、トラッカーから届く値の間を補ってなめらかに動くように変更
+- MediaPipe で、一度見つけた手を見失いにくくし、指の動きが途切れにくいように変更
+
+[English]
+- "Avatar brightness" can now go down to 0.1 (previously 0.5)
+- Added FaceEmo support to the exporter: if the scene has FaceEmo set up for the avatar, its expressions are exported with the mode names (even before "Apply to avatar"; only the blend shape part is used, not accessory toggles)
+- Added "Fluid (high load)" to the MediaPipe tracker mode and made it the default: hands are tracked every frame while visible, so fingers move smoothly (existing settings stay on "Smooth")
+- Arms, hands, and fingers now move smoothly by filling in between the values sent by the tracker
+- MediaPipe now keeps track of a hand once found, so finger movement drops out less often
+
 ■ 1.13.6 (2026-10-09)
 
 [日本語]
 - 新しいバージョンのお知らせの「今すぐ更新」ボタンを目立つ色に変更
+- 最近使ったアバターを画像付きのタイルで並べる機能を追加（タイルの「画像」で PNG / JPG / GIF を設定。GIF はアニメーションします。表示中のアバターには画像をウィンドウにドロップしても設定できます）
+- 目を画面に向ける「カメラ目線」を追加（トラッキングタブ・パネル下部のボタン・ショートカットキー（既定はテンキーの 5）で切り替え。トラッキングを切っていても効きます）
+- 全身を映すアバター向けの「全身モード（足を固定）」を追加（足を床に付けたまま、腰も上半身の傾き・移動についていき、膝の曲げで吸収します）
 - 非表示にしたオブジェクトの中に体のボーンがあるアバターで、首などが足元（原点）まで伸びる問題を修正（.vrcaster の書き出し直しが必要）
 
 [English]
 - Made the "Update now" button in the new version notice stand out with the accent color
+- Added picture tiles for recent avatars ("Image" on a tile sets a PNG / JPG / GIF; GIFs are animated. You can also drop an image onto the window for the avatar being shown)
+- Added "Look at camera", which points the eyes at the screen (toggle it in the Tracking tab, with the button at the bottom of the panel or its shortcut key, numeric keypad 5 by default; works even with tracking off)
+- Added "Full body (keep feet planted)" for avatars shown in full: the feet stay on the floor while the hips follow the upper body's lean and movement, and the knees bend
 - Fixed parts such as the neck stretching down to the origin on avatars whose disabled objects contain body bones (re-export the .vrcaster)
 
 ■ 1.13.5 (2026-10-09)

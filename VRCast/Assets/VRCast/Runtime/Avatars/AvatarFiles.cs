@@ -62,7 +62,10 @@ namespace VRCast.Avatars
             return null;
         }
 
-        private static bool HasExtension(string path, string extension)
+        /// <summary>
+        /// 拡張子が一致する（大文字小文字を区別しない）なら true。空・不正な文字を含むパスは false。存在確認はしない。
+        /// </summary>
+        public static bool HasExtension(string path, string extension)
         {
             // 空・不正な文字を含むパスは対象外
             if (string.IsNullOrWhiteSpace(path) || path.IndexOfAny(Path.GetInvalidPathChars()) >= 0)

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Animations;
@@ -34,6 +35,9 @@ namespace VRCast.UI
         // 注記をスイッチの下に出すときの字下げ（スイッチの幅）と、横に並べるときの最小の間隔
         private const float SourceNoteIndent = 48f;
         private const float SourceNoteGap = 12f;
+
+        // トラッカーの動作の選択肢の並び（重い順。TrackerMode の数値は保存値なので並びとは別）
+        private static readonly TrackerMode[] TrackerModeOrder = { TrackerMode.Fluid, TrackerMode.Smooth, TrackerMode.Eco };
 
         // iPhone の IP アドレスの入力欄の最大文字数（IPv4 の最長 15 文字に余裕を持たせる）
         private const int MaxAddressLength = 40;
@@ -269,6 +273,12 @@ namespace VRCast.UI
                 // MediaPipe はエコ・腕と手の推定を止めるとそれぞれ 1 段軽くなる
                 case TrackingSource.MediaPipe:
                     int level = (_settings.trackingHands ? 1 : 0) + (_settings.trackerMode == TrackerMode.Eco ? 0 : 1);
+                    // ぬるぬるは手を毎フレーム推定するので、手を使うときだけさらに重い
+                    if (level >= 2 && _settings.trackerMode == TrackerMode.Fluid)
+                    {
+                        return Loc.T("Very high", "とても高", "매우 높음", "很高", "很高");
+                    }
+
                     return level >= 2
                         ? Loc.T("High", "高", "높음", "高", "高")
                         : level == 1
@@ -305,16 +315,25 @@ namespace VRCast.UI
 
         private void DrawTrackerMode()
         {
-            // 並びは TrackerMode と同じ（変更すると TrackerProcess がトラッカーを起動し直す）
+            // 重い順に並べる（変更すると TrackerProcess がトラッカーを起動し直す）
             string[] labels =
             {
+                Loc.T("Fluid (high load)", "ぬるぬる（高負荷）", "매끄럽게 (고부하)", "丝滑（高负载）", "絲滑（高負載）"),
                 Loc.T("Smooth", "なめらか", "부드럽게", "流畅", "流暢"),
                 Loc.T("Eco", "エコ", "절약", "节能", "節能"),
             };
-            _settings.trackerMode = (TrackerMode)GuiControls.EnumSelector(
+            int selected = GuiControls.EnumSelector(
                 Loc.T("Tracker mode", "トラッカーの動作", "트래커 동작", "追踪器模式", "追蹤器模式"),
-                labels, (int)_settings.trackerMode);
-            GuiControls.Hint(_settings.trackerMode == TrackerMode.Eco
+                labels, Array.IndexOf(TrackerModeOrder, _settings.trackerMode));
+            _settings.trackerMode = TrackerModeOrder[Mathf.Clamp(selected, 0, TrackerModeOrder.Length - 1)];
+            GuiControls.Hint(_settings.trackerMode == TrackerMode.Fluid
+                ? Loc.T(
+                    "Fluid: like Smooth, but hands are tracked every frame while visible so fingers move smoothly. Uses more CPU.",
+                    "ぬるぬる: 「なめらか」に加え、手が映っている間は手を毎フレーム推定し、指の動きがなめらかになります。CPU 負荷は上がります。",
+                    "매끄럽게: 「부드럽게」에 더해, 손이 보이는 동안 손을 매 프레임 추정해 손가락이 매끄럽게 움직입니다. CPU 부하가 늘어납니다.",
+                    "丝滑：在“流畅”的基础上，手可见时每帧估计手部，手指动作更顺滑。CPU 负载会增加。",
+                    "絲滑：在「流暢」的基礎上，手可見時每格估計手部，手指動作更順滑。CPU 負載會增加。")
+                : _settings.trackerMode == TrackerMode.Eco
                 ? Loc.T(
                     "Eco: up to 20 fps, arms and hands are updated less often. About half the PC load of Smooth.",
                     "エコ: 最大 20fps。腕・手の更新を減らし、PC 負荷は「なめらか」の半分ほどです。",
@@ -805,9 +824,33 @@ namespace VRCast.UI
             _settings.trackingBodyLean = GuiControls.Slider(
                 Loc.T("Body strength", "体の動きの強さ", "몸 움직임 강도", "身体动作强度", "身體動作強度"),
                 _settings.trackingBodyLean, 0f, AppSettings.MaxTrackingBodyLean);
+
+            // 全身を映すアバター向けに、足を固定して腰も上半身についていかせる
+            _settings.trackingPlantFeet = GUILayout.Toggle(
+                _settings.trackingPlantFeet,
+                Loc.T("Full body (keep feet planted)", "全身モード（足を固定）", "전신 모드 (발 고정)", "全身模式（固定脚部）",
+                    "全身模式（固定腳部）"));
+            GuiControls.Hint(Loc.T(
+                "For showing the whole body. The hips follow the upper body's lean and movement while the feet stay on the floor and the knees bend.",
+                "全身を映すとき向けです。足を床に付けたまま、腰も上半身の傾き・移動についていき、膝の曲げで吸収します。",
+                "전신을 비출 때 사용합니다. 발을 바닥에 둔 채 허리도 상체의 기울기·이동을 따라가고 무릎을 굽혀 흡수합니다.",
+                "适合显示全身时使用。脚保持贴地，腰部也跟随上半身的倾斜和移动，由膝盖弯曲吸收。",
+                "適合顯示全身時使用。腳保持貼地，腰部也跟隨上半身的傾斜和移動，由膝蓋彎曲吸收。"));
+
             _settings.trackingGaze = GuiControls.Slider(
                 Loc.T("Eye gaze", "視線の強さ", "시선 강도", "视线强度", "視線強度"),
                 _settings.trackingGaze, 0f, AppSettings.MaxTrackingGaze);
+
+            // カメラ目線（ショートカットキー・パネル下部のボタンでも切り替えられる）
+            _settings.trackingLookAtCamera = GUILayout.Toggle(
+                _settings.trackingLookAtCamera,
+                Loc.T("Look at camera", "カメラ目線", "카메라 시선", "看向镜头", "看向鏡頭"));
+            GuiControls.Hint(Loc.T(
+                "Points the eyes at the screen instead of following your gaze. Also toggled by the button at the bottom of the panel or its shortcut key (default: numeric keypad 5).",
+                "トラッキングの視線の代わりに、目を画面に向けます。パネル下部のボタンやショートカットキー（既定はテンキーの 5）でも切り替えられます。",
+                "트래킹 시선 대신 눈을 화면으로 향하게 합니다. 패널 아래 버튼이나 단축키 (기본값: 숫자 키패드 5)로도 전환할 수 있습니다.",
+                "眼睛看向画面，而不是跟随追踪的视线。也可用面板底部的按钮或快捷键（默认：小键盘 5）切换。",
+                "眼睛看向畫面，而不是跟隨追蹤的視線。也可用面板底部的按鈕或快捷鍵（預設：數字鍵台 5）切換。"));
 
             // ウインク用 BlendShape が無いアバターは両目同時のみ（再エクスポートで推定される場合がある）
             var blink = _avatar.Get<BlinkController>();

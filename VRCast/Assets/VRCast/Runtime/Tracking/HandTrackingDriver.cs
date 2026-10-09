@@ -11,8 +11,8 @@ namespace VRCast.Tracking
     [DefaultExecutionOrder(-90)]
     public class HandTrackingDriver : MonoBehaviour
     {
-        // 点の追従速度（大きいほど速い、1 秒あたり）
-        private const float Smoothing = 15f;
+        // 補間した点への追従速度（大きいほど速い、1 秒あたり）。補間で約 1 回分遅れる分、以前（15）より速くする
+        private const float Smoothing = 25f;
 
         // 映った・消えたときに待機ポーズとの間を切り替える秒数
         private const float FadeSeconds = 0.3f;
@@ -90,6 +90,14 @@ namespace VRCast.Tracking
             public Vector3 LowerDirection;
             public Vector3[] HandPoints = new Vector3[MediaPipePacket.HandPointCount];
 
+            // 届いた値（上腕・前腕の向き、手の 21 点）の間を描画の毎フレーム補間する
+            public readonly PointInterpolator ArmPath = new PointInterpolator(2);
+            public readonly PointInterpolator HandPath = new PointInterpolator(MediaPipePacket.HandPointCount);
+
+            // 届いた値をアバタールート基準へ直す作業領域（毎回の確保を避ける）
+            public readonly Vector3[] ArmSample = new Vector3[2];
+            public readonly Vector3[] HandSample = new Vector3[MediaPipePacket.HandPointCount];
+
             // 待機ポーズ（0）とトラッキング（1）の混ぜ具合
             public float ArmWeight;
             public float HandWeight;
@@ -102,6 +110,9 @@ namespace VRCast.Tracking
 
         // 待機ポーズを記録してボーンを操作中なら true
         private bool _engaged;
+
+        // 最後に使った受信の番号（新しい値が届いたかの判定用）
+        private int _lastSequence;
 
         /// <summary>
         /// 腕または手のトラッキング値を受信して適用中なら true。
@@ -212,11 +223,17 @@ namespace VRCast.Tracking
                 && TrackingSourceInfo.HasArms(_settings.trackingSource);
             BodyTrackingFrame frame = default;
             bool received = enabled && _provider != null && _provider.TryGetBody(out frame);
+            bool fresh = received && frame.Sequence != _lastSequence;
+            if (received)
+            {
+                _lastSequence = frame.Sequence;
+            }
 
             // 鏡像モードでは本人の右腕がアバターの左腕
             bool mirror = _settings.trackingMirror;
-            UpdateTargets(_left, mirror ? frame.Right : frame.Left, received);
-            UpdateTargets(_right, mirror ? frame.Left : frame.Right, received);
+            float now = Time.unscaledTime;
+            UpdateTargets(_left, mirror ? frame.Right : frame.Left, received, fresh, now);
+            UpdateTargets(_right, mirror ? frame.Left : frame.Right, received, fresh, now);
             IsTracking = received && (HasWeight(_left) || HasWeight(_right));
 
             // 操作中に待機ポーズが変更されていたら記録し直す
@@ -259,7 +276,7 @@ namespace VRCast.Tracking
             return rig != null && (rig.ArmWeight > 0f || rig.HandWeight > 0f);
         }
 
-        private void UpdateTargets(ArmRig rig, ArmTrackingData data, bool received)
+        private void UpdateTargets(ArmRig rig, ArmTrackingData data, bool received, bool fresh, float now)
         {
             // 対象外の腕は何もしない
             if (rig == null)
@@ -270,26 +287,54 @@ namespace VRCast.Tracking
             float blend = 1f - Mathf.Exp(-Smoothing * Time.deltaTime);
             float fade = Time.deltaTime / FadeSeconds;
 
-            // 腕: 映っていれば向きを追従（待機ポーズから戻ってきた直後は補間せず合わせる）
+            // 腕: 新しい値が届いたら補間の目標にし、毎フレーム補間した向きへ追従（待機ポーズから戻った直後は合わせる）
             bool hasArm = received && data.HasArm;
             if (hasArm)
             {
-                Vector3 upper = ToAvatar(data.Elbow - data.Shoulder).normalized;
-                Vector3 lower = ToAvatar(data.Wrist - data.Elbow).normalized;
+                if (fresh || !rig.ArmPath.HasValue)
+                {
+                    rig.ArmSample[0] = ToAvatar(data.Elbow - data.Shoulder).normalized;
+                    rig.ArmSample[1] = ToAvatar(data.Wrist - data.Elbow).normalized;
+                    rig.ArmPath.Push(rig.ArmSample, now);
+                }
+
+                rig.ArmPath.Update(now);
+                Vector3 upper = rig.ArmPath.Current[0].normalized;
+                Vector3 lower = rig.ArmPath.Current[1].normalized;
                 bool following = rig.ArmWeight > 0f;
                 rig.UpperDirection = following ? Vector3.Slerp(rig.UpperDirection, upper, blend) : upper;
                 rig.LowerDirection = following ? Vector3.Slerp(rig.LowerDirection, lower, blend) : lower;
             }
+            else
+            {
+                // 見失ったら、次に映ったときは補間せずに合わせる
+                rig.ArmPath.Reset();
+            }
 
-            // 手: 同様に 21 点を追従
+            // 手: 同様に 21 点を補間して追従
             bool hasHand = received && data.HasHand;
             if (hasHand)
             {
+                if (fresh || !rig.HandPath.HasValue)
+                {
+                    for (int i = 0; i < rig.HandSample.Length; i++)
+                    {
+                        rig.HandSample[i] = ToAvatar(data.Hand[i]);
+                    }
+
+                    rig.HandPath.Push(rig.HandSample, now);
+                }
+
+                rig.HandPath.Update(now);
                 float t = rig.HandWeight > 0f ? blend : 1f;
                 for (int i = 0; i < rig.HandPoints.Length; i++)
                 {
-                    rig.HandPoints[i] = Vector3.Lerp(rig.HandPoints[i], ToAvatar(data.Hand[i]), t);
+                    rig.HandPoints[i] = Vector3.Lerp(rig.HandPoints[i], rig.HandPath.Current[i], t);
                 }
+            }
+            else
+            {
+                rig.HandPath.Reset();
             }
 
             // 映っている間はトラッキングへ、消えたら待機ポーズへ徐々に切り替える（最後の値を保持したまま）

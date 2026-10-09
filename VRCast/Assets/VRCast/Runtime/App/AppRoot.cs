@@ -209,6 +209,9 @@ namespace VRCast.App
             var face = avatar.Instance.AddComponent<FaceTrackingDriver>();
             face.Initialize(avatar.Animator, _tracker, _tracker, blink, lipSync, expressions, _settings);
 
+            // 全身モードで固定する足の位置を記録するため待機ポーズ適用後に初期化（腰を動かした後に脚を合わせる）
+            avatar.Instance.AddComponent<FootPlanter>().Initialize(avatar.Animator, _settings);
+
             // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);
 

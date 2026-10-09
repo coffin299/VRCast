@@ -379,6 +379,38 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void AvatarThumbnail_RoundTripsAndRejectsUnsafeNames()
+        {
+            // 視点を記録したアバターだけ画像を設定できること
+            Assert.That(_store.Load().SetAvatarThumbnail("C:/Avatars/A.vrcaster", "a.png"), Is.False);
+            var settings = new AppSettings();
+            settings.SetAvatarCamera("C:/Avatars/A.vrcaster", new CameraPose { distance = 2f });
+            Assert.That(settings.SetAvatarThumbnail("C:/Avatars/A.vrcaster", "a.png"), Is.True);
+
+            // フォルダの外を指しうる名前は受け付けないこと
+            Assert.That(settings.SetAvatarThumbnail("C:/Avatars/A.vrcaster", "../a.png"), Is.False);
+            Assert.That(settings.SetAvatarThumbnail("C:/Avatars/A.vrcaster", ".."), Is.False);
+
+            // 保存して読み直しても残り、大文字・小文字を問わず引けること
+            _store.Save(settings);
+            AppSettings loaded = _store.Load();
+            Assert.That(loaded.GetAvatarThumbnail("c:/avatars/a.vrcaster"), Is.EqualTo("a.png"));
+            Assert.That(loaded.AvatarThumbnails(), Is.EquivalentTo(new[] { "a.png" }));
+        }
+
+        [Test]
+        public void Load_UnsafeThumbnailName_IsCleared()
+        {
+            var settings = new AppSettings();
+            settings.SetAvatarCamera("C:/Avatars/A.vrcaster", new CameraPose { distance = 2f });
+            settings.avatarCameras[0].thumbnail = "..\\..\\secret.png";
+            _store.Save(settings);
+
+            // 手編集でフォルダの外を指した名前は未設定に戻ること
+            Assert.That(_store.Load().GetAvatarThumbnail("C:/Avatars/A.vrcaster"), Is.Empty);
+        }
+
+        [Test]
         public void ResetToDefaults_KeepsAvatarCameras()
         {
             var settings = new AppSettings();

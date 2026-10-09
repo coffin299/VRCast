@@ -126,7 +126,7 @@ namespace VRCast.UI
             _creditsSection = new CreditsSection();
 
             // リセットはパネル下部のボタンとショートカットキー（パネルを隠していても動く）で共用する
-            var resetActions = new ResetActions(session, orbit);
+            var resetActions = new ResetActions(session, orbit, settings);
             _resetBar = new ResetBar(resetActions, settings);
             gameObject.AddComponent<ResetHotkeyListener>().Initialize(resetActions, session, settings);
             _performanceBar = new PerformanceBar(settings, tracker, trackerProcess);

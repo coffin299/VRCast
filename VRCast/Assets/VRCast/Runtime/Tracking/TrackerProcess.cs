@@ -40,6 +40,7 @@ namespace VRCast.Tracking
         // MediaPipe 版のトラッカーの動作ごとの引数（推定回数の上限・体と手の間引き・手が映っていない間に探す頻度）
         private const string SmoothMediaPipeArgument = " --pose-every 2 --hand-search-every 2";
         private const string EcoMediaPipeArgument = " --max-fps 20 --pose-every 3 --hand-search-every 3";
+        private const string FluidMediaPipeArgument = " --pose-every 2 --hand-search-every 2 --hand-every-frame";
 
         // 軽量モードの引数（OpenSeeFace: 既定（3）より軽いモデル。MediaPipe 版はトラッカーの動作で決める）
         private const string LowLoadOpenSeeFaceArgument = " --model 2";
@@ -424,6 +425,22 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
+        /// MediaPipe 版へ渡す、トラッカーの動作ごとの引数。
+        /// </summary>
+        public static string MediaPipeModeArgument(TrackerMode mode)
+        {
+            switch (mode)
+            {
+                case TrackerMode.Eco:
+                    return EcoMediaPipeArgument;
+                case TrackerMode.Fluid:
+                    return FluidMediaPipeArgument;
+                default:
+                    return SmoothMediaPipeArgument;
+            }
+        }
+
+        /// <summary>
         /// トラッカーの終了コードの意味（不明なら "unknown"）。
         /// </summary>
         public static string DescribeExitCode(TrackingSource source, int code)
@@ -522,7 +539,7 @@ namespace VRCast.Tracking
                 // MediaPipe 版はトラッカーの動作、OpenSeeFace は軽量モードで処理の重さを決める
                 if (mediaPipe)
                 {
-                    arguments += _startedMode == TrackerMode.Eco ? EcoMediaPipeArgument : SmoothMediaPipeArgument;
+                    arguments += MediaPipeModeArgument(_startedMode);
                 }
                 else if (_startedLowLoad)
                 {

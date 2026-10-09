@@ -1,6 +1,7 @@
 """VRCast 用 MediaPipe トラッカー。
 
 Web カメラの映像から顔（頭の向き・表情）・腕・手を推定し、JSON を UDP で VRCast へ送る。
+担当: 顔 = Face Landmarker、体（肩・肘・手首）= Pose Landmarker、手・指 = Hand Landmarker（MediaPipe Hands）。
 引数は OpenSeeFace の facetracker と同じ形（-l / -c / -i / -p）にしてあり、
 VRCast から同じ手順で起動・カメラ一覧取得ができる。
 
@@ -21,11 +22,12 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 頭の行列・腕・手・可視度は One Euro フィルターで平滑化してから送る
 （止まっているときの細かい揺れを消し、速い動きでは遅れを抑える。CPU 負荷はほぼ無い）。
 
-負荷を抑える仕組み（VRCast のトラッカーの動作「なめらか」「エコ」で値を変える）:
+負荷を抑える仕組み（VRCast のトラッカーの動作「ぬるぬる」「なめらか」「エコ」で値を変える）:
     --max-fps            推定の回数を毎秒その回数までに間引く
     --pose-every         体・手の推定を N フレームに 1 回にする（顔は毎フレーム。間のフレームは前回の結果を送る）
     --hand-search-every  手が映っていない間、手を探すのを体の推定 N 回に 1 回にする
                          （手が 2 本そろわない間は毎回手のひらの検出からやり直すため重い）
+    --hand-every-frame   手が映っている間は、体を間引いたフレームでも手を推定する（指の動きを細かく送る）
 カメラの読み取りは別スレッドで続け、推定は常に最新のフレームで行う（カメラ待ちで推定を止めない）。
 
 状態ログ（VRCast のデバッグログタブで行頭から重要度を判定する）:
@@ -92,6 +94,13 @@ POSE_RIGHT_WRIST = 16
 FACE_MODEL = "face_landmarker.task"
 HAND_MODEL = "hand_landmarker.task"
 POSE_MODEL = "pose_landmarker_lite.task"
+
+# Hand Landmarker の閾値（MediaPipe の既定はすべて 0.5）。
+# 新しく手を見つけるときは誤検出を避けて既定のまま、一度見つけた手は低めの閾値で追い続ける
+# （見失うと毎回手のひらの検出からやり直すため、重くなり指の動きも途切れる）
+HAND_DETECTION_CONFIDENCE = 0.5  # 手のひらの検出（新しく見つけるとき）
+HAND_PRESENCE_CONFIDENCE = 0.3  # 追跡中の手らしさ（下回ると検出からやり直す）
+HAND_TRACKING_CONFIDENCE = 0.3  # 前のフレームとの手の位置の一致度
 
 # カメラの既定の解像度・フレームレート
 DEFAULT_WIDTH = 640
@@ -168,6 +177,8 @@ def parse_arguments():
     parser.add_argument("--pose-every", type=int, default=1)
     # 手が映っていない間、体の推定何回に 1 回手を探すか（1 で毎回）
     parser.add_argument("--hand-search-every", type=int, default=1)
+    # 手が映っている間は体の間引きに関係なく毎フレーム手を推定する
+    parser.add_argument("--hand-every-frame", action="store_true")
     # 親プロセス（VRCast）の PID。終了したらトラッカーも終了する
     parser.add_argument("--parent-pid", type=int, default=0)
     # 統計の状態ログを出す間隔（秒、0 以下で出さない）
@@ -602,6 +613,9 @@ def create_landmarkers(use_hands):
                     model_asset_buffer=load_model(HAND_MODEL)),
                 running_mode=vision.RunningMode.VIDEO,
                 num_hands=2,
+                min_hand_detection_confidence=HAND_DETECTION_CONFIDENCE,
+                min_hand_presence_confidence=HAND_PRESENCE_CONFIDENCE,
+                min_tracking_confidence=HAND_TRACKING_CONFIDENCE,
             )
         )
     return face, pose, hands
@@ -746,14 +760,17 @@ def assign_hands(hand_result, pose_result):
 class Inference:
     """顔は毎フレーム、体・手は間引いて推定する（間引いたフレームは前回の結果を使う）。
 
-    手は映っている間は体と同じ頻度で追い、映っていない間は探す回数をさらに減らす。
+    手は映っている間は体と同じ頻度（hand_every_frame なら毎フレーム）で追い、
+    映っていない間は探す回数をさらに減らす。
     """
 
-    def __init__(self, landmarkers, pose_every, hand_search_every, stats):
+    def __init__(self, landmarkers, pose_every, hand_search_every, stats,
+                 hand_every_frame=False):
         """landmarkers は (顔, 体, 手 or None)。頻度は 1 以上に丸める。"""
         self._face, self._pose, self._hands = landmarkers
         self._pose_every = max(1, pose_every)
         self._hand_search_every = max(1, hand_search_every)
+        self._hand_every_frame = hand_every_frame
         self._stats = stats
         # 推定したフレーム数・体を推定した回数と、体・手の前回の結果
         self._frames = 0
@@ -771,29 +788,41 @@ class Inference:
         # 体（と手）は N フレームに 1 回
         if self._frames % self._pose_every == 0:
             self._detect_body(image, timestamp)
+        # 体を間引いたフレームでも、指定があれば映っている手だけは追う
+        elif self._hand_every_frame and self._hands_visible():
+            self._detect_hands(image, timestamp)
         self._frames += 1
         stats.inferred += 1
         return face_result, self._pose_result, self._hand_result
+
+    def _hands_visible(self):
+        """前回の推定で手が映っていれば True。"""
+        return (self._hands is not None
+                and self._hand_result is not None
+                and bool(self._hand_result.hand_world_landmarks))
 
     def _detect_body(self, image, timestamp):
         """体を推定し、必要なら手も推定する。"""
         stats = self._stats
         started = time.perf_counter()
         self._pose_result = self._pose.detect_for_video(image, timestamp)
-        pose_done = time.perf_counter()
-        stats.pose_ms += (pose_done - started) * 1000.0
+        stats.pose_ms += (time.perf_counter() - started) * 1000.0
         stats.pose_runs += 1
 
         # 手は映っていれば毎回、映っていなければ N 回に 1 回だけ探す
         if self._hands is not None:
-            tracking = (self._hand_result is not None
-                        and bool(self._hand_result.hand_world_landmarks))
-            if tracking or self._pose_runs % self._hand_search_every == 0:
-                self._hand_result = self._hands.detect_for_video(
-                    image, timestamp)
-                stats.hand_ms += (time.perf_counter() - pose_done) * 1000.0
-                stats.hand_runs += 1
+            searching = self._pose_runs % self._hand_search_every == 0
+            if self._hands_visible() or searching:
+                self._detect_hands(image, timestamp)
         self._pose_runs += 1
+
+    def _detect_hands(self, image, timestamp):
+        """手を推定して結果を更新する。"""
+        stats = self._stats
+        started = time.perf_counter()
+        self._hand_result = self._hands.detect_for_video(image, timestamp)
+        stats.hand_ms += (time.perf_counter() - started) * 1000.0
+        stats.hand_runs += 1
 
 
 def build_packet(face_result, pose_result, hand_result, smoother, now):
@@ -853,7 +882,8 @@ def run(arguments):
     smoother = Smoother()
     stats = Stats(arguments.status_interval, use_hands)
     inference = Inference((face, pose, hands), arguments.pose_every,
-                          arguments.hand_search_every, stats)
+                          arguments.hand_search_every, stats,
+                          arguments.hand_every_frame)
     # カメラは別スレッドで読み続ける（推定は最新のフレームだけを使う）
     grabber = FrameGrabber(capture)
     grabber.start()

@@ -7,17 +7,35 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// リセット（顔の向き・視線・表情・カメラ）の実行と表示名。パネル下部のボタンとショートカットキーで共用する。
+    /// リセット（顔の向き・視線・表情・カメラ）とカメラ目線の切り替えの実行と表示名。パネル下部のボタンとショートカットキーで共用する。
     /// </summary>
     public sealed class ResetActions
     {
         private readonly AvatarComponentCache _avatar;
         private readonly OrbitCameraController _orbit;
+        private readonly AppSettings _settings;
 
-        public ResetActions(AvatarSession session, OrbitCameraController orbit)
+        public ResetActions(AvatarSession session, OrbitCameraController orbit, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
             _orbit = orbit;
+            _settings = settings;
+        }
+
+        /// <summary>
+        /// ON / OFF を切り替える操作なら true（ボタンを押し込んだ見た目で状態を出す）。
+        /// </summary>
+        public static bool IsToggle(ResetAction action)
+        {
+            return action == ResetAction.LookAtCamera;
+        }
+
+        /// <summary>
+        /// 切り替える操作が今 ON なら true（リセットは常に false）。
+        /// </summary>
+        public bool IsOn(ResetAction action)
+        {
+            return action == ResetAction.LookAtCamera && _settings.trackingLookAtCamera;
         }
 
         /// <summary>
@@ -33,6 +51,8 @@ namespace VRCast.UI
                     return Loc.T("Gaze", "視線", "시선", "视线", "視線");
                 case ResetAction.Expression:
                     return Loc.T("Expression", "表情", "표정", "表情", "表情");
+                case ResetAction.LookAtCamera:
+                    return Loc.T("Look at camera", "カメラ目線", "카메라 시선", "看向镜头", "看向鏡頭");
                 default:
                     return Loc.T("Camera", "カメラ", "카메라", "相机", "相機");
             }
@@ -54,6 +74,9 @@ namespace VRCast.UI
                 case ResetAction.Expression:
                     var expressions = _avatar.Get<ExpressionController>();
                     return expressions != null && (expressions.Current >= 0 || expressions.IsManual);
+                case ResetAction.LookAtCamera:
+                    // アバターが無くても切り替えておける（次に読み込んだアバターから効く）
+                    return true;
                 default:
                     return true;
             }
@@ -83,6 +106,10 @@ namespace VRCast.UI
                 case ResetAction.Expression:
                     // 表情をニュートラルへ戻し、手動の固定も外す
                     _avatar.Get<ExpressionController>().ResetToNeutral();
+                    break;
+                case ResetAction.LookAtCamera:
+                    // 目を画面に向けるかを切り替える
+                    _settings.trackingLookAtCamera = !_settings.trackingLookAtCamera;
                     break;
                 default:
                     // カメラを正面の既定位置へ

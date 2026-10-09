@@ -20,7 +20,9 @@ MediaPipe Tracker (StreamingAssets/MediaPipeTracker/)
   Built from Tools/MediaPipeTracker with PyInstaller.
 
   - MediaPipe and MediaPipe Tasks models
-    (face_landmarker, pose_landmarker_lite, hand_landmarker)
+      face_landmarker       Face Landmarker (head pose and facial expressions)
+      pose_landmarker_lite  Pose Landmarker (body: shoulders, elbows, wrists)
+      hand_landmarker       Hand Landmarker / MediaPipe Hands (hands and fingers)
     Copyright Google LLC
     Apache License 2.0
     https://github.com/google-ai-edge/mediapipe

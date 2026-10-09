@@ -35,6 +35,8 @@ namespace VRCast.Converter.Editor
             public int ExpressionCount;
             public int ExtraExpressionClips;
             public int ExtraExpressionCount;
+            public int FaceEmoClips;
+            public int FaceEmoExpressionCount;
             public string LipSyncMode;
             public bool HasBlink;
             public bool HasWink;
@@ -94,6 +96,7 @@ namespace VRCast.Converter.Editor
         /// <summary>
         /// keepSceneBlendShapes が true なら、FX の初期状態ではなくシーン上の BlendShape の値を書き出す。
         /// extraExpressionClips は FX に無い表情として追加するクリップ（BlendShape だけを動かすものを取り込む）。
+        /// シーンに FaceEmo の設定があれば、その表情を FaceEmo の名前で優先して取り込む。
         /// </summary>
         public static Report Export(GameObject source, string outputPath, bool keepSceneBlendShapes = true,
             IReadOnlyList<AnimationClip> extraExpressionClips = null)
@@ -118,6 +121,9 @@ namespace VRCast.Converter.Editor
 
             // NDMF が書き出し中に生成したアセットだけを後で消すため、既存分を控える
             HashSet<string> generatedAssetsBefore = NdmfProcessor.ListGeneratedAssets();
+
+            // FaceEmo は元のアバターを対象として記録しているため、複製の前に元から読む
+            List<ExpressionExtractor.NamedClip> faceEmoClips = FaceEmoReader.Read(source);
 
             try
             {
@@ -168,12 +174,15 @@ namespace VRCast.Converter.Editor
                         keepSceneBlendShapes);
                 }
 
-                // FX と追加指定のクリップから表情プリセットを抽出
-                ExpressionExtractor.Result extracted = ExpressionExtractor.Extract(fx, extraExpressionClips);
+                // FaceEmo・FX・追加指定のクリップから表情プリセットを抽出
+                ExpressionExtractor.Result extracted =
+                    ExpressionExtractor.Extract(fx, extraExpressionClips, faceEmoClips);
                 ExpressionSet expressions = extracted.Set;
                 report.ExpressionCount = expressions.presets.Length;
                 report.ExtraExpressionClips = extraExpressionClips?.Count ?? 0;
                 report.ExtraExpressionCount = extracted.ExtraAdded;
+                report.FaceEmoClips = faceEmoClips.Count;
+                report.FaceEmoExpressionCount = extracted.NamedAdded;
 
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);

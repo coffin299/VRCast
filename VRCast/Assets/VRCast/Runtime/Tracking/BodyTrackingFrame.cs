@@ -30,5 +30,8 @@ namespace VRCast.Tracking
     {
         public ArmTrackingData Left;
         public ArmTrackingData Right;
+
+        // 受信するたびに増える番号（新しい値が届いたかの判定用）
+        public int Sequence;
     }
 }

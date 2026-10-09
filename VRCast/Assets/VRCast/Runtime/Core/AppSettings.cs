@@ -26,7 +26,7 @@ namespace VRCast.Core
         public const float MaxLightTemperature = 10000f;
 
         // アバターの明るさ（マテリアルの色の倍率）の範囲
-        public const float MinAvatarBrightness = 0.5f;
+        public const float MinAvatarBrightness = 0.1f;
         public const float MaxAvatarBrightness = 10f;
 
         // マイク感度・しきい値の範囲
@@ -111,8 +111,8 @@ namespace VRCast.Core
         // パネルの一番下に動作状況（fps・CPU・GPU・トラッキング）を表示するか
         public bool showPerformanceStats = true;
 
-        // 同梱の MediaPipe トラッカーの動作（なめらか / エコ）
-        public TrackerMode trackerMode = TrackerMode.Smooth;
+        // 同梱の MediaPipe トラッカーの動作（ぬるぬる / なめらか / エコ）
+        public TrackerMode trackerMode = TrackerMode.Fluid;
 
         // VRCast 本体と同梱トラッカーのプロセスの優先度（両方に同じ値を使う）
         public ProcessPriority processPriority = ProcessPriority.Normal;
@@ -221,6 +221,12 @@ namespace VRCast.Core
 
         // 上半身のひねり（縦軸まわり）を正面に固定する（左右の傾きは肩の線のまま）
         public bool trackingTorsoLockTwist;
+
+        // カメラ目線（トラッキングの視線の代わりに、目を画面（カメラ）へ向ける。トラッキングを切っていても効く）
+        public bool trackingLookAtCamera;
+
+        // 全身モード（足を床に固定したまま、腰も上半身の傾き・移動についていかせ、膝で吸収する）
+        public bool trackingPlantFeet;
 
         // パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit 名の BlendShape を持つアバターの顔を直接動かす）
         public bool trackingPerfectSync = true;
@@ -395,6 +401,58 @@ namespace VRCast.Core
 
             // 壊れた値は除いて複製を持つ
             avatarCameras[index].expressionHotkeys = hotkeys.FindAll(hotkey => hotkey != null && hotkey.IsValid);
+        }
+
+        /// <summary>
+        /// アバターの一覧に出す画像のファイル名を返す（サムネイル用フォルダ内の名前。未設定・未記録なら空文字）。
+        /// </summary>
+        public string GetAvatarThumbnail(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0 ? avatarCameras[index].thumbnail ?? string.Empty : string.Empty;
+        }
+
+        /// <summary>
+        /// アバターの一覧に出す画像のファイル名を記録する（空文字で解除）。記録の無いアバター・不正な名前は false。
+        /// </summary>
+        public bool SetAvatarThumbnail(string avatarPath, string fileName)
+        {
+            // 記録の無いアバター（視点の無い記録は作らない）と、フォルダの外を指しうる名前は受け付けない
+            int index = FindAvatarCamera(avatarPath);
+            fileName ??= string.Empty;
+            if (index < 0 || (fileName.Length > 0 && !IsThumbnailFileName(fileName)))
+            {
+                return false;
+            }
+
+            avatarCameras[index].thumbnail = fileName;
+            return true;
+        }
+
+        /// <summary>
+        /// 記録中のアバターの画像のファイル名（未設定は含まない）。使われなくなった画像を消すときに使う。
+        /// </summary>
+        public HashSet<string> AvatarThumbnails()
+        {
+            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (AvatarEntry entry in avatarCameras)
+            {
+                if (!string.IsNullOrEmpty(entry.thumbnail))
+                {
+                    names.Add(entry.thumbnail);
+                }
+            }
+
+            return names;
+        }
+
+        /// <summary>
+        /// サムネイル用フォルダ内のファイル名として使えるなら true（区切り文字・「.」「..」を含む名前は不可）。
+        /// </summary>
+        public static bool IsThumbnailFileName(string fileName)
+        {
+            return !string.IsNullOrEmpty(fileName) && fileName != "." && fileName != ".."
+                && fileName.IndexOfAny(System.IO.Path.GetInvalidFileNameChars()) < 0;
         }
 
         /// <summary>
@@ -601,6 +659,9 @@ namespace VRCast.Core
                 // 表情のショートカットキーは壊れたもの・使えないキーを捨てる（旧版の設定には無いので空の一覧にする）
                 entry.expressionHotkeys ??= new List<ExpressionHotkey>();
                 entry.expressionHotkeys.RemoveAll(hotkey => hotkey == null || !hotkey.IsValid);
+
+                // 一覧の画像はフォルダの外を指しうる名前（手編集）を未設定にする（旧版の設定には無いので空にする）
+                entry.thumbnail = IsThumbnailFileName(entry.thumbnail) ? entry.thumbnail : string.Empty;
             }
 
             // リセットのショートカットキーは種類ごとに 1 つへそろえる（旧版の設定には無いので既定のキーになる）
@@ -626,10 +687,10 @@ namespace VRCast.Core
                 hybridCores = HybridCoreSelection.Auto;
             }
 
-            // 未知のトラッカーの動作はなめらかへ
+            // 未知のトラッカーの動作は既定（ぬるぬる）へ
             if (!Enum.IsDefined(typeof(TrackerMode), trackerMode))
             {
-                trackerMode = TrackerMode.Smooth;
+                trackerMode = TrackerMode.Fluid;
             }
 
             // 未知の GPU の優先設定は Windows に任せる
