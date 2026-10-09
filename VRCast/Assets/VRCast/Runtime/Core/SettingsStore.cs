@@ -83,26 +83,8 @@ namespace VRCast.Core
 
             try
             {
-                // 保存先ディレクトリが無ければ作成
-                string directory = Path.GetDirectoryName(FilePath);
-                if (!string.IsNullOrEmpty(directory))
-                {
-                    Directory.CreateDirectory(directory);
-                }
-
                 // 書き込み途中で落ちても既存ファイルを壊さないよう一時ファイル経由で置き換える
-                string tempPath = FilePath + ".tmp";
-                File.WriteAllText(tempPath, JsonUtility.ToJson(settings, true));
-
-                // 既存ファイルがあれば置換、無ければ移動
-                if (File.Exists(FilePath))
-                {
-                    File.Replace(tempPath, FilePath, null);
-                }
-                else
-                {
-                    File.Move(tempPath, FilePath);
-                }
+                AtomicFile.WriteAllText(FilePath, JsonUtility.ToJson(settings, true));
 
                 // 保存成功を記録して Player.log から追えるようにする
                 VRCastLog.Info(LogCategory, $"Saved settings: {FilePath}");

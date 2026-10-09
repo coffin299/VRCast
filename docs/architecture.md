@@ -112,6 +112,9 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `TrackingSource` | トラッキングの入力元（MediaPipe = 0 / OpenSeeFace = 1、設定に数値で保存） |
 | `BodyMotion` | 頭の位置に合わせた体の動かし方（Lean = 0: 足を固定して背骨・胸を傾ける / Move = 1: 腰ごと移動 / LeanAndMove = 2、設定に数値で保存） |
 | `SettingsStore` | `settings.json` の読込・保存。破損時は既定値にフォールバック |
+| `AtomicFile` | 一時ファイルに書いてから置き換える書き込み（`settings.json`・設定プリセットで共用） |
+| `SettingsPreset` | 設定プリセット（`.vrcastpreset`）の書き出し・解析・適用。`AppSettings` のフィールドをカテゴリ（`PresetCategory`。アバター関連の印付き）か除外のどちらかに必ず割り当てる（テストで検査）。ファイルはカテゴリごとのブロックに分けた JSON テキスト。知らないカテゴリ・キーは無視、無いキーは今の値のまま、カテゴリに属さないキーは反映しない。`formatVersion` は互換性のない変更時だけ上げる |
+| `JsonObjectText` | JSON オブジェクトの一番外側のキーと値（JSON のテキストのまま）の切り分け・結合（`JsonUtility` で一部のキーだけを扱うため） |
 | `VersionUtility` | "1.2.0" 形式（先頭の v 可、欠けた桁は 0）のバージョン番号の解析と比較。読めない番号は「新しくない」扱い |
 | `AppBootstrap` | `RuntimeInitializeOnLoadMethod` で起動時に設定を読み込み（初回は既定値で作成）、終了時にウィンドウサイズを含めて保存する |
 
@@ -190,7 +193,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `VRCastUpdater.exe`（C++、`Tools/Updater/src`） | VRCast の PID と、インストール先の実行ファイルで動くプロセス（トラッカー・クラッシュハンドラー）の終了を待つ → 展開先の直下にある名前の範囲だけを対象に、中身が同じファイルは残し、他は `.vrcast-update-backup\<日時>` へ `MoveFileEx`（他のアプリが読み込み中の DLL も名前の変更はできる）→ 空のフォルダを消して新しいファイルを `CopyFile` → 失敗したら置いたファイルを消して退避したファイルを戻す → 結果を書いて VRCast を起動し直す。長いパスは `\\?\` で扱う。asInvoker のマニフェストで、管理者権限では起動しない |
 | `UnityWindow` | メインスレッドの Unity のプレイヤーウィンドウ（`UnityWndClass`）のハンドルを探す。タイトルの変更（`SetWindowTextW`） |
 | `FileDropReceiver` | Windows のスタンドアロン実行時に Unity のウィンドウへ `DragAcceptFiles` でドロップを許可し、メインスレッドの `WH_GETMESSAGE` フックで `WM_DROPFILES` を取り出してパスを `Update` で通知 |
-| `FileDialog` | Windows の「ファイルを開く」ダイアログ（`GetOpenFileNameW`、モーダル。複数の拡張子を 1 つのフィルターで指定） |
+| `FileDialog` | Windows の「ファイルを開く」「名前を付けて保存」ダイアログ（`GetOpenFileNameW` / `GetSaveFileNameW`、モーダル。複数の拡張子を 1 つのフィルターで指定。保存は上書きの確認付き） |
 | `AnimationSection` | Pose タブ（向き・待機ポーズ、表情。表情ごとに 1 行で「表情ボタン・キーの割り当てボタン（押すと割り当て待ち、Esc でやめる）・リセット」。割り当てはアバターごとに `AppSettings.SetExpressionHotkeys` へ記録。リセットのショートカットキーと同じなら行の下に警告）。表情ボタンは固定中の表情を押し直すと自動検出へ戻し、固定中は「自動検出に戻す」を出す |
 | `ExpressionHotkey` | アバターごとの表情のショートカットキー（プリセット名・Windows の仮想キー番号・Ctrl / Alt / Shift。ニュートラルは `<neutral>`） |
 | `RemoteControl` | 外部操作（設定で ON のときだけ）。OSC（UDP）と HTTP を `127.0.0.1` にのみ bind し、スレッドを使わず Update でポーリングして表示中のアバターの `ExpressionController` を操作。HTTP は `Origin` / 別サイトの `Sec-Fetch-Site` 付き（Web ページからの送信）を 403 で拒否し、CORS ヘッダーは付けない。bind 失敗は 3 秒ごとに再試行 |
@@ -216,7 +219,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `GpuSelection` | 描画に使う GPU。Windows の優先設定は `HKCU\Software\Microsoft\DirectX\UserGpuPreferences` の VRCast.exe の値の `GpuPreference` 項目だけを書き換え（他の項目は残す。直接指定中・自動なら項目を消す）。直接指定は GPU 名で保存し、起動時（`AppBootstrap`、シーン読込前）に違う GPU なら番号へ解決して `-force-device-index` / `-adapter` 付きで起動し直す（起動し直した後も違えば繰り返さず警告、`AppRoot` は生成しない）。どちらも反映は次回起動から（`Restart` で再起動） |
 | `CpuTopology` | `GetLogicalProcessorInformationEx`（RelationAll）でコアごとの EfficiencyClass と L3 ごとの大きさ・論理コアのマスクを読む。EfficiencyClass が混在すれば P コア / E コアの CPU（最大の種類が P コア）、そうでなく大きさの違う L3 があれば 2 CCD の X3D（小さい側を使う）。`CoreMaskFor` が設定（`avoidCacheCcd` / `hybridCores`）から使わせるコアのマスクを返す（0 = 全コア）。プロセッサグループが複数の PC は対象外。初回だけ調べる |
 | `NvidiaOverlayExclusion` | NVIDIA のオーバーレイ（ShadowPlay）に VRCast を検知させない設定。`nvapi64.dll` の `nvapi_QueryInterface` で DRS 関数を取り、プロファイル「VRCast」に VRCast.exe と非公開の設定 `0x809D5F60 = 0x10000000` を書く（`Exclude`）/ プロファイルを消す（`Restore`）/ 状態を調べる（`Query`、NVIDIA が無ければ `Unavailable`）。構造体は公開ヘッダーの V1 のバイト数で手書き。exe が別のプロファイルにあれば書き換えない。反映は次回起動から |
-| `SettingsSection` | Settings タブ（表示言語、UI の大きさのプリセット、テーマ（ライト / ダーク）、リセットのショートカットキー（行ごとに割り当て・解除、背面でも使う、既定に戻す。表示中のアバターの表情と同じキーなら警告）、軽量モード・プロセスの優先度・3D V-Cache の無い側のコアで動かす・使うコア（Intel）（どちらも全ての PC に表示し、対象の CPU とこの PC が対象かを添える）・描画に使う GPU（変更時は再起動ボタン）、NVIDIA ShadowPlay に検知させない設定（NVIDIA の PC のみ。状態は初回と変更後だけ調べる）、アップデートの確認（ON/OFF・状態）、ヘルプ、全設定のリセット（赤いボタン → 確認の 2 段階）、バージョン） |
+| `SettingsSection` | Settings タブ（表示言語、UI の大きさのプリセット、テーマ（ライト / ダーク）、リセットのショートカットキー（行ごとに割り当て・解除、背面でも使う、既定に戻す。表示中のアバターの表情と同じキーなら警告）、軽量モード・プロセスの優先度・3D V-Cache の無い側のコアで動かす・使うコア（Intel）（どちらも全ての PC に表示し、対象の CPU とこの PC が対象かを添える）・描画に使う GPU（変更時は再起動ボタン）、NVIDIA ShadowPlay に検知させない設定（NVIDIA の PC のみ。状態は初回と変更後だけ調べる）、アップデートの確認（ON/OFF・状態）、ヘルプ、設定プリセット（`PresetSection`）、全設定のリセット（赤いボタン → 確認の 2 段階）、バージョン） |
+| `PresetSection` | Settings タブの設定プリセットのカード。書き出すカテゴリの選択と保存、読み込んだファイルの確認欄（入っているカテゴリだけを選択、アバター関連をまとめて外す、適用 / キャンセル）。`.vrcastpreset` のドロップでも同じ確認欄を出し、反映後は `MainPanel` の各機能への反映（全設定のリセットと共用）を呼ぶ |
 | `AvatarComponentCache` | 表示中アバターのコンポーネントをアバター切替までキャッシュ |
 | `GuiControls` | セクション共通の IMGUI 部品（見出し付きカード、補足文、ラベル付きスライダー、`<` `>` の巡回選択・列挙値選択） |
 | `PathUtility` | 入力パスの整形（前後の空白・`"` を除去） |
@@ -264,6 +268,7 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | :--- | :--- |
 | `AssemblyIsolationTests` | `VRCast.Runtime` / `VRCast.AvatarFormat` が `UnityEditor` / Editor アセンブリ / VRChat SDK を参照していない（`#if UNITY_EDITOR` 内の参照も違反として検出する） |
 | `SettingsStoreTests` | 設定の保存・再読込、ファイル欠落・破損時のフォールバック、値の補正、リセットのショートカットキー（既定・重複の解除・検索・読込時の補完） |
+| `SettingsPresetTests` | 設定プリセットの往復、カテゴリの絞り込み（アバター関連を外す）、手編集（知らない・消した・別カテゴリのキー）、新しい形式、壊れた・別形式のファイルの拒否、値の補正、全フィールドのカテゴリ割り当て、JSON のキー単位の切り分け |
 | `LogBufferTests` | ログ保持の上限・件数・消去、VRCastLog のカテゴリ分け、例外のスタックトレース、同じログのまとめ、DEBUG の記録条件 |
 | `TrackerProcessTests` | トラッカーのカメラ一覧出力の解析（見出し・CRLF・番号の欠け・無関係な出力）、入力元ごとの同梱版の探索、出力行の重要度判定、終了コードの説明・古いトラッカーの判定、仮想 / 赤外線カメラの判定と既定カメラの選択 |
 | `VirtualCameraInstallerTests` | regsvr32 の引数（登録はデバイス名付きで 64 → 32 bit、解除は /u）、同梱ドライバーの探索（32 / 64 bit の両方が必要） |

@@ -80,6 +80,7 @@ namespace VRCast.UI
         private OutputSection _outputSection;
         private RemoteSection _remoteSection;
         private SettingsSection _settingsSection;
+        private PresetSection _presetSection;
         private LogSection _logSection;
         private CreditsSection _creditsSection;
         private readonly DiscordSection _discordSection = new DiscordSection();
@@ -123,7 +124,8 @@ namespace VRCast.UI
             _displaySection = new DisplaySection(orbit, rendering, settings);
             _outputSection = new OutputSection(virtualCamera, spout, rendering);
             _remoteSection = new RemoteSection(session, remote, settings);
-            _settingsSection = new SettingsSection(session, settings, rendering, updates, ResetAllSettings);
+            _presetSection = new PresetSection(settings, ReapplySettings);
+            _settingsSection = new SettingsSection(session, settings, rendering, updates, ResetAllSettings, _presetSection);
             _logSection = new LogSection(trackerProcess, tracker, settings);
             _creditsSection = new CreditsSection();
 
@@ -139,6 +141,16 @@ namespace VRCast.UI
 
         private void OnFilesDropped(IReadOnlyList<string> paths)
         {
+            // 設定プリセットは、隠していても表示して Settings タブの確認欄を出す（ドロップしただけでは反映しない）
+            string preset = FindPreset(paths);
+            if (preset != null)
+            {
+                _presetSection.Open(preset);
+                SetVisible(true);
+                _tab = Tab.Settings;
+                return;
+            }
+
             // 非対応ファイルのときは隠していても表示し、エラーが見える Avatar タブへ
             if (!_avatarSection.LoadDropped(paths))
             {
@@ -167,11 +179,34 @@ namespace VRCast.UI
             }
         }
 
+        private static string FindPreset(IReadOnlyList<string> paths)
+        {
+            // 最初に見つかった設定プリセット（無ければ null）
+            if (paths == null)
+            {
+                return null;
+            }
+
+            foreach (string path in paths)
+            {
+                if (PresetSection.IsPresetFile(path))
+                {
+                    return path;
+                }
+            }
+
+            return null;
+        }
+
         private void ResetAllSettings()
         {
             // 設定値を既定に戻す（ウィンドウサイズ・最後のアバター・アバターごとの記録は保持）
             _settings.ResetToDefaults();
+            ReapplySettings();
+        }
 
+        private void ReapplySettings()
+        {
             // 設定変更時にしか反映しない機能へ反映し直す（他は毎フレーム設定を読む）
             _rendering.ApplyAll();
             _virtualCamera.Enabled = _settings.virtualCameraEnabled;

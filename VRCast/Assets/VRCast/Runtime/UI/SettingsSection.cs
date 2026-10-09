@@ -11,7 +11,8 @@ namespace VRCast.UI
 {
     /// <summary>
     /// Settings タブ（表示言語、UI の大きさ、テーマ（ライト / ダーク）、リセットのショートカットキー、軽量モード・プロセスの優先度・描画に使う GPU、
-    /// NVIDIA ShadowPlay に検知させない設定（NVIDIA の PC のみ）、アップデートの確認、ヘルプ、全設定のリセット（2 段階確認）、バージョン情報）。
+    /// NVIDIA ShadowPlay に検知させない設定（NVIDIA の PC のみ）、アップデートの確認、ヘルプ、設定プリセットの書き出し・読み込み、
+    /// 全設定のリセット（2 段階確認）、バージョン情報）。
     /// </summary>
     public class SettingsSection
     {
@@ -33,6 +34,7 @@ namespace VRCast.UI
         private readonly RenderingController _rendering;
         private readonly UpdateChecker _updates;
         private readonly Action _resetAll;
+        private readonly PresetSection _presets;
 
         // リセットのショートカットキーの割り当て（対象 = ResetAction）
         private readonly KeyCaptureSession _capture = new KeyCaptureSession();
@@ -47,14 +49,16 @@ namespace VRCast.UI
         private bool _overlayRestartPending;
 
         /// <param name="resetAll">全設定を既定値に戻して各機能へ反映する処理</param>
+        /// <param name="presets">設定プリセットのカード（ドロップでも開くため MainPanel と共有する）</param>
         public SettingsSection(AvatarSession session, AppSettings settings, RenderingController rendering,
-            UpdateChecker updates, Action resetAll)
+            UpdateChecker updates, Action resetAll, PresetSection presets)
         {
             _avatar = new AvatarComponentCache(session);
             _settings = settings;
             _rendering = rendering;
             _updates = updates;
             _resetAll = resetAll;
+            _presets = presets;
         }
 
         public void Draw()
@@ -67,6 +71,7 @@ namespace VRCast.UI
             DrawNvidiaOverlay();
             DrawUpdates();
             DrawHelp();
+            _presets.Draw();
             DrawReset();
             DrawAbout();
         }
