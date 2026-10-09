@@ -44,6 +44,7 @@ namespace VRCast.Converter.Editor
             public bool NdmfApplied;
             public int ModularAvatarFallbackFixes;
             public int RemovedInactiveObjects;
+            public int MissingBoneRenderers;
             public ComponentStripper.Result Strip;
         }
 
@@ -177,6 +178,9 @@ namespace VRCast.Converter.Editor
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
+
+                // ボーンを失ったメッシュ（頂点が原点へ伸びる）を警告
+                report.MissingBoneRenderers = ComponentStripper.WarnMissingBones(clone);
 
                 // BlendShape の同期（改変・除去の後のパスで。まばたき・口パク等の直接の書き込みにも同期させるため）
                 BlendShapeSyncSet blendShapeSync = BlendShapeSyncExtractor.Build(syncPlan);

@@ -8,9 +8,11 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - 新しいバージョンのお知らせの「今すぐ更新」ボタンを目立つ色に変更
+- 非表示にしたオブジェクトの中に体のボーンがあるアバターで、首などが足元（原点）まで伸びる問題を修正（.vrcaster の書き出し直しが必要）
 
 [English]
 - Made the "Update now" button in the new version notice stand out with the accent color
+- Fixed parts such as the neck stretching down to the origin on avatars whose disabled objects contain body bones (re-export the .vrcaster)
 
 ■ 1.13.5 (2026-10-09)
 

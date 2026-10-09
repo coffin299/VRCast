@@ -59,18 +59,53 @@ namespace VRCast.Converter.Editor
         /// <summary>
         /// 非アクティブ（エディタでチェックを外した）オブジェクトを子ごと削除し、削除した数を返す（ルートは残す）。
         /// FX の初期状態で表示されるものも含め、書き出しには一切含めない。
+        /// ただし残るメッシュがボーンとして使う Transform は消さず、コンポーネントだけを外して残す
+        /// （消すとそのボーンに乗った頂点が原点へ伸びる。VRChat では非アクティブでもボーンとして動くため）。
         /// </summary>
         public static int RemoveInactiveObjects(GameObject root)
         {
-            return RemoveObjects(root, go => !go.activeSelf);
+            return RemoveObjects(root, go => !go.activeSelf, true);
+        }
+
+        /// <summary>
+        /// ボーンが見つからない（削除済み・アバター外を参照している）SkinnedMeshRenderer を警告し、その数を返す。
+        /// </summary>
+        public static int WarnMissingBones(GameObject root)
+        {
+            int count = 0;
+            Transform rootTransform = root.transform;
+            foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                // null とアバター外のボーンを数える（アバター外は Prefab 保存時に null になる）
+                int missing = 0;
+                foreach (Transform bone in renderer.bones)
+                {
+                    if (bone == null || !bone.IsChildOf(rootTransform))
+                    {
+                        missing++;
+                    }
+                }
+
+                if (missing == 0)
+                {
+                    continue;
+                }
+
+                count++;
+                Debug.LogWarning(
+                    $"[VRCast][Exporter] '{ReflectionUtility.PathOf(renderer.transform, rootTransform)}' has {missing} missing bone(s); " +
+                    "vertices weighted to them will stretch to the origin.");
+            }
+
+            return count;
         }
 
         private static int RemoveEditorOnlyObjects(GameObject root)
         {
-            return RemoveObjects(root, go => go.CompareTag(EditorOnlyTag));
+            return RemoveObjects(root, go => go.CompareTag(EditorOnlyTag), false);
         }
 
-        private static int RemoveObjects(GameObject root, System.Predicate<GameObject> match)
+        private static int RemoveObjects(GameObject root, System.Predicate<GameObject> match, bool keepUsedBones)
         {
             // 列挙中に破棄しないよう先に対象を集める
             var targets = new List<GameObject>();
@@ -83,18 +118,129 @@ namespace VRCast.Converter.Editor
                 }
             }
 
+            // 残るメッシュが使うボーンとその親（指定時のみ）
+            HashSet<Transform> usedBones = keepUsedBones ? CollectUsedBones(root, targets) : new HashSet<Transform>();
+
             // 親が先に消えた子は null になるのでスキップ
             int count = 0;
             foreach (GameObject go in targets)
             {
-                if (go != null)
+                if (go == null)
+                {
+                    continue;
+                }
+
+                // 使用中のボーンを含むなら、ボーンの Transform だけを残す
+                if (usedBones.Contains(go.transform))
+                {
+                    PruneKeepingBones(go.transform, usedBones);
+                }
+                else
                 {
                     Object.DestroyImmediate(go);
-                    count++;
                 }
+
+                count++;
             }
 
             return count;
+        }
+
+        private static HashSet<Transform> CollectUsedBones(GameObject root, List<GameObject> removing)
+        {
+            var used = new HashSet<Transform>();
+            Transform rootTransform = root.transform;
+            foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                // 一緒に消えるメッシュのボーンは不要
+                if (IsUnderAny(renderer.transform, removing))
+                {
+                    continue;
+                }
+
+                // ボーンとルートボーンを、アバタールートまでの親ごと登録（親が消えると子も消えるため）
+                foreach (Transform bone in renderer.bones)
+                {
+                    AddWithAncestors(used, bone, rootTransform);
+                }
+
+                AddWithAncestors(used, renderer.rootBone, rootTransform);
+            }
+
+            return used;
+        }
+
+        private static bool IsUnderAny(Transform transform, List<GameObject> objects)
+        {
+            // 消える対象（またはその子孫）なら true
+            foreach (GameObject go in objects)
+            {
+                if (go != null && transform.IsChildOf(go.transform))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void AddWithAncestors(HashSet<Transform> set, Transform bone, Transform root)
+        {
+            // アバター外・未設定のボーンは対象外。登録済みの親に当たったら以降も登録済み
+            if (bone == null || !bone.IsChildOf(root))
+            {
+                return;
+            }
+
+            Transform t = bone;
+            while (t != null && t != root && set.Add(t))
+            {
+                t = t.parent;
+            }
+        }
+
+        private static void PruneKeepingBones(Transform kept, HashSet<Transform> usedBones)
+        {
+            // ボーンに使われない子は子ごと削除（付け替えで並びが変わらないよう先に集める）
+            var children = new List<Transform>();
+            foreach (Transform child in kept)
+            {
+                children.Add(child);
+            }
+
+            foreach (Transform child in children)
+            {
+                if (usedBones.Contains(child))
+                {
+                    PruneKeepingBones(child, usedBones);
+                }
+                else
+                {
+                    Object.DestroyImmediate(child.gameObject);
+                }
+            }
+
+            // 表示物・揺れもの等は書き出さないため Transform 以外を外す（RequireComponent の依存順で繰り返す）
+            for (int pass = 0; pass < MaxPasses; pass++)
+            {
+                int removed = 0;
+                foreach (Component component in kept.GetComponents<Component>())
+                {
+                    if (component != null && !(component is Transform) && CanRemove(component))
+                    {
+                        Object.DestroyImmediate(component);
+                        removed++;
+                    }
+                }
+
+                if (removed == 0)
+                {
+                    break;
+                }
+            }
+
+            // Missing Script も外す
+            GameObjectUtility.RemoveMonoBehavioursWithMissingScript(kept.gameObject);
         }
 
         private static int RemoveDisallowedOnce(GameObject root)
