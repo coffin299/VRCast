@@ -33,6 +33,9 @@ alwaysApply: true
    `Packages/com.vrcast.converter/package.json` の `version`、
  `README.md` の「現在の状態」にある「**バージョン x.y.z（製品版）**」。
 3. 修正だけなら z、機能追加なら y、互換性が壊れる変更なら x を上げる。
-4. 配布 zip は `Tools\Package\package.bat`（`CHANGELOG.txt` は自動で同梱される）。
-5. 配布 zip を公開したら、`webpage` ブランチ（作業フォルダ `../VRCast-webpage`）の `version.json` の `version` を同じバージョンにする
- （アプリの更新通知に使う。zip の公開より先に変えない）。
+4. 配布 zip は `Tools\Package\release.bat`（または `package.bat`。`CHANGELOG.txt` は自動で同梱される）。
+ `dist\VRCast-x.y.z-win64.zip` と、自動更新用の `dist\version.json`（zip の大きさと SHA-256 入り）ができる。
+5. GitHub の Release `vx.y.z` に `VRCast-x.y.z-win64.zip` を**名前を変えずに**添付して公開する
+ （アプリは `https://github.com/coffin299/VRCast/releases/download/vx.y.z/VRCast-x.y.z-win64.zip` を取りに行く）。
+6. zip の公開を確かめてから、`webpage` ブランチ（作業フォルダ `../VRCast-webpage`）の `version.json` を `dist\version.json` で置き換える
+ （アプリの更新通知と自動更新に使う。zip の公開より先に変えない。zip を作り直したら SHA-256 が変わるので必ず置き換え直す）。

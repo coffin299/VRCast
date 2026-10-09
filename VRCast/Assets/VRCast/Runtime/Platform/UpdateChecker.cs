@@ -8,14 +8,16 @@ namespace VRCast.Platform
 {
     /// <summary>
     /// Web サイト（webpage ブランチの GitHub Pages）の version.json を取得し、新しいバージョンがあるかを調べる。アプリ全体で 1 つ。
-    /// 起動時に 1 回だけ確認し、失敗（オフライン等）は静かに諦める。自動ダウンロード・自動更新はしない。
+    /// 起動時に 1 回だけ確認し、失敗（オフライン等）は静かに諦める。
+    /// 更新は利用者がボタンを押したときだけ Installer（UpdateInstaller）が行う。
     /// </summary>
     public class UpdateChecker : MonoBehaviour
     {
         // ログのカテゴリ名
         private const string LogCategory = "Update";
 
-        // 最新バージョンの情報（{"version": "1.2.0", "url": "...", "boothUrl": "..."}）
+        // 最新バージョンの情報（{"version": "1.2.0", "url": "...", "boothUrl": "...",
+        // "update": {"zipUrl": "...", "size": 123, "sha256": "..."}}。update は自動更新用で、無ければ手動の案内だけ）
         public const string ManifestUrl = "https://coffin299.github.io/VRCast/version.json";
 
         // version.json に url / boothUrl が無い・許可外のときに開くダウンロードページ
@@ -49,6 +51,18 @@ namespace VRCast.Platform
             public string version;
             public string url;
             public string boothUrl;
+            public PackageInfo update;
+        }
+
+        /// <summary>
+        /// 自動更新に使う配布 zip（GitHub Releases）の場所・大きさ（バイト）・SHA-256。
+        /// </summary>
+        [Serializable]
+        public class PackageInfo
+        {
+            public string zipUrl;
+            public long size;
+            public string sha256;
         }
 
         private AppSettings _settings;
@@ -86,9 +100,21 @@ namespace VRCast.Platform
         /// </summary>
         public bool IsUpdateAvailable => State == CheckState.Done && VersionUtility.IsNewer(LatestVersion, Application.version);
 
+        /// <summary>
+        /// 最新バージョンの配布 zip（version.json に正しい update があるときだけ。無ければ null）。
+        /// </summary>
+        public PackageInfo Package { get; private set; }
+
+        /// <summary>
+        /// 自動更新（ダウンロード・アップデーターの起動）と前回の更新の結果。
+        /// </summary>
+        public UpdateInstaller Installer { get; private set; }
+
         public void Initialize(AppSettings settings)
         {
             _settings = settings;
+            Installer = gameObject.AddComponent<UpdateInstaller>();
+            Installer.Initialize(this);
         }
 
         private void Start()
@@ -185,8 +211,13 @@ namespace VRCast.Platform
             LatestVersion = manifest.version.Trim().TrimStart('v', 'V');
             GitHubUrl = IsAllowedUrl(manifest.url, GitHubUrlPrefixes) ? manifest.url : DefaultGitHubUrl;
             BoothUrl = IsAllowedUrl(manifest.boothUrl, BoothUrlPrefixes) ? manifest.boothUrl : DefaultBoothUrl;
+
+            // 自動更新の情報は、GitHub Releases の URL・大きさ・SHA-256 がそろっているときだけ使う
+            PackageInfo package = manifest.update;
+            Package = package != null && UpdatePackage.IsValid(package.zipUrl, package.size, package.sha256) ? package : null;
             State = CheckState.Done;
-            VRCastLog.Info(LogCategory, $"Latest {LatestVersion}, current {Application.version}");
+            VRCastLog.Info(LogCategory, $"Latest {LatestVersion}, current {Application.version}, "
+                + $"auto-update package: {(Package != null ? "yes" : "no")}");
         }
 
         private static bool IsAllowedUrl(string url, string[] prefixes)

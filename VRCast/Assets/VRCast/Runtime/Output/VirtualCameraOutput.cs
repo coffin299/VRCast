@@ -161,7 +161,7 @@ namespace VRCast.Output
         public VirtualCameraRegistration GetRegistration()
         {
             return UseMediaFoundation
-                ? VirtualCameraInstaller.GetMediaFoundationRegistration()
+                ? VirtualCameraInstaller.GetMediaFoundationRegistration(MediaFoundationCamera.ModulePath)
                 : VirtualCameraInstaller.GetRegistration(BundledFolder);
         }
 

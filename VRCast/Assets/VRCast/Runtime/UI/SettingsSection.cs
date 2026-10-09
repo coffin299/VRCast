@@ -555,11 +555,14 @@ namespace VRCast.UI
             }
 
             GuiControls.Hint(Loc.T(
-                "Connects to the VRCast website (coffin299.github.io) only to read the latest version number",
-                "最新のバージョン番号を読むためだけに VRCast の Web サイト（coffin299.github.io）へ接続します",
-                "최신 버전 번호를 읽기 위해서만 VRCast 웹사이트(coffin299.github.io)에 접속합니다",
-                "仅为读取最新版本号而连接 VRCast 网站（coffin299.github.io）",
-                "僅為讀取最新版本號而連線 VRCast 網站（coffin299.github.io）"));
+                "Connects to the VRCast website (coffin299.github.io) only to read the latest version number. "
+                + "The update itself is downloaded from GitHub only when you press \"Update now\"",
+                "最新のバージョン番号を読むためだけに VRCast の Web サイト（coffin299.github.io）へ接続します。"
+                + "更新そのものは「今すぐ更新」を押したときだけ GitHub からダウンロードします",
+                "최신 버전 번호를 읽기 위해서만 VRCast 웹사이트(coffin299.github.io)에 접속합니다. "
+                + "업데이트 자체는 「지금 업데이트」를 눌렀을 때만 GitHub에서 다운로드합니다",
+                "仅为读取最新版本号而连接 VRCast 网站（coffin299.github.io）。更新本身仅在按下“立即更新”时从 GitHub 下载",
+                "僅為讀取最新版本號而連線 VRCast 網站（coffin299.github.io）。更新本身僅在按下「立即更新」時從 GitHub 下載"));
             GuiControls.Hint(UpdateStatus());
 
             // 新しいバージョンがあればここからも開ける

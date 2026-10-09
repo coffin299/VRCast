@@ -192,7 +192,9 @@ namespace VRCast.UI
             GUI.enabled = _pending == null;
             string installLabel = _registration == VirtualCameraRegistration.NotInstalled
                 ? Loc.T("Install driver", "ドライバーを登録", "드라이버 등록", "安装驱动程序", "安裝驅動程式")
-                : Loc.T("Reinstall driver", "ドライバーを再登録", "드라이버 재등록", "重新安装驱动程序", "重新安裝驅動程式");
+                : _registration == VirtualCameraRegistration.Outdated
+                    ? Loc.T("Update driver", "ドライバーを更新", "드라이버 업데이트", "更新驱动程序", "更新驅動程式")
+                    : Loc.T("Reinstall driver", "ドライバーを再登録", "드라이버 재등록", "重新安装驱动程序", "重新安裝驅動程式");
             if (GUILayout.Button(installLabel, GuiControls.Shrinkable))
             {
                 Run(true);
@@ -294,6 +296,12 @@ namespace VRCast.UI
                         "드라이버: 다른 폴더에서 등록됨 (카메라 오류 시 재등록)",
                         "驱动程序：已从其他文件夹安装（摄像头出错时请重新安装）",
                         "驅動程式：已從其他資料夾安裝（攝影機出錯時請重新安裝）");
+                case VirtualCameraRegistration.Outdated:
+                    return Loc.T("Driver: an older version is installed (press \"Update driver\", needs administrator)",
+                        "ドライバー: 古いバージョンが登録されています（「ドライバーを更新」を押してください、管理者権限）",
+                        "드라이버: 이전 버전이 등록되어 있습니다 (「드라이버 업데이트」를 누르세요, 관리자 권한)",
+                        "驱动程序：已安装旧版本（请按“更新驱动程序”，需管理员权限）",
+                        "驅動程式：已安裝舊版本（請按「更新驅動程式」，需系統管理員權限）");
                 default:
                     return Loc.T("Driver: not installed (install once, needs administrator)",
                         "ドライバー: 未登録（初回のみ登録が必要、管理者権限）",

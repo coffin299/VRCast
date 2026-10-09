@@ -231,8 +231,17 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
   非公式の設定のためドライバーによっては効かない。VRCast.exe が既に別のプロファイルに入っていれば書き換えない。
   書き込めないときは NvAPI のエラー番号を表示する（その場合は管理者として実行して試す）。エディターでは押せない。
 - **アップデートの確認**（既定 ON）: 起動時に Web サイトの `https://coffin299.github.io/VRCast/version.json` を 1 回だけ読み、
-  新しいバージョンがあればパネル上部に通知する（**GitHub からダウンロード** / **BOOTH からダウンロード** / **更新履歴を表示する（GitHub）**）。
-  通信は最新のバージョン番号を読むためだけで、失敗しても何も表示しない。**Settings** の **Check for updates at startup** で OFF にできる。
+  新しいバージョンがあればパネル上部に通知する（**今すぐ更新** / **GitHub からダウンロード** / **BOOTH からダウンロード** / **更新履歴を表示する（GitHub）**）。
+  確認の通信は最新のバージョン番号を読むためだけで、失敗しても何も表示しない。**Settings** の **Check for updates at startup** で OFF にできる。
+- **自動アップデート**: 通知の **Update now**（今すぐ更新）を押すと、GitHub Releases の配布 zip をダウンロードし（進み具合を表示、キャンセル可）、
+  `version.json` に書かれた大きさと SHA-256 が一致したときだけ展開して、VRCast を終了 → ファイルを入れ替え → 自動で起動し直す。設定・アバターはそのまま。
+  - 入れ替えは同梱のアップデーター（`VRCastUpdater.exe`）が行う。VRCast とトラッカーの終了を待ち、中身が同じファイルは触らず、
+    変わったファイルだけを VRCast フォルダ内の隠しフォルダ `.vrcast-update-backup` へ退避してから置く。途中で失敗したら元に戻して元の版を起動し、理由を表示する。
+    OBS・Discord などが仮想カメラ（UnityCapture）の DLL を読み込んだままでも更新できる（退避した旧ファイルは次回以降の起動時に削除）。
+  - 更新後の最初の起動で「更新しました」を表示する。アバターのプロジェクトに入れた書き出しツール（unitypackage）は自動では更新されない。
+  - VRCast が管理者権限の必要なフォルダ（Program Files など）にある場合とエディターでは自動更新せず、手動の入手先だけを出す。
+  - 作業フォルダは `%LOCALAPPDATA%\VRCast\update`（ダウンロードした zip・展開したファイル・アップデーターのログ `updater.log`）。
+  - 自動更新が入る前のバージョン（1.12.5 以前）からは、一度だけ手動で更新する。
 - **全設定のリセット**: **Settings** の赤いボタン **Reset all settings** → 確認の **Yes, reset** で全ての設定を初期状態に戻す
   （ウィンドウサイズと最後に開いたアバターは保持。元に戻せない）。
 - 以下の説明は英語表示の項目名で記載する（日本語表示では対応する日本語名になる）。
@@ -447,7 +456,8 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
   **Use the Windows 11 method (Media Foundation)** を ON にして、その方式のドライバーを **Install driver** で登録する。
   Windows の通常のカメラ（Media Foundation の仮想カメラ）として **VRCast Camera (MF)** の名前で一覧に出る（VRCast の起動中・出力 ON の間だけ）。
   - ドライバーは `C:\Program Files\VRCast\VirtualCamera\` にコピーして登録する（Windows のカメラサービスはユーザーのフォルダを読めないため）。
-    VRCast のフォルダを移動しても登録し直す必要はない。新しいバージョンに更新したら **Reinstall driver** で入れ替える。
+    VRCast のフォルダを移動しても登録し直す必要はない。新しいバージョンに更新して登録済みのドライバーが同梱版と違うときは
+    「古いバージョンが登録されています」と表示されるので、**Update driver**（ドライバーを更新）で入れ替える。
   - 映像は 30fps・1920x1080 で送り、受け取る側の選んだ 1080p / 720p（NV12 / RGB32）に合わせる。
   - 使用中の DLL を入れ替えるため、登録・解除で失敗したときだけ Windows のカメラサービス（Frame Server）を止めてからやり直す
     （他のアプリのカメラ映像が一瞬止まることがある。サービスは次にカメラを開いたときに自動で起動する）。
@@ -484,6 +494,7 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 │   ├── Package/                  配布用 zip・書き出しツールの unitypackage の作成 (一括 release.bat / package.bat / unitypackage.bat、同梱 README.txt)
 │   ├── Spout/                    Spout2 送信プラグインの取得スクリプト (fetch.ps1)
 │   ├── UnityCapture/             仮想カメラ DLL の取得スクリプト (fetch.ps1)
+│   ├── Updater/                  自動更新のアップデーター (C++。build.ps1 / build.bat で VRCastUpdater.exe をビルド)
 │   └── VirtualCamera/            Windows 11 の仮想カメラ (Media Foundation、C++。build.ps1 / build.bat で DLL をビルド)
 └── VRCast/                       Unity Runtime プロジェクト
     └── Assets/VRCast/
@@ -594,9 +605,11 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Spout\fetch.ps1
 **一括（推奨）**: Unity で Windows ビルドをした後、`Tools\Package\release.bat` を実行すると、
 MediaPipe トラッカーのビルド → ビルド済みの `VRCast\Builds\Windows` の StreamingAssets へトラッカーを上書きコピー（Unity で再ビルドしなくても新しいトラッカーが入る）
 → Windows 11 の仮想カメラ DLL のビルド → ビルドの `VRCast_Data\Plugins\x86_64` へコピー
-→ 書き出しツールの unitypackage（`dist\`）→ 配布 zip を順に作る。開始時に VRCast.exe の有無と、ビルドのバージョンと書き出しツールのバージョンの不一致を確認する。
+→ アップデーター（`VRCastUpdater.exe`）のビルド → ビルドの `VRCast_Data\StreamingAssets\Updater` へコピー
+→ 書き出しツールの unitypackage（`dist\`）→ 配布 zip と自動更新用の `dist\version.json` を順に作る。
+開始時に VRCast.exe の有無と、ビルドのバージョンと書き出しツールのバージョンの不一致を確認する。
 
-- 仮想カメラ DLL のビルドには Visual Studio 2022 の「C++ によるデスクトップ開発」が要る。
+- 仮想カメラ DLL とアップデーターのビルドには Visual Studio 2022 の「C++ によるデスクトップ開発」が要る。
   Unity Editor が DLL を読み込んでいて上書きできないときは、既存の DLL を使って続行する（無ければ中止）。
 
 ```powershell
@@ -605,6 +618,8 @@ MediaPipe トラッカーのビルド → ビルド済みの `VRCast\Builds\Wind
 .\Tools\Package\release.bat -SkipTracker
 # 仮想カメラ DLL のビルドを省く（Assets\Plugins\VRCastVirtualCamera にあるものをコピーする）
 .\Tools\Package\release.bat -SkipVirtualCamera
+# アップデーターのビルドを省く（Assets\StreamingAssets\Updater にあるものをコピーする）
+.\Tools\Package\release.bat -SkipUpdater
 ```
 
 **個別**: Windows ビルドの後、`Tools\Package\package.bat` をダブルクリック（またはリポジトリ直下から実行）:
@@ -628,10 +643,13 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 - バージョンは `VRCastBuild` の `AppVersion` と `Packages/com.vrcast.converter/package.json` の `version`、この README の「現在の状態」の版数をそろえる。
 - 利用者に見える変更（バグ修正・機能追加など）は `CHANGELOG.txt` の先頭「未リリース / Unreleased」に日本語・英語で追記し、
   リリース時にバージョンと日付へ書き換える（手順は `.cursor/rules/changelog.mdc`）。
-- 配布 zip を公開したら、`webpage` ブランチの `version.json` の `version`（と必要なら `url`）を新しいバージョンにして公開する。
-  アプリは起動時にこれを読んで更新を通知する（先に更新すると、まだダウンロードできないバージョンを通知してしまう）。
+- 配布 zip は GitHub の Release `v<バージョン>` に**名前を変えずに**添付して公開する
+  （自動更新は `https://github.com/coffin299/VRCast/releases/download/v<バージョン>/VRCast-<バージョン>-win64.zip` を取りに行く）。
+- zip の公開を確かめてから、`webpage` ブランチの `version.json` を `package.bat` が作る `dist\version.json`（`update` に zip の URL・大きさ・SHA-256）で置き換えて公開する。
+  アプリは起動時にこれを読んで更新を通知し、自動更新の zip を検証する（先に更新すると、まだダウンロードできないバージョンを通知してしまう。
+  zip を作り直したら SHA-256 が変わるので置き換え直す。`update` が無い・不正なら手動の入手先だけを出す）。
   Unity が出力する配布不要のフォルダ（`*_BurstDebugInformation_DoNotShip` 等）は除く。
-- `VRCast.exe` か Spout2 のプラグイン（`KlakSpout.dll`）が無ければ中止。同梱トラッカー・仮想カメラのドライバーが無い場合は警告を出して続行する
+- `VRCast.exe`・Spout2 のプラグイン（`KlakSpout.dll`）・Windows 11 の仮想カメラ DLL・アップデーター（`VRCastUpdater.exe`）のどれかが無ければ中止。同梱トラッカー・仮想カメラのドライバーが無い場合は警告を出して続行する
   （`Tools\Spout\fetch.ps1` と、仮想カメラ入りで配布するなら `Tools\UnityCapture\fetch.ps1` を実行してからビルドし直す）。
 - 作業フォルダは `%LOCALAPPDATA%\VRCast\package-build` に作り、完了後に削除する。
 

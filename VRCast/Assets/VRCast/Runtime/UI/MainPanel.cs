@@ -355,6 +355,9 @@ namespace VRCast.UI
 
         private void DrawUpdateNotice()
         {
+            // 前回の自動更新の結果（更新後・失敗後の最初の起動で出す）
+            DrawPreviousUpdate();
+
             // 新しいバージョンがあれば見出しの下に出す
             if (!_updates.IsUpdateAvailable)
             {
@@ -373,6 +376,59 @@ namespace VRCast.UI
                     GuiControls.Shrinkable))
             {
                 _updates.OpenChangelog();
+            }
+
+            GuiControls.EndCard();
+        }
+
+        private void DrawPreviousUpdate()
+        {
+            UpdateInstaller installer = _updates.Installer;
+            if (installer.Previous == UpdateInstaller.PreviousResult.None)
+            {
+                return;
+            }
+
+            bool succeeded = installer.Previous == UpdateInstaller.PreviousResult.Succeeded;
+            GuiControls.BeginCard(succeeded
+                ? Loc.T("Updated", "更新しました", "업데이트했습니다", "已更新", "已更新") + $": v{Application.version}"
+                : Loc.T("The update failed", "更新に失敗しました", "업데이트에 실패했습니다", "更新失败", "更新失敗"));
+            if (succeeded)
+            {
+                // 書き出しツールはアバターの Unity プロジェクトにあるため自動では更新できない
+                GuiControls.Hint(Loc.T(
+                    "The exporter (unitypackage) in your avatar project is not updated automatically. "
+                    + "If the changelog mentions the exporter, import it again from the GitHub / BOOTH zip",
+                    "アバターのプロジェクトに入れた書き出しツール（unitypackage）は自動では更新されません。"
+                    + "更新履歴に書き出しツールの変更があれば、GitHub / BOOTH の zip から入れ直してください",
+                    "아바타 프로젝트에 넣은 내보내기 도구(unitypackage)는 자동으로 업데이트되지 않습니다. "
+                    + "업데이트 내역에 내보내기 도구 변경이 있으면 GitHub / BOOTH의 zip에서 다시 가져오세요",
+                    "放入头像工程中的导出工具（unitypackage）不会自动更新。若更新日志中有导出工具的变更，请从 GitHub / BOOTH 的 zip 重新导入",
+                    "放入頭像專案中的匯出工具（unitypackage）不會自動更新。若更新紀錄中有匯出工具的變更，請從 GitHub / BOOTH 的 zip 重新匯入"));
+                if (GUILayout.Button(Loc.T("View changelog (GitHub)", "更新履歴を表示する（GitHub）",
+                        "업데이트 내역 보기 (GitHub)", "查看更新日志（GitHub）", "查看更新紀錄（GitHub）"),
+                        GuiControls.Shrinkable))
+                {
+                    _updates.OpenChangelog();
+                }
+            }
+            else
+            {
+                // 元のバージョンのまま起動している。理由と、手動で入れる方法を案内する
+                GuiControls.Warning(Loc.T("VRCast was kept at the previous version",
+                    "VRCast は元のバージョンのままです", "VRCast는 이전 버전 그대로입니다",
+                    "VRCast 保持为原来的版本", "VRCast 保持為原來的版本") + $" ({installer.PreviousDetail})");
+                GuiControls.Hint(Loc.T(
+                    "Close apps that use the camera (OBS, Discord, etc.) and try again, or download the zip and replace the folder",
+                    "カメラを使うアプリ（OBS・Discord など）を閉じてもう一度試すか、zip をダウンロードしてフォルダを入れ替えてください",
+                    "카메라를 사용하는 앱(OBS·Discord 등)을 닫고 다시 시도하거나, zip을 다운로드해 폴더를 교체하세요",
+                    "请关闭使用摄像头的应用（OBS、Discord 等）后重试，或下载 zip 替换文件夹",
+                    "請關閉使用攝影機的應用程式（OBS、Discord 等）後再試一次，或下載 zip 替換資料夾"));
+            }
+
+            if (GUILayout.Button(Loc.T("Close", "閉じる", "닫기", "关闭", "關閉"), GuiControls.Shrinkable))
+            {
+                installer.DismissPrevious();
             }
 
             GuiControls.EndCard();

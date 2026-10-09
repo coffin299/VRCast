@@ -27,6 +27,10 @@
 /VRCast/Assets/Plugins/VRCastVirtualCamera/
 /VRCast/Assets/Plugins/VRCastVirtualCamera.meta
 
+# Updater (built by Tools/Updater/build.ps1, shipped in builds)
+/VRCast/Assets/StreamingAssets/Updater/
+/VRCast/Assets/StreamingAssets/Updater.meta
+
 # Spout2 output (KlakSpout native plugin; fetched by Tools/Spout/fetch.ps1, shipped in builds)
 /VRCast/Assets/Plugins/KlakSpout/
 /VRCast/Assets/Plugins/KlakSpout.meta

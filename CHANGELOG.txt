@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- 自動アップデート機能を追加（新しいバージョンのお知らせの「今すぐ更新」を押すと、ダウンロードしてファイルを入れ替え、VRCast が自動で起動し直します。設定はそのまま残ります。このバージョンへの更新だけは手動で行ってください）
+- Windows 11 の方式（Media Foundation）の仮想カメラで、ドライバーが古いままのときに「ドライバーを更新」を案内する機能を追加
+
+[English]
+- Added automatic updates ("Update now" in the new version notice downloads the update, replaces the files and restarts VRCast; your settings are kept. Please update to this version manually)
+- Added an "Update driver" prompt for the Windows 11 (Media Foundation) virtual camera when an older driver is installed
+
 ■ 1.12.5 (2026-10-09)
 
 [日本語]

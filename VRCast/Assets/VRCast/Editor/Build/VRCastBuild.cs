@@ -8,6 +8,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using VRCast.Core;
 using VRCast.Output;
+using VRCast.Platform;
 using VRCast.Tracking;
 
 namespace VRCast.Editor.Build
@@ -70,6 +71,14 @@ namespace VRCast.Editor.Build
             if (!File.Exists(SpoutPluginPath))
             {
                 Debug.LogWarning("[VRCast][Build] KlakSpout.dll not found. Run Tools/Spout/fetch.ps1 to enable the Spout2 output.");
+            }
+
+            // アップデーターの有無を確認（無くてもビルドは続行し、このビルドからは自動更新できない）
+            string updater = Path.Combine(Application.streamingAssetsPath, UpdateInstaller.UpdaterFolder,
+                UpdateInstaller.UpdaterFileName);
+            if (!File.Exists(updater))
+            {
+                Debug.LogWarning("[VRCast][Build] VRCastUpdater.exe not found. Run Tools/Updater/build.bat to enable auto-update.");
             }
 
             // 設定ファイルの保存先 (LocalLow/VRCast/VRCast) を固定する

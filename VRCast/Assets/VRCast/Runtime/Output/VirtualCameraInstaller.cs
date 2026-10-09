@@ -4,6 +4,7 @@ using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
+using VRCast.AvatarFormat;
 using VRCast.Platform;
 
 namespace VRCast.Output
@@ -18,6 +19,9 @@ namespace VRCast.Output
 
         // 別の場所の DLL が登録されている（VRCast のフォルダを移動した、または他のアプリが登録した）
         InstalledElsewhere,
+
+        // 登録済みだが同梱版と中身が違う（VRCast を更新した。Media Foundation 版は Program Files へのコピーなので登録し直しが必要）
+        Outdated,
     }
 
     /// <summary>
@@ -89,12 +93,32 @@ namespace VRCast.Output
             Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "VRCast", "VirtualCamera");
 
         /// <summary>
-        /// Media Foundation 版の現在の登録状態（登録先フォルダの DLL なら登録済み）。
+        /// Media Foundation 版の現在の登録状態（登録先フォルダの DLL なら登録済み。同梱版 sourceDll と中身が違えば Outdated）。
         /// </summary>
-        public static VirtualCameraRegistration GetMediaFoundationRegistration()
+        public static VirtualCameraRegistration GetMediaFoundationRegistration(string sourceDll)
         {
-            return Compare(ReadRegisteredPath(MediaFoundationServerKey),
-                Path.Combine(MediaFoundationInstallFolder, MediaFoundationCamera.PluginFileName));
+            string installed = Path.Combine(MediaFoundationInstallFolder, MediaFoundationCamera.PluginFileName);
+            VirtualCameraRegistration registration = Compare(ReadRegisteredPath(MediaFoundationServerKey), installed);
+            if (registration != VirtualCameraRegistration.Installed || string.IsNullOrEmpty(sourceDll))
+            {
+                return registration;
+            }
+
+            return SameContents(sourceDll, installed) ? registration : VirtualCameraRegistration.Outdated;
+        }
+
+        private static bool SameContents(string first, string second)
+        {
+            // 読めないときは比べられないので同じとみなす（登録済みのまま案内しない）
+            try
+            {
+                return string.Equals(HashUtility.ComputeSha256Hex(first), HashUtility.ComputeSha256Hex(second),
+                    StringComparison.Ordinal);
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                return true;
+            }
         }
 
         private static VirtualCameraRegistration Compare(string registered, string expected)

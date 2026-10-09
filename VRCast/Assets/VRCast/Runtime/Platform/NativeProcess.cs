@@ -136,6 +136,9 @@ namespace VRCast.Platform
         [DllImport("kernel32.dll")]
         private static extern bool CloseHandle(IntPtr handle);
 
+        [DllImport("kernel32.dll")]
+        private static extern uint GetCurrentProcessId();
+
         private IntPtr _handle;
         private Thread _reader;
 
@@ -243,6 +246,11 @@ namespace VRCast.Platform
         /// 呼び出したスレッドのアクティブウィンドウ（メインスレッドで取ると VRCast のウィンドウ）。UAC の確認の親に使う。
         /// </summary>
         public static IntPtr ActiveWindow => GetActiveWindow();
+
+        /// <summary>
+        /// この VRCast のプロセス ID（自動更新でアップデーターが終了を待つのに使う）。
+        /// </summary>
+        public static int CurrentProcessId => unchecked((int)GetCurrentProcessId());
 
         /// <summary>
         /// 管理者権限（UAC の確認あり）でウィンドウを出さずに起動し、終了を待って終了コードを返す。
