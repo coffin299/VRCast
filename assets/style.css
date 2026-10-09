@@ -95,6 +95,7 @@ main { flex: 1; padding: 24px; min-width: 0; }
   background: var(--line); color: var(--text);
 }
 .button.primary { background: var(--accent); color: var(--on-accent); }
+.button.discord { background: #5865F2; color: #fff; }
 .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 16px; margin-bottom: 20px; }
 .grid section { margin-bottom: 0; }
 .grid h3 { margin-top: 0; }
