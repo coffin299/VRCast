@@ -34,6 +34,9 @@ namespace VRCast.Editor.Build
         // プロジェクトルートからの出力先
         private const string WindowsOutputPath = "Builds/Windows/VRCast.exe";
 
+        // 前回の出力のうち使用中で消せないファイルの退避先（名前の変更は使用中でもできるよう、出力先と同じドライブに置く）
+        private const string LockedFilesPath = "Builds/.locked";
+
         // persistentDataPath を決める会社名・製品名
         private const string CompanyName = "VRCast";
         private const string ProductName = "VRCast";
@@ -158,6 +161,9 @@ namespace VRCast.Editor.Build
 
         private static bool CleanOutputFolder()
         {
+            // 前回までに退避したファイルは、使われなくなっていれば消す（使用中のものは次回に回す）
+            DeleteLockedFiles();
+
             // 同梱トラッカーはビルド後に BundledTrackerCopier がコピーし直すため、フォルダごと消してよい
             string folder = Path.GetDirectoryName(WindowsOutputPath);
             if (!Directory.Exists(folder))
@@ -173,10 +179,93 @@ namespace VRCast.Editor.Build
             }
             catch (System.Exception e) when (e is System.UnauthorizedAccessException || e is IOException)
             {
-                // 前回の出力から登録した仮想カメラのドライバーを、カメラを列挙したアプリが読み込んだままにしていると消せない
+                // 前回の出力から登録した仮想カメラのドライバーを、カメラを列挙したアプリ（ブラウザー・ランチャー等）が
+                // 読み込んだままにしていると消せない。名前の変更はできるので退避してから消し直す
+                Debug.LogWarning($"[VRCast][Build] Some files of the previous build are in use ({e.Message}). "
+                    + $"Moving them to {LockedFilesPath}.");
+            }
+
+            try
+            {
+                MoveLockedFiles(folder);
+                Directory.Delete(folder, true);
+                Debug.Log($"[VRCast][Build] Cleaned previous build: {folder}");
+                return true;
+            }
+            catch (System.Exception e) when (e is System.UnauthorizedAccessException || e is IOException)
+            {
+                // 退避もできないファイル（書き込み中等）が残った場合だけ中止する
                 Debug.LogError($"[VRCast][Build] Could not clean the previous build ({e.Message}). "
                     + "A file is in use: close VRCast and apps that list cameras (OBS, Discord, Zoom, browsers), "
                     + "or uninstall the virtual camera driver registered from this folder, then build again.");
+                return false;
+            }
+        }
+
+        private static void MoveLockedFiles(string folder)
+        {
+            // 退避先はビルドごとに分け、同じ名前のファイルがあっても上書きしない
+            string destination = Path.Combine(LockedFilesPath, System.DateTime.Now.ToString("yyyyMMdd-HHmmss"));
+            foreach (string file in Directory.GetFiles(folder, "*", SearchOption.AllDirectories))
+            {
+                // 消せるファイルはそのまま消す
+                if (TryDelete(file))
+                {
+                    continue;
+                }
+
+                // 消せないファイルは同じ相対パスで退避先へ移す
+                string target = Path.Combine(destination, Path.GetRelativePath(folder, file));
+                Directory.CreateDirectory(Path.GetDirectoryName(target));
+                File.Move(file, target);
+                Debug.Log($"[VRCast][Build] Moved a file in use: {file} -> {target}");
+            }
+        }
+
+        private static void DeleteLockedFiles()
+        {
+            // 退避先が無ければ何もしない
+            if (!Directory.Exists(LockedFilesPath))
+            {
+                return;
+            }
+
+            // 使われなくなったファイルだけ消す
+            foreach (string file in Directory.GetFiles(LockedFilesPath, "*", SearchOption.AllDirectories))
+            {
+                TryDelete(file);
+            }
+
+            // 空になったフォルダを深い順に消す（中身が残るフォルダは消せないので飛ばす）
+            string[] folders = Directory.GetDirectories(LockedFilesPath, "*", SearchOption.AllDirectories);
+            foreach (string folder in folders.OrderByDescending(path => path.Length).Append(LockedFilesPath))
+            {
+                try
+                {
+                    if (!Directory.EnumerateFileSystemEntries(folder).Any())
+                    {
+                        Directory.Delete(folder);
+                    }
+                }
+                catch (System.Exception e) when (e is System.UnauthorizedAccessException || e is IOException)
+                {
+                    // エクスプローラー等で開かれているフォルダは次回に回す
+                }
+            }
+        }
+
+        private static bool TryDelete(string file)
+        {
+            try
+            {
+                // 読み取り専用の属性が付いていても消せるようにする
+                File.SetAttributes(file, FileAttributes.Normal);
+                File.Delete(file);
+                return true;
+            }
+            catch (System.Exception e) when (e is System.UnauthorizedAccessException || e is IOException)
+            {
+                // 使用中のファイルは消せない
                 return false;
             }
         }
