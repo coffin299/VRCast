@@ -398,13 +398,13 @@ namespace VRCast.UI
                 // 書き出しツールはアバターの Unity プロジェクトにあるため自動では更新できない
                 GuiControls.Hint(Loc.T(
                     "The exporter (unitypackage) in your avatar project is not updated automatically. "
-                    + "If the changelog mentions the exporter, import it again from the GitHub / BOOTH zip",
+                    + "When you have time, import the latest one from the GitHub / BOOTH zip",
                     "アバターのプロジェクトに入れた書き出しツール（unitypackage）は自動では更新されません。"
-                    + "更新履歴に書き出しツールの変更があれば、GitHub / BOOTH の zip から入れ直してください",
+                    + "お手すきの際に、GitHub / BOOTH の zip から最新版をインポートしてください",
                     "아바타 프로젝트에 넣은 내보내기 도구(unitypackage)는 자동으로 업데이트되지 않습니다. "
-                    + "업데이트 내역에 내보내기 도구 변경이 있으면 GitHub / BOOTH의 zip에서 다시 가져오세요",
-                    "放入头像工程中的导出工具（unitypackage）不会自动更新。若更新日志中有导出工具的变更，请从 GitHub / BOOTH 的 zip 重新导入",
-                    "放入頭像專案中的匯出工具（unitypackage）不會自動更新。若更新紀錄中有匯出工具的變更，請從 GitHub / BOOTH 的 zip 重新匯入"));
+                    + "시간이 있을 때 GitHub / BOOTH의 zip에서 최신 버전을 가져오세요",
+                    "放入头像工程中的导出工具（unitypackage）不会自动更新。方便时请从 GitHub / BOOTH 的 zip 导入最新版",
+                    "放入頭像專案中的匯出工具（unitypackage）不會自動更新。方便時請從 GitHub / BOOTH 的 zip 匯入最新版"));
                 if (GUILayout.Button(Loc.T("View changelog (GitHub)", "更新履歴を表示する（GitHub）",
                         "업데이트 내역 보기 (GitHub)", "查看更新日志（GitHub）", "查看更新紀錄（GitHub）"),
                         GuiControls.Shrinkable))

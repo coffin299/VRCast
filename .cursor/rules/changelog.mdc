@@ -39,3 +39,22 @@ alwaysApply: true
  （アプリは `https://github.com/coffin299/VRCast/releases/download/vx.y.z/VRCast-x.y.z-win64.zip` を取りに行く）。
 6. zip の公開を確かめてから、`webpage` ブランチ（作業フォルダ `../VRCast-webpage`）の `version.json` を `dist\version.json` で置き換える
  （アプリの更新通知と自動更新に使う。zip の公開より先に変えない。zip を作り直したら SHA-256 が変わるので必ず置き換え直す）。
+7. `version.json` の `version` だけを手で書き換えない。`update`（`zipUrl`・`size`・`sha256`）が無いと、
+ アプリは手動ダウンロードの案内だけを出し「今すぐ更新」を表示しない。形は次のとおり:
+
+```json
+{
+  "version": "x.y.z",
+  "url": "https://github.com/coffin299/VRCast/releases/",
+  "boothUrl": "https://coffin299.booth.pm/items/8933317",
+  "update": {
+    "zipUrl": "https://github.com/coffin299/VRCast/releases/download/vx.y.z/VRCast-x.y.z-win64.zip",
+    "size": 123456789,
+    "sha256": "（zip の SHA-256、小文字 16 進 64 文字）"
+  }
+}
+```
+
+8. `dist\version.json` が手元に無いとき（別の PC でビルドした等）は、公開済みの zip をダウンロードして
+ 大きさ（バイト）と `Get-FileHash -Algorithm SHA256` の値（小文字）で `update` を作る。
+ 公開後は `https://coffin299.github.io/VRCast/version.json` を取得し、`update` 入りで反映されたことを確かめる。

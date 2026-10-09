@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.14.6 (2026-10-09)
+
+[日本語]
+- 更新完了のお知らせで、書き出しツール（unitypackage）の最新版をお手すきの際にインポートするよう案内する文言に変更
+
+[English]
+- The update completed notice now asks you to import the latest exporter (unitypackage) when you have time
+
 ■ 1.14.5 (2026-10-09)
 
 [日本語]
