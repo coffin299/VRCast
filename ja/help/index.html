@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<!-- tools/build-langs.mjs で生成（直接編集しない） -->
+<html lang="ja" class="lang-ja" data-page-lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VRCast ヘルプ - 書き出し・OBS 設定・仮想カメラ・トラッキングの使い方</title>
+<meta name="description" content="VRCast の使い方。Unity で VRChat アバターを .vrcaster に書き出す手順（VRM はそのまま）、読み込み、OBS で背景を透過して映す設定、仮想カメラ VRCast Camera、Web カメラのトラッキング、困ったときの対処。">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#e6dbc7">
+<link rel="canonical" href="https://coffin299.github.io/VRCast/ja/help/">
+<!-- hreflang -->
+<link rel="alternate" hreflang="x-default" href="https://coffin299.github.io/VRCast/help/">
+<link rel="alternate" hreflang="en" href="https://coffin299.github.io/VRCast/help/">
+<link rel="alternate" hreflang="ja" href="https://coffin299.github.io/VRCast/ja/help/">
+<link rel="alternate" hreflang="ko" href="https://coffin299.github.io/VRCast/ko/help/">
+<link rel="alternate" hreflang="zh-Hans" href="https://coffin299.github.io/VRCast/zh-hans/help/">
+<link rel="alternate" hreflang="zh-CN" href="https://coffin299.github.io/VRCast/zh-hans/help/">
+<link rel="alternate" hreflang="zh-Hant" href="https://coffin299.github.io/VRCast/zh-hant/help/">
+<link rel="alternate" hreflang="zh-TW" href="https://coffin299.github.io/VRCast/zh-hant/help/">
+<link rel="alternate" hreflang="zh-HK" href="https://coffin299.github.io/VRCast/zh-hant/help/">
+<!-- /hreflang -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="VRCast">
+<meta property="og:title" content="VRCast ヘルプ - 書き出し・OBS 設定・仮想カメラ・トラッキングの使い方">
+<meta property="og:description" content="VRCast の使い方。Unity で VRChat アバターを .vrcaster に書き出す手順（VRM はそのまま）、読み込み、OBS で背景を透過して映す設定、仮想カメラ VRCast Camera、Web カメラのトラッキング、困ったときの対処。">
+<meta property="og:url" content="https://coffin299.github.io/VRCast/ja/help/">
+<meta property="og:image" content="https://coffin299.github.io/VRCast/assets/screenshot.png">
+<meta property="og:image:width" content="1388">
+<meta property="og:image:height" content="794">
+<meta property="og:image:alt" content="VRCast window showing a VRChat avatar (Marycia by BeroarN) with the tracking panel">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VRCast ヘルプ - 書き出し・OBS 設定・仮想カメラ・トラッキングの使い方">
+<meta name="twitter:description" content="VRCast の使い方。Unity で VRChat アバターを .vrcaster に書き出す手順（VRM はそのまま）、読み込み、OBS で背景を透過して映す設定、仮想カメラ VRCast Camera、Web カメラのトラッキング、困ったときの対処。">
+<meta name="twitter:image" content="https://coffin299.github.io/VRCast/assets/screenshot.png">
+<link rel="icon" type="image/png" sizes="96x96" href="../../assets/icon-96.png">
+<link rel="apple-touch-icon" href="../../assets/icon-288.png">
+<link rel="sitemap" type="application/xml" href="../../sitemap.xml">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "VRCast", "item": "https://coffin299.github.io/VRCast/ja/" },
+    { "@type": "ListItem", "position": 2, "name": "ヘルプ", "item": "https://coffin299.github.io/VRCast/ja/help/" }
+  ]
+}
+</script>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="../"><img src="../../assets/icon-96.png" width="32" height="32" alt="">VRCast</a>
+  <div class="links">
+    <a href="../"><span class="ja">概要</span></a>
+    <a class="current" href="./"><span class="ja">ヘルプ</span></a>
+    <a href="https://github.com/coffin299/VRCast">GitHub</a>
+  </div>
+  <div class="spacer"></div>
+  <div class="group">
+    <button data-theme-choice="light"><span class="ja">ライト</span></button>
+    <button data-theme-choice="dark"><span class="ja">ダーク</span></button>
+  </div>
+  <select data-lang-select aria-label="Language">
+    <option value="auto">Auto</option>
+    <option value="ja">日本語</option>
+    <option value="en">English</option>
+    <option value="ko">한국어</option>
+    <option value="zh-Hans">简体中文</option>
+    <option value="zh-Hant">繁體中文</option>
+  </select>
+</header>
+
+<div class="layout">
+<nav class="toc">
+  <a href="#quick"><span class="ja">かんたんスタート</span></a>
+  <a href="#export"><span class="ja">1. アバターの書き出し</span></a>
+  <a href="#load"><span class="ja">2. 読み込み</span></a>
+  <a href="#obs"><span class="ja">3. OBS に映す</span></a>
+  <a href="#vcam"><span class="ja">仮想カメラ</span></a>
+  <a href="#spout"><span class="ja">Spout2</span></a>
+  <a href="#look"><span class="ja">見た目・ライト</span></a>
+  <a href="#face"><span class="ja">口パク・まばたき</span></a>
+  <a href="#tracking"><span class="ja">トラッキング</span></a>
+  <a href="#settings"><span class="ja">設定・リセット</span></a>
+  <a href="#keys"><span class="ja">操作一覧</span></a>
+  <a href="#trouble"><span class="ja">困ったとき</span></a>
+</nav>
+
+<main>
+
+<section id="quick">
+  <h2><span class="ja">かんたんスタート</span></h2>
+  <p class="ja">VRCast は VRChat 用のアバターを単体で表示し、OBS などの配信ソフトに映すアプリです。
+    VRCast を起動すると左のパネルに <span class="ui">はじめに</span> タブが開き、同じ手順を画面上で案内します。</p>
+  <ol class="steps">
+    <li><span class="ja">Unity でアバターを <code>.vrcaster</code> ファイルに書き出す</span>
+        </li>
+    <li><span class="ja"><code>.vrcaster</code> を VRCast のウィンドウにドラッグ＆ドロップ</span>
+        </li>
+    <li><span class="ja">VRM（<code>.vrm</code>、VRoid など）なら書き出し不要で、そのままドラッグ＆ドロップ（<a href="#vrm">VRM について</a>）</span>
+        </li>
+    <li><span class="ja"><span class="ui">はじめに</span> タブの <span class="ui">透過にする</span> を押す</span>
+        </li>
+    <li><span class="ja">OBS で <span class="ui">ゲームキャプチャ</span> を追加して <span class="ui">透過を許可</span></span>
+        </li>
+    <li><span class="ja"><kbd>Tab</kbd> キーで操作パネルを隠す</span>
+        </li>
+  </ol>
+</section>
+
+<section id="export">
+  <h2><span class="ja">1. アバターを書き出す（Unity）</span></h2>
+  <p class="ja">アバターの入った Unity プロジェクト（VCC で作ったプロジェクトで OK、Unity 2022.3.22f1）で作業します。</p>
+  <ol class="steps">
+    <li>
+      <span class="ja">配布 zip の <code>VRCast-Converter</code> フォルダ（本体の <code>VRCast</code> フォルダとは別）にある <code>VRCast-Converter-バージョン.unitypackage</code> をダブルクリック（または Unity にドラッグ＆ドロップ）して
+        <span class="ui">Import</span> を押します（<code>Assets/VRCast/Converter</code> に入ります）。</span>
+    </li>
+    <li><span class="ja">メニュー <span class="ui">VRCast &gt; Avatar Exporter</span> を開きます。</span>
+        </li>
+    <li><span class="ja">シーン上のアバター（一番上の親オブジェクト）を指定して <span class="ui">書き出す...</span> を押し、保存先を選びます。
+          画面は Unity の OS の言語で表示されます（上部の <span class="ui">言語</span> で切り替え可能）。</span>
+        </li>
+  </ol>
+  <p class="note ja">元のアバターは変更されません。表情・口パク・まばたき・揺れもの・Constraint の設定も一緒に書き出されます。</p>
+  <p class="note ja">シーン上で非アクティブ（チェックを外した）オブジェクトは、子も含めて書き出されません。表示したい衣装・小物はアクティブにしてから書き出してください。</p>
+  <p class="note ja">ブレンドシェイプは Unity のシーンで設定した値のまま書き出されます（<span class="ui">シーンのブレンドシェイプの値を優先する</span>、既定 ON）。
+    衣装の切り替えに合わせて縮小用ブレンドシェイプを FX で動かしている場合などは、OFF にすると VRChat に入ったときの初期状態の値で書き出します。</p>
+  <p class="note ja">FX レイヤーにある表情クリップは自動で書き出されます。FX に入っていない表情（昔のアバターに付属していた表情アニメーションなど）は、
+    書き出し画面の <span class="ui">追加の表情</span> にアニメーションクリップかフォルダをドラッグすると表情として書き出せます（ブレンドシェイプだけを動かすクリップが対象。指定はアバターごとに保存）。</p>
+  <p class="note ja">【ベータ版】Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
+    MA の Merge Armature / Bone Proxy で付けた衣装・小物は、統合されなかった場合でもアバターのボーンに付け替えて体に追従させます。
+    MA の Blendshape Sync で口などに追従させたチェーン・小物も、口パク・まばたき・トラッキングに追従します。
+    暫定対応のため、正しく書き出せない場合があります。</p>
+  <p class="note ja">Package Manager で入れる場合は、<span class="ui">Window &gt; Package Manager</span> の <span class="ui">+</span> &gt;
+    <span class="ui">Add package from git URL...</span> に <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+    を入力します（Git が必要）。unitypackage と両方入れるとエラーになるので、どちらか一方にしてください。</p>
+</section>
+
+<section id="load">
+  <h2><span class="ja">2. VRCast で読み込む</span></h2>
+  <ul>
+    <li><span class="ja"><code>.vrcaster</code> または <code>.vrm</code> ファイルを VRCast のウィンドウにドラッグ＆ドロップすると読み込まれます。</span>
+        </li>
+    <li><span class="ja">または <span class="ui">はじめに</span> タブの <span class="ui">ファイルを選ぶ...</span>、
+        <span class="ui">アバター</span> タブの <span class="ui">参照...</span> で選べます。</span>
+        </li>
+    <li><span class="ja">最後に読み込んだアバターは次回起動時に自動で読み込まれます。</span>
+        </li>
+    <li><span class="ja"><span class="ui">アバター</span> タブの <span class="ui">最近使ったアバター</span> に直前に使ったアバターが最大 10 件並び、クリックで切り替えられます（<span class="ui">×</span> で一覧から外します）。
+          カメラ・ライト・アバターの明るさ・待機ポーズ・体の向きはアバターごとに記憶され、切り替えると戻ります。</span>
+        </li>
+  </ul>
+  <p class="note warn ja"><code>.vrcaster</code> と <code>.vrm</code> 以外のファイル（画像や unitypackage など）は読み込めません。<code>.vrcaster</code> でエラーが表示された場合は書き出し直してください。</p>
+
+  <h3 id="vrm"><span class="ja">VRM を読み込む</span></h3>
+  <ul>
+    <li><span class="ja">VRM 0.x / 1.0 の <code>.vrm</code>（VRoid Studio などで作ったもの）は、Unity での書き出しをせずにそのまま読み込めます。</span>
+        </li>
+    <li><span class="ja">VRM の表情（喜怒哀楽・驚き・独自の表情）、まばたき・ウインク、あいうえおの口の形、揺れもの（SpringBone）を VRCast の表情・自動まばたき・口パク・揺れものとして使います。</span>
+        </li>
+    <li><span class="ja"><span class="ui">アバター</span> タブに VRM のバージョン（0.x / 1.0）と作者が表示されます。</span>
+        </li>
+  </ul>
+  <p class="note ja">マテリアルの色を変える表情、VRM のコンストレイント、目のボーンが無いモデルの視線（BlendShape 方式）は反映されません。VRM に書かれた利用条件を守って使ってください。</p>
+</section>
+
+<section id="obs">
+  <h2><span class="ja">3. OBS に映す</span></h2>
+  <ol class="steps">
+    <li><span class="ja">VRCast の <span class="ui">はじめに</span> タブ（または <span class="ui">表示</span> タブ）で背景を <span class="ui">透過</span> にします。
+        VRCast の画面では背景色のまま見えますが、OBS では背景が抜けます。</span>
+        </li>
+    <li><span class="ja">OBS の <span class="ui">ソース</span> の <span class="ui">+</span> から <span class="ui">ゲームキャプチャ</span> を追加します。</span>
+        </li>
+    <li><span class="ja">モードを <span class="ui">特定のウィンドウをキャプチャ</span>、ウィンドウを <code>[VRCast.exe]: VRCast</code> にします。</span>
+        </li>
+    <li><span class="ja"><span class="ui">透過を許可</span> にチェックを入れます。</span>
+        </li>
+    <li><span class="ja">VRCast で <kbd>Tab</kbd> キーを押して操作パネルを隠します（パネルも OBS に映るため）。隠している間は、透過を OFF にしていても OBS では背景が抜けます。</span>
+        </li>
+  </ol>
+  <p class="note warn ja"><span class="ui">ウィンドウキャプチャ</span> は透過に対応していません。透過したいときは必ず <span class="ui">ゲームキャプチャ</span> を使ってください。</p>
+</section>
+
+<section id="vcam">
+  <h2><span class="ja">仮想カメラ（Discord / Zoom など）</span></h2>
+  <ol class="steps">
+    <li><span class="ja"><span class="ui">出力</span> タブで仮想カメラの出力を ON にします。</span>
+        </li>
+    <li><span class="ja">初回だけ <span class="ui">ドライバーを登録</span> を押します（管理者の確認が出ます）。</span>
+        </li>
+    <li><span class="ja">使いたいアプリのカメラ選択で <span class="ui">VRCast Camera</span> を選びます（出ない場合はそのアプリを再起動）。</span>
+        </li>
+  </ol>
+  <p class="note ja">操作パネルは仮想カメラには映りません。Discord などは透過できないため、背景は背景色で映ります。
+    VRCast のフォルダを移動・削除する前に <span class="ui">ドライバーを解除</span> を押してください。</p>
+  <p class="note ja">出力タブに「準備できました」と出ている間は、まだどのアプリもカメラを開いていない状態です（エラーではありません）。受け取る側のアプリで <span class="ui">VRCast Camera</span> を選ぶと「送信中」に変わります。</p>
+  <h3><span class="ja">Discord などでカメラが起動しないとき（Windows 11）</span></h3>
+  <ol class="steps">
+    <li><span class="ja"><span class="ui">出力</span> タブで <span class="ui">Windows 11 の方式（Media Foundation）で出力する</span> を ON にします。</span>
+        </li>
+    <li><span class="ja">この方式のドライバーを <span class="ui">ドライバーを登録</span> で登録します（方式ごとに 1 回。管理者の確認が出ます）。</span>
+        </li>
+    <li><span class="ja">使いたいアプリで <span class="ui">VRCast Camera (MF)</span> を選びます。</span>
+        </li>
+  </ol>
+  <p class="note ja">Windows の通常のカメラとして扱われるため、従来の方式が一覧に出ない・起動に失敗するアプリでも使えることがあります。VRCast の起動中で出力が ON の間だけ一覧に出ます。ドライバーは Program Files にコピーされるため、VRCast のフォルダを移動しても登録し直す必要はありません。</p>
+</section>
+
+<section id="spout">
+  <h2><span class="ja">Spout2（OBS へ軽く・透過のまま）</span></h2>
+  <ol class="steps">
+    <li><span class="ja">OBS に <a href="https://github.com/Off-World-Live/obs-spout2-plugin">Spout2 プラグイン</a> を入れます。</span>
+        </li>
+    <li><span class="ja"><span class="ui">出力</span> タブの <span class="ui">Spout2</span> で <span class="ui">出力する (VRCast)</span> を ON にします。</span>
+        </li>
+    <li><span class="ja">OBS で <span class="ui">Spout2 Capture</span> ソースを追加し、送信元に <span class="ui">VRCast</span> を選びます。</span>
+        </li>
+  </ol>
+  <p class="note ja">GPU 上で映像を渡すので、ゲームキャプチャや仮想カメラより軽く、背景の透過もそのまま届きます。操作パネルは映りません。解像度は VRCast のウィンドウの大きさです。</p>
+</section>
+
+<section id="look">
+  <h2><span class="ja">見た目・ライト（表示タブ）</span></h2>
+  <table>
+    <tr><th><span class="ja">項目</span></th>
+        <th><span class="ja">内容</span></th></tr>
+    <tr><td><span class="ja">カメラ</span></td>
+        <td><span class="ja">画角の変更とリセット。右ドラッグで回転、中ドラッグで移動、ホイールでズーム。カメラの位置と画角はアバターごとに記憶され、再起動後も戻ります。<span class="ui">カメラを固定</span> を ON にすると、マウスのドラッグ・ホイールで動かなくなります（画角とリセットは使えます）。</span>
+            </td></tr>
+    <tr><td><span class="ja">背景</span></td>
+        <td><span class="ja">背景色（既定はベージュ）と透過の切り替え。透過中も VRCast の画面では背景色が見えますが、OBS のゲームキャプチャでは抜けます。</span>
+            </td></tr>
+    <tr><td><span class="ja">解像度</span></td>
+        <td><span class="ja">ウィンドウの大きさ（横長・縦長のプリセット）。</span>
+            </td></tr>
+    <tr><td><span class="ja">ライト</span></td>
+        <td><span class="ja"><span class="ui">環境光</span> はアバター全体を均一に明るく、<span class="ui">太陽光</span> は一方向から照らします。
+            暗いときは <span class="ui">晴れ</span> プリセットを押すか環境光を上げてください。<span class="ui">太陽光の色</span> は低いほど暖色。
+            <span class="ui">向き</span> 0 で正面から当たります。ライトで明るくならないときは <span class="ui">アバターの明るさ</span> を上げます。ライトとアバターの明るさはアバターごとに記憶されます。</span>
+            </td></tr>
+  </table>
+  <p class="ja"><span class="ui">ポーズ・表情</span> タブではアバターの向き・腕の下ろし方・表情を変更できます。
+    表情ごとにショートカットキーを割り当てられます（既定はすべて未割り当て）。キーのボタンを押してから割り当てたいキーを押し（<code>Ctrl+Alt+N</code> のような同時押し、テンキー（NumLock ON で数字キーと区別）、記号キー、右 Ctrl などの単独（押して離す）、マウスのサイドボタンも可）、<span class="ui">Esc</span> でやめられます（Tab は使えません）。隣の <span class="ui">リセット</span> で割り当てを外します（アバターごとに保存）。
+    <span class="ui">VRCast が背面にあるときも使う</span>（既定 ON）なら、OBS などを操作中でも切り替えられます。ほかのアプリで文字を入力している間も反応するため、Ctrl や Alt との組み合わせがおすすめです。
+    ボタン・キーで選んだ表情は固定され、トラッキングの自動検出では変わりません。同じ表情をもう一度選ぶか <span class="ui">自動検出に戻す</span> で元に戻ります。
+    <span class="ui">OSC / HTTP</span> タブ（出力と設定の間）で <span class="ui">外部から操作（OSC / HTTP）</span> を ON にすると、表示中のアバターの表情ごとのコマンドが一覧に並び（<span class="ui">コピー</span> でコピー）、ポートの下に OSC の送信先と HTTP の URL が表示されます（<span class="ui">ブラウザで状態を開く</span> で動作確認。Stream Deck では「Web サイト」の「バックグラウンドで GET」に URL 全体を設定）。Stream Deck や OSC アプリから表情を切り替えられます（この PC からのみ。例: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。番号は 0 = ニュートラル、1 以降 = 表情の並び順）。</p>
+  <p class="ja"><span class="ui">待機モーション</span>（既定 ON、Humanoid のみ）は、Web カメラを使っていないときにアバターが完全に止まって見えないよう、呼吸・体の揺れ・頭のゆらぎを少し足します。
+    <span class="ui">呼吸・体の揺れ</span> を OFF にすると止まります。ON のときは <span class="ui">呼吸</span>・<span class="ui">体の揺れ</span>・<span class="ui">頭のゆらぎ</span> の強さ（0〜2、1 が標準）と <span class="ui">速さ</span>（0.5〜2 倍）を調整できます。
+    顔のトラッキング中は頭のゆらぎを止め、本人の動きに任せます。</p>
+</section>
+
+<section id="face">
+  <h2><span class="ja">口パク・まばたき（顔タブ）</span></h2>
+  <ul>
+    <li><span class="ja"><span class="ui">マイクで口パク</span> を ON にしてマイクを選び、<span class="ui">音量</span> メーターを見ながら
+        <span class="ui">マイク感度</span> と <span class="ui">ノイズゲート</span>（この音量以下は無音）を調整します。</span>
+        </li>
+    <li><span class="ja"><span class="ui">母音で口の形を変える</span> が ON なら、VRChat と同じように「あいうえお」で口の形が変わります。
+        判定がずれるときは <span class="ui">声の高さ補正</span> を動かします（声が高い人は右）。</span>
+        </li>
+    <li><span class="ja">揺れもの（PhysBone の近似）と自動まばたきも ON/OFF できます。</span>
+        </li>
+    <li><span class="ja"><span class="ui">表情中はまばたきしない</span> を ON にすると、表情を出している間は自動まばたきもトラッキングのまばたきも止まり、表情の目の形が崩れません。</span>
+        </li>
+    <li><span class="ja"><span class="ui">表情中はマイクの口パクを止める</span>・<span class="ui">表情中はトラッキングの口を止める</span> を ON にすると、表情を出している間はそれぞれの口の動きが止まります（別々に選べ、両方 ON にもできます。表情の口とリップシンクが重なると崩れるアバター向け）。</span>
+        </li>
+    <li><span class="ja"><span class="ui">シェイプキー設定</span> タブの <span class="ui">BlendShape の上限</span> では、BlendShape ごとに動く最大値（100 = 制限なし）を決められます。まばたきで目が消える・口を開くと顔が崩れるときは、その BlendShape を下げてください。
+        <span class="ui">対象</span> で <span class="ui">顔（まばたき・口・表情）</span>（まばたき・口パク・表情・パーフェクトシンクで動くもの）か <span class="ui">その他</span>（体型・服など）を選び、<span class="ui">検索</span> で絞り込めます。設定はアバターごとに保存されます。</span>
+        </li>
+  </ul>
+</section>
+
+<section id="tracking">
+  <h2><span class="ja">Web カメラトラッキング（トラッキングタブ）</span></h2>
+  <ul>
+    <li><span class="ja"><span class="ui">トラッキングを有効にする</span> を ON にすると、同梱のトラッカーが自動で起動し、頭の向き・まばたき・口・視線（MediaPipe では腕・手も）が動きます。</span>
+        </li>
+    <li><span class="ja">MediaPipe で <span class="ui">腕・手</span> が ON のときは、<span class="ui">上半身のひねり・傾き（肩）</span>（既定は ON）で両肩の向きに合わせて上半身をひねったり左右に傾けたりします。肩が映っていない間は頭の位置で傾けます。ひねらせたくないときは <span class="ui">上半身のひねりを固定</span> を ON にすると、左右の傾きだけが動きます。<span class="ui">生データ表示</span> では上半身の向きが緑の箱と角度で確認できます（骨格はアバターの大きさに合わせて描くので、カメラを動かす必要はありません）。</span>
+        </li>
+    <li><span class="ja"><span class="ui">入力元</span> は、縦に並んだスイッチのどれか 1 つを ON にして選びます。各行の右（幅が足りないときはスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（低・中・高）が出ます。MediaPipe は <span class="ui">腕・手</span> を OFF にすると軽くなり、iPhone などから受け取る入力元は推定をスマートフォン側で行うため PC の負荷は低めです。</span>
+        </li>
+    <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
+        </li>
+    <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
+        </li>
+    <li><span class="ja">MediaPipe・iPhone・外部アプリ（VMC）・iFacialMocap では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面を検出してアバターの表情に切り替えます（割り当て先の表情が無いものは検出しません）。
+        表情ごとの <span class="ui">しきい値</span> で反応のしやすさ（低いほど反応しやすい。<span class="ui">生データ表示</span> 中に出る表情の値が目安）を、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
+        </li>
+    <li><span class="ja">MediaPipe・iPhone・外部アプリ（VMC）・iFacialMocap では <span class="ui">パーフェクトシンク</span>（既定は ON）にも対応しています。ARKit 名の BlendShape（<code>eyeBlinkLeft</code>・<code>jawOpen</code>・<code>mouthSmileLeft</code> など）を持つアバターなら、眉・頬・口の形まで顔の動きどおりに動きます。
+        <span class="ui">有効にする条件</span> で <span class="ui">20 種類以上</span>（既定）か <span class="ui">1 種類でも</span> を選べ、対応しているかはその下に件数で表示されます。パーフェクトシンク中は <span class="ui">表情を反映</span> の自動切り替えは止まります（20 種類未満で動かしているときは併用します）。</span>
+        </li>
+    <li><span class="ja">カメラは <span class="ui">&lt;</span> <span class="ui">&gt;</span> で選びます。動かないときは <span class="ui">トラッカーを再起動</span>。</span>
+        </li>
+    <li><span class="ja">入力元を <span class="ui">iPhone・外部アプリ（VMC、顔のみ）</span> にすると、カメラの代わりにスマートフォンのアプリ（iPhone の Waidayo など）から VMC プロトコルで顔の動きを受け取ります。
+        PC とスマートフォンを同じ Wi-Fi につなぎ、トラッキングタブに出る <span class="ui">この PC の IP アドレス</span> と <span class="ui">UDP ポート</span>（既定 39539）をアプリの送信先に入力してください。
+        初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。ARKit の値を送るアプリなら、パーフェクトシンクと表情の反映も使えます（腕・手は動きません）。</span>
+        </li>
+    <li><span class="ja">入力元を <span class="ui">iFacialMocap（iPhone、顔のみ）</span> にすると、iPhone の iFacialMocap から顔の動きを受け取ります。
+        PC と iPhone を同じ Wi-Fi につなぎ、iFacialMocap の画面上部に出る IP アドレスをトラッキングタブの <span class="ui">iPhone の IP アドレス</span> に入力してください（UDP ポート 49983 を使います）。
+        初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。パーフェクトシンクと表情の反映も使えます（腕・手は動きません）。</span>
+        </li>
+    <li><span class="ja">正面がずれたらカメラを見て、パネル下部の <span class="ui">リセット</span> の <span class="ui">顔の向き</span>（顔・上半身・視線）を押します。視線だけなら <span class="ui">視線</span>。</span>
+        </li>
+    <li><span class="ja">正面は、トラッキング開始時（入力元・カメラの変更後も）に頭が 0.5 秒ほど止まったときの向きで自動で決まります。顔を手で隠すなどして見失っても、正面は取り直しません。</span>
+        </li>
+    <li><span class="ja"><span class="ui">体の動き</span> で、頭の動きに合わせて上半身を傾けるか体ごと動かすかを選べます。</span>
+        </li>
+  </ul>
+  <p class="note warn ja">他のアプリ（Discord・Zoom・VSeeFace など）が Web カメラを使っていると起動できません。</p>
+</section>
+
+<section id="settings">
+  <h2><span class="ja">設定・リセット（設定タブ）</span></h2>
+  <ul>
+    <li><span class="ja"><span class="ui">表示言語</span>: 自動（OS に合わせる）/ English / 日本語 / 한국어 / 简体中文 / 繁體中文。パネル上部の言語ボタンでも、どのタブからでも切り替えられます。</span>
+        </li>
+    <li><span class="ja"><span class="ui">UI の大きさ</span>: 75%〜200%。</span>
+        </li>
+    <li><span class="ja"><span class="ui">テーマ</span>: ライト（既定）/ ダーク。背景色を表示タブで変えていなければ、背景もテーマに合わせて切り替わります。</span>
+        </li>
+    <li><span class="ja"><span class="ui">軽量モード</span>（既定は ON）: 描画を 30fps（OFF なら 60fps）に抑え、OpenSeeFace は軽いモデルを使って、ゲームや OBS と同時に使うときの負荷を減らします。MediaPipe の重さはトラッキングタブの <span class="ui">トラッカーの動作</span> で選びます。</span>
+        </li>
+    <li><span class="ja"><span class="ui">動作状況を表示</span>（既定は ON）: パネルの一番下に、描画の FPS・VRCast の CPU 使用率・GPU の処理時間・同梱トラッカーの CPU 使用率・トラッキングの受信レートを英語で表示します（1 秒ごとに更新）。重いときの原因の見当をつけるのに使えます。</span>
+        </li>
+    <li><span class="ja"><span class="ui">プロセスの優先度</span>（既定は「通常」）: VRCast 本体と同梱トラッカーの優先度をまとめて変えます（すぐ反映）。ゲーム中にトラッキングがカクつくときは上げてください。「高」にすると他のアプリが重くなることがあります。</span>
+        </li>
+    <li><span class="ja"><span class="ui">CPU 設定 › AMD（X3D）› 3D V-Cache の無い側のコアで動かす</span>（既定は ON。効果があるのは 7950X3D / 9950X3D など、3D V-Cache が片方の CCD にだけある CPU だけです。この PC が対象かどうかは設定の下に表示されます）: ゲーム中は Windows がアプリをゲームと同じコアに寄せるため、VRCast 本体と同梱トラッカーを反対側のコアで動かし、ゲームとコアを取り合わないようにします（すぐ反映）。VRCast 自体がゲームと判定されている場合は、Game Bar（Win + G）の設定で「これをゲームとして記憶する」をオフにしてください。</span>
+        </li>
+    <li><span class="ja"><span class="ui">CPU 設定 › Intel（P コア / E コア）› 使うコア</span>（既定は「自動」。効果があるのは P コアと E コアがある Intel の CPU（第 12 世代以降・Core Ultra）だけです）: VRCast 本体と同梱トラッカーを動かすコアを選びます（すぐ反映）。<span class="ui">E コアのみ</span> は P コアをゲームに譲りますが、トラッキングや描画が遅くなることがあります。<span class="ui">P コアのみ</span> は速く動きますがゲームとコアを取り合います。迷ったら「自動」のままで大丈夫です。</span>
+        </li>
+    <li><span class="ja"><span class="ui">描画に使う GPU</span>（既定は「自動」）: 自動 / 省電力 / 高パフォーマンス、または GPU を一覧から直接選べます。VRCast を起動し直すと反映されます（<span class="ui">VRCast を今すぐ起動し直す</span> ボタン。PC の再起動は不要です）。OBS のキャプチャや仮想カメラを使うときは、OBS と同じ GPU にすると最も軽くなります。同梱トラッカーは CPU で動くので、この設定は関係しません。</span>
+        </li>
+    <li><span class="ja"><span class="ui">NVIDIA インスタントリプレイ</span>（NVIDIA の GPU がある PC だけ表示）: <span class="ui">NVIDIA のインスタントリプレイに検知させない</span> を押すと、VRCast がインスタントリプレイ（ShadowPlay）にゲームとして検知されないよう、ドライバー設定に VRCast 用のプロファイルを書きます。VRCast を起動し直すと反映されます。<span class="ui">NVIDIA のインスタントリプレイの検知を元に戻す</span> で元に戻せます。非公式の設定のため、ドライバーによっては効きません。変更できないと表示されたときは、VRCast を管理者として実行してお試しください。</span>
+        </li>
+    <li><span class="ja"><span class="ui">アップデート</span>: 起動時に新しいバージョンがあるかを確認し、あればパネル上部に通知します（<span class="ui">GitHub からダウンロード</span> / <span class="ui">BOOTH からダウンロード</span> / <span class="ui">更新履歴を表示する（GitHub）</span>）。
+        確認は最新のバージョン番号を読むためだけに Web サイト（coffin299.github.io）へ接続します。OFF にもできます。</span>
+        </li>
+    <li><span class="ja">設定は VRCast の終了時に自動で保存され、次回起動時に復元されます。</span>
+        </li>
+    <li><span class="ja">開発者・協力者とライセンスは <span class="ui">クレジット</span> タブで確認できます。
+        開発者の <a href="https://www.twitch.tv/coffinnoob299">Twitch チャンネル</a> もここから開けます。フォローや Prime サブスクをしてくれると開発の励みになります。</span>
+        </li>
+  </ul>
+  <p class="note danger ja"><span class="ui">全ての設定をリセット</span>（赤いボタン）を押し、確認で <span class="ui">リセットする</span> を押すと、全ての設定が初期状態に戻ります
+    （ウィンドウサイズと最後に開いたアバターは残ります）。元に戻せません。</p>
+</section>
+
+<section id="keys">
+  <h2><span class="ja">操作一覧</span></h2>
+  <table>
+    <tr><td><kbd>Tab</kbd></td>
+        <td><span class="ja">操作パネルの表示 / 非表示（隠している間は OBS で背景も透過）</span>
+            </td></tr>
+    <tr><td><span class="ja">パネル上部の言語ボタン</span></td>
+        <td><span class="ja">表示言語の切り替え。どのタブを開いていても押せます</span>
+            </td></tr>
+    <tr><td><span class="ja">パネル下部のリセット</span></td>
+        <td><span class="ja">顔の向き / 視線 / 表情（ニュートラル）/ カメラ。どのタブを開いていても押せます（ボタンの下段に割り当て中のショートカットキーを表示）</span>
+            </td></tr>
+    <tr><td><span class="ja">パネル下部のアンケート</span></td>
+        <td><span class="ja">次に対応してほしい機能などの募集です。<a href="https://github.com/coffin299/VRCast/issues/11">GitHub の Issue</a> か <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google フォーム</a> から自由に書いてください</span>
+            </td></tr>
+    <tr><td><span class="ja">テンキー 1〜4</span></td>
+        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）。パネルを隠していても使え、<span class="ui">設定</span> タブの <span class="ui">ショートカットキー（リセット）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
+            </td></tr>
+    <tr><td><span class="ja">右ドラッグ</span></td>
+        <td><span class="ja">カメラを回転</span></td></tr>
+    <tr><td><span class="ja">中ドラッグ</span></td>
+        <td><span class="ja">カメラを移動</span></td></tr>
+    <tr><td><span class="ja">ホイール</span></td>
+        <td><span class="ja">ズーム</span></td></tr>
+    <tr><td><span class="ja">割り当てたキー</span></td>
+        <td><span class="ja">表情の切り替え / ニュートラル（<span class="ui">ポーズ</span> タブで表情ごとに割り当て。既定は未割り当て）</span>
+            </td></tr>
+  </table>
+</section>
+
+<section id="trouble">
+  <h2><span class="ja">困ったとき</span></h2>
+
+  <h3><span class="ja">アバターが暗い</span></h3>
+  <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
+    <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
+    lilToon 等は明るさがテクスチャの色までに制限されるため、太陽光を上げても一定以上は明るくなりません。
+    その場合は <span class="ui">アバターの明るさ</span> を上げてください（0.5〜10、1 = マテリアルのまま）。</p>
+
+  <h3><span class="ja">OBS で背景が抜けない</span></h3>
+  <p class="ja">VRCast の背景を <span class="ui">透過</span> にし、OBS は <span class="ui">ゲームキャプチャ</span>（ウィンドウキャプチャではなく）で
+    <span class="ui">透過を許可</span> にチェックが入っているか確認してください。</p>
+
+  <h3><span class="ja">OBS に何も映らない</span></h3>
+  <p class="ja">ゲームキャプチャのウィンドウに <code>[VRCast.exe]: VRCast</code> を選び直してください。VRCast を最小化すると映らないことがあります。</p>
+
+  <h3><span class="ja">ドラッグ＆ドロップできない</span></h3>
+  <p class="ja">VRCast を管理者として実行していると Windows の制限でドロップできません。通常どおり起動するか、<span class="ui">ファイルを選ぶ...</span> を使ってください。</p>
+
+  <h3><span class="ja">ゲームや OBS と一緒に使うとトラッキングがカクつく</span></h3>
+  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">エコ</span> にすると負荷が半分ほどになります。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
+
+  <h3><span class="ja">口パクしない</span></h3>
+  <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、
+    動かなければ <span class="ui">マイク感度</span> を上げるか <span class="ui">ノイズゲート</span> を下げてください。</p>
+
+  <h3><span class="ja">表情が変わらない</span></h3>
+  <p class="ja">表情の反映は MediaPipe・iPhone・外部アプリ（VMC）・iFacialMocap のみ対応です。<span class="ui">トラッキング</span> タブで入力元がいずれかになっているか、
+    <span class="ui">表情を反映</span> が ON か確認してください。反応しにくいときは <span class="ui">表情のしきい値</span> を下げ、
+    違う表情になるときは表情ごとの選択で使う表情を指定してください。</p>
+
+  <h3><span class="ja">カメラが認識されない・トラッキングが動かない</span></h3>
+  <p class="ja">まず <span class="ui">トラッキング</span> タブの <span class="ui">カメラ</span> で、お使いの Web カメラが選ばれているか確認してください。
+    <code>VRCast Camera</code>（VRCast の仮想カメラ）・<code>OBS Virtual Camera</code> などの仮想カメラや、顔認証用の赤外線（IR）カメラを選ぶと、映像は届いても顔が認識されません。</p>
+  <p class="ja"><span class="ui">デバッグログ</span> タブを開くと、カメラ一覧・トラッカーの状態と、起動してからのログを確認できます。
+    <span class="ui">WARN</span> / <span class="ui">ERROR</span> だけを表示したり、カテゴリを <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（カメラ関係）に絞ったりできます。
+    不具合を報告するときは <span class="ui">表示中をコピー</span> を押して、ログと環境をそのまま貼り付けてください。</p>
+  <p class="ja">原因がわからないときは <span class="ui">詳細ログ</span> を ON にして、症状が出るまで待ってからコピーしてください。
+    受信の統計（1 秒あたりのデータ数、顔・腕・手が映っていた割合）や MediaPipe の推定にかかる時間などが <span class="ui">DEBUG</span> として記録されます。
+    設定は保存されるため、調べ終わったら OFF に戻してください。</p>
+
+  <h3><span class="ja">設定ファイル・ログの場所</span></h3>
+  <p><code>%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\</code>
+    <span class="ja">（<code>settings.json</code> と <code>Player.log</code>）。不具合の報告時は <code>Player.log</code> を添えてください。</span>
+    </p>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <span class="ja">VRCast は VRChat Inc. の公式ツールではありません。</span>
+  &middot; <a href="https://github.com/coffin299/VRCast/issues"><span class="ja">不具合の報告</span></a>
+  &middot; <a href="../../sitemap/"><span class="ja">サイトマップ</span></a>
+</footer>
+
+</body>
+</html>

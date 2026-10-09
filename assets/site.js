@@ -8,6 +8,10 @@
 
   // 対応言語（URL の ?lang= と保存値に使う値。アプリの「?」もこの値で開く）
   var langs = ['ja', 'en', 'ko', 'zh-Hans', 'zh-Hant'];
+  // 言語別ページ（/ja/ など。フォルダー名は小文字）がある言語。英語は共通ページ（/）が受け持つ
+  var pageLangs = ['ja', 'ko', 'zh-Hans', 'zh-Hant'];
+  // 言語別ページなら、その言語（tools/build-langs.mjs が <html data-page-lang> に書く）。共通ページは null
+  var pageLang = root.getAttribute('data-page-lang');
 
   // 保存値の読み書き（保存できない環境は無視する）
   function load(key) {
@@ -64,8 +68,21 @@
     return 'en';
   }
 
-  // 初期の選択: URL の ?lang= > 保存した選択 > 自動
+  // 言語別ページから、選んだ言語の同じページの URL を作る（言語別ページが無い言語は共通ページ）
+  function pageUrl(choice) {
+    // 今の言語のフォルダー（例: /ja/）
+    var folder = '/' + pageLang.toLowerCase() + '/';
+    // 行き先のフォルダー（言語別ページが無ければ共通ページ = フォルダーなし）
+    var target = pageLangs.indexOf(choice) >= 0 ? '/' + choice.toLowerCase() + '/' : '/';
+    // サイトの前置き（/VRCast/）には言語のフォルダー名が含まれないので、最初の 1 つだけ置き換える
+    return location.pathname.replace(folder, target) + location.hash;
+  }
+
+  // 初期の選択: 言語別ページはその言語 > URL の ?lang= > 保存した選択 > 自動
   function initialChoice() {
+    if (pageLang) {
+      return pageLang;
+    }
     var query = new URLSearchParams(location.search).get('lang');
     if (supported(query)) {
       return query;
@@ -140,12 +157,17 @@
     document.querySelectorAll('select[data-lang-select]').forEach(function (select) {
       select.addEventListener('change', function () {
         choice = select.value;
-        applyLang(choice);
         if (choice === 'auto') {
           remove(langKey);
         } else {
           save(langKey, choice);
         }
+        // 言語別ページは他の言語の文言を持たないので、選んだ言語のページへ移る
+        if (pageLang) {
+          location.href = pageUrl(choice);
+          return;
+        }
+        applyLang(choice);
       });
     });
     // テーマボタン: 切り替えて保存

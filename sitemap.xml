@@ -1,11 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:image="http://www.google.com/schemas/sitemap-image/1.1"
+        xmlns:video="http://www.google.com/schemas/sitemap-video/1.1">
   <url>
     <loc>https://coffin299.github.io/VRCast/</loc>
-    <lastmod>2026-10-05</lastmod>
+    <lastmod>2026-10-09</lastmod>
+    <image:image>
+      <image:loc>https://coffin299.github.io/VRCast/assets/screenshot.png</image:loc>
+    </image:image>
+    <image:image>
+      <image:loc>https://coffin299.github.io/VRCast/assets/icon.png</image:loc>
+    </image:image>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/ja/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/ko/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/zh-hans/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/zh-hant/</loc>
+    <lastmod>2026-10-09</lastmod>
   </url>
   <url>
     <loc>https://coffin299.github.io/VRCast/help/</loc>
-    <lastmod>2026-10-05</lastmod>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/ja/help/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/ko/help/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/zh-hans/help/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/zh-hant/help/</loc>
+    <lastmod>2026-10-09</lastmod>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/video/</loc>
+    <lastmod>2026-10-09</lastmod>
+    <video:video>
+      <video:thumbnail_loc>https://coffin299.github.io/VRCast/assets/preview-poster.jpg</video:thumbnail_loc>
+      <video:title>VRCast demo - VRChat avatar with webcam tracking</video:title>
+      <video:description>A VRChat avatar driven by webcam tracking in VRCast, without Unity or VRChat running.</video:description>
+      <video:content_loc>https://coffin299.github.io/VRCast/assets/preview.mp4</video:content_loc>
+      <video:duration>14</video:duration>
+    </video:video>
+  </url>
+  <url>
+    <loc>https://coffin299.github.io/VRCast/sitemap/</loc>
+    <lastmod>2026-10-09</lastmod>
   </url>
 </urlset>

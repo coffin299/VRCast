@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<!-- tools/build-langs.mjs で生成（直接編集しない） -->
+<html lang="zh-Hans" class="lang-zh-hans" data-page-lang="zh-Hans">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>VRCast 帮助 - 导出、OBS 设置、虚拟摄像头与追踪的使用方法</title>
+<meta name="description" content="VRCast 使用方法：在 Unity 中将 VRChat 虚拟形象导出为 .vrcaster（VRM 可直接使用）、加载、在 OBS 中以透明背景显示的设置、虚拟摄像头 VRCast Camera、摄像头追踪以及故障排除。">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#e6dbc7">
+<link rel="canonical" href="https://coffin299.github.io/VRCast/zh-hans/help/">
+<!-- hreflang -->
+<link rel="alternate" hreflang="x-default" href="https://coffin299.github.io/VRCast/help/">
+<link rel="alternate" hreflang="en" href="https://coffin299.github.io/VRCast/help/">
+<link rel="alternate" hreflang="ja" href="https://coffin299.github.io/VRCast/ja/help/">
+<link rel="alternate" hreflang="ko" href="https://coffin299.github.io/VRCast/ko/help/">
+<link rel="alternate" hreflang="zh-Hans" href="https://coffin299.github.io/VRCast/zh-hans/help/">
+<link rel="alternate" hreflang="zh-CN" href="https://coffin299.github.io/VRCast/zh-hans/help/">
+<link rel="alternate" hreflang="zh-Hant" href="https://coffin299.github.io/VRCast/zh-hant/help/">
+<link rel="alternate" hreflang="zh-TW" href="https://coffin299.github.io/VRCast/zh-hant/help/">
+<link rel="alternate" hreflang="zh-HK" href="https://coffin299.github.io/VRCast/zh-hant/help/">
+<!-- /hreflang -->
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="VRCast">
+<meta property="og:title" content="VRCast 帮助 - 导出、OBS 设置、虚拟摄像头与追踪的使用方法">
+<meta property="og:description" content="VRCast 使用方法：在 Unity 中将 VRChat 虚拟形象导出为 .vrcaster（VRM 可直接使用）、加载、在 OBS 中以透明背景显示的设置、虚拟摄像头 VRCast Camera、摄像头追踪以及故障排除。">
+<meta property="og:url" content="https://coffin299.github.io/VRCast/zh-hans/help/">
+<meta property="og:image" content="https://coffin299.github.io/VRCast/assets/screenshot.png">
+<meta property="og:image:width" content="1388">
+<meta property="og:image:height" content="794">
+<meta property="og:image:alt" content="VRCast window showing a VRChat avatar (Marycia by BeroarN) with the tracking panel">
+<meta property="og:locale" content="zh_CN">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ja_JP">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta property="og:locale:alternate" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VRCast 帮助 - 导出、OBS 设置、虚拟摄像头与追踪的使用方法">
+<meta name="twitter:description" content="VRCast 使用方法：在 Unity 中将 VRChat 虚拟形象导出为 .vrcaster（VRM 可直接使用）、加载、在 OBS 中以透明背景显示的设置、虚拟摄像头 VRCast Camera、摄像头追踪以及故障排除。">
+<meta name="twitter:image" content="https://coffin299.github.io/VRCast/assets/screenshot.png">
+<link rel="icon" type="image/png" sizes="96x96" href="../../assets/icon-96.png">
+<link rel="apple-touch-icon" href="../../assets/icon-288.png">
+<link rel="sitemap" type="application/xml" href="../../sitemap.xml">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "BreadcrumbList",
+  "itemListElement": [
+    { "@type": "ListItem", "position": 1, "name": "VRCast", "item": "https://coffin299.github.io/VRCast/zh-hans/" },
+    { "@type": "ListItem", "position": 2, "name": "帮助", "item": "https://coffin299.github.io/VRCast/zh-hans/help/" }
+  ]
+}
+</script>
+<link rel="stylesheet" href="../../assets/style.css">
+<script src="../../assets/site.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="../"><img src="../../assets/icon-96.png" width="32" height="32" alt="">VRCast</a>
+  <div class="links">
+    <a href="../"><span class="zh-hans">概要</span></a>
+    <a class="current" href="./"><span class="zh-hans">帮助</span></a>
+    <a href="https://github.com/coffin299/VRCast">GitHub</a>
+  </div>
+  <div class="spacer"></div>
+  <div class="group">
+    <button data-theme-choice="light"><span class="zh-hans">浅色</span></button>
+    <button data-theme-choice="dark"><span class="zh-hans">深色</span></button>
+  </div>
+  <select data-lang-select aria-label="Language">
+    <option value="auto">Auto</option>
+    <option value="ja">日本語</option>
+    <option value="en">English</option>
+    <option value="ko">한국어</option>
+    <option value="zh-Hans">简体中文</option>
+    <option value="zh-Hant">繁體中文</option>
+  </select>
+</header>
+
+<div class="layout">
+<nav class="toc">
+  <a href="#quick"><span class="zh-hans">快速开始</span></a>
+  <a href="#export"><span class="zh-hans">1. 导出虚拟形象</span></a>
+  <a href="#load"><span class="zh-hans">2. 加载</span></a>
+  <a href="#obs"><span class="zh-hans">3. 在 OBS 中显示</span></a>
+  <a href="#vcam"><span class="zh-hans">虚拟摄像头</span></a>
+  <a href="#spout"><span class="zh-hans">Spout2</span></a>
+  <a href="#look"><span class="zh-hans">外观与灯光</span></a>
+  <a href="#face"><span class="zh-hans">口型同步与眨眼</span></a>
+  <a href="#tracking"><span class="zh-hans">追踪</span></a>
+  <a href="#settings"><span class="zh-hans">设置与重置</span></a>
+  <a href="#keys"><span class="zh-hans">操作一览</span></a>
+  <a href="#trouble"><span class="zh-hans">故障排除</span></a>
+</nav>
+
+<main>
+
+<section id="quick">
+  <h2><span class="zh-hans">快速开始</span></h2>
+  <p class="zh-hans">VRCast 是一款单独显示 VRChat 虚拟形象并输出到 OBS 等直播软件的应用。
+    启动 VRCast 后，左侧面板会打开 <span class="ui">开始</span> 标签页，在画面上引导相同的步骤。</p>
+  <ol class="steps">
+    <li>
+        <span class="zh-hans">在 Unity 中将虚拟形象导出为 <code>.vrcaster</code> 文件</span>
+        </li>
+    <li>
+        <span class="zh-hans">将 <code>.vrcaster</code> 文件拖放到 VRCast 窗口</span>
+        </li>
+    <li>
+        <span class="zh-hans">VRM（<code>.vrm</code>，如 VRoid）无需导出，直接拖放即可（<a href="#vrm">关于 VRM</a>）</span>
+        </li>
+    <li>
+        <span class="zh-hans">点击 <span class="ui">开始</span> 标签页中的 <span class="ui">设为透明</span></span>
+        </li>
+    <li>
+        <span class="zh-hans">在 OBS 中添加 <span class="ui">游戏采集</span> 并勾选 <span class="ui">允许透明</span></span>
+        </li>
+    <li>
+        <span class="zh-hans">按 <kbd>Tab</kbd> 键隐藏操作面板</span>
+        </li>
+  </ol>
+</section>
+
+<section id="export">
+  <h2><span class="zh-hans">1. 导出虚拟形象（Unity）</span></h2>
+  <p class="zh-hans">在包含虚拟形象的 Unity 项目（用 VCC 创建的项目亦可，Unity 2022.3.22f1）中操作。</p>
+  <ol class="steps">
+    <li>
+      <span class="zh-hans">双击发布 zip 中 <code>VRCast-Converter</code> 文件夹（与主程序的 <code>VRCast</code> 文件夹分开）里的 <code>VRCast-Converter-版本.unitypackage</code>（或拖入 Unity），然后点击
+        <span class="ui">Import</span>（会放入 <code>Assets/VRCast/Converter</code>）。</span>
+    </li>
+    <li>
+        <span class="zh-hans">打开菜单 <span class="ui">VRCast &gt; Avatar Exporter</span>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">指定场景中的虚拟形象（最上层的父对象），点击 <span class="ui">导出...</span> 并选择保存位置。
+          界面会使用操作系统的语言（可在顶部的 <span class="ui">语言</span> 中切换）。</span>
+        </li>
+  </ol>
+  <p class="note zh-hans">不会修改原始虚拟形象。表情、口型同步、眨眼、物理摆动和 Constraint 的设置也会一并导出。</p>
+  <p class="note zh-hans">场景中未激活（取消勾选）的对象及其子对象不会被导出。想要显示的服装和小物请先激活再导出。</p>
+  <p class="note zh-hans">BlendShape 会按 Unity 场景中设置的值导出（<span class="ui">优先使用场景中的 BlendShape 值</span>，默认开启）。
+    如果 FX 层会随服装切换驱动收缩用 BlendShape 等，关闭后会按进入 VRChat 时的初始状态值导出。</p>
+  <p class="note zh-hans">FX 层中的表情剪辑会自动导出。不在 FX 中的表情（例如旧虚拟形象附带的表情动画），
+    可将动画剪辑或文件夹拖到导出窗口的 <span class="ui">追加表情</span> 中作为表情导出（仅限只驱动 BlendShape 的剪辑，按虚拟形象分别保存）。</p>
+  <p class="note zh-hans">【测试版】用 Modular Avatar 等改造过的虚拟形象，直接指定即可按改造后的样子（合并的服装、添加的表情和开关）导出。
+    用 MA 的 Merge Armature / Bone Proxy 添加的服装和小物，即使未被合并，也会重新挂到虚拟形象的骨骼上并跟随身体。
+    用 MA 的 Blendshape Sync 跟随嘴部等的链条和小物，也会跟随口型同步、眨眼和追踪。
+    目前为临时支持，部分虚拟形象可能无法正确导出。</p>
+  <p class="note zh-hans">如需通过 Package Manager 安装，请在 <span class="ui">Window &gt; Package Manager</span> 中点击 <span class="ui">+</span> &gt;
+    <span class="ui">Add package from git URL...</span>，输入 <code>https://github.com/coffin299/VRCast.git?path=/Packages/com.vrcast.converter</code>
+    （需要 Git）。同时安装 unitypackage 和此包会出错，请只选其一。</p>
+</section>
+
+<section id="load">
+  <h2><span class="zh-hans">2. 在 VRCast 中加载</span></h2>
+  <ul>
+    <li>
+        <span class="zh-hans">将 <code>.vrcaster</code> 或 <code>.vrm</code> 文件拖放到 VRCast 窗口即可加载。</span>
+        </li>
+    <li>
+        <span class="zh-hans">也可以使用 <span class="ui">开始</span> 标签页的 <span class="ui">选择文件...</span>，
+        或 <span class="ui">虚拟形象</span> 标签页的 <span class="ui">浏览...</span> 选择。</span>
+        </li>
+    <li>
+        <span class="zh-hans">上次加载的虚拟形象会在下次启动时自动加载。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">虚拟形象</span> 标签页的 <span class="ui">最近使用的虚拟形象</span> 中最多列出 10 个最近使用的虚拟形象，点击即可切换（点击 <span class="ui">×</span> 从列表移除）。
+          相机、灯光、虚拟形象亮度、待机姿势和身体朝向会按虚拟形象分别记住，切换时恢复。</span>
+        </li>
+  </ul>
+  <p class="note warn zh-hans">只能加载 <code>.vrcaster</code> 和 <code>.vrm</code> 文件（不能加载图片或 unitypackage 等）。如果 <code>.vrcaster</code> 显示错误，请重新导出。</p>
+
+  <h3 id="vrm"><span class="zh-hans">加载 VRM</span></h3>
+  <ul>
+    <li>
+        <span class="zh-hans">VRM 0.x / 1.0 的 <code>.vrm</code>（如用 VRoid Studio 制作）无需在 Unity 中导出即可直接加载。</span>
+        </li>
+    <li>
+        <span class="zh-hans">VRM 的表情（喜、怒、哀、乐、惊讶及自定义表情）、眨眼和单眼眨眼、A-I-U-E-O 口型以及摇摆骨骼（SpringBone）会用于 VRCast 的表情、自动眨眼、口型同步和摇摆效果。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">虚拟形象</span> 标签页会显示 VRM 版本（0.x / 1.0）和作者。</span>
+        </li>
+  </ul>
+  <p class="note zh-hans">不支持改变材质颜色的表情、VRM 的约束，以及没有眼睛骨骼的模型的视线（BlendShape 方式）。请遵守 VRM 中写明的使用条件。</p>
+</section>
+
+<section id="obs">
+  <h2><span class="zh-hans">3. 在 OBS 中显示</span></h2>
+  <ol class="steps">
+    <li>
+        <span class="zh-hans">在 VRCast 的 <span class="ui">开始</span> 标签页（或 <span class="ui">显示</span> 标签页）中将背景设为 <span class="ui">透明</span>。
+        VRCast 窗口中仍显示背景色，但 OBS 中背景会被去除。</span>
+        </li>
+    <li>
+        <span class="zh-hans">在 OBS 的 <span class="ui">来源</span> 中点击 <span class="ui">+</span>，添加 <span class="ui">游戏采集</span>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">模式选择 <span class="ui">采集特定窗口</span>，窗口选择 <code>[VRCast.exe]: VRCast</code>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">勾选 <span class="ui">允许透明</span>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">在 VRCast 中按 <kbd>Tab</kbd> 键隐藏操作面板（面板也会显示在 OBS 中）。隐藏期间即使透明为关闭，OBS 中背景也会透明。</span>
+        </li>
+  </ol>
+  <p class="note warn zh-hans"><span class="ui">窗口采集</span> 不支持透明。需要透明背景时，请务必使用 <span class="ui">游戏采集</span>。</p>
+</section>
+
+<section id="vcam">
+  <h2><span class="zh-hans">虚拟摄像头（Discord / Zoom 等）</span></h2>
+  <ol class="steps">
+    <li>
+        <span class="zh-hans">在 <span class="ui">输出</span> 标签页中打开虚拟摄像头输出。</span>
+        </li>
+    <li>
+        <span class="zh-hans">仅首次需要点击 <span class="ui">安装驱动程序</span>（会出现管理员确认）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">在要使用的应用中选择 <span class="ui">VRCast Camera</span> 作为摄像头（若未列出，请重启该应用）。</span>
+        </li>
+  </ol>
+  <p class="note zh-hans">操作面板不会输出到虚拟摄像头。Discord 等无法显示透明，因此背景会以背景色显示。
+    移动或删除 VRCast 文件夹前，请先点击 <span class="ui">卸载驱动程序</span>。</p>
+  <p class="note zh-hans">输出标签页显示“已就绪”时，表示还没有应用打开摄像头（不是错误）。在接收端应用中选择 <span class="ui">VRCast Camera</span> 后会变为“正在发送”。</p>
+  <h3><span class="zh-hans">在 Discord 等中摄像头无法启动时（Windows 11）</span></h3>
+  <ol class="steps">
+    <li>
+        <span class="zh-hans">在 <span class="ui">输出</span> 标签页中打开 <span class="ui">使用 Windows 11 方式（Media Foundation）输出</span>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">点击 <span class="ui">安装驱动程序</span> 注册此方式的驱动程序（每种方式一次，会出现管理员确认）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">在要使用的应用中选择 <span class="ui">VRCast Camera (MF)</span>。</span>
+        </li>
+  </ol>
+  <p class="note zh-hans">它会被视为普通的 Windows 摄像头，因此在旧方式未列出或启动失败的应用中也可能可以使用。仅在 VRCast 运行且输出打开时才会列出。驱动程序会复制到 Program Files，移动 VRCast 文件夹后无需重新注册。</p>
+</section>
+
+<section id="spout">
+  <h2><span class="zh-hans">Spout2（轻量、保留透明地输出到 OBS）</span></h2>
+  <ol class="steps">
+    <li>
+        <span class="zh-hans">为 OBS 安装 <a href="https://github.com/Off-World-Live/obs-spout2-plugin">Spout2 插件</a>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">在 <span class="ui">输出</span> 标签页的 <span class="ui">Spout2</span> 中打开 <span class="ui">输出 (VRCast)</span>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">在 OBS 中添加 <span class="ui">Spout2 Capture</span> 来源，并选择 <span class="ui">VRCast</span> 作为发送端。</span>
+        </li>
+  </ol>
+  <p class="note zh-hans">画面在 GPU 上传递，因此比游戏捕获或虚拟摄像头更轻，透明背景也会原样传递。操作面板不会输出。分辨率与 VRCast 窗口大小相同。</p>
+</section>
+
+<section id="look">
+  <h2><span class="zh-hans">外观与灯光（显示标签页）</span></h2>
+  <table>
+    <tr><th><span class="zh-hans">项目</span></th>
+        <th><span class="zh-hans">说明</span></th></tr>
+    <tr><td><span class="zh-hans">相机</span></td>
+        <td>
+            <span class="zh-hans">更改与重置视野。右键拖动旋转，中键拖动平移，滚轮缩放。相机位置和视野会按虚拟形象分别记住，重启后也会恢复。开启 <span class="ui">锁定相机</span> 后，鼠标拖动和滚轮不会再移动相机（仍可更改视野和重置）。</span>
+            </td></tr>
+    <tr><td><span class="zh-hans">背景</span></td>
+        <td>
+            <span class="zh-hans">背景色（默认米色）与透明切换。透明时 VRCast 窗口中仍显示背景色，但 OBS 游戏采集会去除背景。</span>
+            </td></tr>
+    <tr><td><span class="zh-hans">分辨率</span></td>
+        <td>
+            <span class="zh-hans">窗口大小（横向 / 纵向预设）。</span>
+            </td></tr>
+    <tr><td><span class="zh-hans">灯光</span></td>
+        <td>
+            <span class="zh-hans"><span class="ui">环境光</span> 会均匀照亮整个虚拟形象，<span class="ui">阳光</span> 从一个方向照射。
+            画面偏暗时，请点击 <span class="ui">晴天</span> 预设或调高环境光。<span class="ui">阳光颜色</span> 越低越偏暖色。
+            <span class="ui">方向</span> 为 0 时从正面照射。灯光无法变亮时，请调高 <span class="ui">虚拟形象亮度</span>。灯光和虚拟形象亮度会按虚拟形象分别记住。</span>
+            </td></tr>
+  </table>
+  <p class="zh-hans">在 <span class="ui">姿势·表情</span> 标签页中可以更改虚拟形象的朝向、手臂姿势和表情。
+    可为每种表情分配快捷键（默认全部未分配）。点击按键按钮后按下要分配的键（也可使用 <code>Ctrl+Alt+N</code> 等组合键、小键盘（NumLock 开启时与数字键区分）、符号键、右 Ctrl 等单独按键（按下后松开）以及鼠标侧键），按 <span class="ui">Esc</span> 取消（不能使用 Tab）。旁边的 <span class="ui">重置</span> 可取消分配（按虚拟形象分别保存）。
+    开启 <span class="ui">VRCast 在后台时也可使用</span>（默认开启）后，操作 OBS 等时也能切换。在其他应用中输入时也会响应，建议与 Ctrl 或 Alt 组合使用。
+    通过按钮或快捷键选择的表情会被固定，不会被自动检测改变。再次选择同一表情或点击 <span class="ui">恢复自动检测</span> 即可恢复。
+    <span class="ui">OSC / HTTP</span> 标签页（输出与设置之间）会列出当前虚拟形象每个表情的命令（点击 <span class="ui">复制</span> 复制），端口下方显示 OSC 目标和 HTTP URL（点击 <span class="ui">在浏览器中打开状态</span> 测试；在 Stream Deck 中将完整 URL 设置到“网站”的“在后台发送 GET 请求”）。开启 <span class="ui">外部操作（OSC / HTTP）</span> 后，可从 Stream Deck 或 OSC 应用切换表情（仅限本机。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。编号 0 = 无表情，1 起 = 表情顺序）。</p>
+  <p class="zh-hans"><span class="ui">待机动作</span>（默认开启，仅限 Humanoid）会在不使用摄像头时，稍微加上呼吸、身体摇摆和头部晃动，避免虚拟形象完全静止。
+    关闭 <span class="ui">呼吸 · 身体摇摆</span> 后会停止。开启时可以调整 <span class="ui">呼吸</span>、<span class="ui">身体摇摆</span>、<span class="ui">头部晃动</span> 的强度（0～2，1 为标准）和 <span class="ui">速度</span>（0.5～2 倍）。
+    面部追踪时会停止头部晃动，跟随本人的动作。</p>
+</section>
+
+<section id="face">
+  <h2><span class="zh-hans">口型同步与眨眼（面部标签页）</span></h2>
+  <ul>
+    <li>
+        <span class="zh-hans">打开 <span class="ui">用麦克风对口型</span> 并选择麦克风，一边看 <span class="ui">音量</span> 表，一边调整
+        <span class="ui">麦克风灵敏度</span> 和 <span class="ui">噪声门</span>（低于此音量视为无声）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">打开 <span class="ui">根据元音改变口型</span> 后，会像 VRChat 一样根据元音（A I U E O）改变口型。
+        判断不准时，请调整 <span class="ui">音高校正</span>（声音较高的人向右）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">物理摆动（PhysBone 近似）和自动眨眼也可以开启或关闭。</span>
+        </li>
+    <li>
+        <span class="zh-hans">开启 <span class="ui">表情期间不眨眼</span> 后，显示表情期间会同时停止自动眨眼和面部追踪的眨眼，表情的眼睛形状不会被破坏。</span>
+        </li>
+    <li>
+        <span class="zh-hans">开启 <span class="ui">表情期间停止麦克风口型同步</span>、<span class="ui">表情期间停止追踪的嘴部动作</span> 后，显示表情期间会停止相应的嘴部动作（可分别开启，也可同时开启；适用于表情的嘴型与口型同步重叠时会变形的虚拟形象）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">在 <span class="ui">形态键设置</span> 标签页的 <span class="ui">BlendShape 上限</span> 中可为每个 BlendShape 设定可动到的最大值（100 = 不限制）。如果眨眼时眼睛消失、张嘴时脸部变形，请调低对应的 BlendShape。
+        在 <span class="ui">对象</span> 中选择 <span class="ui">面部（眨眼、嘴、表情）</span>（由眨眼、口型同步、表情、完美同步驱动的）或 <span class="ui">其他</span>（体型、服装等），并可用 <span class="ui">搜索</span> 缩小范围。设置按虚拟形象分别保存。</span>
+        </li>
+  </ul>
+</section>
+
+<section id="tracking">
+  <h2><span class="zh-hans">摄像头追踪（追踪标签页）</span></h2>
+  <ul>
+    <li>
+        <span class="zh-hans">打开 <span class="ui">启用追踪</span> 后，内置追踪器会自动启动，驱动头部朝向、眨眼、嘴部和视线（MediaPipe 还包括手臂和手）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 开启时，<span class="ui">上半身扭转 / 倾斜（肩部）</span>（默认开启）会根据双肩的朝向扭转或左右倾斜上半身。未拍到肩部时按头部位置倾斜。不想扭转时，开启 <span class="ui">固定上半身扭转</span> 即可只保留左右倾斜。在 <span class="ui">原始数据显示</span> 中可通过绿色方框和角度确认上半身朝向（骨架按虚拟形象的大小绘制，无需移动相机）。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">输入源</span> 通过打开纵向排列的开关之一来选择。每行右侧（宽度不足时在开关下方）会显示推荐（MediaPipe）以及电脑负载参考（低 / 中 / 高）。MediaPipe 关闭 <span class="ui">手臂 / 手</span> 后会更轻，从 iPhone 等接收的输入源由手机进行追踪，因此电脑负载较低。</span>
+        </li>
+    <li>
+        <span class="zh-hans">关闭 <span class="ui">追踪眨眼</span>（默认开启）后，不再跟随眼睛开合，改用面部标签的自动眨眼（完美同步也不驱动眨眼）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">如果闭上的眼睛或单眼眨眼与头部倾斜、手臂方向相反，请开启 <span class="ui">动作</span> 栏中的 <span class="ui">交换面部左右</span>（默认关闭）。只交换面部（眨眼、完美同步、视线），头部朝向和手臂仍按 <span class="ui">镜像</span> 设置。</span>
+        </li>
+    <li>
+        <span class="zh-hans">使用 MediaPipe、iPhone / 外部应用（VMC）或 iFacialMocap时，打开 <span class="ui">反映表情</span>（默认开启）后，会检测笑脸、惊讶、生气、悲伤、眨单眼、眯眼、嘟嘴并切换虚拟形象的表情（没有可分配表情的不会检测）。
+        可用每种表情的 <span class="ui">阈值</span> 调整反应程度（越低越容易反应，可参考 <span class="ui">原始数据显示</span> 中的表情数值），并为每种表情选择要使用的表情（<span class="ui">自动</span> 会根据表情名称推测）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">使用 MediaPipe、iPhone / 外部应用（VMC）或 iFacialMocap时还支持 <span class="ui">完美同步</span>（默认开启）。如果虚拟形象带有 ARKit 名称的 BlendShape（<code>eyeBlinkLeft</code>、<code>jawOpen</code>、<code>mouthSmileLeft</code> 等），眉毛、脸颊和嘴形都会跟随面部动作。
+        可在 <span class="ui">启用条件</span> 中选择 <span class="ui">20 种以上</span>（默认）或 <span class="ui">有 1 种即可</span>，下方会显示找到的数量。完美同步期间，<span class="ui">反映表情</span> 的自动切换会暂停（少于 20 种时会同时使用）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">用 <span class="ui">&lt;</span> <span class="ui">&gt;</span> 选择相机。没有反应时，请点击 <span class="ui">重启追踪器</span>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">将输入源设为 <span class="ui">iPhone / 外部应用（VMC，仅面部）</span> 后，会代替相机，通过 VMC 协议从手机应用（如 iPhone 上的 Waidayo）接收面部动作。
+        请将电脑和手机连接到同一 Wi-Fi，并在应用的发送目标中输入追踪标签页显示的 <span class="ui">此电脑的 IP 地址</span> 和 <span class="ui">UDP 端口</span>（默认 39539）。
+        首次会弹出 Windows 防火墙确认，请允许专用网络。发送 ARKit 数值的应用还可使用完美同步和反映表情（手臂和手不会动）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">将输入源设为 <span class="ui">iFacialMocap（iPhone，仅面部）</span> 后，会从 iPhone 上的 iFacialMocap 接收面部动作。
+        请将电脑和 iPhone 连接到同一 Wi-Fi，并在追踪标签页的 <span class="ui">iPhone 的 IP 地址</span> 中输入 iFacialMocap 屏幕上方显示的 IP 地址（使用 UDP 端口 49983）。
+        首次会弹出 Windows 防火墙确认，请允许专用网络。也可使用完美同步和反映表情（手臂和手不会动）。</span>
+        </li>
+    <li>
+        <span class="zh-hans">正面方向偏移时，请看着相机，点击面板底部 <span class="ui">重置</span> 中的 <span class="ui">头部朝向</span>（头部、上半身、视线）。只调整视线时点击 <span class="ui">视线</span>。</span>
+        </li>
+    <li>
+        <span class="zh-hans">开始追踪时（更改输入源或相机后也一样），头部静止约 0.5 秒时的朝向会自动成为正面。即使用手遮住脸等导致丢失，也不会重新设定正面。</span>
+        </li>
+    <li>
+        <span class="zh-hans">在 <span class="ui">身体动作</span> 中可以选择随头部动作倾斜上半身，或整体移动身体。</span>
+        </li>
+  </ul>
+  <p class="note warn zh-hans">如果其他应用（Discord、Zoom、VSeeFace 等）正在使用摄像头，追踪器将无法启动。</p>
+</section>
+
+<section id="settings">
+  <h2><span class="zh-hans">设置与重置（设置标签页）</span></h2>
+  <ul>
+    <li>
+        <span class="zh-hans"><span class="ui">显示语言</span>：自动（跟随系统）/ English / 日本語 / 한국어 / 简体中文 / 繁體中文。也可以在任意标签页中用面板顶部的语言按钮切换。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">界面大小</span>：75%～200%。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">主题</span>：浅色（默认）/ 深色。如果未在显示标签页中更改背景色，背景也会随主题切换。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">低负载模式</span>（默认开启）：将画面限制为 30fps（关闭时为 60fps），OpenSeeFace 使用较轻的模型，降低与游戏或 OBS 同时使用时的负载。MediaPipe 的负载请在追踪标签页的 <span class="ui">追踪器模式</span> 中选择。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">显示运行状态</span>（默认开启）：在面板底部以英文显示画面 FPS、VRCast 的 CPU 使用率、GPU 处理时间、内置追踪器的 CPU 使用率和追踪接收速率（每秒更新）。可用于判断卡顿的原因。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">进程优先级</span>（默认“正常”）：同时更改 VRCast 本体和内置追踪器的优先级（立即生效）。游戏时追踪卡顿可调高。设为“高”可能使其他应用变慢。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">CPU 设置 › AMD（X3D）› 在没有 3D V-Cache 的核心上运行</span>（默认开启；仅对 3D V-Cache 只位于一个 CCD 的 CPU 有效，如 7950X3D / 9950X3D，本机是否支持会显示在设置下方）：游戏运行时 Windows 会把应用集中到与游戏相同的核心上，此选项让 VRCast 本体和内置追踪器在另一侧核心上运行，避免与游戏争抢核心（立即生效）。如果 VRCast 本身被识别为游戏，请在 Game Bar（Win + G）设置中关闭“记住这是一个游戏”。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">CPU 设置 › Intel（P 核 / E 核）› 使用的核心</span>（默认“自动”；仅对具有 P 核和 E 核的 Intel CPU 有效，即第 12 代及以后、Core Ultra）：选择运行 VRCast 本体和内置追踪器的核心（立即生效）。<span class="ui">仅 E 核</span> 把 P 核让给游戏，但追踪和渲染可能变慢。<span class="ui">仅 P 核</span> 速度快，但会与游戏争抢核心。不确定时保持“自动”即可。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">渲染使用的 GPU</span>（默认“自动”）：可选择自动 / 节能 / 高性能，或从列表中直接选择 GPU。重新启动 VRCast 后生效（<span class="ui">立即重新启动 VRCast</span> 按钮，无需重启电脑）。使用 OBS 捕获或虚拟摄像头时，与 OBS 使用同一 GPU 最省资源。内置追踪器在 CPU 上运行，不受此设置影响。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">NVIDIA 即时重放</span>（仅在有 NVIDIA GPU 的电脑上显示）：按下 <span class="ui">不让 NVIDIA 即时重放检测</span> 后，会在驱动设置中写入 VRCast 专用配置文件，使 VRCast 不被即时重放（ShadowPlay）识别为游戏。重新启动 VRCast 后生效。按 <span class="ui">恢复 NVIDIA 即时重放的检测</span> 可还原。这是非官方设置，部分驱动可能无效。如提示无法更改，请尝试以管理员身份运行 VRCast。</span>
+        </li>
+    <li>
+        <span class="zh-hans"><span class="ui">更新</span>：启动时检查是否有新版本，如有则在面板顶部提示（<span class="ui">从 GitHub 下载</span> / <span class="ui">从 BOOTH 下载</span> / <span class="ui">查看更新日志（GitHub）</span>）。
+        仅为读取最新版本号而连接网站（coffin299.github.io），也可以关闭。</span>
+        </li>
+    <li>
+        <span class="zh-hans">设置会在 VRCast 退出时自动保存，并在下次启动时恢复。</span>
+        </li>
+    <li>
+        <span class="zh-hans">开发者、协力者和许可证可在 <span class="ui">致谢</span> 标签页中查看。
+        也可以在这里打开开发者的 <a href="https://www.twitch.tv/coffinnoob299">Twitch 频道</a>。关注或使用 Prime 订阅会成为开发的动力。</span>
+        </li>
+  </ul>
+  <p class="note danger zh-hans">点击 <span class="ui">重置所有设置</span>（红色按钮），再在确认中点击 <span class="ui">确定重置</span>，所有设置将恢复为默认值
+    （窗口大小和上次打开的虚拟形象会保留）。此操作无法撤销。</p>
+</section>
+
+<section id="keys">
+  <h2><span class="zh-hans">操作一览</span></h2>
+  <table>
+    <tr><td><kbd>Tab</kbd></td>
+        <td>
+            <span class="zh-hans">显示 / 隐藏操作面板（隐藏期间 OBS 中背景也会透明）</span>
+            </td></tr>
+    <tr><td><span class="zh-hans">面板顶部的语言按钮</span></td>
+        <td>
+            <span class="zh-hans">切换显示语言，在任意标签页中都可使用</span>
+            </td></tr>
+    <tr><td><span class="zh-hans">面板底部的重置</span></td>
+        <td>
+            <span class="zh-hans">头部朝向 / 视线 / 表情（无表情）/ 相机，在任意标签页中都可使用（按钮第二行显示已分配的快捷键）</span>
+            </td></tr>
+    <tr><td><span class="zh-hans">面板底部的问卷</span></td>
+        <td>
+            <span class="zh-hans">征集希望接下来支持的功能等建议。欢迎在 <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 或 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 表单</a> 中自由填写</span>
+            </td></tr>
+    <tr><td><span class="zh-hans">小键盘 1～4</span></td>
+        <td>
+            <span class="zh-hans">重置（1 头部朝向 / 2 视线 / 3 表情 / 4 相机）。隐藏面板时也可使用，可在 <span class="ui">设置</span> 标签页的 <span class="ui">快捷键（重置）</span> 中更改或清除（需开启 NumLock；<span class="ui">VRCast 在后台时也可使用</span> 默认开启）。若与表情快捷键相同，会显示警告且表情优先</span>
+            </td></tr>
+    <tr><td><span class="zh-hans">右键拖动</span></td>
+        <td><span class="zh-hans">旋转相机</span></td></tr>
+    <tr><td><span class="zh-hans">中键拖动</span></td>
+        <td><span class="zh-hans">平移相机</span></td></tr>
+    <tr><td><span class="zh-hans">滚轮</span></td>
+        <td><span class="zh-hans">缩放</span></td></tr>
+    <tr><td><span class="zh-hans">已分配的按键</span></td>
+        <td>
+            <span class="zh-hans">切换表情 / 无表情（在 <span class="ui">姿势</span> 标签页中为每个表情分配，默认未分配）</span>
+            </td></tr>
+  </table>
+</section>
+
+<section id="trouble">
+  <h2><span class="zh-hans">故障排除</span></h2>
+
+  <h3><span class="zh-hans">虚拟形象偏暗</span></h3>
+  <p class="zh-hans">请点击 <span class="ui">显示</span> 标签页的 <span class="ui">晴天</span> 预设，或调高 <span class="ui">环境光</span>。
+    将 <span class="ui">方向</span> 设为 0 附近可从正面照射。
+    lilToon 等着色器的亮度上限为贴图颜色，因此调高阳光超过一定程度后不会再变亮。
+    此时请调高 <span class="ui">虚拟形象亮度</span>（0.5～10，1 = 保持材质原样）。</p>
+
+  <h3><span class="zh-hans">OBS 中背景不透明</span></h3>
+  <p class="zh-hans">请确认 VRCast 的背景已设为 <span class="ui">透明</span>，并且 OBS 使用的是 <span class="ui">游戏采集</span>（而非窗口采集），
+    且已勾选 <span class="ui">允许透明</span>。</p>
+
+  <h3><span class="zh-hans">OBS 中什么都不显示</span></h3>
+  <p class="zh-hans">请在游戏采集的窗口中重新选择 <code>[VRCast.exe]: VRCast</code>。最小化 VRCast 可能会导致无法显示。</p>
+
+  <h3><span class="zh-hans">无法拖放</span></h3>
+  <p class="zh-hans">以管理员身份运行 VRCast 时，Windows 会阻止拖放。请正常启动，或使用 <span class="ui">选择文件...</span>。</p>
+
+  <h3><span class="zh-hans">与游戏或 OBS 同时使用时追踪卡顿</span></h3>
+  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。使用 MediaPipe 时，将追踪标签页的 <span class="ui">追踪器模式</span> 设为 <span class="ui">节能</span> 可使负载减半左右。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
+
+  <h3><span class="zh-hans">口型不动</span></h3>
+  <p class="zh-hans">请在 <span class="ui">面部</span> 标签页中确认选择了正确的麦克风，以及 <span class="ui">音量</span> 表是否有反应。
+    如果没有反应，请调高 <span class="ui">麦克风灵敏度</span> 或调低 <span class="ui">噪声门</span>。</p>
+
+  <h3><span class="zh-hans">表情不变化</span></h3>
+  <p class="zh-hans">表情反映仅支持 MediaPipe、iPhone / 外部应用（VMC）和 iFacialMocap。请在 <span class="ui">追踪</span> 标签页中确认输入源为其中之一，
+    且 <span class="ui">反映表情</span> 已开启。反应不灵敏时请调低 <span class="ui">表情阈值</span>；
+    出现错误的表情时，请为每种表情指定要使用的表情。</p>
+
+  <h3><span class="zh-hans">无法识别摄像头·追踪不工作</span></h3>
+  <p class="zh-hans">请先在 <span class="ui">追踪</span> 标签页的 <span class="ui">相机</span> 中确认选择的是您的网络摄像头。
+    如果选择了 <code>VRCast Camera</code>（VRCast 的虚拟摄像头）、<code>OBS Virtual Camera</code> 等虚拟摄像头，或用于人脸登录的红外（IR）摄像头，即使有画面也无法识别面部。</p>
+  <p class="zh-hans">打开 <span class="ui">调试日志</span> 标签页，可以查看摄像头列表、追踪器状态以及启动以来的日志。
+    可以只显示 <span class="ui">WARN</span> / <span class="ui">ERROR</span>，或将类别限定为 <code>Tracker</code> / <code>TrackerOutput</code> / <code>Tracking</code>（与摄像头相关）。
+    报告问题时，请点击 <span class="ui">复制显示内容</span>，然后直接粘贴日志和环境信息。</p>
+  <p class="zh-hans">原因不明时，请开启 <span class="ui">详细日志</span>，等到问题出现后再复制。
+    接收统计（每秒数据量、面部·手臂·手被拍到的比例）和 MediaPipe 的推理耗时等会作为 <span class="ui">DEBUG</span> 记录。
+    该设置会被保存，排查结束后请关闭。</p>
+
+  <h3><span class="zh-hans">设置文件与日志的位置</span></h3>
+  <p><code>%USERPROFILE%\AppData\LocalLow\VRCast\VRCast\</code>
+    <span class="zh-hans">（<code>settings.json</code> 和 <code>Player.log</code>）。报告问题时请附上 <code>Player.log</code>。</span>
+    </p>
+</section>
+
+</main>
+</div>
+
+<footer>
+  <span class="zh-hans">VRCast 并非 VRChat Inc. 的官方工具。</span>
+  &middot; <a href="https://github.com/coffin299/VRCast/issues"><span class="zh-hans">报告问题</span></a>
+  &middot; <a href="../../sitemap/"><span class="zh-hans">网站地图</span></a>
+</footer>
+
+</body>
+</html>

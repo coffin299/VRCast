@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<!-- tools/build-langs.mjs で生成（直接編集しない） -->
+<html lang="ja" class="lang-ja" data-page-lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="google-site-verification" content="STqpZioRe0Gg_BgeWLFgpXYZzfbKt-Ts0jZnscRFByg">
+<title>VRCast - VRChat アバターを Unity・VRChat なしで OBS 配信 | 無料 Windows アプリ</title>
+<meta name="description" content="VRCast は、VRChat のアバターを Unity や VRChat を開かずに OBS・Discord・Zoom へ映せる無料の Windows アプリです。Web カメラのトラッキング、あいうえおの口パク、背景透過、仮想カメラに対応。VRM もそのまま読み込めます。">
+<meta name="robots" content="index, follow, max-image-preview:large">
+<meta name="theme-color" content="#e6dbc7">
+<link rel="canonical" href="https://coffin299.github.io/VRCast/ja/">
+<!-- hreflang -->
+<link rel="alternate" hreflang="x-default" href="https://coffin299.github.io/VRCast/">
+<link rel="alternate" hreflang="en" href="https://coffin299.github.io/VRCast/">
+<link rel="alternate" hreflang="ja" href="https://coffin299.github.io/VRCast/ja/">
+<link rel="alternate" hreflang="ko" href="https://coffin299.github.io/VRCast/ko/">
+<link rel="alternate" hreflang="zh-Hans" href="https://coffin299.github.io/VRCast/zh-hans/">
+<link rel="alternate" hreflang="zh-CN" href="https://coffin299.github.io/VRCast/zh-hans/">
+<link rel="alternate" hreflang="zh-Hant" href="https://coffin299.github.io/VRCast/zh-hant/">
+<link rel="alternate" hreflang="zh-TW" href="https://coffin299.github.io/VRCast/zh-hant/">
+<link rel="alternate" hreflang="zh-HK" href="https://coffin299.github.io/VRCast/zh-hant/">
+<!-- /hreflang -->
+<link rel="icon" type="image/png" sizes="96x96" href="../assets/icon-96.png">
+<link rel="apple-touch-icon" href="../assets/icon-288.png">
+<link rel="sitemap" type="application/xml" href="../sitemap.xml">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="VRCast">
+<meta property="og:title" content="VRCast - VRChat アバターを Unity・VRChat なしで OBS 配信 | 無料 Windows アプリ">
+<meta property="og:description" content="VRCast は、VRChat のアバターを Unity や VRChat を開かずに OBS・Discord・Zoom へ映せる無料の Windows アプリです。Web カメラのトラッキング、あいうえおの口パク、背景透過、仮想カメラに対応。VRM もそのまま読み込めます。">
+<meta property="og:url" content="https://coffin299.github.io/VRCast/ja/">
+<meta property="og:image" content="https://coffin299.github.io/VRCast/assets/screenshot.png">
+<meta property="og:image:width" content="1388">
+<meta property="og:image:height" content="794">
+<meta property="og:image:alt" content="VRCast window showing a VRChat avatar (Marycia by BeroarN) with the tracking panel">
+<meta property="og:locale" content="ja_JP">
+<meta property="og:locale:alternate" content="en_US">
+<meta property="og:locale:alternate" content="ko_KR">
+<meta property="og:locale:alternate" content="zh_CN">
+<meta property="og:locale:alternate" content="zh_TW">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="VRCast - VRChat アバターを Unity・VRChat なしで OBS 配信 | 無料 Windows アプリ">
+<meta name="twitter:description" content="VRCast は、VRChat のアバターを Unity や VRChat を開かずに OBS・Discord・Zoom へ映せる無料の Windows アプリです。Web カメラのトラッキング、あいうえおの口パク、背景透過、仮想カメラに対応。VRM もそのまま読み込めます。">
+<meta name="twitter:image" content="https://coffin299.github.io/VRCast/assets/screenshot.png">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "VRCast",
+  "url": "https://coffin299.github.io/VRCast/",
+  "description": "A Windows app that shows a VRChat 3D avatar on its own and sends it to OBS, Discord and Zoom without opening Unity or VRChat. Export the avatar once to a .vrcaster file in Unity (VRM 0.x / 1.0 files load directly), then use webcam tracking (MediaPipe / OpenSeeFace), A-I-U-E-O lip sync, facial expressions, a transparent background for OBS Game Capture and the VRCast Camera virtual camera.",
+  "applicationCategory": "MultimediaApplication",
+  "operatingSystem": "Windows 10, Windows 11 (x64)",
+  "inLanguage": ["ja", "en", "ko", "zh-Hans", "zh-Hant"],
+  "isAccessibleForFree": true,
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "JPY" },
+  "license": "https://www.apache.org/licenses/LICENSE-2.0",
+  "downloadUrl": "https://github.com/coffin299/VRCast/releases",
+  "image": "https://coffin299.github.io/VRCast/assets/icon.png",
+  "screenshot": "https://coffin299.github.io/VRCast/assets/screenshot.png",
+  "softwareHelp": "https://coffin299.github.io/VRCast/help/",
+  "featureList": [
+    "Show a VRChat avatar without Unity or VRChat running",
+    "Transparent background for OBS Game Capture",
+    "Virtual camera (VRCast Camera) for Discord and Zoom",
+    "Spout2 output to OBS with transparency",
+    "Webcam tracking of head, eyes, mouth, arms, hands and fingers (MediaPipe / OpenSeeFace)",
+    "Idle motion (breathing, body sway and head motion) while the webcam is not driving the avatar",
+    "Facial expressions from the webcam",
+    "Perfect sync for avatars with ARKit blend shapes",
+    "A-I-U-E-O lip sync from the microphone and auto blink",
+    "Keeps expressions, default toggles, PhysBones (approximated) and constraints"
+  ],
+  "author": { "@type": "Person", "name": "coffin299", "url": "https://github.com/coffin299" },
+  "sameAs": ["https://github.com/coffin299/VRCast", "https://coffin299.booth.pm/items/8933317"]
+}
+</script>
+<link rel="stylesheet" href="../assets/style.css">
+<script src="../assets/site.js"></script>
+</head>
+<body>
+<header>
+  <a class="brand" href="./"><img src="../assets/icon-96.png" width="32" height="32" alt="">VRCast</a>
+  <div class="links">
+    <a class="current" href="./"><span class="ja">概要</span></a>
+    <a href="help/"><span class="ja">ヘルプ</span></a>
+    <a href="https://github.com/coffin299/VRCast">GitHub</a>
+  </div>
+  <div class="spacer"></div>
+  <div class="group">
+    <button data-theme-choice="light"><span class="ja">ライト</span></button>
+    <button data-theme-choice="dark"><span class="ja">ダーク</span></button>
+  </div>
+  <select data-lang-select aria-label="Language">
+    <option value="auto">Auto</option>
+    <option value="ja">日本語</option>
+    <option value="en">English</option>
+    <option value="ko">한국어</option>
+    <option value="zh-Hans">简体中文</option>
+    <option value="zh-Hant">繁體中文</option>
+  </select>
+</header>
+
+<div class="page">
+
+<div class="hero">
+  <img src="../assets/icon-288.png" width="140" height="140" fetchpriority="high" alt="VRCast">
+  <h1>VRCast</h1>
+  <p class="lead ja">VRChat のアバターを、Unity・VRChat を開かずにそのまま配信へ。</p>
+  <div class="buttons">
+    <a class="button primary" href="https://github.com/coffin299/VRCast/releases">
+      <span class="ja">ダウンロード</span></a>
+    <a class="button" href="help/"><span class="ja">使い方を見る</span></a>
+    <a class="button" href="https://github.com/coffin299/VRCast">GitHub</a>
+  </div>
+</div>
+
+<div class="counter">
+  <img src="https://count.getloli.com/@VRCastCounterV2?theme=green&amp;padding=7&amp;offset=0&amp;align=top&amp;scale=1&amp;pixelated=1&amp;darkmode=0"
+    alt="VRCast counter">
+</div>
+
+<figure class="shot">
+  <video width="1392" height="768" poster="../assets/preview-poster.jpg"
+    autoplay muted loop playsinline preload="auto" data-autoplay
+    aria-label="VRCast demo: a VRChat avatar (Marycia by BeroarN) following webcam tracking, shown without Unity or VRChat">
+    <source src="../assets/preview.webm" type="video/webm; codecs=vp9">
+    <source src="../assets/preview.mp4" type="video/mp4">
+    <a href="../assets/preview.mp4">VRCast demo video</a>
+  </video>
+  <figcaption>
+    <span class="ja">Web カメラのトラッキングで動かしている様子（<a href="../video/">動画のページ</a>）。</span>
+    <span class="ja">使用アバター:</span>
+    <a href="https://brn.booth.pm/items/6305948">Marycia マリシア</a> (BeroarN)
+  </figcaption>
+</figure>
+
+<section>
+  <h2><span class="ja">VRCast とは</span></h2>
+  <p class="ja">VRCast は、VRChat 向けの 3D アバターを単体で表示し、OBS などの配信ソフトや Discord / Zoom に映す Windows 用アプリです。
+    アバターを一度 <code>.vrcaster</code> ファイルに書き出せば、あとは Unity や VCC を起動せずに使えます。</p>
+  <p class="ja">VRoid などの VRM（<code>.vrm</code>、VRM 0.x / 1.0）は書き出し不要で、そのまま読み込めます。</p>
+  <div class="flow">
+    <span class="box"><span class="ja">VRChat アバター（Unity）</span></span>
+    <span class="arrow">→</span>
+    <span class="box"><code>.vrcaster</code></span>
+    <span class="arrow">→</span>
+    <span class="box">VRCast.exe</span>
+    <span class="arrow">→</span>
+    <span class="box"><span class="ja">OBS / 仮想カメラ</span></span>
+  </div>
+</section>
+
+<div class="grid">
+  <section>
+    <h3><span class="ja">OBS に背景透過で映せる</span></h3>
+    <p class="ja">ゲームキャプチャで背景を抜いて配信画面に重ねられます。VRCast の画面上は目に優しいベージュ背景のまま。</p>
+  </section>
+  <section>
+    <h3><span class="ja">VRChat の設定をそのまま</span></h3>
+    <p class="ja">表情・小物の初期状態・揺れもの（PhysBone 近似）・Constraint を書き出して再現します。元のアバターは変更しません。</p>
+  </section>
+  <section>
+    <h3><span class="ja">あいうえおの口パク</span></h3>
+    <p class="ja">マイクの声から母音を判定し、VRChat と同じように口の形が変わります。自動まばたき付き。</p>
+  </section>
+  <section>
+    <h3><span class="ja">Web カメラでトラッキング</span></h3>
+    <p class="ja">同梱の MediaPipe トラッカーで頭・まばたき・口・視線に加えて腕・手・指まで動きます（OpenSeeFace にも対応）。</p>
+  </section>
+  <section>
+    <h3><span class="ja">カメラがなくても少し動く</span></h3>
+    <p class="ja">待機中は呼吸・体の揺れ・頭のゆらぎで、完全に止まって見えません。強さと速さを調整でき、顔のトラッキング中は頭を本人の動きに任せます。</p>
+  </section>
+  <section>
+    <h3><span class="ja">表情もカメラで反映</span></h3>
+    <p class="ja">笑顔・驚き・怒り・悲しみを検出して、アバターの表情に切り替えます（MediaPipe のみ、OFF にもできます）。</p>
+  </section>
+  <section>
+    <h3><span class="ja">パーフェクトシンク</span></h3>
+    <p class="ja">ARKit 名の BlendShape を持つアバターなら、眉・頬・口の形まで顔の動きどおりに動きます（MediaPipe のみ）。</p>
+  </section>
+  <section>
+    <h3><span class="ja">仮想カメラ出力</span></h3>
+    <p class="ja"><span class="ui">VRCast Camera</span> として Discord や Zoom のカメラに選べます。</p>
+  </section>
+  <section>
+    <h3><span class="ja">Spout2 出力</span></h3>
+    <p class="ja">OBS へ GPU 上で映像を渡します。キャプチャより軽く、透過もそのまま（OBS 用 Spout2 プラグインが必要）。</p>
+  </section>
+  <section>
+    <h3><span class="ja">はじめてでも迷わない</span></h3>
+    <p class="ja">起動すると「はじめに」タブが読み込みから OBS までを案内。ドラッグ＆ドロップで読み込め、日本語 / 英語 / 韓国語 / 中国語（簡体字・繁体字）に対応。</p>
+  </section>
+</div>
+
+<section>
+  <h2><span class="ja">画面</span></h2>
+  <figure class="shot">
+    <img src="../assets/screenshot.png" width="1388" height="794" loading="lazy"
+      alt="VRCast window: the settings panel on the left and a VRChat avatar (Marycia by BeroarN) smiling from webcam expression tracking">
+    <figcaption>
+      <span class="ja">左のパネルで設定し、右にアバターを表示します（カメラで笑顔を検出して表情を切り替え中）。</span>
+      <span class="ja">使用アバター:</span>
+      <a href="https://brn.booth.pm/items/6305948">Marycia マリシア</a> (BeroarN)
+    </figcaption>
+  </figure>
+</section>
+
+<section>
+  <h2><span class="ja">かんたん 3 ステップ</span></h2>
+  <ol class="steps">
+    <li><span class="ja">Unity でアバターを <code>.vrcaster</code> に書き出す（<a href="help/#export">手順</a>）</span>
+        <br>
+        <span class="ja">VRM（<code>.vrm</code>）ならこの手順は不要（<a href="help/#vrm">VRM について</a>）</span>
+        </li>
+    <li><span class="ja">VRCast のウィンドウにドラッグ＆ドロップして、背景を透過にする</span>
+        </li>
+    <li><span class="ja">OBS でゲームキャプチャを追加して <span class="ui">透過を許可</span>（<a href="help/#obs">手順</a>）</span>
+        </li>
+  </ol>
+</section>
+
+<section>
+  <h2><span class="ja">動作環境</span></h2>
+  <ul>
+    <li>Windows 10 / 11 (x64)</li>
+    <li><span class="ja">書き出し: アバターの入った Unity 2022.3.22f1 プロジェクト（VCC プロジェクト可）</span>
+        </li>
+    <li><span class="ja">VRM（0.x / 1.0）: 書き出し不要（Unity も不要）</span>
+        </li>
+    <li><span class="ja">トラッキング: Web カメラ（任意）</span></li>
+  </ul>
+</section>
+
+<section class="faq">
+  <h2><span class="ja">よくある質問</span></h2>
+  <h3><span class="ja">Unity や VRChat は必要ですか？</span></h3>
+  <p class="ja">アバターを <code>.vrcaster</code> に書き出すときだけ、アバターの入った Unity プロジェクトを使います。配信中は Unity も VRChat も起動しません。</p>
+  <h3><span class="ja">VRM（VRoid など）は使えますか？</span></h3>
+  <p class="ja">はい。VRM 0.x / 1.0 の <code>.vrm</code> をそのままドラッグ＆ドロップで読み込めます。表情・まばたき・口パク・揺れものにも対応しています（<a href="help/#vrm">詳しく</a>）。</p>
+  <h3><span class="ja">料金はかかりますか？</span></h3>
+  <p class="ja">無料です。Apache License 2.0 のオープンソースで、<a href="https://github.com/coffin299/VRCast/releases">GitHub</a> と <a href="https://coffin299.booth.pm/items/8933317">BOOTH</a> からダウンロードできます。</p>
+  <h3><span class="ja">どのアプリに映せますか？</span></h3>
+  <p class="ja">OBS ではゲームキャプチャか Spout2 で背景を透過して重ねられます。Discord や Zoom などでは仮想カメラ <span class="ui">VRCast Camera</span> をカメラとして選べます。</p>
+  <h3><span class="ja">元のアバターは変更されますか？</span></h3>
+  <p class="ja">いいえ。書き出しは元のアバターを変更しません。</p>
+</section>
+
+</div>
+
+<footer>
+  <span class="ja">VRCast は VRChat Inc. の公式ツールではありません。</span>
+  &middot; Apache License 2.0 &middot; <a href="https://github.com/coffin299/VRCast">github.com/coffin299/VRCast</a>
+  &middot; <a href="../sitemap/"><span class="ja">サイトマップ</span></a>
+  <br>
+  <span class="ja">ページ内で使用しているアバター:</span>
+  <a href="https://brn.booth.pm/items/6305948">Marycia マリシア</a> &copy; BeroarN
+</footer>
+
+</body>
+</html>

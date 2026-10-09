@@ -27,6 +27,15 @@ Key facts:
 - [Virtual camera](https://coffin299.github.io/VRCast/help/#vcam)
 - [Tracking](https://coffin299.github.io/VRCast/help/#tracking)
 - [Troubleshooting](https://coffin299.github.io/VRCast/help/#trouble)
+- [Demo video](https://coffin299.github.io/VRCast/video/): a VRChat avatar driven by webcam tracking (14 seconds, no audio)
+- [Sitemap](https://coffin299.github.io/VRCast/sitemap/): every page in every language
+
+## Other languages
+
+- Japanese: [Overview](https://coffin299.github.io/VRCast/ja/), [Help](https://coffin299.github.io/VRCast/ja/help/)
+- Korean: [Overview](https://coffin299.github.io/VRCast/ko/), [Help](https://coffin299.github.io/VRCast/ko/help/)
+- Simplified Chinese: [Overview](https://coffin299.github.io/VRCast/zh-hans/), [Help](https://coffin299.github.io/VRCast/zh-hans/help/)
+- Traditional Chinese: [Overview](https://coffin299.github.io/VRCast/zh-hant/), [Help](https://coffin299.github.io/VRCast/zh-hant/help/)
 
 ## Download
 
