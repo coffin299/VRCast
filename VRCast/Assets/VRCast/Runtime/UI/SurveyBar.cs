@@ -4,16 +4,13 @@ namespace VRCast.UI
 {
     /// <summary>
     /// パネル下部に常に表示するアンケート欄（次に対応してほしい機能などの募集）。
-    /// ほかのカードと同じ見た目で、GitHub の Issue か Google フォームへ誘導する。すぐ下に公式 Discord のボタンを出す。
+    /// ほかのカードと同じ見た目で、GitHub の Issue か Google フォームへ誘導する。
     /// </summary>
     public class SurveyBar
     {
         // 回答先（GitHub の Issue / Google フォーム）
         private const string GitHubIssueUrl = "https://github.com/coffin299/VRCast/issues/11";
         private const string GoogleFormUrl = "https://forms.gle/L8z1P6SXZ23SnwWa8";
-
-        // 公式 Discord サーバーの招待
-        private const string DiscordUrl = "https://discord.gg/vM5RH52HdF";
 
         public void Draw()
         {
@@ -43,13 +40,6 @@ namespace VRCast.UI
 
             GUILayout.EndHorizontal();
             GUILayout.EndVertical();
-
-            // アンケート欄のすぐ下に公式 Discord への招待
-            if (GUILayout.Button(Loc.T("Join the official Discord", "公式 Discord に参加", "공식 Discord 참여",
-                    "加入官方 Discord", "加入官方 Discord"), GuiControls.Shrinkable))
-            {
-                Application.OpenURL(DiscordUrl);
-            }
         }
     }
 }

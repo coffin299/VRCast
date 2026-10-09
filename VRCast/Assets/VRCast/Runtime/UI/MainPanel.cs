@@ -15,7 +15,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits）で
+    /// IMGUI の操作パネル。左のタブ（Start / Avatar / Pose / Face / Shape keys / Tracking / Display / Output / OSC / HTTP / Settings / Log / Credits / Discord）で
     /// 表示するセクションを切り替え、内容は縦スクロールする。下部にはリセットボタン・アンケート欄・動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
@@ -57,6 +57,7 @@ namespace VRCast.UI
             Settings,
             Log,
             Credits,
+            Discord,
         }
 
         private static readonly int TabCount = Enum.GetValues(typeof(Tab)).Length;
@@ -81,6 +82,7 @@ namespace VRCast.UI
         private SettingsSection _settingsSection;
         private LogSection _logSection;
         private CreditsSection _creditsSection;
+        private readonly DiscordSection _discordSection = new DiscordSection();
         private ResetBar _resetBar;
         private readonly SurveyBar _surveyBar = new SurveyBar();
         private PerformanceBar _performanceBar;
@@ -272,9 +274,10 @@ namespace VRCast.UI
                 _fileDrop.FilesDropped -= OnFilesDropped;
             }
 
-            // 生成したテクスチャ・フォントを破棄
+            // 生成したテクスチャ・フォントを破棄し、Discord の情報の取得を止める
             _theme?.Destroy();
             _theme = null;
+            _discordSection.Dispose();
         }
 
         private void FitToScreen(float screenWidth, float screenHeight)
@@ -507,6 +510,9 @@ namespace VRCast.UI
                 case Tab.Credits:
                     _creditsSection.Draw();
                     break;
+                case Tab.Discord:
+                    _discordSection.Draw();
+                    break;
                 default:
                     _settingsSection.Draw();
                     break;
@@ -540,6 +546,8 @@ namespace VRCast.UI
                     return Loc.T("Debug log", "デバッグログ", "디버그 로그", "调试日志", "偵錯日誌");
                 case Tab.Credits:
                     return Loc.T("Credits", "クレジット", "크레딧", "致谢", "致謝");
+                case Tab.Discord:
+                    return Loc.T("Official Discord", "公式 Discord", "공식 Discord", "官方 Discord", "官方 Discord");
                 default:
                     return Loc.T("Settings", "設定", "설정", "设置", "設定");
             }

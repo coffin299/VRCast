@@ -42,7 +42,7 @@ namespace VRCast.Editor.Build
         private const string ProductName = "VRCast";
 
         // アプリのバージョン（CHANGELOG.txt と converter の package.json の version に合わせる）
-        private const string AppVersion = "1.14.6";
+        private const string AppVersion = "1.15.6";
 
         // 初回起動時のウィンドウサイズ（以降は settings.json の値を使う）
         private const int DefaultWidth = 1280;

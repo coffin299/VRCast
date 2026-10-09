@@ -38,7 +38,7 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 ## 現在の状態
 
-**バージョン 1.14.6（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
+**バージョン 1.15.6（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
 
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
@@ -170,12 +170,12 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 | 割り当てたキー | 表情プリセット切替 / ニュートラル（Pose タブで表情ごとに割り当て。テンキー・記号キー・修飾キー単独・Ctrl / Alt / Shift の組み合わせ可、既定は未割り当て、背面でも有効） |
 | テンキー 1〜5 | リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）と 5 カメラ目線の ON / OFF。パネル下部のボタンと同じ。Settings タブで変更・解除可、NumLock ON、背面でも有効 |
 
-操作パネルは左のタブ（Start / Avatar / Pose / Face / Shape key setup / Tracking / Display / Output / Settings / Debug log / Credits）で項目を切り替え、内容は縦にスクロールする。
+操作パネルは左のタブ（Start / Avatar / Pose / Face / Shape key setup / Tracking / Display / Output / Settings / Debug log / Credits / Official Discord）で項目を切り替え、内容は縦にスクロールする。
 配色は背景のベージュに合わせた濃いめのベージュ（焦げ茶の文字、キャラメル色のアクセント）。
 パネル下部には、どのタブでも押せるリセットボタン（**Head** 顔の向き / **Gaze** 視線 / **Expression** 表情をニュートラルへ / **Camera** カメラ）と、**Look at camera**（カメラ目線。ON の間は押し込んだ表示）を常に表示する。
 同じ操作はショートカットキーでも行える（パネルを隠していても有効。既定はテンキー 1〜5 で、**Settings** の **Shortcut keys (reset / look at camera)** で変更・解除・既定に戻す・背面でも使うかを選べる。割り当て方は表情のショートカットキーと同じ）。各ボタンの 2 行目に割り当て中のキー（例: `キー: Num 1`、未割り当てなら「未割り当て」）を表示する。
 表情のショートカットキーと同じ組み合わせにすると表情が優先され、そのリセットはキーでは動かない（Settings の行と Pose タブの表情の行の両方に警告が出る）。
-その下にアンケート欄（次に対応してほしい機能などの募集。ほかの欄と同じ見た目で、[GitHub の Issue](https://github.com/coffin299/VRCast/issues/11) か [Google フォーム](https://forms.gle/L8z1P6SXZ23SnwWa8) を開くボタンを表示。すぐ下に [公式 Discord](https://discord.gg/vM5RH52HdF) のボタン）、
+その下にアンケート欄（次に対応してほしい機能などの募集。ほかの欄と同じ見た目で、[GitHub の Issue](https://github.com/coffin299/VRCast/issues/11) か [Google フォーム](https://forms.gle/L8z1P6SXZ23SnwWa8) を開くボタンを表示）、
 さらにその下に動作状況（**FPS** 描画のフレームレートと 1 フレームの時間 / **CPU** VRCast の CPU 使用率 / **GPU** 1 フレームの GPU 処理時間 / **Tracker CPU** 同梱トラッカーの CPU 使用率 / **Tracking** トラッキングの受信レート）を英語で表示する。
 1 秒ごとに更新し、**Settings** の **Show performance stats**（既定 ON）で隠せる。CPU 使用率はタスクマネージャーと同じく全論理コアに対する割合。
 見出しの「VRCast」の横にはバージョン番号（例: `v1.11.3`）を表示する。
@@ -202,7 +202,10 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
     MediaPipe 版の `STATS:` 行（カメラ FPS・推定 FPS・モデルごとの推定時間・検出率・間引き / 失敗の件数。`--status-interval` 秒ごと、既定 5）。
   - **負荷対策**: 連続した同じログは 1 行にまとめて回数（×N）を表示、トラッカー出力の INFO は毎秒 30 行まで（超えた分は件数だけ警告）、
     不正パケットの警告は 10 秒に 1 回、統計は詳細ログ OFF なら文字列も作らない、一覧の作り直しは 0.25 秒に 1 回まで、配布版では通常ログ・警告のスタックトレースを取らない。
-- **Credits**（クレジット、タブ列の一番下）: 開発者（ごみぃ）・協力者（Arche_039、おけパ）のリンク（名前のボタンで X、その右に YouTube 等があれば並べる）、開発者の Twitch チャンネル（[coffinnoob299](https://www.twitch.tv/coffinnoob299)）へのリンクと、ライセンス・NOTICE を GitHub で開くボタン（配布物にも `LICENSE.txt` / `NOTICE.txt` を同梱）
+- **Official Discord**（公式 Discord、タブ列の一番下）: [公式 Discord](https://discord.gg/vM5RH52HdF) に参加するボタンと、Discord のウィジェットと同じ内容
+  （サーバー名・オンライン人数・オンラインのメンバーのアイコン・状態・名前。`widget.json` から取得）を表示する。情報はこのタブを開いている間だけ取得し、1 分ごと・**Refresh** で取り直す。
+  その下に招待コード（`vM5RH52HdF`）と招待リンクを表示し、それぞれ **Copy** でコピーできる（Discord アプリの「サーバーに参加」に入力する用）。
+- **Credits**（クレジット）: 開発者（ごみぃ）・協力者（Arche_039、おけパ）のリンク（名前のボタンで X、その右に YouTube 等があれば並べる）、開発者の Twitch チャンネル（[coffinnoob299](https://www.twitch.tv/coffinnoob299)）へのリンクと、ライセンス・NOTICE を GitHub で開くボタン（配布物にも `LICENSE.txt` / `NOTICE.txt` を同梱）
   （配布フォルダにファイルが無い場合は GitHub のファイルを開くボタンになる）。
 - **UI の大きさ**: **Settings** の UI size で 75% / 100% / 125% / 150% / 200% を選べる（高解像度ディスプレイ向け）。
 - **テーマ**: **Settings** の Theme で **Light**（既定、ベージュ）/ **Dark**（暗い茶系）を選べる（OS の設定には合わせない）。
