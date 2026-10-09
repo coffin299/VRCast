@@ -96,11 +96,11 @@ HAND_MODEL = "hand_landmarker.task"
 POSE_MODEL = "pose_landmarker_lite.task"
 
 # Hand Landmarker の閾値（MediaPipe の既定はすべて 0.5）。
-# 新しく手を見つけるときは誤検出を避けて既定のまま、一度見つけた手は低めの閾値で追い続ける
-# （見失うと毎回手のひらの検出からやり直すため、重くなり指の動きも途切れる）
+# 一度見つけた手は手らしさを少し低めにして追い続ける（見失うと毎回手のひらの検出からやり直し、指が途切れる）。
+# 位置の一致度は既定のまま（下げると速く動かしたときにずれた範囲で推定し続け、点が崩れる）
 HAND_DETECTION_CONFIDENCE = 0.5  # 手のひらの検出（新しく見つけるとき）
-HAND_PRESENCE_CONFIDENCE = 0.3  # 追跡中の手らしさ（下回ると検出からやり直す）
-HAND_TRACKING_CONFIDENCE = 0.3  # 前のフレームとの手の位置の一致度
+HAND_PRESENCE_CONFIDENCE = 0.4  # 追跡中の手らしさ（下回ると検出からやり直す）
+HAND_TRACKING_CONFIDENCE = 0.5  # 前のフレームとの手の位置の一致度
 
 # カメラの既定の解像度・フレームレート
 DEFAULT_WIDTH = 640

@@ -1,3 +1,4 @@
+using System;
 using UnityEngine;
 using VRCast.Core;
 
@@ -11,8 +12,9 @@ namespace VRCast.Tracking
     [DefaultExecutionOrder(-90)]
     public class HandTrackingDriver : MonoBehaviour
     {
-        // 補間した点への追従速度（大きいほど速い、1 秒あたり）。補間で約 1 回分遅れる分、以前（15）より速くする
-        private const float Smoothing = 25f;
+        // 届いた値へ寄る目安の秒数（腕は Pose が 2 フレームに 1 回の更新なので手より長め）
+        private const float ArmSmoothTime = 0.07f;
+        private const float HandSmoothTime = 0.05f;
 
         // 映った・消えたときに待機ポーズとの間を切り替える秒数
         private const float FadeSeconds = 0.3f;
@@ -90,9 +92,9 @@ namespace VRCast.Tracking
             public Vector3 LowerDirection;
             public Vector3[] HandPoints = new Vector3[MediaPipePacket.HandPointCount];
 
-            // 届いた値（上腕・前腕の向き、手の 21 点）の間を描画の毎フレーム補間する
-            public readonly PointInterpolator ArmPath = new PointInterpolator(2);
-            public readonly PointInterpolator HandPath = new PointInterpolator(MediaPipePacket.HandPointCount);
+            // 届いた値（上腕・前腕の向き、手の 21 点）へ描画の毎フレームなめらかに寄せる
+            public readonly PointSmoother ArmPath = new PointSmoother(2, ArmSmoothTime);
+            public readonly PointSmoother HandPath = new PointSmoother(MediaPipePacket.HandPointCount, HandSmoothTime);
 
             // 届いた値をアバタールート基準へ直す作業領域（毎回の確保を避ける）
             public readonly Vector3[] ArmSample = new Vector3[2];
@@ -284,10 +286,9 @@ namespace VRCast.Tracking
                 return;
             }
 
-            float blend = 1f - Mathf.Exp(-Smoothing * Time.deltaTime);
             float fade = Time.deltaTime / FadeSeconds;
 
-            // 腕: 新しい値が届いたら補間の目標にし、毎フレーム補間した向きへ追従（待機ポーズから戻った直後は合わせる）
+            // 腕: 新しい値が届いたら目標にし、毎フレームなめらかに寄せた向きを使う（映り始めは寄せずに合わせる）
             bool hasArm = received && data.HasArm;
             if (hasArm)
             {
@@ -299,11 +300,8 @@ namespace VRCast.Tracking
                 }
 
                 rig.ArmPath.Update(now);
-                Vector3 upper = rig.ArmPath.Current[0].normalized;
-                Vector3 lower = rig.ArmPath.Current[1].normalized;
-                bool following = rig.ArmWeight > 0f;
-                rig.UpperDirection = following ? Vector3.Slerp(rig.UpperDirection, upper, blend) : upper;
-                rig.LowerDirection = following ? Vector3.Slerp(rig.LowerDirection, lower, blend) : lower;
+                rig.UpperDirection = rig.ArmPath.Current[0].normalized;
+                rig.LowerDirection = rig.ArmPath.Current[1].normalized;
             }
             else
             {
@@ -311,7 +309,7 @@ namespace VRCast.Tracking
                 rig.ArmPath.Reset();
             }
 
-            // 手: 同様に 21 点を補間して追従
+            // 手: 同様に 21 点をなめらかに寄せる
             bool hasHand = received && data.HasHand;
             if (hasHand)
             {
@@ -326,11 +324,7 @@ namespace VRCast.Tracking
                 }
 
                 rig.HandPath.Update(now);
-                float t = rig.HandWeight > 0f ? blend : 1f;
-                for (int i = 0; i < rig.HandPoints.Length; i++)
-                {
-                    rig.HandPoints[i] = Vector3.Lerp(rig.HandPoints[i], rig.HandPath.Current[i], t);
-                }
+                Array.Copy(rig.HandPath.Current, rig.HandPoints, rig.HandPoints.Length);
             }
             else
             {
