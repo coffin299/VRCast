@@ -135,6 +135,7 @@
     衣装の切り替えに合わせて縮小用ブレンドシェイプを FX で動かしている場合などは、OFF にすると VRChat に入ったときの初期状態の値で書き出します。</p>
   <p class="note ja">FX レイヤーにある表情クリップは自動で書き出されます。FX に入っていない表情（昔のアバターに付属していた表情アニメーションなど）は、
     書き出し画面の <span class="ui">追加の表情</span> にアニメーションクリップかフォルダをドラッグすると表情として書き出せます（ブレンドシェイプだけを動かすクリップが対象。指定はアバターごとに保存）。</p>
+  <p class="note ja">シーンに <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> の設定があれば、そのアバターの表情を FaceEmo のモード名で自動的に書き出します（FaceEmo の「アバターに適用」をしていなくても可。小物の表示などは除き、ブレンドシェイプの部分だけを使います）。</p>
   <p class="note ja">【ベータ版】Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
     MA の Merge Armature / Bone Proxy で付けた衣装・小物は、統合されなかった場合でもアバターのボーンに付け替えて体に追従させます。
     MA の Blendshape Sync で口などに追従させたチェーン・小物も、口パク・まばたき・トラッキングに追従します。
@@ -156,6 +157,9 @@
         </li>
     <li><span class="ja"><span class="ui">アバター</span> タブの <span class="ui">最近使ったアバター</span> に直前に使ったアバターが最大 10 件並び、クリックで切り替えられます（<span class="ui">×</span> で一覧から外します）。
           カメラ・ライト・アバターの明るさ・待機ポーズ・体の向きはアバターごとに記憶され、切り替えると戻ります。</span>
+        </li>
+    <li><span class="ja">一覧はアバターごとの画像付きのタイルで並びます。タイルの <span class="ui">画像</span> で PNG / JPG / GIF（GIF はアニメーションします）を設定できます。
+          表示中のアバターには、画像をウィンドウにドロップしても設定できます。外すときは <span class="ui">状態</span> の <span class="ui">画像を外す</span> を押します。</span>
         </li>
   </ul>
   <p class="note warn ja"><code>.vrcaster</code> と <code>.vrm</code> 以外のファイル（画像や unitypackage など）は読み込めません。<code>.vrcaster</code> でエラーが表示された場合は書き出し直してください。</p>
@@ -316,6 +320,10 @@
         </li>
     <li><span class="ja"><span class="ui">体の動き</span> で、頭の動きに合わせて上半身を傾けるか体ごと動かすかを選べます。</span>
         </li>
+    <li><span class="ja">全身を映すときは <span class="ui">全身モード（足を固定）</span> を ON にすると、足を床に付けたまま、腰も上半身の傾き・移動についていき、膝の曲げで吸収します。</span>
+        </li>
+    <li><span class="ja"><span class="ui">カメラ目線</span> を ON にすると、トラッキングの視線の代わりに目を画面に向けます（トラッキングを切っていても効きます）。パネル下部のボタンやテンキーの 5 でも切り替えられます。</span>
+        </li>
   </ul>
   <p class="note warn ja">他のアプリ（Discord・Zoom・VSeeFace など）が Web カメラを使っていると起動できません。</p>
 </section>
@@ -372,8 +380,8 @@
     <tr><td><span class="ja">パネル下部のアンケート</span></td>
         <td><span class="ja">次に対応してほしい機能などの募集です。<a href="https://github.com/coffin299/VRCast/issues/11">GitHub の Issue</a> か <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google フォーム</a> から自由に書いてください</span>
             </td></tr>
-    <tr><td><span class="ja">テンキー 1〜4</span></td>
-        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）。パネルを隠していても使え、<span class="ui">設定</span> タブの <span class="ui">ショートカットキー（リセット）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
+    <tr><td><span class="ja">テンキー 1〜5</span></td>
+        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）と 5 カメラ目線の ON / OFF。パネルを隠していても使え、<span class="ui">設定</span> タブの <span class="ui">ショートカットキー（リセット・カメラ目線）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
             </td></tr>
     <tr><td><span class="ja">右ドラッグ</span></td>
         <td><span class="ja">カメラを回転</span></td></tr>
@@ -394,7 +402,7 @@
   <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
     <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
     lilToon 等は明るさがテクスチャの色までに制限されるため、太陽光を上げても一定以上は明るくなりません。
-    その場合は <span class="ui">アバターの明るさ</span> を上げてください（0.5〜10、1 = マテリアルのまま）。</p>
+    その場合は <span class="ui">アバターの明るさ</span> を上げてください（0.1〜10、1 = マテリアルのまま）。</p>
 
   <h3><span class="ja">OBS で背景が抜けない</span></h3>
   <p class="ja">VRCast の背景を <span class="ui">透過</span> にし、OBS は <span class="ui">ゲームキャプチャ</span>（ウィンドウキャプチャではなく）で
@@ -407,7 +415,7 @@
   <p class="ja">VRCast を管理者として実行していると Windows の制限でドロップできません。通常どおり起動するか、<span class="ui">ファイルを選ぶ...</span> を使ってください。</p>
 
   <h3><span class="ja">ゲームや OBS と一緒に使うとトラッキングがカクつく</span></h3>
-  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">エコ</span> にすると負荷が半分ほどになります。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
+  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">なめらか</span> にすると負荷が下がり、<span class="ui">エコ</span> にするとさらに半分ほどになります（既定の <span class="ui">ぬるぬる（高負荷）</span> は指をなめらかに動かすため重めです）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
 
   <h3><span class="ja">口パクしない</span></h3>
   <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、

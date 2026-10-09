@@ -135,6 +135,7 @@
     如果 FX 層會隨服裝切換驅動收縮用 BlendShape 等，關閉後會按進入 VRChat 時的初始狀態值匯出。</p>
   <p class="note zh-hant">FX 層中的表情剪輯會自動匯出。不在 FX 中的表情（例如舊虛擬形象附帶的表情動畫），
     可將動畫剪輯或資料夾拖到匯出視窗的 <span class="ui">追加表情</span> 中作為表情匯出（僅限只驅動 BlendShape 的剪輯，按虛擬形象分別儲存）。</p>
+  <p class="note zh-hant">如果場景中有該虛擬形象的 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 設定，會自動以 FaceEmo 的模式名稱匯出其表情（即使未執行 FaceEmo 的「套用到虛擬形象」也可以；僅使用 BlendShape 部分，不含小物顯示等）。</p>
   <p class="note zh-hant">【測試版】用 Modular Avatar 等改造過的虛擬形象，直接指定即可按改造後的樣子（合併的服裝、新增的表情和開關）匯出。
     用 MA 的 Merge Armature / Bone Proxy 新增的服裝和小物，即使未被合併，也會重新掛到虛擬形象的骨骼上並跟隨身體。
     用 MA 的 Blendshape Sync 跟隨嘴部等的鏈條和小物，也會跟隨口型同步、眨眼和追蹤。
@@ -393,7 +394,7 @@
   <p class="zh-hant">請點擊 <span class="ui">顯示</span> 分頁的 <span class="ui">晴天</span> 預設，或調高 <span class="ui">環境光</span>。
     將 <span class="ui">方向</span> 設為 0 附近可從正面照射。
     lilToon 等著色器的亮度上限為貼圖顏色，因此調高陽光超過一定程度後不會再變亮。
-    此時請調高 <span class="ui">虛擬形象亮度</span>（0.5～10，1 = 保持材質原樣）。</p>
+    此時請調高 <span class="ui">虛擬形象亮度</span>（0.1～10，1 = 保持材質原樣）。</p>
 
   <h3><span class="zh-hant">OBS 中背景不透明</span></h3>
   <p class="zh-hant">請確認 VRCast 的背景已設為 <span class="ui">透明</span>，並且 OBS 使用的是 <span class="ui">遊戲擷取</span>（而非視窗擷取），
@@ -406,7 +407,7 @@
   <p class="zh-hant">以系統管理員身分執行 VRCast 時，Windows 會阻止拖放。請正常啟動，或使用 <span class="ui">選擇檔案...</span>。</p>
 
   <h3><span class="zh-hant">與遊戲或 OBS 同時使用時追蹤卡頓</span></h3>
-  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。使用 MediaPipe 時，將追蹤分頁的 <span class="ui">追蹤器模式</span> 設為 <span class="ui">節能</span> 可使負載減半左右。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
+  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。使用 MediaPipe 時，將追蹤分頁的 <span class="ui">追蹤器模式</span> 設為 <span class="ui">流暢</span> 可降低負載，設為 <span class="ui">節能</span> 可再減半左右（預設的 <span class="ui">絲滑（高負載）</span> 為了讓手指順滑移動，負載較高）。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
 
   <h3><span class="zh-hant">嘴型不動</span></h3>
   <p class="zh-hant">請在 <span class="ui">臉部</span> 分頁中確認選擇了正確的麥克風，以及 <span class="ui">音量</span> 表是否有反應。

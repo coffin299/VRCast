@@ -206,6 +206,11 @@
     可将动画剪辑或文件夹拖到导出窗口的 <span class="ui">追加表情</span> 中作为表情导出（仅限只驱动 BlendShape 的剪辑，按虚拟形象分别保存）。</p>
   <p class="note zh-hant">FX 層中的表情剪輯會自動匯出。不在 FX 中的表情（例如舊虛擬形象附帶的表情動畫），
     可將動畫剪輯或資料夾拖到匯出視窗的 <span class="ui">追加表情</span> 中作為表情匯出（僅限只驅動 BlendShape 的剪輯，按虛擬形象分別儲存）。</p>
+  <p class="note ja">シーンに <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> の設定があれば、そのアバターの表情を FaceEmo のモード名で自動的に書き出します（FaceEmo の「アバターに適用」をしていなくても可。小物の表示などは除き、ブレンドシェイプの部分だけを使います）。</p>
+  <p class="note en">If the scene has <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> set up for the avatar, its expressions are exported automatically with FaceEmo's mode names (even without "Apply to avatar"; only the blend shape part is used, not accessory toggles).</p>
+  <p class="note ko">씬에 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 설정이 있으면 그 아바타의 표정을 FaceEmo의 모드 이름으로 자동으로 내보냅니다 (FaceEmo의 「아바타에 적용」을 하지 않아도 됩니다. 소품 표시 등은 제외하고 블렌드셰이프 부분만 사용합니다).</p>
+  <p class="note zh-hans">如果场景中有该虚拟形象的 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 设置，会自动以 FaceEmo 的模式名称导出其表情（即使未执行 FaceEmo 的“应用到虚拟形象”也可以；仅使用 BlendShape 部分，不含小物显示等）。</p>
+  <p class="note zh-hant">如果場景中有該虛擬形象的 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 設定，會自動以 FaceEmo 的模式名稱匯出其表情（即使未執行 FaceEmo 的「套用到虛擬形象」也可以；僅使用 BlendShape 部分，不含小物顯示等）。</p>
   <p class="note ja">【ベータ版】Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
     MA の Merge Armature / Bone Proxy で付けた衣装・小物は、統合されなかった場合でもアバターのボーンに付け替えて体に追従させます。
     MA の Blendshape Sync で口などに追従させたチェーン・小物も、口パク・まばたき・トラッキングに追従します。
@@ -276,6 +281,16 @@
           相机、灯光、虚拟形象亮度、待机姿势和身体朝向会按虚拟形象分别记住，切换时恢复。</span>
         <span class="zh-hant"><span class="ui">虛擬形象</span> 分頁的 <span class="ui">最近使用的虛擬形象</span> 中最多列出 10 個最近使用的虛擬形象，點擊即可切換（點擊 <span class="ui">×</span> 從清單移除）。
           相機、燈光、虛擬形象亮度、待機姿勢和身體朝向會依虛擬形象分別記住，切換時恢復。</span></li>
+    <li><span class="ja">一覧はアバターごとの画像付きのタイルで並びます。タイルの <span class="ui">画像</span> で PNG / JPG / GIF（GIF はアニメーションします）を設定できます。
+          表示中のアバターには、画像をウィンドウにドロップしても設定できます。外すときは <span class="ui">状態</span> の <span class="ui">画像を外す</span> を押します。</span>
+        <span class="en">The list shows a tile with a picture for each avatar. Use <span class="ui">Image</span> on a tile to set a PNG / JPG / GIF (GIFs are animated).
+          For the avatar being shown you can also drop an image onto the window. To remove it, press <span class="ui">Remove image</span> under <span class="ui">Status</span>.</span>
+        <span class="ko">목록은 아바타마다 이미지가 있는 타일로 표시됩니다. 타일의 <span class="ui">이미지</span>로 PNG / JPG / GIF(GIF는 애니메이션됩니다)를 설정할 수 있습니다.
+          표시 중인 아바타는 이미지를 창에 드롭해도 설정됩니다. 제거하려면 <span class="ui">상태</span>의 <span class="ui">이미지 제거</span>를 누르세요.</span>
+        <span class="zh-hans">列表以带图片的磁贴显示每个虚拟形象。用磁贴上的 <span class="ui">图片</span> 可设置 PNG / JPG / GIF（GIF 会播放动画）。
+          也可将图片拖放到窗口，设置给正在显示的虚拟形象。要移除时，请按 <span class="ui">状态</span> 中的 <span class="ui">移除图片</span>。</span>
+        <span class="zh-hant">清單以附圖片的磚塊顯示每個虛擬形象。用磚塊上的 <span class="ui">圖片</span> 可設定 PNG / JPG / GIF（GIF 會播放動畫）。
+          也可將圖片拖放到視窗，設定給正在顯示的虛擬形象。要移除時，請按 <span class="ui">狀態</span> 中的 <span class="ui">移除圖片</span>。</span></li>
   </ul>
   <p class="note warn ja"><code>.vrcaster</code> と <code>.vrm</code> 以外のファイル（画像や unitypackage など）は読み込めません。<code>.vrcaster</code> でエラーが表示された場合は書き出し直してください。</p>
   <p class="note warn en">Only <code>.vrcaster</code> and <code>.vrm</code> files can be loaded (not images, unitypackages, etc.). If a <code>.vrcaster</code> shows an error, export the avatar again.</p>
@@ -670,6 +685,16 @@
         <span class="ko"><span class="ui">몸의 움직임</span>에서 머리 움직임에 맞춰 상체를 기울일지 몸 전체를 움직일지 선택할 수 있습니다.</span>
         <span class="zh-hans">在 <span class="ui">身体动作</span> 中可以选择随头部动作倾斜上半身，或整体移动身体。</span>
         <span class="zh-hant">在 <span class="ui">身體動作</span> 中可以選擇隨頭部動作傾斜上半身，或整體移動身體。</span></li>
+    <li><span class="ja">全身を映すときは <span class="ui">全身モード（足を固定）</span> を ON にすると、足を床に付けたまま、腰も上半身の傾き・移動についていき、膝の曲げで吸収します。</span>
+        <span class="en">When showing the whole body, turn on <span class="ui">Full body (keep feet planted)</span>: the feet stay on the floor while the hips follow the upper body's lean and movement, and the knees bend.</span>
+        <span class="ko">전신을 비출 때 <span class="ui">전신 모드 (발 고정)</span>를 켜면 발을 바닥에 둔 채 허리도 상체의 기울기·이동을 따라가고 무릎을 굽혀 흡수합니다.</span>
+        <span class="zh-hans">显示全身时开启 <span class="ui">全身模式（固定脚部）</span>，脚保持贴地，腰部也跟随上半身的倾斜和移动，由膝盖弯曲吸收。</span>
+        <span class="zh-hant">顯示全身時開啟 <span class="ui">全身模式（固定腳部）</span>，腳保持貼地，腰部也跟隨上半身的傾斜和移動，由膝蓋彎曲吸收。</span></li>
+    <li><span class="ja"><span class="ui">カメラ目線</span> を ON にすると、トラッキングの視線の代わりに目を画面に向けます（トラッキングを切っていても効きます）。パネル下部のボタンやテンキーの 5 でも切り替えられます。</span>
+        <span class="en">Turn on <span class="ui">Look at camera</span> to point the eyes at the screen instead of following your gaze (works even with tracking off). You can also toggle it with the button at the bottom of the panel or numeric keypad 5.</span>
+        <span class="ko"><span class="ui">카메라 시선</span>을 켜면 트래킹 시선 대신 눈을 화면으로 향하게 합니다 (트래킹을 꺼도 동작). 패널 아래 버튼이나 숫자 키패드 5로도 전환할 수 있습니다.</span>
+        <span class="zh-hans">开启 <span class="ui">看向镜头</span> 后，眼睛会看向画面，而不是跟随追踪的视线（关闭追踪时也有效）。也可用面板底部的按钮或小键盘 5 切换。</span>
+        <span class="zh-hant">開啟 <span class="ui">看向鏡頭</span> 後，眼睛會看向畫面，而不是跟隨追蹤的視線（關閉追蹤時也有效）。也可用面板底部的按鈕或數字鍵台 5 切換。</span></li>
   </ul>
   <p class="note warn ja">他のアプリ（Discord・Zoom・VSeeFace など）が Web カメラを使っていると起動できません。</p>
   <p class="note warn en">The tracker cannot start while another app (Discord, Zoom, VSeeFace, etc.) is using the webcam.</p>
@@ -801,12 +826,12 @@
             <span class="ko">다음에 지원했으면 하는 기능 등을 모집합니다. <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 또는 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 폼</a>에 자유롭게 적어 주세요</span>
             <span class="zh-hans">征集希望接下来支持的功能等建议。欢迎在 <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 或 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 表单</a> 中自由填写</span>
             <span class="zh-hant">徵集希望接下來支援的功能等建議。歡迎在 <a href="https://github.com/coffin299/VRCast/issues/11">GitHub Issue</a> 或 <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google 表單</a> 中自由填寫</span></td></tr>
-    <tr><td><span class="ja">テンキー 1〜4</span><span class="en">Numpad 1–4</span><span class="ko">숫자 키패드 1~4</span><span class="zh-hans">小键盘 1～4</span><span class="zh-hant">數字鍵台 1～4</span></td>
-        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）。パネルを隠していても使え、<span class="ui">設定</span> タブの <span class="ui">ショートカットキー（リセット）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
-            <span class="en">Resets (1 Head / 2 Gaze / 3 Expression / 4 Camera). Works while the panel is hidden; change or remove the keys in <span class="ui">Shortcut keys (reset)</span> in the <span class="ui">Settings</span> tab (NumLock on; <span class="ui">Also work when VRCast is in the background</span> is on by default). If a key is the same as an expression shortcut, a warning is shown and the expression takes priority</span>
-            <span class="ko">초기화 (1 얼굴 방향 / 2 시선 / 3 표정 / 4 카메라). 패널을 숨겨도 사용할 수 있으며 <span class="ui">설정</span> 탭의 <span class="ui">단축키 (초기화)</span>에서 변경·해제할 수 있습니다 (NumLock 켜짐. <span class="ui">VRCast가 뒤에 있을 때도 사용</span>은 기본 켜짐). 표정 단축키와 같은 키로 하면 경고가 나오고 표정이 우선됩니다</span>
-            <span class="zh-hans">重置（1 头部朝向 / 2 视线 / 3 表情 / 4 相机）。隐藏面板时也可使用，可在 <span class="ui">设置</span> 标签页的 <span class="ui">快捷键（重置）</span> 中更改或清除（需开启 NumLock；<span class="ui">VRCast 在后台时也可使用</span> 默认开启）。若与表情快捷键相同，会显示警告且表情优先</span>
-            <span class="zh-hant">重設（1 頭部朝向 / 2 視線 / 3 表情 / 4 相機）。隱藏面板時也可使用，可在 <span class="ui">設定</span> 分頁的 <span class="ui">快捷鍵（重設）</span> 中變更或清除（需開啟 NumLock；<span class="ui">VRCast 在背景時也可使用</span> 預設開啟）。若與表情快捷鍵相同，會顯示警告且表情優先</span></td></tr>
+    <tr><td><span class="ja">テンキー 1〜5</span><span class="en">Numpad 1–5</span><span class="ko">숫자 키패드 1~5</span><span class="zh-hans">小键盘 1～5</span><span class="zh-hant">數字鍵台 1～5</span></td>
+        <td><span class="ja">リセット（1 顔の向き / 2 視線 / 3 表情 / 4 カメラ）と 5 カメラ目線の ON / OFF。パネルを隠していても使え、<span class="ui">設定</span> タブの <span class="ui">ショートカットキー（リセット・カメラ目線）</span> で変更・解除できます（NumLock ON。<span class="ui">VRCast が背面にあるときも使う</span> は既定 ON）。表情のショートカットキーと同じキーにすると警告が出て、表情が優先されます</span>
+            <span class="en">Resets (1 Head / 2 Gaze / 3 Expression / 4 Camera) and 5 Look at camera on / off. Works while the panel is hidden; change or remove the keys in <span class="ui">Shortcut keys (reset / look at camera)</span> in the <span class="ui">Settings</span> tab (NumLock on; <span class="ui">Also work when VRCast is in the background</span> is on by default). If a key is the same as an expression shortcut, a warning is shown and the expression takes priority</span>
+            <span class="ko">초기화 (1 얼굴 방향 / 2 시선 / 3 표정 / 4 카메라)와 5 카메라 시선 켜기 / 끄기. 패널을 숨겨도 사용할 수 있으며 <span class="ui">설정</span> 탭의 <span class="ui">단축키 (초기화·카메라 시선)</span>에서 변경·해제할 수 있습니다 (NumLock 켜짐. <span class="ui">VRCast가 뒤에 있을 때도 사용</span>은 기본 켜짐). 표정 단축키와 같은 키로 하면 경고가 나오고 표정이 우선됩니다</span>
+            <span class="zh-hans">重置（1 头部朝向 / 2 视线 / 3 表情 / 4 相机）和 5 看向镜头开关。隐藏面板时也可使用，可在 <span class="ui">设置</span> 标签页的 <span class="ui">快捷键（重置·看向镜头）</span> 中更改或清除（需开启 NumLock；<span class="ui">VRCast 在后台时也可使用</span> 默认开启）。若与表情快捷键相同，会显示警告且表情优先</span>
+            <span class="zh-hant">重設（1 頭部朝向 / 2 視線 / 3 表情 / 4 相機）和 5 看向鏡頭開關。隱藏面板時也可使用，可在 <span class="ui">設定</span> 分頁的 <span class="ui">快捷鍵（重設·看向鏡頭）</span> 中變更或清除（需開啟 NumLock；<span class="ui">VRCast 在背景時也可使用</span> 預設開啟）。若與表情快捷鍵相同，會顯示警告且表情優先</span></td></tr>
     <tr><td><span class="ja">右ドラッグ</span><span class="en">Right-drag</span><span class="ko">오른쪽 드래그</span><span class="zh-hans">右键拖动</span><span class="zh-hant">右鍵拖曳</span></td>
         <td><span class="ja">カメラを回転</span><span class="en">Rotate the camera</span><span class="ko">카메라 회전</span><span class="zh-hans">旋转相机</span><span class="zh-hant">旋轉相機</span></td></tr>
     <tr><td><span class="ja">中ドラッグ</span><span class="en">Middle-drag</span><span class="ko">가운데 드래그</span><span class="zh-hans">中键拖动</span><span class="zh-hant">中鍵拖曳</span></td>
@@ -829,23 +854,23 @@
   <p class="ja"><span class="ui">表示</span> タブの <span class="ui">晴れ</span> プリセットを押すか、<span class="ui">環境光</span> を上げてください。
     <span class="ui">向き</span> を 0 付近にすると正面から光が当たります。
     lilToon 等は明るさがテクスチャの色までに制限されるため、太陽光を上げても一定以上は明るくなりません。
-    その場合は <span class="ui">アバターの明るさ</span> を上げてください（0.5〜10、1 = マテリアルのまま）。</p>
+    その場合は <span class="ui">アバターの明るさ</span> を上げてください（0.1〜10、1 = マテリアルのまま）。</p>
   <p class="en">Press the <span class="ui">Sunny</span> preset in the <span class="ui">Display</span> tab or raise <span class="ui">Ambient</span>.
     Set <span class="ui">Direction</span> near 0 to light the avatar from the front.
     Shaders such as lilToon cap brightness at the texture color, so raising Sunlight stops helping past a point.
-    In that case, raise <span class="ui">Avatar brightness</span> (0.5 to 10, 1 = material as is).</p>
+    In that case, raise <span class="ui">Avatar brightness</span> (0.1 to 10, 1 = material as is).</p>
   <p class="ko"><span class="ui">표시</span> 탭의 <span class="ui">맑음</span> 프리셋을 누르거나 <span class="ui">환경광</span>을 올리세요.
     <span class="ui">방향</span>을 0 근처로 하면 정면에서 빛이 비춥니다.
     lilToon 등은 밝기가 텍스처 색까지로 제한되므로, 태양광을 올려도 일정 이상은 밝아지지 않습니다.
-    그럴 때는 <span class="ui">아바타 밝기</span>를 올리세요 (0.5~10, 1 = 머티리얼 그대로).</p>
+    그럴 때는 <span class="ui">아바타 밝기</span>를 올리세요 (0.1~10, 1 = 머티리얼 그대로).</p>
   <p class="zh-hans">请点击 <span class="ui">显示</span> 标签页的 <span class="ui">晴天</span> 预设，或调高 <span class="ui">环境光</span>。
     将 <span class="ui">方向</span> 设为 0 附近可从正面照射。
     lilToon 等着色器的亮度上限为贴图颜色，因此调高阳光超过一定程度后不会再变亮。
-    此时请调高 <span class="ui">虚拟形象亮度</span>（0.5～10，1 = 保持材质原样）。</p>
+    此时请调高 <span class="ui">虚拟形象亮度</span>（0.1～10，1 = 保持材质原样）。</p>
   <p class="zh-hant">請點擊 <span class="ui">顯示</span> 分頁的 <span class="ui">晴天</span> 預設，或調高 <span class="ui">環境光</span>。
     將 <span class="ui">方向</span> 設為 0 附近可從正面照射。
     lilToon 等著色器的亮度上限為貼圖顏色，因此調高陽光超過一定程度後不會再變亮。
-    此時請調高 <span class="ui">虛擬形象亮度</span>（0.5～10，1 = 保持材質原樣）。</p>
+    此時請調高 <span class="ui">虛擬形象亮度</span>（0.1～10，1 = 保持材質原樣）。</p>
 
   <h3><span class="ja">OBS で背景が抜けない</span><span class="en">The background is not transparent in OBS</span><span class="ko">OBS에서 배경이 투명해지지 않는다</span><span class="zh-hans">OBS 中背景不透明</span><span class="zh-hant">OBS 中背景不透明</span></h3>
   <p class="ja">VRCast の背景を <span class="ui">透過</span> にし、OBS は <span class="ui">ゲームキャプチャ</span>（ウィンドウキャプチャではなく）で
@@ -874,11 +899,11 @@
   <p class="zh-hant">以系統管理員身分執行 VRCast 時，Windows 會阻止拖放。請正常啟動，或使用 <span class="ui">選擇檔案...</span>。</p>
 
   <h3><span class="ja">ゲームや OBS と一緒に使うとトラッキングがカクつく</span><span class="en">Tracking stutters while running games or OBS</span><span class="ko">게임이나 OBS와 함께 쓰면 트래킹이 끊긴다</span><span class="zh-hans">与游戏或 OBS 同时使用时追踪卡顿</span><span class="zh-hant">與遊戲或 OBS 同時使用時追蹤卡頓</span></h3>
-  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">エコ</span> にすると負荷が半分ほどになります。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
-  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Settings</span> tab is on (it is on by default). With MediaPipe, setting <span class="ui">Tracker mode</span> in the Tracking tab to <span class="ui">Eco</span> roughly halves the load. If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load. Setting <span class="ui">Process priority</span> to Above normal can also help.</p>
-  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">절약</span>으로 하면 부하가 절반 정도가 됩니다. 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
-  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。使用 MediaPipe 时，将追踪标签页的 <span class="ui">追踪器模式</span> 设为 <span class="ui">节能</span> 可使负载减半左右。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
-  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。使用 MediaPipe 時，將追蹤分頁的 <span class="ui">追蹤器模式</span> 設為 <span class="ui">節能</span> 可使負載減半左右。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
+  <p class="ja"><span class="ui">設定</span> タブの <span class="ui">軽量モード</span> が ON になっているか確認してください（既定は ON）。MediaPipe ならトラッキングタブの <span class="ui">トラッカーの動作</span> を <span class="ui">なめらか</span> にすると負荷が下がり、<span class="ui">エコ</span> にするとさらに半分ほどになります（既定の <span class="ui">ぬるぬる（高負荷）</span> は指をなめらかに動かすため重めです）。それでも重いときは、使わない <span class="ui">腕・手</span> のトラッキングを OFF にすると負荷が下がります。<span class="ui">プロセスの優先度</span> を「通常以上」にするのも効果があります。</p>
+  <p class="en">Make sure <span class="ui">Low load mode</span> in the <span class="ui">Settings</span> tab is on (it is on by default). With MediaPipe, setting <span class="ui">Tracker mode</span> in the Tracking tab to <span class="ui">Smooth</span> lowers the load, and <span class="ui">Eco</span> roughly halves it again (the default, <span class="ui">Fluid (high load)</span>, is heavier because it moves fingers smoothly). If it is still heavy, turning off arm/hand tracking when you do not need it reduces the load. Setting <span class="ui">Process priority</span> to Above normal can also help.</p>
+  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">부드럽게</span>로 하면 부하가 줄고, <span class="ui">절약</span>으로 하면 다시 절반 정도가 됩니다 (기본값인 <span class="ui">매끄럽게 (고부하)</span>는 손가락을 매끄럽게 움직이기 위해 무거운 편입니다). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
+  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。使用 MediaPipe 时，将追踪标签页的 <span class="ui">追踪器模式</span> 设为 <span class="ui">流畅</span> 可降低负载，设为 <span class="ui">节能</span> 可再减半左右（默认的 <span class="ui">丝滑（高负载）</span> 为了让手指顺滑移动，负载较高）。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
+  <p class="zh-hant">請確認 <span class="ui">設定</span> 分頁中的 <span class="ui">低負載模式</span> 已開啟（預設開啟）。使用 MediaPipe 時，將追蹤分頁的 <span class="ui">追蹤器模式</span> 設為 <span class="ui">流暢</span> 可降低負載，設為 <span class="ui">節能</span> 可再減半左右（預設的 <span class="ui">絲滑（高負載）</span> 為了讓手指順滑移動，負載較高）。仍然卡頓時，關閉不需要的手臂和手的追蹤可以降低負載。將 <span class="ui">處理程序優先順序</span> 設為「高於正常」也有幫助。</p>
 
   <h3><span class="ja">口パクしない</span><span class="en">Lip sync does not move</span><span class="ko">립싱크가 안 된다</span><span class="zh-hans">口型不动</span><span class="zh-hant">嘴型不動</span></h3>
   <p class="ja"><span class="ui">顔</span> タブで正しいマイクが選ばれているか、<span class="ui">音量</span> メーターが動くか確認し、

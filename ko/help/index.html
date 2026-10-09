@@ -143,6 +143,7 @@
     의상 전환에 맞춰 축소용 블렌드셰이프를 FX로 움직이는 경우 등에는 OFF로 하면 VRChat에 들어갔을 때의 초기 상태 값으로 내보냅니다.</p>
   <p class="note ko">FX 레이어에 있는 표정 클립은 자동으로 내보내집니다. FX에 없는 표정(예전 아바타에 포함된 표정 애니메이션 등)은
     내보내기 화면의 <span class="ui">추가 표정</span>에 애니메이션 클립이나 폴더를 드래그하면 표정으로 내보낼 수 있습니다 (블렌드셰이프만 움직이는 클립이 대상, 아바타별로 저장).</p>
+  <p class="note ko">씬에 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 설정이 있으면 그 아바타의 표정을 FaceEmo의 모드 이름으로 자동으로 내보냅니다 (FaceEmo의 「아바타에 적용」을 하지 않아도 됩니다. 소품 표시 등은 제외하고 블렌드셰이프 부분만 사용합니다).</p>
   <p class="note ko">[베타] Modular Avatar 등으로 개조한 아바타는 그대로 지정하면 개조 후의 모습 (의상 통합·추가한 표정과 토글)으로 내보내집니다.
     MA의 Merge Armature / Bone Proxy로 붙인 의상·소품은 통합되지 않은 경우에도 아바타의 본에 다시 붙여 몸을 따라가게 합니다.
     MA의 Blendshape Sync로 입 등에 따라가게 한 체인·소품도 립싱크·눈 깜빡임·트래킹을 따라갑니다.
@@ -465,7 +466,7 @@
   <p class="ko"><span class="ui">표시</span> 탭의 <span class="ui">맑음</span> 프리셋을 누르거나 <span class="ui">환경광</span>을 올리세요.
     <span class="ui">방향</span>을 0 근처로 하면 정면에서 빛이 비춥니다.
     lilToon 등은 밝기가 텍스처 색까지로 제한되므로, 태양광을 올려도 일정 이상은 밝아지지 않습니다.
-    그럴 때는 <span class="ui">아바타 밝기</span>를 올리세요 (0.5~10, 1 = 머티리얼 그대로).</p>
+    그럴 때는 <span class="ui">아바타 밝기</span>를 올리세요 (0.1~10, 1 = 머티리얼 그대로).</p>
 
   <h3><span class="ko">OBS에서 배경이 투명해지지 않는다</span></h3>
   <p class="ko">VRCast의 배경을 <span class="ui">투명</span>하게 하고, OBS는 <span class="ui">게임 캡처</span> (윈도우 캡처가 아님)에서
@@ -478,7 +479,7 @@
   <p class="ko">VRCast를 관리자 권한으로 실행하면 Windows 제한으로 드롭할 수 없습니다. 일반적으로 실행하거나 <span class="ui">파일 선택...</span>을 사용하세요.</p>
 
   <h3><span class="ko">게임이나 OBS와 함께 쓰면 트래킹이 끊긴다</span></h3>
-  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">절약</span>으로 하면 부하가 절반 정도가 됩니다. 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
+  <p class="ko"><span class="ui">설정</span> 탭의 <span class="ui">저부하 모드</span>가 켜져 있는지 확인하세요 (기본은 켜짐). MediaPipe라면 트래킹 탭의 <span class="ui">트래커 동작</span>을 <span class="ui">부드럽게</span>로 하면 부하가 줄고, <span class="ui">절약</span>으로 하면 다시 절반 정도가 됩니다 (기본값인 <span class="ui">매끄럽게 (고부하)</span>는 손가락을 매끄럽게 움직이기 위해 무거운 편입니다). 그래도 무거우면 쓰지 않는 팔·손 트래킹을 끄면 부하가 줄어듭니다. <span class="ui">프로세스 우선순위</span>를 「보통 이상」으로 하는 것도 효과가 있습니다.</p>
 
   <h3><span class="ko">립싱크가 안 된다</span></h3>
   <p class="ko"><span class="ui">얼굴</span> 탭에서 올바른 마이크가 선택되어 있는지, <span class="ui">음량</span> 미터가 움직이는지 확인하고,

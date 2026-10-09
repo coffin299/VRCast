@@ -143,6 +143,7 @@
     如果 FX 层会随服装切换驱动收缩用 BlendShape 等，关闭后会按进入 VRChat 时的初始状态值导出。</p>
   <p class="note zh-hans">FX 层中的表情剪辑会自动导出。不在 FX 中的表情（例如旧虚拟形象附带的表情动画），
     可将动画剪辑或文件夹拖到导出窗口的 <span class="ui">追加表情</span> 中作为表情导出（仅限只驱动 BlendShape 的剪辑，按虚拟形象分别保存）。</p>
+  <p class="note zh-hans">如果场景中有该虚拟形象的 <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> 设置，会自动以 FaceEmo 的模式名称导出其表情（即使未执行 FaceEmo 的“应用到虚拟形象”也可以；仅使用 BlendShape 部分，不含小物显示等）。</p>
   <p class="note zh-hans">【测试版】用 Modular Avatar 等改造过的虚拟形象，直接指定即可按改造后的样子（合并的服装、添加的表情和开关）导出。
     用 MA 的 Merge Armature / Bone Proxy 添加的服装和小物，即使未被合并，也会重新挂到虚拟形象的骨骼上并跟随身体。
     用 MA 的 Blendshape Sync 跟随嘴部等的链条和小物，也会跟随口型同步、眨眼和追踪。
@@ -465,7 +466,7 @@
   <p class="zh-hans">请点击 <span class="ui">显示</span> 标签页的 <span class="ui">晴天</span> 预设，或调高 <span class="ui">环境光</span>。
     将 <span class="ui">方向</span> 设为 0 附近可从正面照射。
     lilToon 等着色器的亮度上限为贴图颜色，因此调高阳光超过一定程度后不会再变亮。
-    此时请调高 <span class="ui">虚拟形象亮度</span>（0.5～10，1 = 保持材质原样）。</p>
+    此时请调高 <span class="ui">虚拟形象亮度</span>（0.1～10，1 = 保持材质原样）。</p>
 
   <h3><span class="zh-hans">OBS 中背景不透明</span></h3>
   <p class="zh-hans">请确认 VRCast 的背景已设为 <span class="ui">透明</span>，并且 OBS 使用的是 <span class="ui">游戏采集</span>（而非窗口采集），
@@ -478,7 +479,7 @@
   <p class="zh-hans">以管理员身份运行 VRCast 时，Windows 会阻止拖放。请正常启动，或使用 <span class="ui">选择文件...</span>。</p>
 
   <h3><span class="zh-hans">与游戏或 OBS 同时使用时追踪卡顿</span></h3>
-  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。使用 MediaPipe 时，将追踪标签页的 <span class="ui">追踪器模式</span> 设为 <span class="ui">节能</span> 可使负载减半左右。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
+  <p class="zh-hans">请确认 <span class="ui">设置</span> 标签页中的 <span class="ui">低负载模式</span> 已开启（默认开启）。使用 MediaPipe 时，将追踪标签页的 <span class="ui">追踪器模式</span> 设为 <span class="ui">流畅</span> 可降低负载，设为 <span class="ui">节能</span> 可再减半左右（默认的 <span class="ui">丝滑（高负载）</span> 为了让手指顺滑移动，负载较高）。仍然卡顿时，关闭不需要的手臂和手的追踪可以降低负载。将 <span class="ui">进程优先级</span> 设为“高于正常”也有帮助。</p>
 
   <h3><span class="zh-hans">口型不动</span></h3>
   <p class="zh-hans">请在 <span class="ui">面部</span> 标签页中确认选择了正确的麦克风，以及 <span class="ui">音量</span> 表是否有反应。
