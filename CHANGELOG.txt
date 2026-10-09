@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- 新しいバージョンのお知らせの「今すぐ更新」ボタンを目立つ色に変更
+
+[English]
+- Made the "Update now" button in the new version notice stand out with the accent color
+
 ■ 1.13.5 (2026-10-09)
 
 [日本語]

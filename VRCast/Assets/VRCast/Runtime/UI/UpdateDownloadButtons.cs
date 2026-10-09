@@ -96,9 +96,12 @@ namespace VRCast.UI
             switch (installer.GetAvailability())
             {
                 case UpdateInstaller.Availability.Available:
+                    // 押してほしい操作なのでアクセント色で目立たせる（入手先のボタンは通常の色のまま）
+                    UiTheme theme = UiTheme.Current;
                     if (GUILayout.Button(Loc.T("Update now (VRCast restarts automatically)",
                             "今すぐ更新（VRCast は自動で起動し直します）", "지금 업데이트 (VRCast가 자동으로 다시 시작됩니다)",
-                            "立即更新（VRCast 将自动重新启动）", "立即更新（VRCast 將自動重新啟動）"), GuiControls.Shrinkable))
+                            "立即更新（VRCast 将自动重新启动）", "立即更新（VRCast 將自動重新啟動）"),
+                            theme != null ? theme.AccentButton : GUI.skin.button, GuiControls.Shrinkable))
                     {
                         installer.Install();
                     }
