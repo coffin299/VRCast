@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 1.14.6 (2026-10-09)
 
 [日本語]
 - 「アバターの明るさ」を 0.1 まで下げられるように変更（これまでは 0.5 まで）
