@@ -108,7 +108,16 @@ namespace VRCast.Editor.Build
             IncludeVrmShaders();
 
             // 前回の出力を消してから出す（Mono でビルドした出力が残っていると IL2CPP のビルドが拒否される）
-            CleanOutputFolder();
+            if (!CleanOutputFolder())
+            {
+                // 消せないファイルは上書きもできないため、ビルドせずに中止する
+                if (Application.isBatchMode)
+                {
+                    EditorApplication.Exit(1);
+                }
+
+                return;
+            }
 
             // ビルド設定を組み立てる
             var options = new BuildPlayerOptions
@@ -138,14 +147,28 @@ namespace VRCast.Editor.Build
             }
         }
 
-        private static void CleanOutputFolder()
+        private static bool CleanOutputFolder()
         {
             // 同梱トラッカーはビルド後に BundledTrackerCopier がコピーし直すため、フォルダごと消してよい
             string folder = Path.GetDirectoryName(WindowsOutputPath);
-            if (Directory.Exists(folder))
+            if (!Directory.Exists(folder))
+            {
+                return true;
+            }
+
+            try
             {
                 Directory.Delete(folder, true);
                 Debug.Log($"[VRCast][Build] Cleaned previous build: {folder}");
+                return true;
+            }
+            catch (System.Exception e) when (e is System.UnauthorizedAccessException || e is IOException)
+            {
+                // 前回の出力から登録した仮想カメラのドライバーを、カメラを列挙したアプリが読み込んだままにしていると消せない
+                Debug.LogError($"[VRCast][Build] Could not clean the previous build ({e.Message}). "
+                    + "A file is in use: close VRCast and apps that list cameras (OBS, Discord, Zoom, browsers), "
+                    + "or uninstall the virtual camera driver registered from this folder, then build again.");
+                return false;
             }
         }
 
