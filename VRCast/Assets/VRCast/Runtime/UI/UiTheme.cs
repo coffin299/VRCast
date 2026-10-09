@@ -451,7 +451,12 @@ namespace VRCast.UI
             SurveyText = new GUIStyle(Skin.label) { fontSize = 12 };
 
             // 塗りつぶしのアクセント色のボタン（「今すぐ更新」など、押してほしい操作）
-            AccentButton = new GUIStyle(Skin.button) { fontStyle = FontStyle.Bold };
+            // 太字の日本語は代替フォントで背が高くなり下が切れるため、上下の余白を広げる
+            AccentButton = new GUIStyle(Skin.button)
+            {
+                fontStyle = FontStyle.Bold,
+                padding = new RectOffset(10, 10, 8, 9),
+            };
             SetStates(AccentButton, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius),
                 Rounded(Accent, ControlRadius), OnAccent);
 

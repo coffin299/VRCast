@@ -8,9 +8,11 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - 更新完了のお知らせで、書き出しツール（unitypackage）の最新版をお手すきの際にインポートするよう案内する文言に変更
+- 「今すぐ更新」ボタンの文字の下が切れることがある問題を修正
 
 [English]
 - The update completed notice now asks you to import the latest exporter (unitypackage) when you have time
+- Fixed the bottom of the "Update now" button text being cut off
 
 ■ 1.14.5 (2026-10-09)
 
