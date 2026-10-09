@@ -28,7 +28,8 @@ namespace VRCast.Converter.Editor
         /// avatar を対象にした FaceEmo の表情を、メニューの順に返す（見つからなければ空）。
         /// モードは FaceEmo の表示名、ハンドジェスチャーの分岐は FaceEmo のメニューと同じくクリップ名を使う。
         /// </summary>
-        public static List<ExpressionExtractor.NamedClip> Read(GameObject avatar)
+        /// <param name="trace">読んだメニューの中身（フォルダ・モード・読めなかったクリップ）を書き足す一覧（不要なら null）</param>
+        public static List<ExpressionExtractor.NamedClip> Read(GameObject avatar, List<string> trace = null)
         {
             var clips = new List<ExpressionExtractor.NamedClip>();
             // FaceEmo は VRCAvatarDescriptor を対象として記録している
@@ -41,18 +42,26 @@ namespace VRCast.Converter.Editor
             // シーン上（非アクティブ含む）の FaceEmo のうち、このアバターを対象にしているものを読む
             foreach (MonoBehaviour launcher in Object.FindObjectsOfType<MonoBehaviour>(true))
             {
-                if (!IsType(launcher, LauncherTypeName) || !Targets(launcher, descriptor))
+                if (!IsType(launcher, LauncherTypeName))
                 {
                     continue;
                 }
 
+                // 別のアバター用の FaceEmo は読まない（ログには残す）
+                if (!Targets(launcher, descriptor))
+                {
+                    trace?.Add($"launcher: {launcher.gameObject.name} (targets another avatar, ignored)");
+                    continue;
+                }
+
                 // 表情メニューは起動用コンポーネントと同じオブジェクトにある
+                trace?.Add($"launcher: {launcher.gameObject.name}");
                 foreach (MonoBehaviour component in launcher.GetComponents<MonoBehaviour>())
                 {
                     if (IsType(component, RepositoryTypeName))
                     {
                         Object menu = GetReference(component, "SerializableMenu");
-                        ReadList(GetReference(menu, "Registered"), clips, 0);
+                        ReadList(GetReference(menu, "Registered"), string.Empty, clips, trace, 0);
                     }
                 }
             }
@@ -94,60 +103,73 @@ namespace VRCast.Converter.Editor
             return false;
         }
 
-        private static void ReadList(Object list, List<ExpressionExtractor.NamedClip> clips, int depth)
+        private static void ReadList(Object list, string path, List<ExpressionExtractor.NamedClip> clips,
+            List<string> trace, int depth)
         {
             // 未設定・入れ子が深すぎるものは読まない
             if (list == null || depth > MaxGroupDepth)
             {
+                trace?.Add($"{path}: {(list == null ? "missing list" : "too deep")}");
                 return;
             }
 
             using (var serialized = new SerializedObject(list))
             {
-                foreach (Object mode in GetReferences(serialized, "Modes"))
+                List<Object> modes = GetReferences(serialized, "Modes");
+                List<Object> groups = GetReferences(serialized, "Groups");
+                trace?.Add($"{Label(path, "(menu)")}: {modes.Count} modes, {groups.Count} groups");
+
+                foreach (Object mode in modes)
                 {
-                    ReadMode(mode, clips);
+                    ReadMode(mode, path, clips, trace);
                 }
 
                 // グループ（サブメニュー）の中も読む
-                foreach (Object group in GetReferences(serialized, "Groups"))
+                foreach (Object group in groups)
                 {
-                    ReadList(group, clips, depth + 1);
+                    ReadList(group, Join(path, GetString(group, "DisplayName")), clips, trace, depth + 1);
                 }
             }
         }
 
-        private static void ReadMode(Object mode, List<ExpressionExtractor.NamedClip> clips)
+        private static void ReadMode(Object mode, string path, List<ExpressionExtractor.NamedClip> clips,
+            List<string> trace)
         {
             if (mode == null)
             {
+                trace?.Add($"{Label(path, "(menu)")}: missing mode");
                 return;
             }
 
             using (var serialized = new SerializedObject(mode))
             {
                 // モード本体の表情（「アニメーション名を表示名に使う」ならクリップ名）
-                AnimationClip clip = LoadClip(serialized.FindProperty("Animation")?.objectReferenceValue);
+                string displayName = serialized.FindProperty("DisplayName")?.stringValue;
+                string modePath = Join(path, displayName);
+                AnimationClip clip = LoadClip(serialized.FindProperty("Animation")?.objectReferenceValue, modePath,
+                    trace);
                 if (clip != null)
                 {
                     bool useClipName = serialized.FindProperty("UseAnimationNameAsDisplayName")?.boolValue ?? false;
-                    string displayName = serialized.FindProperty("DisplayName")?.stringValue;
                     clips.Add(new ExpressionExtractor.NamedClip
                     {
                         Clip = clip,
                         Name = useClipName ? clip.name : displayName,
+                        Source = modePath,
                     });
                 }
 
                 // ハンドジェスチャーの分岐ごとの表情（トリガーで切り替わる表情も含む）
-                foreach (Object branch in GetReferences(serialized, "Branches"))
+                List<Object> branches = GetReferences(serialized, "Branches");
+                for (int i = 0; i < branches.Count; i++)
                 {
-                    ReadBranch(branch, clips);
+                    ReadBranch(branches[i], $"{modePath} / branch {i + 1}", clips, trace);
                 }
             }
         }
 
-        private static void ReadBranch(Object branch, List<ExpressionExtractor.NamedClip> clips)
+        private static void ReadBranch(Object branch, string path, List<ExpressionExtractor.NamedClip> clips,
+            List<string> trace)
         {
             if (branch == null)
             {
@@ -158,18 +180,19 @@ namespace VRCast.Converter.Editor
             {
                 foreach (string field in BranchAnimationFields)
                 {
-                    AnimationClip clip = LoadClip(serialized.FindProperty(field)?.objectReferenceValue);
+                    string fieldPath = $"{path} {field}";
+                    AnimationClip clip = LoadClip(serialized.FindProperty(field)?.objectReferenceValue, fieldPath, trace);
                     if (clip != null)
                     {
-                        clips.Add(new ExpressionExtractor.NamedClip { Clip = clip, Name = clip.name });
+                        clips.Add(new ExpressionExtractor.NamedClip { Clip = clip, Name = clip.name, Source = fieldPath });
                     }
                 }
             }
         }
 
-        private static AnimationClip LoadClip(Object animation)
+        private static AnimationClip LoadClip(Object animation, string path, List<string> trace)
         {
-            // FaceEmo はクリップをアセットの GUID で記録している
+            // FaceEmo はクリップをアセットの GUID で記録している（未設定は何もしない）
             if (animation == null)
             {
                 return null;
@@ -183,9 +206,42 @@ namespace VRCast.Converter.Editor
                     return null;
                 }
 
-                // 削除済みなら null
-                return AssetDatabase.LoadAssetAtPath<AnimationClip>(AssetDatabase.GUIDToAssetPath(guid));
+                // 削除済み・クリップでないアセットは読めなかったとして記録する
+                string assetPath = AssetDatabase.GUIDToAssetPath(guid);
+                AnimationClip clip = AssetDatabase.LoadAssetAtPath<AnimationClip>(assetPath);
+                if (clip == null)
+                {
+                    trace?.Add($"{path}: clip not found (GUID {guid}, path '{assetPath}')");
+                }
+
+                return clip;
             }
+        }
+
+        private static string GetString(Object target, string field)
+        {
+            // 未設定・フィールドが無いなら空
+            if (target == null)
+            {
+                return string.Empty;
+            }
+
+            using (var serialized = new SerializedObject(target))
+            {
+                return serialized.FindProperty(field)?.stringValue ?? string.Empty;
+            }
+        }
+
+        private static string Join(string path, string name)
+        {
+            // 「親 / 子」の形にする（名前の無いものは ? で表す）
+            string label = string.IsNullOrEmpty(name) ? "?" : name;
+            return string.IsNullOrEmpty(path) ? label : $"{path} / {label}";
+        }
+
+        private static string Label(string path, string root)
+        {
+            return string.IsNullOrEmpty(path) ? root : path;
         }
 
         private static Object GetReference(Object target, string field)

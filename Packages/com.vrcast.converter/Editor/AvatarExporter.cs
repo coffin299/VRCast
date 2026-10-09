@@ -123,7 +123,8 @@ namespace VRCast.Converter.Editor
             HashSet<string> generatedAssetsBefore = NdmfProcessor.ListGeneratedAssets();
 
             // FaceEmo は元のアバターを対象として記録しているため、複製の前に元から読む
-            List<ExpressionExtractor.NamedClip> faceEmoClips = FaceEmoReader.Read(source);
+            var faceEmoTrace = new List<string>();
+            List<ExpressionExtractor.NamedClip> faceEmoClips = FaceEmoReader.Read(source, faceEmoTrace);
 
             try
             {
@@ -183,6 +184,12 @@ namespace VRCast.Converter.Editor
                 report.ExtraExpressionCount = extracted.ExtraAdded;
                 report.FaceEmoClips = faceEmoClips.Count;
                 report.FaceEmoExpressionCount = extracted.NamedAdded;
+
+                // FaceEmo の表情が足りないときに原因を追えるよう、読んだメニューと取り込まなかった表情をログに出す
+                if (faceEmoTrace.Count > 0)
+                {
+                    LogFaceEmo(faceEmoTrace, extracted.NamedSkipped);
+                }
 
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
@@ -275,6 +282,18 @@ namespace VRCast.Converter.Editor
                 // bundle 化が済んだので NDMF の生成アセットも片付ける
                 NdmfProcessor.DeleteGeneratedAssets(generatedAssetsBefore);
             }
+        }
+
+        private static void LogFaceEmo(List<string> trace, List<string> skipped)
+        {
+            // 1 行ごとに分けて Console にまとめて出す（メニューの構成 → 取り込まなかった表情の順）
+            var lines = new List<string>(trace);
+            foreach (string item in skipped)
+            {
+                lines.Add("skipped: " + item);
+            }
+
+            Debug.Log("[VRCast][Exporter][FaceEmo]\n" + string.Join("\n", lines));
         }
 
         private static string BuildBundle(string bundleDir)

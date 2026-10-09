@@ -24,6 +24,9 @@ namespace VRCast.Converter.Editor
             public ExpressionSet Set;
             public int ExtraAdded;
             public int NamedAdded;
+
+            // 表情ツールの表情のうち取り込まなかったもの（「メニュー上の場所: 理由」。原因を調べるためにログへ出す）
+            public List<string> NamedSkipped;
         }
 
         /// <summary>
@@ -33,6 +36,9 @@ namespace VRCast.Converter.Editor
         {
             public AnimationClip Clip;
             public string Name;
+
+            // メニュー上の場所（例: 「Folder / Mode / Left」。ログ用）
+            public string Source;
         }
 
         /// <param name="controller">FX コントローラー（無ければ null）</param>
@@ -50,24 +56,42 @@ namespace VRCast.Converter.Editor
             var namedSources = new HashSet<string>();
 
             int namedAdded = 0;
+            var namedSkipped = new List<string>();
             if (namedClips != null)
             {
                 foreach (NamedClip named in namedClips)
                 {
-                    // 同じクリップ・上限超えは飛ばす
-                    if (named.Clip == null || !usedClips.Add(named.Clip) || presets.Count >= ExpressionSet.MaxPresets)
+                    // 同じクリップ・上限超えは飛ばす（理由はログ用に控える）
+                    if (named.Clip == null)
                     {
+                        continue;
+                    }
+
+                    if (!usedClips.Add(named.Clip))
+                    {
+                        namedSkipped.Add($"{named.Source}: same clip as another expression ({named.Clip.name})");
+                        continue;
+                    }
+
+                    if (presets.Count >= ExpressionSet.MaxPresets)
+                    {
+                        namedSkipped.Add($"{named.Source}: over {ExpressionSet.MaxPresets} expressions");
                         continue;
                     }
 
                     namedSources.Add(named.Clip.name);
                     // 名前が無ければクリップ名、重なれば番号を付ける
                     string name = string.IsNullOrWhiteSpace(named.Name) ? named.Clip.name : named.Name.Trim();
-                    ExpressionPreset preset = TryCreatePreset(named.Clip, UniqueName(name, usedNames), true);
+                    ExpressionPreset preset = TryCreatePreset(named.Clip, UniqueName(name, usedNames), true,
+                        out ClipCheck check);
                     if (preset != null)
                     {
                         presets.Add(preset);
                         namedAdded++;
+                    }
+                    else
+                    {
+                        namedSkipped.Add($"{named.Source}: {check} ({named.Clip.name})");
                     }
                 }
             }
@@ -122,6 +146,7 @@ namespace VRCast.Converter.Editor
                 Set = new ExpressionSet { presets = presets.ToArray() },
                 ExtraAdded = extraAdded,
                 NamedAdded = namedAdded,
+                NamedSkipped = namedSkipped,
             };
         }
 
@@ -147,9 +172,16 @@ namespace VRCast.Converter.Editor
 
         private static ExpressionPreset TryCreatePreset(AnimationClip clip, string name, bool blendShapesOnly)
         {
-            // 取り込めるクリップだけプリセットにする
+            return TryCreatePreset(clip, name, blendShapesOnly, out _);
+        }
+
+        private static ExpressionPreset TryCreatePreset(AnimationClip clip, string name, bool blendShapesOnly,
+            out ClipCheck check)
+        {
+            // 取り込めるクリップだけプリセットにする（取り込めなければ理由を返す）
             var values = new List<BlendShapeValue>();
-            if (Read(clip, values, blendShapesOnly) != ClipCheck.Expression)
+            check = Read(clip, values, blendShapesOnly);
+            if (check != ClipCheck.Expression)
             {
                 return null;
             }
