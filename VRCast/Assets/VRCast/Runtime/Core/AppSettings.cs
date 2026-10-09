@@ -557,6 +557,8 @@ namespace VRCast.Core
             int height = windowHeight;
             string avatarPath = lastAvatarPath;
             List<AvatarEntry> cameras = avatarCameras;
+            // FromJsonOverwrite は既存のリストを使い回して空にするため、上書き前に切り離す
+            avatarCameras = new List<AvatarEntry>();
 
             // 既定値で上書き
             JsonUtility.FromJsonOverwrite(JsonUtility.ToJson(new AppSettings()), this);
