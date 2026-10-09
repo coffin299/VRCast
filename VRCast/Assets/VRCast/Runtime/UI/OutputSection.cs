@@ -1,6 +1,7 @@
 using System.Threading.Tasks;
 using UnityEngine;
 using VRCast.Output;
+using VRCast.Rendering;
 
 namespace VRCast.UI
 {
@@ -11,6 +12,7 @@ namespace VRCast.UI
     {
         private readonly VirtualCameraOutput _output;
         private readonly SpoutOutput _spout;
+        private readonly RenderingController _rendering;
 
         // 現在の登録状態（表示時に毎回レジストリを読まないよう、開始時・方式の切り替え時・登録・解除の後に更新）と、読んだときの方式
         private VirtualCameraRegistration _registration;
@@ -21,10 +23,11 @@ namespace VRCast.UI
         private bool _hasResult;
         private string _error;
 
-        public OutputSection(VirtualCameraOutput output, SpoutOutput spout)
+        public OutputSection(VirtualCameraOutput output, SpoutOutput spout, RenderingController rendering)
         {
             _output = output;
             _spout = spout;
+            _rendering = rendering;
             _registration = output.GetRegistration();
             _registrationMediaFoundation = output.UseMediaFoundation;
         }
@@ -82,13 +85,38 @@ namespace VRCast.UI
                 _spout.Enabled,
                 Loc.T("Output", "出力する", "출력하기", "输出", "輸出") + $" ({SpoutOutput.SenderName})");
 
-            // 有効時のみ状態を出す
+            // 有効時のみ状態と透過の設定を出す
             if (_spout.Enabled)
             {
                 GuiControls.Hint(_spout.Status);
+                DrawSpoutTransparency();
             }
 
             GuiControls.EndCard();
+        }
+
+        private void DrawSpoutTransparency()
+        {
+            // 背景の透過は表示タブの設定と共通（Spout2 はカメラの描画結果のアルファをそのまま送る）
+            _rendering.TransparentBackground = GUILayout.Toggle(
+                _rendering.TransparentBackground,
+                Loc.T("Transparent background", "背景を透過する", "배경을 투명하게", "背景透明", "背景透明"));
+
+            // OBS の Spout2 Capture は合成モードの既定が不透明のため、透過時は切り替えを案内する
+            if (_rendering.TransparentBackground)
+            {
+                GuiControls.Hint(Loc.T(
+                    "In the OBS Spout2 Capture source properties, set \"Composite mode\" to \"Default\" "
+                    + "(the background stays opaque otherwise)",
+                    "OBS の Spout2 Capture ソースのプロパティで「Composite mode」を「Default」にしてください"
+                    + "（そのままだと背景が透過しません）",
+                    "OBS의 Spout2 Capture 소스 속성에서 「Composite mode」를 「Default」로 설정하세요 "
+                    + "(그대로 두면 배경이 투명해지지 않습니다)",
+                    "请在 OBS 的 Spout2 Capture 来源属性中将“Composite mode”设为“Default”"
+                    + "（否则背景不会透明）",
+                    "請在 OBS 的 Spout2 Capture 來源屬性中將「Composite mode」設為「Default」"
+                    + "（否則背景不會透明）"));
+            }
         }
 
         private void DrawMethod()

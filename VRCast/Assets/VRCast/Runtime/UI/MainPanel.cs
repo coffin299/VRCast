@@ -119,7 +119,7 @@ namespace VRCast.UI
             _shapeKeySection = new ShapeKeySection(session, settings);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _displaySection = new DisplaySection(orbit, rendering, settings);
-            _outputSection = new OutputSection(virtualCamera, spout);
+            _outputSection = new OutputSection(virtualCamera, spout, rendering);
             _remoteSection = new RemoteSection(session, remote, settings);
             _settingsSection = new SettingsSection(session, settings, rendering, updates, ResetAllSettings);
             _logSection = new LogSection(trackerProcess, tracker, settings);

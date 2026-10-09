@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- Spout2 出力の映像が OBS で上下反転して映る問題を修正
+- 出力タブの Spout2 に「背景を透過する」を追加（ON にすると、OBS の Spout2 Capture で「Composite mode」を「Default」にするよう案内を表示します）
+
+[English]
+- Fixed the Spout2 output appearing upside down in OBS
+- Added "Transparent background" to Spout2 in the Output tab (when on, it reminds you to set "Composite mode" to "Default" in the OBS Spout2 Capture source)
+
 ■ 1.12.4 (2026-10-09)
 
 [日本語]

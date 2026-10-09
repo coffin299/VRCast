@@ -457,6 +457,8 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 1. OBS に [Spout2 プラグイン（obs-spout2-plugin）](https://github.com/Off-World-Live/obs-spout2-plugin) を入れる。
 2. **Output** タブの **Spout2** で **Output (VRCast)** を ON にする。
 3. OBS で **Spout2 Capture** ソースを追加し、送信元に **VRCast** を選ぶ。
+4. 背景を透過するなら、VRCast で **Transparent background**（背景を透過する。表示タブの透過と共通）を ON にし、
+   OBS の Spout2 Capture ソースのプロパティで **Composite mode** を **Default** にする（未設定のままだと不透明で表示される）。
 
 - GPU 上で映像を共有するため、ゲームキャプチャや仮想カメラより軽く、透過（アルファ）もそのまま渡る。操作パネルは映らない。
 - 解像度は VRCast のウィンドウの描画サイズのまま。Direct3D 11 / 12 が必要（既定の設定のままでよい）。

@@ -30,6 +30,10 @@ namespace VRCast.Output
         // 描画スレッドが読み終えるまで、閉じた送信先のイベントデータを解放せずに待つフレーム数
         private const int ReleaseDelayFrames = 3;
 
+        // 送信用テクスチャへ写すときの上下反転（v を 1 - v にする）
+        private static readonly Vector2 FlipScale = new Vector2(1f, -1f);
+        private static readonly Vector2 FlipOffset = new Vector2(0f, 1f);
+
         // 描画イベントに渡すデータ（KlakSpout::EventData と同じ並び）
         [StructLayout(LayoutKind.Sequential)]
         private struct EventData
@@ -142,7 +146,8 @@ namespace VRCast.Output
             {
                 // 描画結果を送信用テクスチャへ写し（アルファも保つ）、大きさが変わったら送信先を作り直す
                 PrepareBuffer(source.width, source.height);
-                Graphics.Blit(source, _buffer);
+                // Unity のテクスチャは下の行から並ぶが、Spout2 の受け取り側は上の行から読むため上下を反転して写す
+                Graphics.Blit(source, _buffer, FlipScale, FlipOffset);
                 if (_sender == IntPtr.Zero && !OpenSender())
                 {
                     return;
