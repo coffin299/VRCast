@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 1.15.6 (2026-10-10)
 
 [日本語]
 - シェイプキー設定タブに「トラッキングの表情には上限をかけない」を追加（既定 ON。トラッキングタブの「表情を反映」で切り替わった表情は BlendShape の上限なしで動きます。手動で選んだ表情・まばたき・口パクには今までどおり上限がかかります）
