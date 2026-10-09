@@ -8,9 +8,13 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - 設定タブに「設定プリセット」を追加（軽量化などの設定をカテゴリを選んで .vrcastpreset ファイルに書き出し、別の PC や後から読み込めます。読み込むときは反映するカテゴリを選べ、ライト・ポーズ・表情の割り当てなどアバター関連はまとめて外せます。アバターごとの記録とマイク・カメラ・ポートなど PC ごとの値は含みません。ファイルはテキストで読め、いらないカテゴリを消して使うこともできます）
+- 書き出しツールで、FaceEmo の対象アバターの指定が外れているとき（Prefab の入れ替え後など）に FaceEmo の表情を読み込めないことがある問題を修正
+- 書き出しツールの結果に、FaceEmo の表情を取り込まなかった数と、シーンの FaceEmo が別のアバター用で読み込めなかったことを表示する機能を追加
 
 [English]
 - Added "Settings preset" to the Settings tab (export settings such as performance options to a .vrcastpreset file by category and load them on another PC or later; when loading you can choose which categories to apply and exclude avatar-related ones such as light, pose and expression mapping at once; per-avatar data and PC-specific values such as microphone, camera and ports are not included; the file is readable text, so you can also delete categories you don't need)
+- Fixed the exporter sometimes not reading FaceEmo expressions when FaceEmo's target avatar link was lost (for example after replacing the prefab)
+- Added to the exporter result how many FaceEmo expressions were skipped, and a notice when the scene's FaceEmo is for another avatar and was not read
 
 ■ 1.15.6 (2026-10-10)
 

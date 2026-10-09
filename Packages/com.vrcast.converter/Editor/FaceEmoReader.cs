@@ -28,15 +28,25 @@ namespace VRCast.Converter.Editor
         /// avatar を対象にした FaceEmo の表情を、メニューの順に返す（見つからなければ空）。
         /// モードは FaceEmo の表示名、ハンドジェスチャーの分岐は FaceEmo のメニューと同じくクリップ名を使う。
         /// </summary>
-        /// <param name="trace">読んだメニューの中身（フォルダ・モード・読めなかったクリップ）を書き足す一覧（不要なら null）</param>
-        public static List<ExpressionExtractor.NamedClip> Read(GameObject avatar, List<string> trace = null)
+        /// <summary>
+        /// 読んだ表情と、見つけた FaceEmo の設定の数（このアバター用 / 別のアバター用）。
+        /// </summary>
+        public struct Result
         {
-            var clips = new List<ExpressionExtractor.NamedClip>();
+            public List<ExpressionExtractor.NamedClip> Clips;
+            public int Launchers;
+            public int OtherLaunchers;
+        }
+
+        /// <param name="trace">読んだメニューの中身（フォルダ・モード・読めなかったクリップ）を書き足す一覧（不要なら null）</param>
+        public static Result Read(GameObject avatar, List<string> trace = null)
+        {
+            var result = new Result { Clips = new List<ExpressionExtractor.NamedClip>() };
             // FaceEmo は VRCAvatarDescriptor を対象として記録している
             Component descriptor = avatar != null ? VrcDescriptorReader.FindDescriptor(avatar) : null;
             if (descriptor == null)
             {
-                return clips;
+                return result;
             }
 
             // シーン上（非アクティブ含む）の FaceEmo のうち、このアバターを対象にしているものを読む
@@ -47,15 +57,18 @@ namespace VRCast.Converter.Editor
                     continue;
                 }
 
-                // 別のアバター用の FaceEmo は読まない（ログには残す）
+                // 別のアバター用の FaceEmo は読まない（数とログには残す）
                 if (!Targets(launcher, descriptor))
                 {
+                    result.OtherLaunchers++;
                     trace?.Add($"launcher: {launcher.gameObject.name} (targets another avatar, ignored)");
                     continue;
                 }
 
                 // 表情メニューは起動用コンポーネントと同じオブジェクトにある
+                result.Launchers++;
                 trace?.Add($"launcher: {launcher.gameObject.name}");
+                List<ExpressionExtractor.NamedClip> clips = result.Clips;
                 foreach (MonoBehaviour component in launcher.GetComponents<MonoBehaviour>())
                 {
                     if (IsType(component, RepositoryTypeName))
@@ -66,7 +79,7 @@ namespace VRCast.Converter.Editor
                 }
             }
 
-            return clips;
+            return result;
         }
 
         private static bool IsType(Component component, string fullName)
@@ -98,9 +111,38 @@ namespace VRCast.Converter.Editor
                         return true;
                     }
                 }
+
+                // 参照が外れている（Prefab の入れ替え・シーンの開き直し等）ときは、FaceEmo が控えている階層のパスで照合する
+                string path = FullPath(descriptor.transform);
+                if (serialized.FindProperty("TargetAvatarPath")?.stringValue == path)
+                {
+                    return true;
+                }
+
+                SerializedProperty subPaths = serialized.FindProperty("SubTargetAvatarPaths");
+                for (int i = 0; subPaths != null && subPaths.isArray && i < subPaths.arraySize; i++)
+                {
+                    if (subPaths.GetArrayElementAtIndex(i).stringValue == path)
+                    {
+                        return true;
+                    }
+                }
             }
 
             return false;
+        }
+
+        private static string FullPath(Transform transform)
+        {
+            // FaceEmo と同じ「/親/子」の形（ルートから自身まで）
+            var names = new List<string>();
+            for (Transform current = transform; current != null; current = current.parent)
+            {
+                names.Add(current.name);
+            }
+
+            names.Reverse();
+            return "/" + string.Join("/", names);
         }
 
         private static void ReadList(Object list, string path, List<ExpressionExtractor.NamedClip> clips,

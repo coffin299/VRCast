@@ -37,6 +37,9 @@ namespace VRCast.Converter.Editor
             public int ExtraExpressionCount;
             public int FaceEmoClips;
             public int FaceEmoExpressionCount;
+            public int FaceEmoLaunchers;
+            public int FaceEmoOtherLaunchers;
+            public int FaceEmoSkipped;
             public string LipSyncMode;
             public bool HasBlink;
             public bool HasWink;
@@ -124,7 +127,8 @@ namespace VRCast.Converter.Editor
 
             // FaceEmo は元のアバターを対象として記録しているため、複製の前に元から読む
             var faceEmoTrace = new List<string>();
-            List<ExpressionExtractor.NamedClip> faceEmoClips = FaceEmoReader.Read(source, faceEmoTrace);
+            FaceEmoReader.Result faceEmo = FaceEmoReader.Read(source, faceEmoTrace);
+            List<ExpressionExtractor.NamedClip> faceEmoClips = faceEmo.Clips;
 
             try
             {
@@ -184,6 +188,9 @@ namespace VRCast.Converter.Editor
                 report.ExtraExpressionCount = extracted.ExtraAdded;
                 report.FaceEmoClips = faceEmoClips.Count;
                 report.FaceEmoExpressionCount = extracted.NamedAdded;
+                report.FaceEmoLaunchers = faceEmo.Launchers;
+                report.FaceEmoOtherLaunchers = faceEmo.OtherLaunchers;
+                report.FaceEmoSkipped = extracted.NamedSkipped.Count;
 
                 // FaceEmo の表情が足りないときに原因を追えるよう、読んだメニューと取り込まなかった表情をログに出す
                 if (faceEmoTrace.Count > 0)

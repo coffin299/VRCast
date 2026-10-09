@@ -568,9 +568,22 @@ namespace VRCast.Converter.Editor
                 "씬의 블렌드셰이프 우선", "优先场景 BlendShape", "優先場景 BlendShape");
             string expressions = L("Expressions", "表情", "표정", "表情", "表情");
             string extraExpressions = L("added clips", "追加したクリップ", "추가한 클립", "追加的剪辑", "追加的剪輯");
-            // FaceEmo の設定があったときだけ件数を出す
-            string faceEmo = report.FaceEmoClips > 0
-                ? $"FaceEmo: {report.FaceEmoExpressionCount} / {report.FaceEmoClips}, "
+            // FaceEmo の設定があったときだけ件数を出す（取り込まなかった表情があればその数も）
+            string faceEmoSkipped = report.FaceEmoSkipped > 0
+                ? " " + L("skipped", "見送り", "제외", "跳过", "略過") + $" {report.FaceEmoSkipped}"
+                : string.Empty;
+            string faceEmo = report.FaceEmoLaunchers > 0
+                ? $"FaceEmo: {report.FaceEmoExpressionCount} / {report.FaceEmoClips}{faceEmoSkipped}, "
+                : string.Empty;
+
+            // シーンに FaceEmo はあるが、このアバター用のものが無い（読めていない）ことを知らせる
+            string faceEmoNotFound = report.FaceEmoLaunchers == 0 && report.FaceEmoOtherLaunchers > 0
+                ? L("FaceEmo: the scene's FaceEmo targets another avatar, so it was not read. " +
+                    "Open FaceEmo and check the target avatar.",
+                    "FaceEmo: シーンの FaceEmo は別のアバター用のため読み込んでいません。FaceEmo を開いて対象のアバターをご確認ください。",
+                    "FaceEmo: 씬의 FaceEmo가 다른 아바타용이라 읽지 않았습니다. FaceEmo를 열어 대상 아바타를 확인하세요.",
+                    "FaceEmo：场景中的 FaceEmo 属于其他虚拟形象，因此未读取。请打开 FaceEmo 确认目标虚拟形象。",
+                    "FaceEmo：場景中的 FaceEmo 屬於其他虛擬形象，因此未讀取。請開啟 FaceEmo 確認目標虛擬形象。") + "\n"
                 : string.Empty;
             string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
             string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");
@@ -594,6 +607,7 @@ namespace VRCast.Converter.Editor
                 $"{sceneBlendShapes}: {report.KeptSceneBlendShapes}\n" +
                 $"{expressions}: {report.ExpressionCount} " +
                 $"({faceEmo}{extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips})\n" +
+                faceEmoNotFound +
                 $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +
                 $"PhysBones: {report.PhysBoneCount}\n" +
                 $"Constraints: {report.ConstraintCount}\n" +
