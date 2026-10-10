@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 using UnityEditor;
 using UnityEngine;
 using VRCast.AvatarFormat;
@@ -556,6 +557,19 @@ namespace VRCast.Converter.Editor
             }
         }
 
+        private static string UnresolvedSamples(AvatarExporter.Report report)
+        {
+            // スクリーンショットで原因が分かるよう、先頭の数件だけ「  - 表情名 (パス / BlendShape [原因])」で並べる
+            const int maxSamples = 3;
+            var builder = new StringBuilder();
+            for (int i = 0; report.UnresolvedDetails != null && i < report.UnresolvedDetails.Count && i < maxSamples; i++)
+            {
+                builder.Append("  - ").Append(report.UnresolvedDetails[i]).Append('\n');
+            }
+
+            return builder.ToString();
+        }
+
         private static string BuildSummary(AvatarExporter.Report report, bool english)
         {
             // english なら英語固定、そうでなければ表示言語で項目名を選ぶ
@@ -615,7 +629,7 @@ namespace VRCast.Converter.Editor
                     "⚠ 표정 {0}개는 움직일 메시를 찾지 못해 앱의 표정 목록에 나오지 않습니다 (이름은 Console에 있습니다).",
                     "⚠ {0} 个表情因找不到要驱动的网格，不会出现在应用的表情列表中（名称见 Console）。",
                     "⚠ {0} 個表情因找不到要驅動的網格，不會出現在應用程式的表情列表中（名稱見 Console）。"),
-                    report.UnresolvedExpressions) + "\n"
+                    report.UnresolvedExpressions) + "\n" + UnresolvedSamples(report)
                 : string.Empty;
             string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
             string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");

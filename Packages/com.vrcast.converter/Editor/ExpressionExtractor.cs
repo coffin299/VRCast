@@ -65,6 +65,16 @@ namespace VRCast.Converter.Editor
             var namedSkipped = new List<string>();
             // 表情ツールで取り込んだ「クリップと名前」の組（同じクリップでも名前が違うモードは別の表情として出す）
             var usedNamedClips = new HashSet<(AnimationClip, string)>();
+            // 改変後の FX のクリップ（名前ごとに最初の 1 つ）
+            var fxByName = new Dictionary<string, AnimationClip>();
+            foreach (AnimationClip clip in controller != null ? controller.animationClips : Array.Empty<AnimationClip>())
+            {
+                if (clip != null && !fxByName.ContainsKey(clip.name))
+                {
+                    fxByName.Add(clip.name, clip);
+                }
+            }
+
             if (namedClips != null)
             {
                 foreach (NamedClip named in namedClips)
@@ -93,8 +103,16 @@ namespace VRCast.Converter.Editor
                     }
 
                     namedSources.Add(named.Clip.name);
+                    // 最適化ツール等が FX 用に複製・書き換えた同名クリップがあれば、改変後のパスで読めるそちらを優先する
                     // 表情ツールのモードは BlendShape が 1 つでもあれば取り込む（値がすべて 0・多すぎる場合も見送らない）
-                    ExpressionPreset preset = CreateFromBlendShapes(named.Clip, false);
+                    ExpressionPreset preset = null;
+                    if (fxByName.TryGetValue(named.Clip.name, out AnimationClip processed) && processed != named.Clip)
+                    {
+                        preset = CreateFromBlendShapes(processed, false);
+                        usedClips.Add(processed);
+                    }
+
+                    preset = preset ?? CreateFromBlendShapes(named.Clip, false);
                     if (preset != null)
                     {
                         // 名前が重なれば番号を付ける

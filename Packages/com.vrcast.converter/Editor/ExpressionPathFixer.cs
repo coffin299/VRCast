@@ -26,8 +26,10 @@ namespace VRCast.Converter.Editor
             public List<string> Unresolved;
         }
 
+        /// <param name="sourceRoot">改変前の元のアバター（見つからなかった値の原因をログに出すため。null なら出さない）</param>
         /// <param name="facePaths">顔のメッシュのパス（リップシンク・まぶたのメッシュ。空は無視）</param>
-        public static Result Fix(ExpressionSet expressions, Transform root, params string[] facePaths)
+        public static Result Fix(ExpressionSet expressions, Transform root, Transform sourceRoot,
+            params string[] facePaths)
         {
             var result = new Result { Unresolved = new List<string>() };
             // 非アクティブを含む全メッシュ（BlendShape 名から探し直す候補）
@@ -56,7 +58,7 @@ namespace VRCast.Converter.Editor
                     }
                     else
                     {
-                        missing.Add($"{value.path} / {value.blendShape}");
+                        missing.Add($"{value.path} / {value.blendShape} [{Diagnose(sourceRoot, value)}]");
                     }
                 }
 
@@ -215,6 +217,24 @@ namespace VRCast.Converter.Editor
             }
 
             return builder.ToString();
+        }
+
+        private static string Diagnose(Transform sourceRoot, BlendShapeValue value)
+        {
+            // 元のアバターにあったか（あれば改変・最適化で消えた、無ければ別のアバター用のクリップ）
+            if (sourceRoot == null)
+            {
+                return "unknown";
+            }
+
+            Transform node = string.IsNullOrEmpty(value.path) ? sourceRoot : sourceRoot.Find(value.path);
+            if (Has(node, value.blendShape))
+            {
+                return "in source, removed by NDMF/optimizer";
+            }
+
+            var renderer = node != null ? node.GetComponent<SkinnedMeshRenderer>() : null;
+            return renderer != null ? "source mesh has no such blend shape" : "no such mesh in source";
         }
 
         private static string Describe(string presetName, List<string> missing)

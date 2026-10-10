@@ -44,6 +44,7 @@ namespace VRCast.Converter.Editor
             public int HiddenExpressionCount;
             public int ExpressionPathsFixed;
             public int UnresolvedExpressions;
+            public List<string> UnresolvedDetails;
             public string LipSyncMode;
             public bool HasBlink;
             public bool HasWink;
@@ -213,9 +214,10 @@ namespace VRCast.Converter.Editor
 
                 // 改変前から読んだ表情（FaceEmo 等）のパスを、改変・除去の後のメッシュに合わせる
                 ExpressionPathFixer.Result pathFix = ExpressionPathFixer.Fix(expressions, clone.transform,
-                    descriptorData.lipSync.meshPath, descriptorData.eyelids.meshPath);
+                    source.transform, descriptorData.lipSync.meshPath, descriptorData.eyelids.meshPath);
                 report.ExpressionPathsFixed = pathFix.FixedValues;
                 report.UnresolvedExpressions = pathFix.Unresolved.Count;
+                report.UnresolvedDetails = pathFix.Unresolved;
                 if (pathFix.Unresolved.Count > 0)
                 {
                     Debug.LogWarning("[VRCast][Exporter] Expressions whose meshes were not found " +
