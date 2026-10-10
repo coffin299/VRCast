@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using VRCast.AvatarFormat;
 
 namespace VRCast.Converter.Editor
 {
