@@ -157,6 +157,8 @@ namespace VRCast.Converter.Editor
                 if (GUILayout.Button(T("Export...", "書き出す...", "내보내기...", "导出...", "匯出...")))
                 {
                     ExportWithDialog();
+                    // ダイアログ中にレイアウトが崩れるため、この回の描画は打ち切る（EndLayoutGroup のエラーを防ぐ）
+                    GUIUtility.ExitGUI();
                 }
             }
         }

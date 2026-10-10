@@ -210,7 +210,8 @@ namespace VRCast.Converter.Editor
                 report.MissingBoneRenderers = ComponentStripper.WarnMissingBones(clone);
 
                 // 改変前から読んだ表情（FaceEmo 等）のパスを、改変・除去の後のメッシュに合わせる
-                ExpressionPathFixer.Result pathFix = ExpressionPathFixer.Fix(expressions, clone.transform);
+                ExpressionPathFixer.Result pathFix = ExpressionPathFixer.Fix(expressions, clone.transform,
+                    descriptorData.lipSync.meshPath, descriptorData.eyelids.meshPath);
                 report.ExpressionPathsFixed = pathFix.FixedValues;
                 report.UnresolvedExpressions = pathFix.Unresolved.Count;
                 if (pathFix.Unresolved.Count > 0)

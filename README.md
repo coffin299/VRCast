@@ -131,6 +131,7 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
   BlendShape が 1 つでもあるモードは見送らずに取り込む（値がすべて 0・多すぎる場合も。同じクリップでもモード名が違えば別の表情）。
   FaceEmo のアセンブリは参照せず型名で読むため、FaceEmo が無いプロジェクトでもそのまま動き、「アバターに適用」前でも取り込める。
   最適化ツール（メッシュの統合など）で顔のメッシュの場所が変わっても、同じ BlendShape を持つメッシュへ付け替えて書き出す。
+  決められないときは顔のメッシュ（Avatar Descriptor のリップシンク・まぶたのメッシュ）とみなす。
 - Avatar Descriptor の Lip Sync（Viseme / JawFlap BlendShape）と Eyelids（BlendShape）設定を `metadata/descriptor.json` に書き出す。
   Eyelids 未設定の場合は顔メッシュの `まばたき` / `blink` / `eyeBlinkLeft`+`eyeBlinkRight` 等をまばたき用として推定する。
   ウインク用 BlendShape（`ウィンク`+`ウィンク右`、`wink_L`+`wink_R` 等）も推定して書き出す。
