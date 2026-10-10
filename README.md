@@ -129,10 +129,14 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
   欄の下に、書き出す前にクリップごとの判定（✓ / ✗ と補足: ブレンドシェイプ以外も動かす・ブレンドシェイプを動かさない・多すぎる・すべて 0）を表示する（クリックでプロジェクト上の場所を表示）。
 - シーンに [FaceEmo](https://github.com/suzuryg/face-emo) の設定（対象アバターが書き出すアバター）があれば、その表情を FX より優先して取り込む。
   モードは FaceEmo の表示名、ハンドジェスチャーの分岐はクリップ名を使い、BlendShape 以外のカーブ（小物の表示など）は無視する。
+  改変適用後の Expression Menu に名前が「FaceEmo」を含むサブメニューがあれば、その中のボタンが切り替えるパラメータと値から
+  FX で再生されるクリップを探し、メニューの名前で取り込む（VRChat と同じ道筋。同じ名前の表情は FaceEmo の設定から読んだものより優先）。
   BlendShape が 1 つでもあるモードは見送らずに取り込む（値がすべて 0・多すぎる場合も。同じクリップでもモード名が違えば別の表情）。
   FaceEmo のアセンブリは参照せず型名で読むため、FaceEmo が無いプロジェクトでもそのまま動き、「アバターに適用」前でも取り込める。
   最適化ツール（メッシュの統合など）で顔のメッシュの場所が変わっても、同じ BlendShape を持つメッシュへ付け替えて書き出す。
   決められないときは顔のメッシュ（Avatar Descriptor のリップシンク・まぶたのメッシュ）とみなす。
+  AAO（Avatar Optimizer）の Trace and Optimize があれば、書き出す複製でだけ BlendShape の最適化を止める
+  （FX で動かない BlendShape が消され、FaceEmo で編集した表情などが動かなくなるのを防ぐ）。
 - Avatar Descriptor の Lip Sync（Viseme / JawFlap BlendShape）と Eyelids（BlendShape）設定を `metadata/descriptor.json` に書き出す。
   Eyelids 未設定の場合は顔メッシュの `まばたき` / `blink` / `eyeBlinkLeft`+`eyeBlinkRight` 等をまばたき用として推定する。
   ウインク用 BlendShape（`ウィンク`+`ウィンク右`、`wink_L`+`wink_R` 等）も推定して書き出す。

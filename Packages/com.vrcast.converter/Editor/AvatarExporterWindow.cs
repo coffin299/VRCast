@@ -602,8 +602,9 @@ namespace VRCast.Converter.Editor
             string faceEmoSkipped = report.FaceEmoSkipped > 0
                 ? " " + L("skipped", "見送り", "제외", "跳过", "略過") + $" {report.FaceEmoSkipped}"
                 : string.Empty;
-            string faceEmo = report.FaceEmoLaunchers > 0
-                ? $"FaceEmo: {report.FaceEmoExpressionCount} / {report.FaceEmoClips}{faceEmoSkipped}, "
+            string faceEmo = report.FaceEmoLaunchers > 0 || report.FaceEmoMenuClips > 0
+                ? $"FaceEmo: {report.FaceEmoExpressionCount} / {report.FaceEmoClips}{faceEmoSkipped}" +
+                  $" ({L("from menu", "メニューから", "메뉴에서", "来自菜单", "來自選單")} {report.FaceEmoMenuClips}), "
                 : string.Empty;
 
             // シーンに FaceEmo が複数あり、このアバター用のものを決められなかった（読めていない）ことを知らせる
@@ -647,7 +648,9 @@ namespace VRCast.Converter.Editor
                 $"{exported}: {report.OutputPath}\n" +
                 $"{size}: {report.Manifest.bundleSize / (1024f * 1024f):F1} MB\n" +
                 $"Humanoid: {report.IsHumanoid}\n" +
-                $"{ndmf}: {report.NdmfApplied}\n" +
+                $"{ndmf}: {report.NdmfApplied}" +
+                (report.OptimizerBlendShapeSettingsDisabled > 0 ? " (AAO BlendShape optimization: off)" : string.Empty) +
+                "\n" +
                 $"{attached}: {report.ModularAvatarFallbackFixes}\n" +
                 $"{baked}: {report.BakedFxClips}\n" +
                 $"{sceneBlendShapes}: {report.KeptSceneBlendShapes}\n" +

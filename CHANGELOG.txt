@@ -11,6 +11,8 @@ Newest first. Each version is written in Japanese, then English.
 - 書き出しツールで、FaceEmo の別々のモードが同じアニメーションを使っていると、片方しか表情一覧に出ない問題を修正
 - 書き出しツールで、FaceEmo のモードを値がすべて 0 などの理由で見送らず、BlendShape があればすべて取り込むように変更
 - ポーズ・表情タブに「ほかのクリップも表示」を追加（小物の切り替えなども含むクリップから BlendShape だけを取り出した表情を一覧に出せます。既定 OFF。新しい書き出しツールで書き出し直したアバターで使えます）
+- 書き出しツールで、FaceEmo の表情を VRChat の Expression Menu（FaceEmo のサブメニュー）からも読むように変更（メニューと同じ名前で、改変を適用した後のアニメーションを使います）
+- 書き出しツールで、AAO（Avatar Optimizer）を使ったアバターの FaceEmo で編集した表情の BlendShape が最適化で消され、表情が動かない問題を修正（書き出すときだけ BlendShape の最適化を止めます）
 - 書き出しツールで、最適化ツールがアニメーションを書き換えたアバターでは、FaceEmo の表情を書き換え後のアニメーションから読むように変更
 - 書き出しツールで、表情の動かすメッシュが見つからないときに顔のメッシュ（リップシンク・まぶたに使うメッシュ）を使うように変更（BlendShape 名の大文字・小文字や区切り文字の違いも吸収します）
 - 書き出しツールの「追加の表情」で、小物の切り替えなども含むクリップや値がすべて 0 のクリップを見送らず、BlendShape の部分を取り込むように変更（FaceEmo のアニメーションを追加しても入らない問題を修正）
@@ -22,6 +24,8 @@ Newest first. Each version is written in Japanese, then English.
 - Fixed only one of several FaceEmo modes sharing the same animation appearing in the expression list
 - Changed the exporter to take every FaceEmo mode that has blend shapes instead of skipping some (for example when all values are 0)
 - Added "Also show other clips" to the Pose tab (lists expressions taken as blend shapes only from clips that also toggle items etc.; off by default; available for avatars exported again with the new exporter)
+- Changed the exporter to also read FaceEmo expressions from the VRChat Expression Menu (the FaceEmo submenu), using the menu names and the animations after modifications are applied
+- Fixed blend shapes of expressions edited in FaceEmo being removed by AAO (Avatar Optimizer) so the expressions did not move (blend shape optimization is turned off only while exporting)
 - Changed the exporter to read FaceEmo expressions from the animations rewritten by optimization tools when they are present
 - Changed the exporter to use the face mesh (the mesh used for lip sync and eyelids) when an expression's mesh is not found (differences in letter case and separators in blend shape names are also absorbed)
 - Changed "Additional expressions" in the exporter to take the blend shape part of clips that also toggle items or whose values are all 0 instead of skipping them (fixes FaceEmo animations not being added)

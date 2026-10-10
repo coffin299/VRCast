@@ -249,6 +249,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ModularAvatarFallback` | NDMF 実行前に MA Merge Armature / Bone Proxy の統合元・統合先を控え、実行後もアバターのボーンの子になっていない衣装・小物を MA と同じ規則（prefix/suffix 付きボーン名の対応、Bone Proxy の配置モード）で付け替える。MA の処理はエラーを投げずに失敗し得るため、その保険。移動したオブジェクトの元パスを返し、`FxDefaultStateBaker` が古いパスのカーブを読み替える |
 | `ExpressionExtractor` | FaceEmo の表情（優先・BlendShape 部分のみ）、FX コントローラー、追加指定のクリップから BlendShape のみのクリップを表情プリセットとして抽出（FX と同じクリップは除き、名前の重複には番号を付ける。FaceEmo は同じクリップでもモード名が違えば別の表情にし、BlendShape があれば見送らない。FX の表情でないクリップは BlendShape 部分だけを `hidden` として最後に取り込む） |
 | `FaceEmoReader` | シーン上の FaceEmo（`FaceEmoLauncherComponent` の対象アバター）の表情メニューを型名と SerializedObject で読み、モード名付きのクリップ一覧を返す（FaceEmo のアセンブリは参照しない。対象の参照が外れていれば控えのパス、それも合わなければシーンに 1 つだけの FaceEmo を使う） |
+| `ExpressionMenuReader` | 改変適用後の `expressionsMenu` を SerializedObject でたどり、名前に FaceEmo を含むサブメニュー以下のボタン・トグルのパラメータと値に一致する FX の遷移（ジェスチャー 0 以外の条件が少ないもの）の遷移先クリップを、メニュー名付きで返す |
+| `OptimizerGuard` | NDMF の前に、複製に付いた AAO の `TraceAndOptimize` の BlendShape 関係の bool 設定（`optimizeBlendShape` 等）を OFF にする（表情の BlendShape が固定・削除されないため。型名と SerializedObject で設定） |
 | `ExpressionPathFixer` | 改変前から読んだ表情（FaceEmo 等）の BlendShape のパスを、NDMF・除去の後の複製で見つかるメッシュへ付け替える（同名のメッシュ → その BlendShape を持つ顔のメッシュ（リップシンク・まぶたのメッシュ、無ければ Body / Face / Head）→ その BlendShape を持つ唯一のメッシュ → 顔のメッシュで大文字小文字・区切り文字だけ違う BlendShape）。見つからない表情は結果欄と Console で知らせる |
 | `ExtraExpressionClips` | 書き出し画面の「追加の表情」の指定（AnimationClip / フォルダ）。アバターの GlobalObjectId ごとに GUID を EditorPrefs へ保存し、フォルダはサブフォルダ内のクリップまで展開 |
 | `VrcDescriptorReader` | VRChat SDK 非依存（リフレクション）で `VRCAvatarDescriptor` の FX コントローラー、Expression Parameters 既定値、Lip Sync・Eyelids 設定を取得 |

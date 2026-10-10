@@ -39,6 +39,7 @@ namespace VRCast.Converter.Editor
             public int FaceEmoClips;
             public int FaceEmoExpressionCount;
             public int FaceEmoLaunchers;
+            public int FaceEmoMenuClips;
             public int FaceEmoOtherLaunchers;
             public int FaceEmoSkipped;
             public int HiddenExpressionCount;
@@ -52,6 +53,7 @@ namespace VRCast.Converter.Editor
             public int ConstraintCount;
             public int BlendShapeSyncCount;
             public bool NdmfApplied;
+            public int OptimizerBlendShapeSettingsDisabled;
             public int ModularAvatarFallbackFixes;
             public int RemovedInactiveObjects;
             public int MissingBoneRenderers;
@@ -149,6 +151,9 @@ namespace VRCast.Converter.Editor
                 ModularAvatarFallback.Plan maPlan = ModularAvatarFallback.Capture(clone);
                 BlendShapeSyncExtractor.Plan syncPlan = BlendShapeSyncExtractor.Capture(clone);
 
+                // 表情の BlendShape が最適化で消えないよう、最適化ツールの BlendShape の削除を複製でだけ止める
+                report.OptimizerBlendShapeSettingsDisabled = OptimizerGuard.KeepBlendShapes(clone);
+
                 // Modular Avatar 等の改変を VRChat のアップロード時と同じく複製へ適用（NDMF が無ければ何もしない）
                 report.NdmfApplied = NdmfProcessor.Process(clone);
 
@@ -183,6 +188,12 @@ namespace VRCast.Converter.Editor
                         clone, fx, VrcDescriptorReader.GetExpressionParameterDefaults(descriptor), maFallback.MovedObjects,
                         keepSceneBlendShapes);
                 }
+
+                // 改変適用後の Expression Menu の FaceEmo の下から、VRChat と同じ道筋で表情を読む（名前・パスとも VRChat と同じ）
+                List<ExpressionExtractor.NamedClip> menuClips =
+                    ExpressionMenuReader.Read(descriptor, fx, faceEmoTrace);
+                report.FaceEmoMenuClips = menuClips.Count;
+                faceEmoClips = MergeNamedClips(menuClips, faceEmoClips);
 
                 // FaceEmo・FX・追加指定のクリップから表情プリセットを抽出
                 ExpressionExtractor.Result extracted =
@@ -308,6 +319,28 @@ namespace VRCast.Converter.Editor
                 // bundle 化が済んだので NDMF の生成アセットも片付ける
                 NdmfProcessor.DeleteGeneratedAssets(generatedAssetsBefore);
             }
+        }
+
+        private static List<ExpressionExtractor.NamedClip> MergeNamedClips(
+            List<ExpressionExtractor.NamedClip> menuClips, List<ExpressionExtractor.NamedClip> faceEmoClips)
+        {
+            // メニューから読めた表情を先に置き、FaceEmo の設定から読んだ同じ名前の表情は除く（メニューの方が改変後のクリップのため）
+            var names = new HashSet<string>();
+            foreach (ExpressionExtractor.NamedClip clip in menuClips)
+            {
+                names.Add(clip.Name?.Trim() ?? string.Empty);
+            }
+
+            var merged = new List<ExpressionExtractor.NamedClip>(menuClips);
+            foreach (ExpressionExtractor.NamedClip clip in faceEmoClips)
+            {
+                if (!names.Contains(clip.Name?.Trim() ?? string.Empty))
+                {
+                    merged.Add(clip);
+                }
+            }
+
+            return merged;
         }
 
         private static void LogFaceEmo(List<string> trace, List<string> skipped)
