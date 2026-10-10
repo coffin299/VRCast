@@ -292,6 +292,7 @@
     可为每种表情分配快捷键（默认全部未分配）。点击按键按钮后按下要分配的键（也可使用 <code>Ctrl+Alt+N</code> 等组合键、小键盘（NumLock 开启时与数字键区分）、符号键、右 Ctrl 等单独按键（按下后松开）以及鼠标侧键），按 <span class="ui">Esc</span> 取消（不能使用 Tab）。旁边的 <span class="ui">重置</span> 可取消分配（按虚拟形象分别保存）。
     开启 <span class="ui">VRCast 在后台时也可使用</span>（默认开启）后，操作 OBS 等时也能切换。在其他应用中输入时也会响应，建议与 Ctrl 或 Alt 组合使用。
     通过按钮或快捷键选择的表情会被固定，不会被自动检测改变。再次选择同一表情或点击 <span class="ui">恢复自动检测</span> 即可恢复。
+    从还包含道具切换等的剪辑中只取出 BlendShape 的表情默认不显示在列表中，打开 <span class="ui">也显示其他剪辑</span> 即可显示（仅在虚拟形象有此类剪辑时出现）。
     <span class="ui">OSC / HTTP</span> 标签页（输出与设置之间）会列出当前虚拟形象每个表情的命令（点击 <span class="ui">复制</span> 复制），端口下方显示 OSC 目标和 HTTP URL（点击 <span class="ui">在浏览器中打开状态</span> 测试；在 Stream Deck 中将完整 URL 设置到“网站”的“在后台发送 GET 请求”）。开启 <span class="ui">外部操作（OSC / HTTP）</span> 后，可从 Stream Deck 或 OSC 应用切换表情（仅限本机。例如 <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。编号 0 = 无表情，1 起 = 表情顺序）。</p>
   <p class="zh-hans"><span class="ui">待机动作</span>（默认开启，仅限 Humanoid）会在不使用摄像头时，稍微加上呼吸、身体摇摆和头部晃动，避免虚拟形象完全静止。
     关闭 <span class="ui">呼吸 · 身体摇摆</span> 后会停止。开启时可以调整 <span class="ui">呼吸</span>、<span class="ui">身体摇摆</span>、<span class="ui">头部晃动</span> 的强度（0～2，1 为标准）和 <span class="ui">速度</span>（0.5～2 倍）。

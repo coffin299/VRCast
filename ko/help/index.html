@@ -292,6 +292,7 @@
     표정마다 단축키를 할당할 수 있습니다 (기본은 모두 미할당). 키 버튼을 누른 뒤 할당할 키를 누르고 (<code>Ctrl+Alt+N</code> 같은 동시 입력, 숫자 키패드 (NumLock 켜짐에서 숫자 키와 구별), 기호 키, 오른쪽 Ctrl 등의 단독 키 (눌렀다 떼기), 마우스 사이드 버튼도 가능), <span class="ui">Esc</span>로 취소합니다 (Tab은 사용할 수 없습니다). 옆의 <span class="ui">초기화</span>로 할당을 해제합니다 (아바타별로 저장).
     <span class="ui">VRCast가 뒤에 있을 때도 사용</span>(기본 켜짐)이면 OBS 등을 조작하는 중에도 전환할 수 있습니다. 다른 앱에서 입력하는 동안에도 반응하므로 Ctrl이나 Alt와의 조합을 권장합니다.
     버튼·키로 고른 표정은 고정되어 자동 감지로 바뀌지 않습니다. 같은 표정을 다시 고르거나 <span class="ui">자동 감지로 복귀</span>를 누르면 돌아갑니다.
+    소품 전환 등도 포함한 클립에서 BlendShape만 꺼낸 표정은 기본적으로 목록에 나오지 않습니다. <span class="ui">다른 클립도 표시</span>를 켜면 나옵니다 (해당 클립이 있는 아바타에서만 표시).
     <span class="ui">OSC / HTTP</span> 탭 (출력과 설정 사이)에는 불러온 아바타의 표정별 명령이 나열되며 (<span class="ui">복사</span>로 복사), 포트 아래에 OSC 대상과 HTTP URL이 표시됩니다 (<span class="ui">브라우저에서 상태 열기</span>로 동작 확인. Stream Deck에서는 "웹사이트"의 "백그라운드에서 GET"에 URL 전체를 설정). <span class="ui">외부 조작 (OSC / HTTP)</span>을 켜면 Stream Deck이나 OSC 앱에서 표정을 전환할 수 있습니다 (이 PC에서만. 예: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>, OSC <code>/vrcast/expression "Smile"</code>. 번호는 0 = 무표정, 1 이후 = 표정 순서).</p>
   <p class="ko"><span class="ui">대기 모션</span>(기본 켜짐, Humanoid만)은 웹캠을 쓰지 않을 때 아바타가 완전히 멈춰 보이지 않도록 호흡·몸 흔들림·머리 흔들림을 조금 더합니다.
     <span class="ui">호흡 · 몸 흔들림</span>을 끄면 멈춥니다. 켜져 있을 때는 <span class="ui">호흡</span>·<span class="ui">몸 흔들림</span>·<span class="ui">머리 흔들림</span>의 강도 (0~2, 1이 표준)와 <span class="ui">속도</span> (0.5~2배)를 조정할 수 있습니다.

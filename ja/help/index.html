@@ -261,6 +261,7 @@
     表情ごとにショートカットキーを割り当てられます（既定はすべて未割り当て）。キーのボタンを押してから割り当てたいキーを押し（<code>Ctrl+Alt+N</code> のような同時押し、テンキー（NumLock ON で数字キーと区別）、記号キー、右 Ctrl などの単独（押して離す）、マウスのサイドボタンも可）、<span class="ui">Esc</span> でやめられます（Tab は使えません）。隣の <span class="ui">リセット</span> で割り当てを外します（アバターごとに保存）。
     <span class="ui">VRCast が背面にあるときも使う</span>（既定 ON）なら、OBS などを操作中でも切り替えられます。ほかのアプリで文字を入力している間も反応するため、Ctrl や Alt との組み合わせがおすすめです。
     ボタン・キーで選んだ表情は固定され、トラッキングの自動検出では変わりません。同じ表情をもう一度選ぶか <span class="ui">自動検出に戻す</span> で元に戻ります。
+    小物の切り替えなども含むクリップから BlendShape だけを取り出した表情は、既定では一覧に出ません。<span class="ui">ほかのクリップも表示</span> を ON にすると出ます（該当するクリップがあるアバターだけ表示）。
     <span class="ui">OSC / HTTP</span> タブ（出力と設定の間）で <span class="ui">外部から操作（OSC / HTTP）</span> を ON にすると、表示中のアバターの表情ごとのコマンドが一覧に並び（<span class="ui">コピー</span> でコピー）、ポートの下に OSC の送信先と HTTP の URL が表示されます（<span class="ui">ブラウザで状態を開く</span> で動作確認。Stream Deck では「Web サイト」の「バックグラウンドで GET」に URL 全体を設定）。Stream Deck や OSC アプリから表情を切り替えられます（この PC からのみ。例: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。番号は 0 = ニュートラル、1 以降 = 表情の並び順）。</p>
   <p class="ja"><span class="ui">待機モーション</span>（既定 ON、Humanoid のみ）は、Web カメラを使っていないときにアバターが完全に止まって見えないよう、呼吸・体の揺れ・頭のゆらぎを少し足します。
     <span class="ui">呼吸・体の揺れ</span> を OFF にすると止まります。ON のときは <span class="ui">呼吸</span>・<span class="ui">体の揺れ</span>・<span class="ui">頭のゆらぎ</span> の強さ（0〜2、1 が標準）と <span class="ui">速さ</span>（0.5〜2 倍）を調整できます。
