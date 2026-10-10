@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 1.16.7 (2026-10-10)
+
+[日本語]
+- 書き出しツールで、最適化ツール（メッシュの統合など）を使ったアバターの FaceEmo の表情が、取り込めているのにアプリの表情一覧に出ない問題を修正
+- 書き出しツールの結果に、動かすメッシュが見つからずアプリの表情一覧に出ない表情の数を表示する機能を追加
+
+[English]
+- Fixed FaceEmo expressions of avatars using optimization tools (such as mesh merging) being exported but not appearing in the app's expression list
+- Added to the exporter result the number of expressions that will not appear in the app's expression list because their meshes were not found
+
 ■ 1.16.6 (2026-10-10)
 
 [日本語]

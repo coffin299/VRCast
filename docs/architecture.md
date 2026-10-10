@@ -248,7 +248,8 @@ Unity の型名との衝突を避けるため、フォルダ・名前空間は�
 | `ExporterLoc` | エクスポーターの表示言語（英日韓・中国語簡体/繁体）。アプリの `Loc` と同じく 5 言語の組で書く `T(...)`。選択は EditorPrefs に保存し、既定は OS の言語。変換パッケージはアプリのアセンブリを参照できないため別実装 |
 | `ModularAvatarFallback` | NDMF 実行前に MA Merge Armature / Bone Proxy の統合元・統合先を控え、実行後もアバターのボーンの子になっていない衣装・小物を MA と同じ規則（prefix/suffix 付きボーン名の対応、Bone Proxy の配置モード）で付け替える。MA の処理はエラーを投げずに失敗し得るため、その保険。移動したオブジェクトの元パスを返し、`FxDefaultStateBaker` が古いパスのカーブを読み替える |
 | `ExpressionExtractor` | FaceEmo の表情（優先・BlendShape 部分のみ）、FX コントローラー、追加指定のクリップから BlendShape のみのクリップを表情プリセットとして抽出（FX と同じクリップは除き、名前の重複には番号を付ける） |
-| `FaceEmoReader` | シーン上の FaceEmo（`FaceEmoLauncherComponent` の対象アバター）の表情メニューを型名と SerializedObject で読み、モード名付きのクリップ一覧を返す（FaceEmo のアセンブリは参照しない） |
+| `FaceEmoReader` | シーン上の FaceEmo（`FaceEmoLauncherComponent` の対象アバター）の表情メニューを型名と SerializedObject で読み、モード名付きのクリップ一覧を返す（FaceEmo のアセンブリは参照しない。対象の参照が外れていれば控えのパス、それも合わなければシーンに 1 つだけの FaceEmo を使う） |
+| `ExpressionPathFixer` | 改変前から読んだ表情（FaceEmo 等）の BlendShape のパスを、NDMF・除去の後の複製で見つかるメッシュへ付け替える（同名のメッシュか、その BlendShape を持つ唯一のメッシュ）。見つからない表情は結果欄と Console で知らせる |
 | `ExtraExpressionClips` | 書き出し画面の「追加の表情」の指定（AnimationClip / フォルダ）。アバターの GlobalObjectId ごとに GUID を EditorPrefs へ保存し、フォルダはサブフォルダ内のクリップまで展開 |
 | `VrcDescriptorReader` | VRChat SDK 非依存（リフレクション）で `VRCAvatarDescriptor` の FX コントローラー、Expression Parameters 既定値、Lip Sync・Eyelids 設定を取得 |
 | `FxDefaultStateBaker` | FX の各レイヤーで既定値により到達するステートのモーション（BlendTree は重み付き、1D は補間）から、表示 ON/OFF・BlendShape・マテリアル差し替えの 0 秒時点の値を複製へ適用。BlendShape はシーンの値を優先する設定（既定）では適用しない |

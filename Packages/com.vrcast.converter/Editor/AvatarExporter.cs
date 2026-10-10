@@ -40,6 +40,8 @@ namespace VRCast.Converter.Editor
             public int FaceEmoLaunchers;
             public int FaceEmoOtherLaunchers;
             public int FaceEmoSkipped;
+            public int ExpressionPathsFixed;
+            public int UnresolvedExpressions;
             public string LipSyncMode;
             public bool HasBlink;
             public bool HasWink;
@@ -204,6 +206,16 @@ namespace VRCast.Converter.Editor
 
                 // ボーンを失ったメッシュ（頂点が原点へ伸びる）を警告
                 report.MissingBoneRenderers = ComponentStripper.WarnMissingBones(clone);
+
+                // 改変前から読んだ表情（FaceEmo 等）のパスを、改変・除去の後のメッシュに合わせる
+                ExpressionPathFixer.Result pathFix = ExpressionPathFixer.Fix(expressions, clone.transform);
+                report.ExpressionPathsFixed = pathFix.FixedValues;
+                report.UnresolvedExpressions = pathFix.Unresolved.Count;
+                if (pathFix.Unresolved.Count > 0)
+                {
+                    Debug.LogWarning("[VRCast][Exporter] Expressions whose meshes were not found " +
+                        "(not shown in the app):\n" + string.Join("\n", pathFix.Unresolved));
+                }
 
                 // BlendShape の同期（改変・除去の後のパスで。まばたき・口パク等の直接の書き込みにも同期させるため）
                 BlendShapeSyncSet blendShapeSync = BlendShapeSyncExtractor.Build(syncPlan);

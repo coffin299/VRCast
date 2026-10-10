@@ -590,6 +590,17 @@ namespace VRCast.Converter.Editor
                     "FaceEmo：場景中有其他虛擬形象的 FaceEmo，無法確定此虛擬形象使用哪一個，因此未讀取。" +
                     "請開啟 FaceEmo 確認目標虛擬形象，或在場景中只保留此虛擬形象的 FaceEmo。") + "\n"
                 : string.Empty;
+
+            // メッシュが見つからずアプリの一覧に出ない表情があれば数を知らせる（名前は Console に出す）
+            string unresolved = report.UnresolvedExpressions > 0
+                ? string.Format(L(
+                    "⚠ {0} expressions will not appear in the app because their meshes were not found (names are in the Console).",
+                    "⚠ {0} 個の表情は動かすメッシュが見つからないため、アプリの表情一覧に出ません（名前は Console に出ています）。",
+                    "⚠ 표정 {0}개는 움직일 메시를 찾지 못해 앱의 표정 목록에 나오지 않습니다 (이름은 Console에 있습니다).",
+                    "⚠ {0} 个表情因找不到要驱动的网格，不会出现在应用的表情列表中（名称见 Console）。",
+                    "⚠ {0} 個表情因找不到要驅動的網格，不會出現在應用程式的表情列表中（名稱見 Console）。"),
+                    report.UnresolvedExpressions) + "\n"
+                : string.Empty;
             string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
             string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");
             string wink = L("wink", "ウインク", "윙크", "眨单眼", "眨單眼");
@@ -613,6 +624,7 @@ namespace VRCast.Converter.Editor
                 $"{expressions}: {report.ExpressionCount} " +
                 $"({faceEmo}{extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips})\n" +
                 faceEmoNotFound +
+                unresolved +
                 $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +
                 $"PhysBones: {report.PhysBoneCount}\n" +
                 $"Constraints: {report.ConstraintCount}\n" +
