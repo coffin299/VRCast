@@ -50,6 +50,7 @@ namespace VRCast.Converter.Editor
             }
 
             // シーン上（非アクティブ含む）の FaceEmo のうち、このアバターを対象にしているものを読む
+            var others = new List<MonoBehaviour>();
             foreach (MonoBehaviour launcher in Object.FindObjectsOfType<MonoBehaviour>(true))
             {
                 if (!IsType(launcher, LauncherTypeName))
@@ -57,29 +58,82 @@ namespace VRCast.Converter.Editor
                     continue;
                 }
 
-                // 別のアバター用の FaceEmo は読まない（数とログには残す）
+                // 別のアバター用の FaceEmo は後で候補にするため控える
                 if (!Targets(launcher, descriptor))
                 {
-                    result.OtherLaunchers++;
-                    trace?.Add($"launcher: {launcher.gameObject.name} (targets another avatar, ignored)");
+                    others.Add(launcher);
                     continue;
                 }
 
-                // 表情メニューは起動用コンポーネントと同じオブジェクトにある
                 result.Launchers++;
-                trace?.Add($"launcher: {launcher.gameObject.name}");
-                List<ExpressionExtractor.NamedClip> clips = result.Clips;
-                foreach (MonoBehaviour component in launcher.GetComponents<MonoBehaviour>())
+                ReadLauncher(launcher, result.Clips, trace, string.Empty);
+            }
+
+            // 対象が一致するものが無ければ、対象の指定が壊れた（別 PC で開いた等）とみなして候補から 1 つ選んで読む
+            MonoBehaviour fallback = result.Launchers == 0 ? PickFallback(others, avatar.name) : null;
+            foreach (MonoBehaviour other in others)
+            {
+                if (other == fallback)
                 {
-                    if (IsType(component, RepositoryTypeName))
-                    {
-                        Object menu = GetReference(component, "SerializableMenu");
-                        ReadList(GetReference(menu, "Registered"), string.Empty, clips, trace, 0);
-                    }
+                    result.Launchers++;
+                    ReadLauncher(other, result.Clips, trace, " (target mismatch, used as fallback)");
+                }
+                else
+                {
+                    // 読まなかった FaceEmo は数とログに残す
+                    result.OtherLaunchers++;
+                    trace?.Add($"launcher: {other.gameObject.name} (targets another avatar, ignored)");
                 }
             }
 
             return result;
+        }
+
+        private static void ReadLauncher(MonoBehaviour launcher, List<ExpressionExtractor.NamedClip> clips,
+            List<string> trace, string note)
+        {
+            // 表情メニューは起動用コンポーネントと同じオブジェクトにある
+            trace?.Add($"launcher: {launcher.gameObject.name}{note}");
+            foreach (MonoBehaviour component in launcher.GetComponents<MonoBehaviour>())
+            {
+                if (IsType(component, RepositoryTypeName))
+                {
+                    Object menu = GetReference(component, "SerializableMenu");
+                    ReadList(GetReference(menu, "Registered"), string.Empty, clips, trace, 0);
+                }
+            }
+        }
+
+        private static MonoBehaviour PickFallback(List<MonoBehaviour> candidates, string avatarName)
+        {
+            // シーンに FaceEmo が 1 つだけなら、それがこのアバター用とみなす
+            if (candidates.Count == 1)
+            {
+                return candidates[0];
+            }
+
+            // 複数あるなら、控えている対象のパスの末尾がアバター名と同じものが 1 つだけのときに限り選ぶ
+            MonoBehaviour match = null;
+            foreach (MonoBehaviour candidate in candidates)
+            {
+                Object setting = GetReference(candidate, "AV3Setting");
+                string path = GetString(setting, "TargetAvatarPath");
+                string last = path.Substring(path.LastIndexOf('/') + 1);
+                if (last != avatarName)
+                {
+                    continue;
+                }
+
+                // 同名が複数あると取り違えるため選ばない
+                if (match != null)
+                {
+                    return null;
+                }
+
+                match = candidate;
+            }
+
+            return match;
         }
 
         private static bool IsType(Component component, string fullName)

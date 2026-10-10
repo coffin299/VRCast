@@ -576,14 +576,19 @@ namespace VRCast.Converter.Editor
                 ? $"FaceEmo: {report.FaceEmoExpressionCount} / {report.FaceEmoClips}{faceEmoSkipped}, "
                 : string.Empty;
 
-            // シーンに FaceEmo はあるが、このアバター用のものが無い（読めていない）ことを知らせる
+            // シーンに FaceEmo が複数あり、このアバター用のものを決められなかった（読めていない）ことを知らせる
             string faceEmoNotFound = report.FaceEmoLaunchers == 0 && report.FaceEmoOtherLaunchers > 0
-                ? L("FaceEmo: the scene's FaceEmo targets another avatar, so it was not read. " +
-                    "Open FaceEmo and check the target avatar.",
-                    "FaceEmo: シーンの FaceEmo は別のアバター用のため読み込んでいません。FaceEmo を開いて対象のアバターをご確認ください。",
-                    "FaceEmo: 씬의 FaceEmo가 다른 아바타용이라 읽지 않았습니다. FaceEmo를 열어 대상 아바타를 확인하세요.",
-                    "FaceEmo：场景中的 FaceEmo 属于其他虚拟形象，因此未读取。请打开 FaceEmo 确认目标虚拟形象。",
-                    "FaceEmo：場景中的 FaceEmo 屬於其他虛擬形象，因此未讀取。請開啟 FaceEmo 確認目標虛擬形象。") + "\n"
+                ? L("FaceEmo: the scene has FaceEmo for other avatars and none could be matched to this one, " +
+                    "so it was not read. Open FaceEmo and check the target avatar, " +
+                    "or keep only this avatar's FaceEmo in the scene.",
+                    "FaceEmo: シーンに別のアバター用の FaceEmo があり、このアバター用を決められないため読み込んでいません。" +
+                    "FaceEmo を開いて対象のアバターを確認するか、シーンにこのアバターの FaceEmo だけを置いてください。",
+                    "FaceEmo: 씬에 다른 아바타용 FaceEmo가 있어 이 아바타용을 정할 수 없어 읽지 않았습니다. " +
+                    "FaceEmo를 열어 대상 아바타를 확인하거나 씬에 이 아바타의 FaceEmo만 두세요.",
+                    "FaceEmo：场景中有其他虚拟形象的 FaceEmo，无法确定此虚拟形象使用哪一个，因此未读取。" +
+                    "请打开 FaceEmo 确认目标虚拟形象，或在场景中只保留此虚拟形象的 FaceEmo。",
+                    "FaceEmo：場景中有其他虛擬形象的 FaceEmo，無法確定此虛擬形象使用哪一個，因此未讀取。" +
+                    "請開啟 FaceEmo 確認目標虛擬形象，或在場景中只保留此虛擬形象的 FaceEmo。") + "\n"
                 : string.Empty;
             string lipSync = L("Lip sync", "リップシンク", "립싱크", "口型同步", "口型同步");
             string blink = L("blink", "まばたき", "눈 깜빡임", "眨眼", "眨眼");

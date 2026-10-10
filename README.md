@@ -40,7 +40,7 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 ## 現在の状態
 
-**バージョン 1.15.6（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
+**バージョン 1.16.6（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
 
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
@@ -274,7 +274,7 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 {
     "format": "VRCastPreset",
     "formatVersion": 1,
-    "appVersion": "1.15.6",
+    "appVersion": "1.16.6",
     "createdAt": "2026-10-10T08:30:00+09:00",
     "categories": {
         "performance": { "lowLoadMode": true, "trackerMode": 1 },
