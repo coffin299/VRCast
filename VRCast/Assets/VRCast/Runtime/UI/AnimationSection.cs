@@ -253,15 +253,19 @@ namespace VRCast.UI
             // 既定で非表示の表情があるときだけ、一覧に出すかを選べる
             if (_expressions.HiddenCount > 0)
             {
+                // スイッチの文字は短くし（長いとパネルの幅を押し広げて行が見切れる）、説明は折り返す説明文にする
                 _settings.showHiddenExpressions = GUILayout.Toggle(
                     _settings.showHiddenExpressions,
-                    string.Format(Loc.T(
-                            "Also show other clips ({0}: blend shapes taken from clips that also toggle items, etc.)",
-                            "ほかのクリップも表示（{0} 個。小物の切り替えなども含むクリップから BlendShape だけを取り出したもの）",
-                            "다른 클립도 표시 ({0}개. 소품 전환 등도 포함한 클립에서 BlendShape만 꺼낸 것)",
-                            "也显示其他剪辑（{0} 个。从还包含道具切换等的剪辑中只取出 BlendShape）",
-                            "也顯示其他剪輯（{0} 個。從還包含道具切換等的剪輯中只取出 BlendShape）"),
-                        _expressions.HiddenCount));
+                    string.Format(Loc.T("Also show other clips ({0})", "ほかのクリップも表示（{0} 個）",
+                            "다른 클립도 표시 ({0}개)", "也显示其他剪辑（{0} 个）", "也顯示其他剪輯（{0} 個）"),
+                        _expressions.HiddenCount),
+                    GuiControls.Shrinkable);
+                GuiControls.Hint(Loc.T(
+                    "Blend shapes taken from clips that also toggle items, etc.",
+                    "小物の切り替えなども含むクリップから BlendShape だけを取り出した表情です。",
+                    "소품 전환 등도 포함한 클립에서 BlendShape만 꺼낸 표정입니다.",
+                    "从还包含道具切换等的剪辑中只取出 BlendShape 的表情。",
+                    "從還包含道具切換等的剪輯中只取出 BlendShape 的表情。"));
             }
 
             // ニュートラルは常に先頭、以降は表情（選択中はアクセント色。パネル全体がスクロールする）
