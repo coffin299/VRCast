@@ -35,6 +35,7 @@ namespace VRCast.Converter.Editor
             public int ExpressionCount;
             public int ExtraExpressionClips;
             public int ExtraExpressionCount;
+            public int ExtraExpressionIncluded;
             public int FaceEmoClips;
             public int FaceEmoExpressionCount;
             public int FaceEmoLaunchers;
@@ -189,6 +190,7 @@ namespace VRCast.Converter.Editor
                 report.ExpressionCount = expressions.presets.Length;
                 report.ExtraExpressionClips = extraExpressionClips?.Count ?? 0;
                 report.ExtraExpressionCount = extracted.ExtraAdded;
+                report.ExtraExpressionIncluded = extracted.ExtraIncluded;
                 report.FaceEmoClips = faceEmoClips.Count;
                 report.FaceEmoExpressionCount = extracted.NamedAdded;
                 report.FaceEmoLaunchers = faceEmo.Launchers;

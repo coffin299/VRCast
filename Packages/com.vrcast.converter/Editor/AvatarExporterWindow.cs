@@ -290,7 +290,7 @@ namespace VRCast.Converter.Editor
             int usable = 0;
             foreach (KeyValuePair<AnimationClip, ClipCheck> check in _extraChecks)
             {
-                usable += check.Value == ClipCheck.Expression ? 1 : 0;
+                usable += ExpressionExtractor.CanImport(check.Value) ? 1 : 0;
             }
 
             EditorGUILayout.LabelField(
@@ -298,10 +298,10 @@ namespace VRCast.Converter.Editor
                 + $": {usable} / {_extraChecks.Count}",
                 EditorStyles.miniBoldLabel);
 
-            // クリップごとに取り込めるか（取り込めない理由）を表示。クリックでプロジェクト上の場所を示す
+            // クリップごとに取り込めるか（取り込めない理由・BlendShape 部分だけを取り込む理由）を表示。クリックでプロジェクト上の場所を示す
             foreach (KeyValuePair<AnimationClip, ClipCheck> check in _extraChecks)
             {
-                string mark = check.Value == ClipCheck.Expression ? "✓" : "✗";
+                string mark = ExpressionExtractor.CanImport(check.Value) ? "✓" : "✗";
                 string reason = check.Value == ClipCheck.Expression ? string.Empty : " — " + DescribeCheck(check.Value);
                 if (GUILayout.Button($"{mark} {check.Key.name}{reason}", EditorStyles.miniLabel))
                 {
@@ -312,31 +312,38 @@ namespace VRCast.Converter.Editor
             // 名前が FX の表情と重なると番号付きになることを補足
             EditorGUILayout.HelpBox(
                 T(
-                    "Clips that are also in the FX layer are added only once. If the name matches another expression, " +
-                    "a number is added, such as \"Name (2)\".",
-                    "FX レイヤーにもあるクリップは 1 回だけ入ります。名前がほかの表情と重なる場合は「名前 (2)」のように番号が付きます。",
-                    "FX 레이어에도 있는 클립은 한 번만 들어갑니다. 이름이 다른 표정과 겹치면 「이름 (2)」처럼 번호가 붙습니다.",
-                    "同时在 FX 层中的剪辑只会加入一次。名称与其他表情重复时会加上编号，例如“名称 (2)”。",
-                    "同時在 FX 層中的剪輯只會加入一次。名稱與其他表情重複時會加上編號，例如「名稱 (2)」。"),
+                    "Clips that are also in FaceEmo or the FX layer are added only once (with the FaceEmo name). " +
+                    "If the name matches another expression, a number is added, such as \"Name (2)\".",
+                    "FaceEmo・FX レイヤーにもあるクリップは 1 回だけ入ります（FaceEmo の名前になります）。名前がほかの表情と重なる場合は「名前 (2)」のように番号が付きます。",
+                    "FaceEmo·FX 레이어에도 있는 클립은 한 번만 들어갑니다 (FaceEmo의 이름이 됩니다). 이름이 다른 표정과 겹치면 「이름 (2)」처럼 번호가 붙습니다.",
+                    "同时在 FaceEmo 或 FX 层中的剪辑只会加入一次（使用 FaceEmo 的名称）。名称与其他表情重复时会加上编号，例如“名称 (2)”。",
+                    "同時在 FaceEmo 或 FX 層中的剪輯只會加入一次（使用 FaceEmo 的名稱）。名稱與其他表情重複時會加上編號，例如「名稱 (2)」。"),
                 MessageType.None);
         }
 
         private static string DescribeCheck(ClipCheck check)
         {
-            // 取り込めない理由の文言
+            // 取り込めない理由、または取り込むときの補足の文言
             switch (check)
             {
                 case ClipCheck.HasOtherCurves:
-                    return T("also moves things other than blend shapes", "ブレンドシェイプ以外も動かしています",
-                        "블렌드셰이프 이외의 것도 움직입니다", "还驱动了 BlendShape 以外的内容", "還驅動了 BlendShape 以外的內容");
+                    return T("also moves other things (only the blend shapes are added)",
+                        "ブレンドシェイプ以外も動かしています（ブレンドシェイプの部分だけ入ります）",
+                        "블렌드셰이프 이외의 것도 움직입니다 (블렌드셰이프 부분만 들어갑니다)",
+                        "还驱动了 BlendShape 以外的内容（只加入 BlendShape 部分）",
+                        "還驅動了 BlendShape 以外的內容（只加入 BlendShape 部分）");
                 case ClipCheck.NoCurves:
-                    return T("empty clip", "中身が空です", "빈 클립입니다", "剪辑为空", "剪輯為空");
+                    return T("moves no blend shapes", "ブレンドシェイプを動かしていません", "블렌드셰이프를 움직이지 않습니다",
+                        "没有驱动 BlendShape", "沒有驅動 BlendShape");
                 case ClipCheck.TooManyCurves:
-                    return T("too many blend shapes", "ブレンドシェイプが多すぎます", "블렌드셰이프가 너무 많습니다",
-                        "BlendShape 过多", "BlendShape 過多");
+                    return T("too many blend shapes (only the first ones are added)",
+                        "ブレンドシェイプが多すぎます（先頭から上限までが入ります）",
+                        "블렌드셰이프가 너무 많습니다 (앞에서부터 상한까지 들어갑니다)",
+                        "BlendShape 过多（从开头起加入到上限为止）", "BlendShape 過多（從開頭起加入到上限為止）");
                 case ClipCheck.AllZero:
-                    return T("all values are 0 (reset clip)", "値がすべて 0 です（戻す用のクリップ）",
-                        "값이 모두 0입니다 (되돌리기용 클립)", "所有值均为 0（复位用剪辑）", "所有值均為 0（復位用剪輯）");
+                    return T("all values are 0 (added as a reset expression)", "値がすべて 0 です（戻す用の表情として入ります）",
+                        "값이 모두 0입니다 (되돌리기용 표정으로 들어갑니다)", "所有值均为 0（作为复位用表情加入）",
+                        "所有值均為 0（作為復位用表情加入）");
                 default:
                     return string.Empty;
             }
@@ -570,6 +577,11 @@ namespace VRCast.Converter.Editor
                 "씬의 블렌드셰이프 우선", "优先场景 BlendShape", "優先場景 BlendShape");
             string expressions = L("Expressions", "表情", "표정", "表情", "表情");
             string extraExpressions = L("added clips", "追加したクリップ", "추가한 클립", "追加的剪辑", "追加的剪輯");
+            // 追加指定のうち FaceEmo・FX で取り込み済みだった数（あるときだけ）
+            string extraIncluded = report.ExtraExpressionIncluded > 0
+                ? " " + L("already in FaceEmo / FX", "FaceEmo・FX で取り込み済み", "FaceEmo·FX에서 이미 포함",
+                    "已由 FaceEmo / FX 加入", "已由 FaceEmo / FX 加入") + $" {report.ExtraExpressionIncluded}"
+                : string.Empty;
             // アプリの設定で表示したときだけ一覧に出る表情（FX の小物の切り替え等から BlendShape だけを取り出したもの）
             string hiddenExpressions = L("hidden by default", "既定で非表示", "기본 숨김", "默认隐藏", "預設隱藏");
             // FaceEmo の設定があったときだけ件数を出す（取り込まなかった表情があればその数も）
@@ -626,7 +638,7 @@ namespace VRCast.Converter.Editor
                 $"{baked}: {report.BakedFxClips}\n" +
                 $"{sceneBlendShapes}: {report.KeptSceneBlendShapes}\n" +
                 $"{expressions}: {report.ExpressionCount} " +
-                $"({faceEmo}{extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips}, " +
+                $"({faceEmo}{extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips}{extraIncluded}, " +
                 $"{hiddenExpressions}: {report.HiddenExpressionCount})\n" +
                 faceEmoNotFound +
                 unresolved +
