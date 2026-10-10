@@ -9,7 +9,7 @@ namespace VRCast.Converter.Editor
 {
     /// <summary>
     /// 表情ツール（FaceEmo）・FX コントローラー・追加指定のクリップから「BlendShape だけを動かすクリップ」を表情プリセットとして抽出する。
-    /// 0 秒時点の値を使い、重みがすべて 0 のクリップ（リセット用）は除外する。
+    /// 0 秒時点の値を使う。FX の表情でないクリップ（小物の切り替え等を含む・重みがすべて 0）は BlendShape 部分だけを非表示として取り込む。
     /// </summary>
     public static class ExpressionExtractor
     {
@@ -24,6 +24,9 @@ namespace VRCast.Converter.Editor
             public ExpressionSet Set;
             public int ExtraAdded;
             public int NamedAdded;
+
+            // FX の表情でないクリップから BlendShape だけを非表示として取り込んだ数
+            public int HiddenAdded;
 
             // 表情ツールの表情のうち取り込まなかったもの（「メニュー上の場所: 理由」。原因を調べるためにログへ出す）
             public List<string> NamedSkipped;
@@ -57,21 +60,28 @@ namespace VRCast.Converter.Editor
 
             int namedAdded = 0;
             var namedSkipped = new List<string>();
+            // 表情ツールで取り込んだ「クリップと名前」の組（同じクリップでも名前が違うモードは別の表情として出す）
+            var usedNamedClips = new HashSet<(AnimationClip, string)>();
             if (namedClips != null)
             {
                 foreach (NamedClip named in namedClips)
                 {
-                    // 同じクリップ・上限超えは飛ばす（理由はログ用に控える）
+                    // 同じクリップで同じ名前・上限超えは飛ばす（理由はログ用に控える）
                     if (named.Clip == null)
                     {
                         continue;
                     }
 
-                    if (!usedClips.Add(named.Clip))
+                    // 名前が無ければクリップ名を使う
+                    string name = string.IsNullOrWhiteSpace(named.Name) ? named.Clip.name : named.Name.Trim();
+                    if (!usedNamedClips.Add((named.Clip, name)))
                     {
-                        namedSkipped.Add($"{named.Source}: same clip as another expression ({named.Clip.name})");
+                        namedSkipped.Add($"{named.Source}: same clip and name as another expression ({named.Clip.name})");
                         continue;
                     }
+
+                    // FX・追加指定から同じクリップを二重に入れないよう控える
+                    usedClips.Add(named.Clip);
 
                     if (presets.Count >= ExpressionSet.MaxPresets)
                     {
@@ -80,23 +90,24 @@ namespace VRCast.Converter.Editor
                     }
 
                     namedSources.Add(named.Clip.name);
-                    // 名前が無ければクリップ名、重なれば番号を付ける
-                    string name = string.IsNullOrWhiteSpace(named.Name) ? named.Clip.name : named.Name.Trim();
-                    ExpressionPreset preset = TryCreatePreset(named.Clip, UniqueName(name, usedNames), true,
-                        out ClipCheck check);
+                    // 表情ツールのモードは BlendShape が 1 つでもあれば取り込む（値がすべて 0・多すぎる場合も見送らない）
+                    ExpressionPreset preset = CreateFromBlendShapes(named.Clip, false);
                     if (preset != null)
                     {
+                        // 名前が重なれば番号を付ける
+                        preset.name = UniqueName(name, usedNames);
                         presets.Add(preset);
                         namedAdded++;
                     }
                     else
                     {
-                        namedSkipped.Add($"{named.Source}: {check} ({named.Clip.name})");
+                        namedSkipped.Add($"{named.Source}: no blend shapes ({named.Clip.name})");
                     }
                 }
             }
 
-            // コントローラー内の全クリップ（重複は Unity 側で除去済み）
+            // コントローラー内の全クリップ（重複は Unity 側で除去済み）。表情でないものは後で非表示として取り込む
+            var hiddenClips = new List<AnimationClip>();
             if (controller != null)
             {
                 foreach (AnimationClip clip in controller.animationClips)
@@ -114,6 +125,10 @@ namespace VRCast.Converter.Editor
                     if (preset != null)
                     {
                         presets.Add(preset);
+                    }
+                    else
+                    {
+                        hiddenClips.Add(clip);
                     }
                 }
             }
@@ -139,14 +154,70 @@ namespace VRCast.Converter.Editor
                 }
             }
 
-            // 名前順で並べて UI 上で探しやすくする
-            presets.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+            // FX の表情でないクリップ（小物の切り替え等を含む・値がすべて 0）は BlendShape 部分だけを非表示として取り込む
+            // （上限に達したときに表情・追加指定が押し出されないよう最後に回す。名前は FX の読み込みで予約済み）
+            int hiddenAdded = 0;
+            foreach (AnimationClip clip in hiddenClips)
+            {
+                if (presets.Count >= ExpressionSet.MaxPresets)
+                {
+                    break;
+                }
+
+                ExpressionPreset preset = CreateFromBlendShapes(clip, true);
+                if (preset != null)
+                {
+                    preset.name = clip.name;
+                    presets.Add(preset);
+                    hiddenAdded++;
+                }
+            }
+
+            // 表示するものを先に名前順で並べ、非表示は後ろに置く（キーワードでの自動の割り当てで表示中の表情を優先するため）
+            presets.Sort((a, b) => a.hidden != b.hidden
+                ? a.hidden.CompareTo(b.hidden)
+                : string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
             return new Result
             {
                 Set = new ExpressionSet { presets = presets.ToArray() },
                 ExtraAdded = extraAdded,
                 NamedAdded = namedAdded,
                 NamedSkipped = namedSkipped,
+                HiddenAdded = hiddenAdded,
+            };
+        }
+
+        private static ExpressionPreset CreateFromBlendShapes(AnimationClip clip, bool hidden)
+        {
+            // BlendShape のカーブだけを読み、上限を超える分は切り捨てる（BlendShape が 1 つも無ければ null）
+            var values = new List<BlendShapeValue>();
+            foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(clip))
+            {
+                if (values.Count >= ExpressionSet.MaxValuesPerPreset)
+                {
+                    break;
+                }
+
+                if (IsBlendShape(binding))
+                {
+                    values.Add(ToValue(clip, binding));
+                }
+            }
+
+            return values.Count > 0
+                ? new ExpressionPreset { values = values.ToArray(), hidden = hidden }
+                : null;
+        }
+
+        private static BlendShapeValue ToValue(AnimationClip clip, EditorCurveBinding binding)
+        {
+            // 0 秒時点の重みを 0〜100 に丸める
+            AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
+            return new BlendShapeValue
+            {
+                path = binding.path,
+                blendShape = binding.propertyName.Substring(BlendShapePrefix.Length),
+                weight = Mathf.Clamp(curve != null ? curve.Evaluate(0f) : 0f, 0f, 100f),
             };
         }
 
@@ -224,16 +295,10 @@ namespace VRCast.Converter.Editor
                     return ClipCheck.HasOtherCurves;
                 }
 
-                // 0 秒時点の重みを 0〜100 に丸めて記録（判定だけのときは記録しない）
-                AnimationCurve curve = AnimationUtility.GetEditorCurve(clip, binding);
-                float weight = Mathf.Clamp(curve != null ? curve.Evaluate(0f) : 0f, 0f, 100f);
-                hasNonZero |= weight > 0f;
-                values?.Add(new BlendShapeValue
-                {
-                    path = binding.path,
-                    blendShape = binding.propertyName.Substring(BlendShapePrefix.Length),
-                    weight = weight,
-                });
+                // 0 秒時点の重みを記録（判定だけのときは記録しない）
+                BlendShapeValue value = ToValue(clip, binding);
+                hasNonZero |= value.weight > 0f;
+                values?.Add(value);
             }
 
             // すべて 0 のクリップはリセット用とみなして除外

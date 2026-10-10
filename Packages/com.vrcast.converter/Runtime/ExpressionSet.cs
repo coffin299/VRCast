@@ -71,6 +71,10 @@ namespace VRCast.AvatarFormat
     {
         public string name = string.Empty;
         public BlendShapeValue[] values = Array.Empty<BlendShapeValue>();
+
+        // 表情以外も動かすクリップ等から BlendShape だけを取り出したもの。アプリでは設定で表示したときだけ一覧に出す
+        // （この項目を知らない旧版のアプリは常に表示する）
+        public bool hidden;
     }
 
     /// <summary>

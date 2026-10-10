@@ -40,6 +40,7 @@ namespace VRCast.Converter.Editor
             public int FaceEmoLaunchers;
             public int FaceEmoOtherLaunchers;
             public int FaceEmoSkipped;
+            public int HiddenExpressionCount;
             public int ExpressionPathsFixed;
             public int UnresolvedExpressions;
             public string LipSyncMode;
@@ -193,6 +194,7 @@ namespace VRCast.Converter.Editor
                 report.FaceEmoLaunchers = faceEmo.Launchers;
                 report.FaceEmoOtherLaunchers = faceEmo.OtherLaunchers;
                 report.FaceEmoSkipped = extracted.NamedSkipped.Count;
+                report.HiddenExpressionCount = extracted.HiddenAdded;
 
                 // FaceEmo の表情が足りないときに原因を追えるよう、読んだメニューと取り込まなかった表情をログに出す
                 if (faceEmoTrace.Count > 0)

@@ -568,6 +568,8 @@ namespace VRCast.Converter.Editor
                 "씬의 블렌드셰이프 우선", "优先场景 BlendShape", "優先場景 BlendShape");
             string expressions = L("Expressions", "表情", "표정", "表情", "表情");
             string extraExpressions = L("added clips", "追加したクリップ", "추가한 클립", "追加的剪辑", "追加的剪輯");
+            // アプリの設定で表示したときだけ一覧に出る表情（FX の小物の切り替え等から BlendShape だけを取り出したもの）
+            string hiddenExpressions = L("hidden by default", "既定で非表示", "기본 숨김", "默认隐藏", "預設隱藏");
             // FaceEmo の設定があったときだけ件数を出す（取り込まなかった表情があればその数も）
             string faceEmoSkipped = report.FaceEmoSkipped > 0
                 ? " " + L("skipped", "見送り", "제외", "跳过", "略過") + $" {report.FaceEmoSkipped}"
@@ -622,7 +624,8 @@ namespace VRCast.Converter.Editor
                 $"{baked}: {report.BakedFxClips}\n" +
                 $"{sceneBlendShapes}: {report.KeptSceneBlendShapes}\n" +
                 $"{expressions}: {report.ExpressionCount} " +
-                $"({faceEmo}{extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips})\n" +
+                $"({faceEmo}{extraExpressions}: {report.ExtraExpressionCount} / {report.ExtraExpressionClips}, " +
+                $"{hiddenExpressions}: {report.HiddenExpressionCount})\n" +
                 faceEmoNotFound +
                 unresolved +
                 $"{lipSync}: {report.LipSyncMode}, {blink}: {report.HasBlink}, {wink}: {report.HasWink}\n" +

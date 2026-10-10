@@ -257,6 +257,9 @@ namespace VRCast.Core
         // 表情のショートカットキーを、VRCast のウィンドウが前面に無いときも使う（OBS などを操作中でも切り替えられる）
         public bool expressionHotkeysInBackground = true;
 
+        // 表情一覧に、既定で非表示の表情（FX の小物の切り替え等から BlendShape だけを取り出したもの）も出す
+        public bool showHiddenExpressions;
+
         // リセット（顔の向き・視線・表情・カメラ）のショートカットキー（アプリ全体。既定はテンキー 1〜4）と、背面でも使うか
         public List<ResetHotkey> resetHotkeys = ResetHotkey.Defaults();
         public bool resetHotkeysInBackground = true;

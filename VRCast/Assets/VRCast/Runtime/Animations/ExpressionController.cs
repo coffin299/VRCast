@@ -43,6 +43,9 @@ namespace VRCast.Animations
         private readonly List<string> _names = new List<string>();
         private readonly List<Target[]> _presets = new List<Target[]>();
 
+        // 既定では一覧に出さない表情か（プリセットと同じ並び）
+        private readonly List<bool> _hidden = new List<bool>();
+
         // プリセットが触る BlendShape の一覧と、実体から一覧の位置を引く表
         private readonly List<Slot> _slots = new List<Slot>();
         private readonly Dictionary<(SkinnedMeshRenderer, int), int> _slotIndex =
@@ -76,6 +79,19 @@ namespace VRCast.Animations
 
         public IReadOnlyList<string> Names => _names;
 
+        /// <summary>
+        /// 既定では一覧に出さない表情（FX の小物の切り替え等から BlendShape だけを取り出したもの）の数。
+        /// </summary>
+        public int HiddenCount { get; private set; }
+
+        /// <summary>
+        /// 指定プリセットが既定では一覧に出さない表情なら true（範囲外は false）。
+        /// </summary>
+        public bool IsHidden(int presetIndex)
+        {
+            return presetIndex >= 0 && presetIndex < _hidden.Count && _hidden[presetIndex];
+        }
+
         public void Initialize(Transform root, ExpressionSet expressions)
         {
             int unresolved = 0;
@@ -100,6 +116,8 @@ namespace VRCast.Animations
                 {
                     _names.Add(preset.name);
                     _presets.Add(targets.ToArray());
+                    _hidden.Add(preset.hidden);
+                    HiddenCount += preset.hidden ? 1 : 0;
                 }
             }
 

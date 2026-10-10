@@ -250,10 +250,30 @@ namespace VRCast.UI
                 GUILayout.EndHorizontal();
             }
 
+            // 既定で非表示の表情があるときだけ、一覧に出すかを選べる
+            if (_expressions.HiddenCount > 0)
+            {
+                _settings.showHiddenExpressions = GUILayout.Toggle(
+                    _settings.showHiddenExpressions,
+                    string.Format(Loc.T(
+                            "Also show other clips ({0}: blend shapes taken from clips that also toggle items, etc.)",
+                            "ほかのクリップも表示（{0} 個。小物の切り替えなども含むクリップから BlendShape だけを取り出したもの）",
+                            "다른 클립도 표시 ({0}개. 소품 전환 등도 포함한 클립에서 BlendShape만 꺼낸 것)",
+                            "也显示其他剪辑（{0} 个。从还包含道具切换等的剪辑中只取出 BlendShape）",
+                            "也顯示其他剪輯（{0} 個。從還包含道具切換等的剪輯中只取出 BlendShape）"),
+                        _expressions.HiddenCount));
+            }
+
             // ニュートラルは常に先頭、以降は表情（選択中はアクセント色。パネル全体がスクロールする）
             DrawExpressionRow(-1, Loc.T("Neutral", "ニュートラル", "무표정", "无表情", "無表情"));
             for (int i = 0; i < _labels.Length; i++)
             {
+                // 非表示の表情は設定で表示したときだけ出す（選択中なら戻せるよう出しておく）
+                if (_expressions.IsHidden(i) && !_settings.showHiddenExpressions && _expressions.Current != i)
+                {
+                    continue;
+                }
+
                 DrawExpressionRow(i, _labels[i]);
             }
 

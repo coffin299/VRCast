@@ -112,7 +112,7 @@ namespace VRCast.Core
                 nameof(AppSettings.autoBlink), nameof(AppSettings.blinkPausedByExpression), nameof(AppSettings.lipSyncEnabled),
                 nameof(AppSettings.micGain), nameof(AppSettings.micThreshold), nameof(AppSettings.lipSyncVowels),
                 nameof(AppSettings.lipSyncVoiceScale), nameof(AppSettings.lipSyncPausedByExpression),
-                nameof(AppSettings.trackingMouthPausedByExpression)),
+                nameof(AppSettings.trackingMouthPausedByExpression), nameof(AppSettings.showHiddenExpressions)),
             new PresetCategory("tracking", false,
                 nameof(AppSettings.trackingEnabled), nameof(AppSettings.trackingSource), nameof(AppSettings.trackingMirror),
                 nameof(AppSettings.trackingSwapFaceSides), nameof(AppSettings.trackingBodyLean),
