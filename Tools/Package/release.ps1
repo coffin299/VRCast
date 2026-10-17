@@ -54,14 +54,14 @@ if (-not (Test-Path (Join-Path $BuildPath "VRCast.exe"))) {
     throw "VRCast.exe was not found in $BuildPath. Build the app in Unity first (VRCast > Build > Windows x64)."
 }
 
-# Warn when the app build and the exporter have different versions (the zip name uses the app version)
+# アプリ版（zip 名）と書き出しツール版は別（converter に変更が無いときは前の版のまま）
 $settings = Join-Path $repository "VRCast\ProjectSettings\ProjectSettings.asset"
 $line = Select-String -Path $settings -Pattern "^\s*bundleVersion:\s*(.+)$" | Select-Object -First 1
 $appVersion = if ($line) { $line.Matches[0].Groups[1].Value.Trim() } else { "unknown" }
 $converterVersion = (Get-Content -Raw (Join-Path $repository "Packages\com.vrcast.converter\package.json") | ConvertFrom-Json).version
 Write-Host "App version (last Unity build): $appVersion / Exporter version: $converterVersion"
 if ($appVersion -ne $converterVersion) {
-    Write-Warning "The versions differ. Rebuild the app in Unity after changing AppVersion in VRCastBuild.cs."
+    Write-Host "Note: app and exporter versions differ on purpose when the converter package was not changed."
 }
 
 # 1. Tracker

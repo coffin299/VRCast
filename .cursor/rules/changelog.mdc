@@ -29,18 +29,23 @@ alwaysApply: true
 ## リリースするとき（ユーザーが指示したときだけ）
 
 1. 「■ 未リリース / Unreleased」を「■ x.y.z (YYYY-MM-DD)」に書き換える。
-2. 同じバージョンに合わせる: `VRCast/Assets/VRCast/Editor/Build/VRCastBuild.cs` の `AppVersion`、
-   `Packages/com.vrcast.converter/package.json` の `version`、
- `README.md` の「現在の状態」にある「**バージョン x.y.z（製品版）**」。
-3. 修正だけなら z、機能追加なら y、互換性が壊れる変更なら x を上げる。
+2. **アプリ**の版をそろえる: `VRCast/Assets/VRCast/Editor/Build/VRCastBuild.cs` の `AppVersion`、
+   `README.md` の「現在の状態」にある「**バージョン x.y.z（製品版）**」。
+   修正だけなら z、機能追加なら y、互換性が壊れる変更なら x を上げる。
+3. **書き出しツール（Unity package）はアプリと別版**。
+   `Packages/com.vrcast.converter/package.json` の `version` は、
+   `Packages/com.vrcast.converter/` 配下に利用者向けの変更があるときだけ上げる。
+   アプリだけのリリースでは **触らない**（例: アプリ 3.0.1 でも converter は 3.0.0 のまま）。
+   上げるときもアプリと同じく、修正なら z・機能なら y・互換破壊なら x。
 4. 配布物は `Tools\Package\release.bat`（または `package.bat`。`CHANGELOG.txt` は本体 zip に自動で同梱される）。
- 出力先は `dist\x.y.z\`（版ごとにフォルダ分け）。中身は `VRCast-x.y.z-win64.zip`（GitHub 用の本体）、
+ 出力先は `dist\<アプリ版>\`（版ごとにフォルダ分け）。中身は `VRCast-<アプリ版>-win64.zip`（GitHub 用の本体）、
  自動更新用の `version.json`（zip の大きさと SHA-256 入り）、
  Jinxxy 向けの `VRCast-setup.exe`（実行時に GitHub から最新 zip を取得。毎回同じ名前で差し替える）、
- BOOTH 向けの `VRCast-booth.zip`（README・Download-VRCast.bat・VRCast-setup.exe。本体 zip は入れない）。
-5. GitHub の Release `vx.y.z` に `VRCast-x.y.z-win64.zip` を**名前を変えずに**添付して公開する
- （アプリとセットアップ／バッチは `https://github.com/coffin299/VRCast/releases/download/vx.y.z/VRCast-x.y.z-win64.zip` を取りに行く）。
-6. zip の公開を確かめてから、`webpage` ブランチ（作業フォルダ `../VRCast-webpage`）の `version.json` を `dist\x.y.z\version.json` で置き換える
+ BOOTH 向けの `VRCast-booth.zip`（README・Download-VRCast.bat・VRCast-setup.exe。本体 zip は入れない）、
+ 書き出しツールは `VRCast-Converter-<converter の version>.unitypackage`（未変更なら前の版のまま同梱される）。
+5. GitHub の Release `v<アプリ版>` に `VRCast-<アプリ版>-win64.zip` を**名前を変えずに**添付して公開する
+ （アプリとセットアップ／バッチは `https://github.com/coffin299/VRCast/releases/download/v<アプリ版>/VRCast-<アプリ版>-win64.zip` を取りに行く）。
+6. zip の公開を確かめてから、`webpage` ブランチ（作業フォルダ `../VRCast-webpage`）の `version.json` を `dist\<アプリ版>\version.json` で置き換える
  （アプリの更新通知・自動更新・セットアップの取得先に使う。zip の公開より先に変えない。zip を作り直したら SHA-256 が変わるので必ず置き換え直す）。
 7. `version.json` の `version` だけを手で書き換えない。`update`（`zipUrl`・`size`・`sha256`）が無いと、
  アプリは手動ダウンロードの案内だけを出し「今すぐ更新」を表示しない。形は次のとおり:
@@ -58,6 +63,6 @@ alwaysApply: true
 }
 ```
 
-8. `dist\x.y.z\version.json` が手元に無いとき（別の PC でビルドした等）は、公開済みの zip をダウンロードして
+8. `dist\<アプリ版>\version.json` が手元に無いとき（別の PC でビルドした等）は、公開済みの zip をダウンロードして
  大きさ（バイト）と `Get-FileHash -Algorithm SHA256` の値（小文字）で `update` を作る。
  公開後は `https://coffin299.github.io/VRCast/version.json` を取得し、`update` 入りで反映されたことを確かめる。

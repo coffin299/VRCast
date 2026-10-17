@@ -897,7 +897,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
   （上書きインポートで更新できる）。ファイルを追加したら Unity で一度開いて `.meta` を作り、一緒にコミットする（無いと中止する）。
 ### バージョンと更新履歴
 
-- バージョンは `VRCastBuild` の `AppVersion` と `Packages/com.vrcast.converter/package.json` の `version`、この README の「現在の状態」の版数をそろえる。
+- アプリのバージョンは `VRCastBuild` の `AppVersion` と、この README の「現在の状態」の版数をそろえる。
+  書き出しツール（`Packages/com.vrcast.converter/package.json` の `version`）はアプリと別版で、converter に変更があるときだけ上げる（手順は `.cursor/rules/changelog.mdc`）。
 - 利用者に見える変更（バグ修正・機能追加など）は `CHANGELOG.txt` の先頭「未リリース / Unreleased」に日本語・英語で追記し、
   リリース時にバージョンと日付へ書き換える（手順は `.cursor/rules/changelog.mdc`）。
 - 配布 zip は GitHub の Release `v<バージョン>` に**名前を変えずに**添付して公開する
