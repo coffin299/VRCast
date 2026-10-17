@@ -1,17 +1,17 @@
 <#
 .SYNOPSIS
     Package the Windows build (VRCast/Builds/Windows) and the exporter .unitypackage
-    into dist/VRCast-<version>-win64.zip for GitHub Releases.
+    into dist/<version>/VRCast-<version>-win64.zip for GitHub Releases.
     The zip contains VRCast/ (the app) and VRCast-Converter/ (the exporter for the avatar project).
-    Also writes dist/version.json (with the zip's SHA-256 and size for auto-update).
+    Also writes dist/<version>/version.json (with the zip's SHA-256 and size for auto-update).
     Upload the zip to the GitHub release v<version> with the same file name BEFORE publishing version.json.
-    Also writes (fixed names, no version — overwrite on each release):
-      - dist/VRCast-setup.exe (small installer that downloads the latest zip from GitHub; for Jinxxy)
-      - dist/VRCast-booth.zip (README + Download-VRCast.bat + the setup EXE; for BOOTH)
+    Also writes under dist/<version>/ (fixed names, no version in the file name — overwrite on each run):
+      - VRCast-setup.exe (small installer that downloads the latest zip from GitHub; for Jinxxy)
+      - VRCast-booth.zip (README + Download-VRCast.bat + the setup EXE; for BOOTH)
     Skipped with a warning when Visual Studio is missing (setup / booth zip).
     The GitHub app zip keeps the version in its name (auto-update URL).
 .PARAMETER Version
-    Version in the zip name. Defaults to bundleVersion in ProjectSettings (Player > Version).
+    Version in the zip name and the dist/<version>/ folder. Defaults to bundleVersion in ProjectSettings (Player > Version).
 .PARAMETER BuildPath
     Folder that contains VRCast.exe. Defaults to VRCast/Builds/Windows in this repository.
 #>
@@ -22,10 +22,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
-# リポジトリ直下・ビルドの場所・出力先
+# リポジトリ直下・ビルドの場所
 $repository = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
 if (-not $BuildPath) { $BuildPath = Join-Path $repository "VRCast\Builds\Windows" }
-$dist = Join-Path $repository "dist"
 
 # ビルドが無ければ中止（先に Unity で VRCast > Build > Windows x64）
 if (-not (Test-Path (Join-Path $BuildPath "VRCast.exe"))) {
@@ -38,8 +37,11 @@ if (-not $Version) {
     $line = if (Test-Path $settings) { Select-String -Path $settings -Pattern "^\s*bundleVersion:\s*(.+)$" | Select-Object -First 1 }
     $Version = if ($line) { $line.Matches[0].Groups[1].Value.Trim() } else { "dev" }
 }
+
+# 版ごとにフォルダを分ける（前の版の配布物を残せる）
+$dist = Join-Path $repository "dist\$Version"
 $name = "VRCast-$Version-win64"
-Write-Host "Packaging $name from $BuildPath"
+Write-Host "Packaging $name from $BuildPath -> $dist"
 
 # 同梱物が欠けていれば警告（無くても続行。その機能が使えないだけ）
 $streaming = Join-Path $BuildPath "VRCast_Data\StreamingAssets"

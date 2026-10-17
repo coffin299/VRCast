@@ -855,8 +855,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Spout\fetch.ps1
 MediaPipe トラッカーのビルド → ビルド済みの `VRCast\Builds\Windows` の StreamingAssets へトラッカーを上書きコピー（Unity で再ビルドしなくても新しいトラッカーが入る）
 → Windows 11 の仮想カメラ DLL のビルド → ビルドの `VRCast_Data\Plugins\x86_64` へコピー
 → アップデーター（`VRCastUpdater.exe`）のビルド → ビルドの `VRCast_Data\StreamingAssets\Updater` へコピー
-→ 書き出しツールの unitypackage（`dist\`）→ GitHub 用 zip・自動更新用の `dist\version.json`・Jinxxy 向けセットアップ EXE・BOOTH 向け軽い zip を順に作る。
-開始時に VRCast.exe の有無と、ビルドのバージョンと書き出しツールのバージョンの不一致を確認する。
+→ 書き出しツールの unitypackage → GitHub 用 zip・自動更新用の `version.json`・Jinxxy 向けセットアップ EXE・BOOTH 向け軽い zip を
+`dist\<バージョン>\` へ順に作る。開始時に VRCast.exe の有無と、ビルドのバージョンと書き出しツールのバージョンの不一致を確認する。
 
 - 仮想カメラ DLL とアップデーターのビルドには Visual Studio 2022 の「C++ によるデスクトップ開発」が要る。
   Unity Editor が DLL を読み込んでいて上書きできないときは、既存の DLL を使って続行する（無ければ中止）。
@@ -879,20 +879,20 @@ MediaPipe トラッカーのビルド → ビルド済みの `VRCast\Builds\Wind
 powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.0.1 -BuildPath .\VRCast\Builds\Windows
 ```
 
-- 出力: `dist\VRCast-<バージョン>-win64.zip`（`.gitignore` 済み）。バージョンの既定は Player Settings の Version（`bundleVersion`。
-  ビルド時に `VRCastBuild` の `AppVersion` が設定される）。
+- 出力先: `dist\<バージョン>\`（`.gitignore` 済み）。中の本体 zip は `VRCast-<バージョン>-win64.zip`。
+  バージョンの既定は Player Settings の Version（`bundleVersion`。ビルド時に `VRCastBuild` の `AppVersion` が設定される）。
 - 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
   本体と取り違えないよう、別の `VRCast-Converter\` フォルダに書き出しツール `VRCast-Converter-<package.json の version>.unitypackage` と、
   「アバターのプロジェクトにインポートする」ことをファイル名で伝える説明（`Tools/Package/Converter/` の中身をそのまま複製）を入れる。
-- セットアップ EXE: `dist\VRCast-setup.exe`（版なしの固定名。中身は入れない軽い EXE。実行時に GitHub から最新の本体 zip を取得して展開）。
+- セットアップ EXE: `dist\<バージョン>\VRCast-setup.exe`（版なしの固定名。中身は入れない軽い EXE。実行時に GitHub から最新の本体 zip を取得して展開）。
   Jinxxy にはこの EXE だけを置く。`Tools/Setup`（C# / .NET Framework 4.8。Visual Studio 2022 付属の C# コンパイラーでビルド。無ければ警告を出して EXE だけ作らない）。
   取得先はアプリの自動更新と同じ `version.json`（無ければ GitHub Releases の latest）。選んだフォルダ（既定は EXE と同じ場所に作る `VRCast`）へ
   `VRCast\` と `VRCast-Converter\` を展開する。既に VRCast が入っていればアップデーターに差し替えを任せる（起動はしない）。
   版はアプリ内で確認する（展開先フォルダ名には入れない）。
   画面は VRCast 本体と同じ 5 言語。管理者権限は求めない。
-- BOOTH 用 zip: `dist\VRCast-booth.zip`（版なしの固定名。`README.txt`・`Download-VRCast.bat`・`VRCast-setup.exe`）。本体 zip は入れない。
+- BOOTH 用 zip: `dist\<バージョン>\VRCast-booth.zip`（版なしの固定名。`README.txt`・`Download-VRCast.bat`・`VRCast-setup.exe`）。本体 zip は入れない。
   バッチは GitHub から最新の `VRCast-*-win64.zip` を同じフォルダへ保存するだけ（展開は利用者が行う）。
-- 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\VRCast-Converter-<バージョン>.unitypackage`）。
+- 書き出しツールの unitypackage だけを作る場合は `Tools\Package\unitypackage.bat`（Unity 不要、出力 `dist\<バージョン>\VRCast-Converter-<バージョン>.unitypackage`）。
   `Packages/com.vrcast.converter` を `Assets/VRCast/Converter/` に入るよう詰める。GUID はリポジトリの `.meta` を使うため版をまたいで同じ
   （上書きインポートで更新できる）。ファイルを追加したら Unity で一度開いて `.meta` を作り、一緒にコミットする（無いと中止する）。
 ### バージョンと更新履歴
@@ -902,7 +902,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
   リリース時にバージョンと日付へ書き換える（手順は `.cursor/rules/changelog.mdc`）。
 - 配布 zip は GitHub の Release `v<バージョン>` に**名前を変えずに**添付して公開する
   （自動更新は `https://github.com/coffin299/VRCast/releases/download/v<バージョン>/VRCast-<バージョン>-win64.zip` を取りに行く）。
-- zip の公開を確かめてから、`webpage` ブランチの `version.json` を `package.bat` が作る `dist\version.json`（`update` に zip の URL・大きさ・SHA-256）で置き換えて公開する。
+- zip の公開を確かめてから、`webpage` ブランチの `version.json` を `package.bat` が作る `dist\<バージョン>\version.json`（`update` に zip の URL・大きさ・SHA-256）で置き換えて公開する。
   アプリは起動時にこれを読んで更新を通知し、自動更新の zip を検証する（先に更新すると、まだダウンロードできないバージョンを通知してしまう。
   zip を作り直したら SHA-256 が変わるので置き換え直す。`update` が無い・不正なら手動の入手先だけを出す）。
   Unity が出力する配布不要のフォルダ（`*_BurstDebugInformation_DoNotShip` 等）は除く。

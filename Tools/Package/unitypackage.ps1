@@ -5,7 +5,7 @@
 .PARAMETER Version
     Version in the file name. Defaults to "version" in Packages/com.vrcast.converter/package.json.
 .PARAMETER OutputPath
-    Output file. Defaults to dist/VRCast-Converter-<version>.unitypackage in this repository.
+    Output file. Defaults to dist/<version>/VRCast-Converter-<version>.unitypackage in this repository.
 #>
 param(
     [string]$Version = "",
@@ -23,7 +23,9 @@ $installPath = "Assets/VRCast/Converter"
 if (-not $Version) {
     $Version = (Get-Content -Raw (Join-Path $source "package.json") | ConvertFrom-Json).version
 }
-if (-not $OutputPath) { $OutputPath = Join-Path $repository "dist\VRCast-Converter-$Version.unitypackage" }
+if (-not $OutputPath) {
+    $OutputPath = Join-Path $repository "dist\$Version\VRCast-Converter-$Version.unitypackage"
+}
 Write-Host "Packing VRCast-Converter-$Version from $source"
 
 # 作業フォルダはリポジトリの外（完了後に削除）

@@ -7,10 +7,10 @@
       4. Copy the DLL into the existing Windows build
       5. Build the updater (Tools/Updater/build.ps1)
       6. Copy the updater into the existing Windows build
-      7. Pack the exporter into dist/VRCast-Converter-<version>.unitypackage
-      8. Package dist/VRCast-<version>-win64.zip (GitHub), dist/version.json (auto-update),
-         dist/VRCast-setup.exe (Jinxxy; downloads from GitHub), and
-         dist/VRCast-booth.zip (BOOTH; README + bat + setup EXE)
+      7. Pack the exporter into dist/<version>/VRCast-Converter-<version>.unitypackage
+      8. Package under dist/<version>/: VRCast-<version>-win64.zip (GitHub), version.json (auto-update),
+         VRCast-setup.exe (Jinxxy; downloads from GitHub), and
+         VRCast-booth.zip (BOOTH; README + bat + setup EXE)
     Build the app in Unity first (VRCast > Build > Windows x64).
 .PARAMETER PythonVersion
     Python version used to build the tracker (MediaPipe supports 3.9 - 3.12).
@@ -138,4 +138,4 @@ Write-Step "8/8 Packaging the distribution zip"
 & (Join-Path $PSScriptRoot "package.ps1") -BuildPath $BuildPath
 
 Write-Step "Release build finished"
-Write-Host "Output: $(Join-Path $repository 'dist')"
+Write-Host "Output: $(Join-Path $repository "dist\$appVersion")"

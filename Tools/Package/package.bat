@@ -1,5 +1,5 @@
 @echo off
-rem Package VRCast\Builds\Windows into dist\VRCast-<version>-win64.zip for distribution.
+rem Package VRCast\Builds\Windows into dist\<version>\VRCast-<version>-win64.zip for distribution.
 rem Build the app in Unity first (VRCast > Build > Windows x64).
 
 setlocal

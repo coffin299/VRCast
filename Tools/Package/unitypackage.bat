@@ -1,5 +1,5 @@
 @echo off
-rem Pack the exporter (Packages\com.vrcast.converter) into dist\VRCast-Converter-<version>.unitypackage.
+rem Pack the exporter (Packages\com.vrcast.converter) into dist\<version>\VRCast-Converter-<version>.unitypackage.
 rem Unity is not required.
 
 setlocal
