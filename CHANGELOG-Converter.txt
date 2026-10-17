@@ -1,0 +1,176 @@
+VRCast Converter（書き出しツール / unitypackage）更新履歴 / Changelog
+======================================================================
+
+`Packages/com.vrcast.converter`（アバターの Unity プロジェクトに入れる書き出しツール）の変更点です。
+本体アプリの履歴は `CHANGELOG.txt` を見てください。
+
+新しいものが上です。各節は、その変更が載ったときのアプリ版です（converter の `package.json` の版は、
+このファイルに追記するときだけ上げます。アプリだけのリリースでは触りません）。
+Newest first. Section headers are the app version that shipped the change (raise
+`Packages/com.vrcast.converter/package.json` only when this file gets new entries).
+
+■ 2.2.1 (2026-10-15)
+
+[日本語]
+- リップシンクを FX のアニメーションで動かす作りのアバター（Lip Sync が Viseme Parameter Only など）向けに、必要なデータを書き出すように変更（顔以外に歯や舌のメッシュを一緒に動かすアバターにも対応。既に書き出したアバターは書き出し直しが必要）
+- エクスポーターのウィンドウに、書き出しの進み具合と結果を表示するように変更（今どの工程かが分かり、途中で中断できます。書き出し後は同じウィンドウで、書き出したファイルのアバターをプレビューでき、腕を動かして衣装が体についてくるかを確かめられます。書き出しの記録を日本語・英語で表示し、書き出したファイルの横に「〜.log.txt」として保存します。ほかのツールが出したエラーも記録に入ります）
+- 書き出し時に、衣装の姿勢がアバターと合っていない（T ポーズの衣装を A ポーズのアバターに着せた等）・体に追従しないメッシュがあることを知らせる機能を追加
+- エクスポーターに「アバターと合わない衣装の姿勢を直す」を追加（袖や脚が体から浮いてしまう衣装の腕・脚のボーンを、書き出すアバターの上でだけアバターの向きに合わせます。既定 OFF）
+
+[English]
+- Export now includes the data needed for lip sync driven by FX animations (such as Lip Sync set to Viseme Parameter Only), including avatars that also move teeth or tongue meshes (re-export previously exported avatars)
+- The exporter window now shows the export progress and result (see which step is running and cancel it; after exporting, preview the exported avatar in the same window and move its arms to check that outfits follow the body; the export log is shown in Japanese or English and saved next to the exported file as "*.log.txt", including errors from other tools)
+- Added warnings when exporting if an outfit's pose does not match the avatar (such as a T-pose outfit on an A-pose avatar) or if a mesh will not follow the body
+- Added "Fix outfit poses that do not match the avatar" to the exporter (turns the arm and leg bones of outfits whose sleeves or legs float away from the body to match the avatar, in the exported avatar only; off by default)
+
+■ 2.1.0 (2026-10-13)
+
+[日本語]
+- アバターに付いた小物のアニメーション（小物に付いた Animator と、FX で常に再生されている小物の動き）を書き出すように追加（既に書き出したアバターは書き出し直しが必要）
+
+[English]
+- Added exporting of prop animations (animators on props and prop motions that FX keeps playing; re-export existing avatars to include them)
+
+■ 2.0.0 (2026-10-12)
+
+[日本語]
+- BlendShape のあるメッシュを読み取れる形で書き出すように変更（アプリのパーフェクトシンク化に必要。既存のアバターで使うには書き出し直してください）
+
+[English]
+- Changed export to write meshes with blend shapes in a readable form (needed for perfect sync setup in the app; re-export existing avatars to use it)
+
+■ 1.18.7 (2026-10-11)
+
+[日本語]
+- 「非アクティブのオブジェクトも書き出す」を追加（ON にすると、シーン上で OFF にしたオブジェクトも OFF のまま書き出し、アプリの「オブジェクト」タブで ON にできます。既定 ON。OFF にすると従来どおり書き出しません）
+- パーティクルは書き出し時に OFF のものも含め、VRChat で一緒に ON/OFF するもの（FX の切り替え単位・エフェクトのフォルダー）を 1 つにまとめて書き出すように対応
+
+[English]
+- Added "Also export inactive objects" (when on, objects turned off in the scene are exported, kept turned off, and can be turned on in the app's Objects tab; on by default; when off, they are not exported as before)
+- Added exporting of particles that are off, and grouping of particles switched together in VRChat (FX toggles and effect folders) into one entry
+
+■ 1.17.7 (2026-10-11)
+
+[日本語]
+- VRCFury で改変したアバターを改変後の姿で書き出せるように対応（VRChat へのアップロード時と同じ処理を適用します）
+- パーティクルを書き出し、アプリでエフェクトごとに ON/OFF できるように対応
+
+[English]
+- Added support for exporting avatars customized with VRCFury with the changes applied (the same processing as uploading to VRChat)
+- Added exporting of avatar particles for on/off switches per effect in the app
+
+■ 1.16.7 (2026-10-10)
+
+[日本語]
+- 最適化ツール（メッシュの統合など）を使ったアバターの FaceEmo の表情が、取り込めているのにアプリの表情一覧に出ない問題を修正
+- FaceEmo の別々のモードが同じアニメーションを使っていると、片方しか表情一覧に出ない問題を修正
+- FaceEmo のモードを値がすべて 0 などの理由で見送らず、BlendShape があればすべて取り込むように変更
+- FaceEmo の表情を VRChat の Expression Menu（FaceEmo のサブメニュー）からも読むように変更（メニューと同じ名前で、改変を適用した後のアニメーションを使います）
+- AAO（Avatar Optimizer）を使ったアバターの FaceEmo で編集した表情の BlendShape が最適化で消され、表情が動かない問題を修正（書き出すときだけ BlendShape の最適化を止めます）
+- 最適化ツールがアニメーションを書き換えたアバターでは、FaceEmo の表情を書き換え後のアニメーションから読むように変更
+- 表情の動かすメッシュが見つからないときに顔のメッシュ（リップシンク・まぶたに使うメッシュ）を使うように変更（BlendShape 名の大文字・小文字や区切り文字の違いも吸収します）
+- 「追加の表情」で、小物の切り替えなども含むクリップや値がすべて 0 のクリップを見送らず、BlendShape の部分を取り込むように変更（FaceEmo のアニメーションを追加しても入らない問題を修正）
+- 書き出した後に Console にレイアウトのエラーが出る問題を修正
+- 結果に、動かすメッシュが見つからずアプリの表情一覧に出ない表情の数を表示する機能を追加
+
+[English]
+- Fixed FaceEmo expressions of avatars using optimization tools (such as mesh merging) being exported but not appearing in the app's expression list
+- Fixed only one of several FaceEmo modes sharing the same animation appearing in the expression list
+- Changed the exporter to take every FaceEmo mode that has blend shapes instead of skipping some (for example when all values are 0)
+- Changed the exporter to also read FaceEmo expressions from the VRChat Expression Menu (the FaceEmo submenu), using the menu names and the animations after modifications are applied
+- Fixed blend shapes of expressions edited in FaceEmo being removed by AAO (Avatar Optimizer) so the expressions did not move (blend shape optimization is turned off only while exporting)
+- Changed the exporter to read FaceEmo expressions from the animations rewritten by optimization tools when they are present
+- Changed the exporter to use the face mesh (the mesh used for lip sync and eyelids) when an expression's mesh is not found (differences in letter case and separators in blend shape names are also absorbed)
+- Changed "Additional expressions" to take the blend shape part of clips that also toggle items or whose values are all 0 instead of skipping them (fixes FaceEmo animations not being added)
+- Fixed a layout error appearing in the Console after exporting
+- Added to the exporter result the number of expressions that will not appear in the app's expression list because their meshes were not found
+
+■ 1.16.6 (2026-10-10)
+
+[日本語]
+- FaceEmo の対象アバターの指定が外れているとき（別の PC で開いた・Prefab を入れ替えた等）に FaceEmo の表情を読み込めないことがある問題を修正（シーンの FaceEmo が 1 つだけならそれを使います）
+- 結果に、FaceEmo の表情を取り込まなかった数と、どの FaceEmo を使うか決められず読み込めなかったことを表示する機能を追加
+
+[English]
+- Fixed the exporter sometimes not reading FaceEmo expressions when FaceEmo's target avatar link was lost (for example after opening the project on another PC or replacing the prefab); if the scene has only one FaceEmo, it is used
+- Added to the exporter result how many FaceEmo expressions were skipped, and a notice when it could not decide which FaceEmo to use and did not read it
+
+■ 1.14.5 (2026-10-09)
+
+[日本語]
+- FaceEmo の表情を取り込む機能を追加（シーンに FaceEmo の設定があれば、モード名を表情名にして自動で書き出します。「アバターに適用」前でも可。小物の表示などは除き、ブレンドシェイプの部分だけを使います）
+- 非表示にしたオブジェクトの中に体のボーンがあるアバターで、首などが足元（原点）まで伸びる問題を修正（.vrcaster の書き出し直しが必要）
+
+[English]
+- Added FaceEmo support: if the scene has FaceEmo set up for the avatar, its expressions are exported with the mode names (even before "Apply to avatar"; only the blend shape part is used, not accessory toggles)
+- Fixed parts such as the neck stretching down to the origin on avatars whose disabled objects contain body bones (re-export the .vrcaster)
+
+■ 1.12.3 (2026-10-08)
+
+[日本語]
+- Modular Avatar の Blendshape Sync で口に追従させたチェーンなどが追従するよう、必要なデータを書き出すように修正（アバターの書き出し直しが必要です）
+
+[English]
+- Fixed export so chains and other parts synced to the mouth with Modular Avatar's Blendshape Sync follow lip sync, blinking or tracking (re-export the avatar to apply)
+
+■ 1.10.3 (2026-10-07)
+
+[日本語]
+- シーン上で非アクティブにしたオブジェクトを子ごと書き出さないように変更（FX の初期状態で表示されるものも含めて除きます。除いた数は書き出し結果に表示）
+
+[English]
+- Changed the exporter to never export objects that are inactive in the scene, including their children (even if the FX default state would show them; the number removed is shown in the export result)
+
+■ 1.9.1 (2026-10-07)
+
+[日本語]
+- 「追加の表情」で、フォルダやクリップをドロップしても反応しないことがある問題を修正（アバター未選択でも追加でき、選んだときに保存されます。エクスプローラーからのプロジェクト内のものも可。追加した件数や使えない理由を表示）
+
+[English]
+- Fixed "Extra expressions" sometimes not reacting to dropped folders or clips (you can now add them before selecting an avatar and they are saved when you select one; items inside the project can also be dropped from File Explorer; the number added or the reason something cannot be used is shown)
+
+■ 1.7.1 (2026-10-07)
+
+[日本語]
+- 「追加の表情」を追加（FX レイヤーに入っていない表情のアニメーションクリップやフォルダをドラッグして、表情として書き出せます。書き出す前に取り込めるかどうかと理由を一覧で確認できます。指定はアバターごとに保存）
+
+[English]
+- Added "Additional expressions" (drag expression animation clips or folders that are not in the FX layer to export them as expressions; you can check which clips can be used, and why not, before exporting; saved per avatar)
+
+■ 1.4.0 (2026-10-05)
+
+[日本語]
+- Unity で設定したブレンドシェイプの値が、書き出し時に FX レイヤーの値で上書きされてしまう問題を修正
+- ラジアルメニューのスライダーなどの初期値が、書き出し時に中間の値にならず 0 か最大になってしまう問題を修正
+- 「シーンのブレンドシェイプの値を優先する」を追加（既定 ON。OFF にすると従来どおり FX の初期状態の値を使う）
+
+[English]
+- Fixed blend shape values set in Unity being overwritten by FX layer values on export
+- Fixed default values of radial menu sliders and similar controls being exported as 0 or the maximum instead of the in-between value
+- Added "Keep blend shape values from the scene" (on by default; turn it off to use the FX default-state values as before)
+
+■ 1.3.0 (2026-10-05)
+
+[日本語]
+- 画面を日本語・韓国語・中国語（簡体字・繁体字）に対応（既定は OS の言語、画面上部で切り替え可能）
+- 画面上部とタブにアプリアイコンを表示
+
+[English]
+- The exporter window is now available in Japanese, Korean and Chinese (Simplified / Traditional) (follows the OS language by default; switch it at the top of the window)
+- The exporter window now shows the app icon in its header and tab
+
+■ 1.2.0 (2026-10-05)
+
+[日本語]
+- 【ベータ版】Modular Avatar などで改変したアバターを、改変後の姿（衣装の統合・追加した表情やトグル）で書き出す機能を追加（暫定対応のため、正しく書き出せない場合があります）
+
+[English]
+- [Beta] Added support for avatars customized with Modular Avatar and other NDMF tools; outfits, added expressions and toggles are exported as applied (preliminary support; some avatars may not export correctly)
+
+■ 1.0.0 (2026-10-03)
+
+[日本語]
+- VRChat アバターを .vrcaster に書き出す Unity 用ツールの初版（元のアバターは変更しない。unitypackage を同梱）
+
+[English]
+- First release of the Unity exporter that converts a VRChat avatar to .vrcaster (the original avatar is never modified; .unitypackage included)

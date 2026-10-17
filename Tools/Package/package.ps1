@@ -99,6 +99,8 @@ try {
     & (Join-Path $PSScriptRoot "unitypackage.ps1") -Version $converterVersion `
         -OutputPath (Join-Path $converter "VRCast-Converter-$converterVersion.unitypackage")
     Copy-Item (Join-Path $PSScriptRoot "Converter\*") $converter -Recurse -Force
+    # 書き出しツールの更新履歴（リポジトリ直下が正。アプリ本体の CHANGELOG.txt とは別）
+    Copy-Item (Join-Path $repository "CHANGELOG-Converter.txt") (Join-Path $converter "CHANGELOG-Converter.txt") -Force
 
     # 既存の同名 zip を消してから作成
     New-Item -ItemType Directory -Force $dist | Out-Null

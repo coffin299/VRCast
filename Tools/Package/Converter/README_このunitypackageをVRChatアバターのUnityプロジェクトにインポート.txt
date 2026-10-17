@@ -13,6 +13,7 @@ VRCast 本体（VRCast フォルダ）に入れるものではありません。
 
 新しいバージョンに更新するときは、同じ手順でインポートし直してください（上書きされます）。
 不要になったら、プロジェクトの Assets/VRCast/Converter フォルダを削除してください。
+書き出しツール自体の変更点は、同じフォルダの CHANGELOG-Converter.txt を見てください。
 詳しくは VRCast フォルダの README.txt と、ヘルプ（https://coffin299.github.io/VRCast/help/）をご覧ください。
 
 
@@ -28,4 +29,5 @@ It does not go into the VRCast app (the VRCast folder).
 
 To update, import the new version the same way (it overwrites the old one).
 To remove it, delete the Assets/VRCast/Converter folder in your project.
+See CHANGELOG-Converter.txt in this folder for changes to the exporter itself.
 See README.txt in the VRCast folder and the help page (https://coffin299.github.io/VRCast/help/) for details.
