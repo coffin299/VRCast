@@ -241,7 +241,7 @@ namespace VRCast.Core
             }
 
             reflectionStrength = Clamp(reflectionStrength, 0f, AppSettings.MaxReflectionStrength, 0.14f);
-            shadowStrength = Clamp(shadowStrength, 0f, AppSettings.MaxShadowStrength, 5f);
+            shadowStrength = Clamp(shadowStrength, 0f, AppSettings.MaxShadowStrength, 0.52f);
             shadowSoftness = Clamp(shadowSoftness, 0f, AppSettings.MaxShadowSoftness, 0.056f);
             bloomIntensity = Clamp(bloomIntensity, 0f, AppSettings.MaxBloomIntensity, 0.012f);
             bloomThreshold = Clamp(bloomThreshold, 0f, AppSettings.MaxBloomThreshold, 1.95f);
@@ -252,7 +252,7 @@ namespace VRCast.Core
             colorTemperature = Clamp(colorTemperature, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance,
                 -0.04f);
             colorTint = Clamp(colorTint, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance, 0.01f);
-            ssaoIntensity = Clamp(ssaoIntensity, 0f, AppSettings.MaxSsaoIntensity, 3.69f);
+            ssaoIntensity = Clamp(ssaoIntensity, 0f, AppSettings.MaxSsaoIntensity, 1.98f);
             ssaoRadius = Clamp(ssaoRadius, 0f, AppSettings.MaxSsaoRadius, 0.15f);
             screenRimIntensity = Clamp(screenRimIntensity, 0f, AppSettings.MaxScreenRimIntensity, 0.12f);
             screenRimPower = Clamp(screenRimPower, 0.5f, AppSettings.MaxScreenRimPower, 3.5f);

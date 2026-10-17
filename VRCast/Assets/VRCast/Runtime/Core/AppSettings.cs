@@ -239,7 +239,7 @@ namespace VRCast.Core
         public float lightTemperature = 6000f;
         public float ambientIntensity = 1.2f;
 
-        // 最新ライティングの Fill / Rim / IBL 等（「明瞭影」プリセット＝既定）
+        // 最新ライティングの Fill / Rim / IBL 等（「影ver2」プリセット＝既定）
         public float fillIntensity = 0.1f;
         public float fillYaw = 145f;
         public float fillPitch = 10f;
@@ -254,7 +254,7 @@ namespace VRCast.Core
         public IblPreset iblPreset = IblPreset.Studio;
         public float reflectionStrength = 0.14f;
         public bool softShadows = true;
-        public float shadowStrength = 5f;
+        public float shadowStrength = 0.52f;
         public float shadowSoftness = 0.056f;
         public bool bloomEnabled = true;
         public float bloomIntensity = 0.012f;
@@ -270,7 +270,7 @@ namespace VRCast.Core
         public float colorTint = 0.01f; // -1 緑〜 +1 マゼンタ
 
         public bool ssaoEnabled = true;
-        public float ssaoIntensity = 3.69f;
+        public float ssaoIntensity = 1.98f;
         public float ssaoRadius = 0.15f;
 
         public bool screenRimEnabled = true;

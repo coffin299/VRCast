@@ -301,15 +301,15 @@ namespace VRCast.UI
             GuiControls.BeginCard(Loc.T("Lighting presets", "ライティングプリセット", "라이팅 프리셋",
                 "光照预设", "光照預設"));
             GuiControls.Hint(Loc.T(
-                "Built-in looks: Legacy-like ≈ 2.x (no fill / IBL / FX), Default = clear shadows look. "
+                "Built-in looks: Legacy-like ≈ 2.x (no fill / IBL / FX), Default = clear shadows (v2). "
                 + "Save current sliders under a name; export / import via Graphics preset.",
-                "内蔵: レガシー寄り ≈ 2.x（フィル／IBL／FX なし）、既定＝明瞭影。"
+                "内蔵: レガシー寄り ≈ 2.x（フィル／IBL／FX なし）、既定＝影ver2。"
                 + "今の値は名前付きで保存可。書き出し・読み込みは下のグラフィックプリセットから。",
-                "내장: 레거시 비슷 ≈ 2.x(필/IBL/FX 없음), 기본＝선명한 그림자. "
+                "내장: 레거시 비슷 ≈ 2.x(필/IBL/FX 없음), 기본＝그림자 ver2. "
                 + "지금 값은 이름 붙여 저장 가능. 내보내기·불러오기는 아래 그래픽 프리셋에서.",
-                "内置：旧版风 ≈ 2.x（无辅光 / IBL / 特效），默认＝清晰阴影。"
+                "内置：旧版风 ≈ 2.x（无辅光 / IBL / 特效），默认＝阴影 ver2。"
                 + "当前值可命名保存；导出 / 导入用下方图形预设。",
-                "內建：舊版風 ≈ 2.x（無輔光／IBL／特效），預設＝清晰陰影。"
+                "內建：舊版風 ≈ 2.x（無輔光／IBL／特效），預設＝陰影 ver2。"
                 + "目前值可命名儲存；匯出／匯入用下方圖形預設。"));
 
             GuiControls.SubHeading(Loc.T("Built-in", "内蔵", "내장", "内置", "內建"));

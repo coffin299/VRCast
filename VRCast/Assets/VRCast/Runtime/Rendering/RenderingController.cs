@@ -649,7 +649,7 @@ namespace VRCast.Rendering
                     _settings.vignetteEnabled = false;
                     break;
                 default:
-                    // 既定＝「明瞭影」（利用者プリセット由来。Key／Ambient はレガシー共有既定と別）
+                    // 既定＝「影ver2」（利用者プリセット由来。Key／Ambient はレガシー共有既定と別）
                     SetModernLighting(
                         keyIntensity: 1.05f, keyTemp: 5800f, keyYaw: -22f, keyPitch: 34f,
                         ambient: 0.14f,
