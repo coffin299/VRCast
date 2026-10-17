@@ -9,11 +9,13 @@ Newest first. Each version is written in Japanese, then English.
 [日本語]
 - 同じ名前のカメラが複数あるとき、それぞれを選べるように修正
 - カメラが斜めのときに頭・腕・確認用の骨格をそろえる「カメラの傾きを合わせる」を追加（押してから 5 秒後に記録。使わなければ今までどおり）
+- キャリブレーションに、記録したカメラの傾き補正の値（前後・左右・回転）を表示するように追加
 - クレジットに「Claudeと愉快な仲間たち」を追加
 
 [English]
 - Fixed being unable to choose among cameras that share the same name
 - Added "Align camera tilt" to match head, arms, and the raw skeleton when the camera is tilted (records 5 seconds after you press; unchanged if you never use it)
+- Added a display of the recorded camera tilt correction (pitch / yaw / roll) on the Calibration card
 - Added "Claude and his merry friends" to the credits
 
 ■ 3.0.0 (2026-10-17)

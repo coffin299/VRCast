@@ -1123,13 +1123,24 @@ namespace VRCast.UI
                     $"请站直。{seconds} 秒后记录…",
                     $"請站直。{seconds} 秒後記錄…"));
             }
-            else if (_settings.HasTrackingTiltCorrection)
-            {
-                GuiControls.Hint(Loc.T("Tilt correction is on.", "傾き補正が有効です。", "기울기 보정이 켜져 있습니다.",
-                    "倾斜校正已开启。", "傾斜校正已開啟。"));
-            }
+
+            // 記録済みの傾き補正（度、-180〜180。未補正は 0）
+            Vector3 tilt = EulerSigned(_settings.TrackingTiltCorrection);
+            GuiControls.Hint(Loc.T("Tilt correction", "傾き補正", "기울기 보정", "倾斜校正", "傾斜校正")
+                + $"  {Loc.T("pitch", "前後", "앞뒤", "前后", "前後")} {tilt.x:F1}°  "
+                + $"{Loc.T("yaw", "左右", "좌우", "左右", "左右")} {tilt.y:F1}°  "
+                + $"{Loc.T("roll", "回転", "회전", "旋转", "旋轉")} {tilt.z:F1}°");
 
             GuiControls.EndCard();
+        }
+
+        private static Vector3 EulerSigned(Quaternion rotation)
+        {
+            Vector3 euler = rotation.eulerAngles;
+            return new Vector3(
+                Mathf.DeltaAngle(0f, euler.x),
+                Mathf.DeltaAngle(0f, euler.y),
+                Mathf.DeltaAngle(0f, euler.z));
         }
 
         /// <summary>
