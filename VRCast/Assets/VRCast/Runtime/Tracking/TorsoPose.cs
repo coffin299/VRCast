@@ -19,6 +19,15 @@ namespace VRCast.Tracking
         /// </summary>
         public static bool TryGetAngles(BodyTrackingFrame body, bool mirror, out Vector2 angles)
         {
+            return TryGetAngles(body, mirror, Quaternion.identity, out angles);
+        }
+
+        /// <summary>
+        /// 傾き補正を掛けたうえで両肩から上半身の向きを求める（補正が identity なら無補正と同じ）。
+        /// </summary>
+        public static bool TryGetAngles(
+            BodyTrackingFrame body, bool mirror, Quaternion tiltCorrection, out Vector2 angles)
+        {
             angles = Vector2.zero;
 
             // 両肩が映っていなければ求めない
@@ -27,9 +36,9 @@ namespace VRCast.Tracking
                 return false;
             }
 
-            // アバターの左肩 → 右肩の向き（鏡像では本人の右肩がアバターの左肩）をアバタールート基準へ
-            Vector3 avatarRight = mirror ? body.Left.Shoulder : body.Right.Shoulder;
-            Vector3 avatarLeft = mirror ? body.Right.Shoulder : body.Left.Shoulder;
+            // アバターの左肩 → 右肩の向き（鏡像では本人の右肩がアバターの左肩）を傾き補正後にアバタールート基準へ
+            Vector3 avatarRight = tiltCorrection * (mirror ? body.Left.Shoulder : body.Right.Shoulder);
+            Vector3 avatarLeft = tiltCorrection * (mirror ? body.Right.Shoulder : body.Left.Shoulder);
             Vector3 line = TrackingMath.ToAvatar(avatarRight - avatarLeft, mirror);
 
             // 肩幅が狭すぎれば向きが定まらない

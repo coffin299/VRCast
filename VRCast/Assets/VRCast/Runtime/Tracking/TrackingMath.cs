@@ -47,6 +47,22 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
+        /// 傾き補正を掛けてからアバタールート基準へ変換する（補正が identity なら ToAvatar と同じ）。
+        /// </summary>
+        public static Vector3 ToAvatar(Vector3 cameraVector, bool mirror, Quaternion tiltCorrection)
+        {
+            return ToAvatar(tiltCorrection * cameraVector, mirror);
+        }
+
+        /// <summary>
+        /// 傾き補正後の頭の向き（補正が identity ならそのまま）。
+        /// </summary>
+        public static Quaternion CorrectHeadRotation(Quaternion headRotation, Quaternion tiltCorrection)
+        {
+            return tiltCorrection * headRotation;
+        }
+
+        /// <summary>
         /// 回転を左右反転する（X 軸まわりはそのまま、Y・Z 軸まわりを逆向き）。
         /// </summary>
         public static Quaternion MirrorRotation(Quaternion rotation)

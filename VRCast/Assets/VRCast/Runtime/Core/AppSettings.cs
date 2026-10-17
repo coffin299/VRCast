@@ -471,9 +471,17 @@ namespace VRCast.Core
         public const int MaxLightingPresets = 32;
         public List<LightingPresetEntry> lightingPresets = new List<LightingPresetEntry>();
 
-        // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名）
+        // VRCast から起動するトラッカー（実行ファイルのパス（空 = 同梱版）と、使うカメラのデバイス名と番号。
+        // 番号は -1 = 未設定（名前だけで解決）。同名カメラが複数あるときに番号で区別する）
         public string trackerPath = string.Empty;
         public string trackerCamera = string.Empty;
+        public int trackerCameraIndex = -1;
+
+        // カメラの傾き補正（専用キャリブで保存するクォータニオン。identity = 未補正。頭・腕・生データに同じものを掛ける）
+        public float trackingTiltCorrectionX;
+        public float trackingTiltCorrectionY;
+        public float trackingTiltCorrectionZ;
+        public float trackingTiltCorrectionW = 1f;
 
         // デバッグログタブの詳細ログ（トラッキングの受信統計・状態の変化など。調査時だけ ON にする想定で既定は OFF）
         public bool detailedLogging;
@@ -482,6 +490,55 @@ namespace VRCast.Core
         /// 顔（まばたき・パーフェクトシンク・視線）に使う鏡像の向き。顔の左右の入れ替えが ON なら鏡像設定と逆。
         /// </summary>
         public bool FaceMirror => trackingMirror != trackingSwapFaceSides;
+
+        /// <summary>
+        /// カメラの傾き補正（専用キャリブ未実施・不正値なら identity）。
+        /// </summary>
+        public Quaternion TrackingTiltCorrection
+        {
+            get
+            {
+                var q = new Quaternion(
+                    trackingTiltCorrectionX, trackingTiltCorrectionY, trackingTiltCorrectionZ, trackingTiltCorrectionW);
+                // ゼロや非有限は未補正
+                float mag = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+                if (mag < 1e-8f || !TiltCorrectionFinite(q))
+                {
+                    return Quaternion.identity;
+                }
+
+                return q.normalized;
+            }
+            set
+            {
+                Quaternion q = value;
+                float mag = q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w;
+                if (mag < 1e-8f || !TiltCorrectionFinite(q))
+                {
+                    q = Quaternion.identity;
+                }
+                else
+                {
+                    q = q.normalized;
+                }
+
+                trackingTiltCorrectionX = q.x;
+                trackingTiltCorrectionY = q.y;
+                trackingTiltCorrectionZ = q.z;
+                trackingTiltCorrectionW = q.w;
+            }
+        }
+
+        /// <summary>
+        /// 傾き補正が identity でなければ true（解除ボタンの表示用）。
+        /// </summary>
+        public bool HasTrackingTiltCorrection => Quaternion.Angle(TrackingTiltCorrection, Quaternion.identity) > 0.01f;
+
+        private static bool TiltCorrectionFinite(Quaternion q)
+        {
+            return !(float.IsNaN(q.x) || float.IsNaN(q.y) || float.IsNaN(q.z) || float.IsNaN(q.w)
+                || float.IsInfinity(q.x) || float.IsInfinity(q.y) || float.IsInfinity(q.z) || float.IsInfinity(q.w));
+        }
 
         /// <summary>
         /// テーマに合った背景色の既定値を返す。
@@ -1350,6 +1407,14 @@ namespace VRCast.Core
             trackerPath ??= string.Empty;
             // カメラ名も同様
             trackerCamera ??= string.Empty;
+            // カメラ番号は -1 未満を未設定へ（上限はトラッカー側の 255）
+            if (trackerCameraIndex < -1 || trackerCameraIndex > 255)
+            {
+                trackerCameraIndex = -1;
+            }
+
+            // 傾き補正は不正値を identity へ
+            TrackingTiltCorrection = TrackingTiltCorrection;
             // 表情のキャリブレーションは壊れた記録を捨てる
             expressionCalibrations ??= new List<ExpressionCalibrationSample>();
             expressionCalibrations.RemoveAll(sample => sample == null || !sample.IsValid);

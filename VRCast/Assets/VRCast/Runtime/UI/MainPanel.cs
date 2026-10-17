@@ -367,8 +367,9 @@ namespace VRCast.UI
                     WindowId, _windowRect, DrawWindow, GUIContent.none, _theme.Skin.window,
                     GUILayout.Width(_windowRect.width), GUILayout.Height(_windowRect.height));
 
-                // 表情のキャリブレーション中は、何の顔をするかを画面の上中央に大きく出す
+                // 表情・傾きのキャリブレーション中は、案内を画面の上中央に大きく出す
                 ExpressionCalibrationControls.DrawOverlay(_trackingSection.CalibrationRecorder, Screen.width / scale);
+                TrackingSection.DrawTiltOverlay(_trackingSection.TiltCalibration, Screen.width / scale);
             }
 
             GUI.backgroundColor = previousBackground;

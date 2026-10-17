@@ -135,13 +135,14 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// 受信中の両肩から求めた上半身のひねり・傾き（度、正面の補正前）。両肩が映っていなければ false。
+        /// 受信中の両肩から求めた上半身のひねり・傾き（度、傾き補正後。専用キャリブ未使用なら生の角度）。
+        /// 両肩が映っていなければ false。
         /// </summary>
         public bool TryGetTorsoAngles(out Vector2 angles)
         {
             angles = Vector2.zero;
             return _body != null && _body.TryGetBody(out BodyTrackingFrame body)
-                && TorsoPose.TryGetAngles(body, _settings.trackingMirror, out angles);
+                && TorsoPose.TryGetAngles(body, _settings.trackingMirror, _settings.TrackingTiltCorrection, out angles);
         }
 
         private void LateUpdate()
@@ -270,8 +271,9 @@ namespace VRCast.Tracking
             Joint(_origin, CenterColor);
             Line(_origin, neck, Scaled(ArmWidth), CenterColor);
 
-            // 上半身の向き: 肩の線から求めたひねり・傾き（補正前の生の角度）。肩幅が狭すぎて求まらなければ描かない
-            if (!TorsoPose.TryGetAngles(body, _mirror, out Vector2 angles))
+            // 上半身の向き: 肩の線から求めたひねり・傾き（傾き補正後。専用キャリブ未使用なら生の角度）。
+            // 肩幅が狭すぎて求まらなければ描かない
+            if (!TorsoPose.TryGetAngles(body, _mirror, _settings.TrackingTiltCorrection, out Vector2 angles))
             {
                 return;
             }
@@ -331,8 +333,9 @@ namespace VRCast.Tracking
 
         private void DrawHead(FaceTrackingFrame face, Vector3 neck)
         {
-            // 頭の向き（アバタールート基準 → ワールド、鏡像設定に従う）と中心
-            Quaternion local = _mirror ? TrackingMath.MirrorRotation(face.HeadRotation) : face.HeadRotation;
+            // 頭の向き（傾き補正後 → アバタールート基準 → ワールド、鏡像設定に従う）と中心
+            Quaternion corrected = TrackingMath.CorrectHeadRotation(face.HeadRotation, _settings.TrackingTiltCorrection);
+            Quaternion local = _mirror ? TrackingMath.MirrorRotation(corrected) : corrected;
             Quaternion head = _rotation * local;
             Vector3 halfSize = HeadHalfSize * _scale;
             Vector3 center = neck + _rotation * Vector3.up * Scaled(NeckLength);
@@ -390,8 +393,9 @@ namespace VRCast.Tracking
 
         private Vector3 ToWorld(Vector3 cameraPoint)
         {
-            // カメラ基準（腰が原点）→ アバタールート基準 → アバターの大きさに合わせてワールドへ
-            return _origin + _rotation * (TrackingMath.ToAvatar(cameraPoint, _mirror) * _scale);
+            // カメラ基準（腰が原点）→ 傾き補正 → アバタールート基準 → アバターの大きさに合わせてワールドへ
+            return _origin + _rotation * (TrackingMath.ToAvatar(
+                cameraPoint, _mirror, _settings.TrackingTiltCorrection) * _scale);
         }
 
         private float Scaled(float length)

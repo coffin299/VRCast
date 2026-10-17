@@ -122,7 +122,8 @@ namespace VRCast.UI
                     $", mode {_settings.trackerMode}",
                 $"Tracker: {_process.Status}",
                 $"Receiver: {_receiver.Status}",
-                $"Selected camera: {(string.IsNullOrEmpty(_settings.trackerCamera) ? "-" : _settings.trackerCamera)}",
+                $"Selected camera: {(string.IsNullOrEmpty(_settings.trackerCamera) ? "-" : _settings.trackerCamera)}"
+                    + (_settings.trackerCameraIndex >= 0 ? $" (#{_settings.trackerCameraIndex})" : string.Empty),
             };
 
             // カメラ一覧（番号はトラッカーに渡すカメラ番号）

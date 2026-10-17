@@ -142,6 +142,10 @@ namespace VRCast.Tracking
         // 正面を取ったときの入力元とカメラ（変わったら以前の正面は基準が違うため取り直す）
         private TrackingSource _calibratedSource;
         private string _calibratedCamera;
+        private int _calibratedCameraIndex = -1;
+
+        // 直前に使った傾き補正（変わったら正面を取り直す）
+        private Quaternion _appliedTilt = Quaternion.identity;
 
         // 自動キャリブレーションの静止判定の基準の向きと、その向きになった時刻
         private Quaternion _stableReference = Quaternion.identity;
@@ -353,10 +357,11 @@ namespace VRCast.Tracking
             // 待っていた自動リセットの取り直しは、これで済んだことにする
             _pendingHead = false;
 
-            // 受信済みフレームが無ければ次のフレームで行う
+            // 受信済みフレームが無ければ次のフレームで行う（傾き補正後の向き・位置を正面とする）
             _calibrated = IsTracking;
-            _neutral = _lastFrame.HeadRotation;
-            _neutralPosition = _lastFrame.HeadPosition;
+            _appliedTilt = _settings != null ? _settings.TrackingTiltCorrection : Quaternion.identity;
+            _neutral = CorrectedHeadRotation(_lastFrame.HeadRotation);
+            _neutralPosition = CorrectedPosition(_lastFrame.HeadPosition);
 
             // 肩の線は次に両肩が映ったときに取り直す
             _torsoCalibrated = false;
@@ -418,11 +423,21 @@ namespace VRCast.Tracking
             // （顔を見失っただけなら正面は保持する。再検出直後の不正確な向きで取り直すと以後ずっとずれるため）
             TrackingSource faceSource = _provider != null ? _provider.FaceSource : _settings.trackingSource;
             if (!_settings.trackingEnabled || faceSource != _calibratedSource
-                || _settings.trackerCamera != _calibratedCamera)
+                || _settings.trackerCamera != _calibratedCamera
+                || _settings.trackerCameraIndex != _calibratedCameraIndex)
             {
                 _calibrated = false;
                 _calibratedSource = faceSource;
                 _calibratedCamera = _settings.trackerCamera;
+                _calibratedCameraIndex = _settings.trackerCameraIndex;
+            }
+
+            // 傾き補正が変わったら正面を取り直す（補正なし identity のときは従来どおり）
+            Quaternion tilt = _settings.TrackingTiltCorrection;
+            if (Quaternion.Angle(_appliedTilt, tilt) > 0.01f)
+            {
+                _appliedTilt = tilt;
+                _calibrated = false;
             }
 
             // 見失った顔を再検出した直後は、値が落ち着くまで頭の向きを使わない
@@ -473,11 +488,12 @@ namespace VRCast.Tracking
         {
             float now = Time.unscaledTime;
 
-            // 再検出直後か、基準から頭が動いたら静止の計測をやり直す
+            // 再検出直後か、基準から頭が動いたら静止の計測をやり直す（傾き補正後の向きで判定）
+            Quaternion head = CorrectedHeadRotation(_lastFrame.HeadRotation);
             if (now < _settleUntil
-                || Quaternion.Angle(_stableReference, _lastFrame.HeadRotation) > CalibrationStableAngle)
+                || Quaternion.Angle(_stableReference, head) > CalibrationStableAngle)
             {
-                _stableReference = _lastFrame.HeadRotation;
+                _stableReference = head;
                 _stableSince = now;
                 return;
             }
@@ -493,17 +509,18 @@ namespace VRCast.Tracking
         {
             // 静止の判定は起動時の自動キャリブレーションと同じ（動いていれば計測をやり直す）
             float now = Time.unscaledTime;
+            Quaternion head = CorrectedHeadRotation(_lastFrame.HeadRotation);
             if (now < _settleUntil
-                || Quaternion.Angle(_stableReference, _lastFrame.HeadRotation) > CalibrationStableAngle)
+                || Quaternion.Angle(_stableReference, head) > CalibrationStableAngle)
             {
-                _stableReference = _lastFrame.HeadRotation;
+                _stableReference = head;
                 _stableSince = now;
                 return;
             }
 
             // 静止が足りない・今の正面から大きく外れている（よそ見・下を向いている等）なら待つ
             if (now - _stableSince < CalibrationStableSeconds
-                || Quaternion.Angle(_neutral, _lastFrame.HeadRotation) > RecalibrationMaxAngle)
+                || Quaternion.Angle(_neutral, head) > RecalibrationMaxAngle)
             {
                 return;
             }
@@ -863,8 +880,8 @@ namespace VRCast.Tracking
 
         private Vector3 CalculateHeadOffset()
         {
-            // 正面位置からの差分（カメラ基準）。鏡像モードは左右反転
-            Vector3 offset = _lastFrame.HeadPosition - _neutralPosition;
+            // 正面位置からの差分（カメラ基準・傾き補正後）。鏡像モードは左右反転
+            Vector3 offset = CorrectedPosition(_lastFrame.HeadPosition) - _neutralPosition;
             if (_settings.trackingMirror)
             {
                 offset.x = -offset.x;
@@ -895,7 +912,7 @@ namespace VRCast.Tracking
                 && TrackingSourceInfo.HasArms(_settings.trackingSource);
             Vector2 angles = Vector2.zero;
             bool has = enabled && _body != null && _body.TryGetBody(out BodyTrackingFrame body)
-                && TorsoPose.TryGetAngles(body, _settings.trackingMirror, out angles);
+                && TorsoPose.TryGetAngles(body, _settings.trackingMirror, _settings.TrackingTiltCorrection, out angles);
 
             // 鏡像設定が変わったら左右の基準が変わるため正面を取り直す
             if (_torsoMirror != _settings.trackingMirror)
@@ -932,8 +949,8 @@ namespace VRCast.Tracking
 
         private Quaternion CalculateHeadDelta()
         {
-            // 正面からの相対回転（カメラ基準）
-            Quaternion delta = _lastFrame.HeadRotation * Quaternion.Inverse(_neutral);
+            // 正面からの相対回転（カメラ基準・傾き補正後）
+            Quaternion delta = CorrectedHeadRotation(_lastFrame.HeadRotation) * Quaternion.Inverse(_neutral);
 
             // 鏡像モードは左右反転
             if (_settings.trackingMirror)
@@ -943,6 +960,16 @@ namespace VRCast.Tracking
 
             // 誤検出による極端な角度を制限
             return Quaternion.RotateTowards(Quaternion.identity, delta, MaxHeadAngle);
+        }
+
+        private Quaternion CorrectedHeadRotation(Quaternion headRotation)
+        {
+            return TrackingMath.CorrectHeadRotation(headRotation, _settings.TrackingTiltCorrection);
+        }
+
+        private Vector3 CorrectedPosition(Vector3 cameraPosition)
+        {
+            return _settings.TrackingTiltCorrection * cameraPosition;
         }
 
         private void ApplyEyes(bool received)

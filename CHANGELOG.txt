@@ -4,6 +4,18 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 3.0.1 (2026-10-17)
+
+[日本語]
+- 同じ名前のカメラが複数あるとき、それぞれを選べるように修正
+- カメラが斜めのときに頭・腕・確認用の骨格をそろえる「カメラの傾きを合わせる」を追加（押してから 5 秒後に記録。使わなければ今までどおり）
+- クレジットに「Claudeと愉快な仲間たち」を追加
+
+[English]
+- Fixed being unable to choose among cameras that share the same name
+- Added "Align camera tilt" to match head, arms, and the raw skeleton when the camera is tilted (records 5 seconds after you press; unchanged if you never use it)
+- Added "Claude and his merry friends" to the credits
+
 ■ 3.0.0 (2026-10-17)
 
 [日本語]

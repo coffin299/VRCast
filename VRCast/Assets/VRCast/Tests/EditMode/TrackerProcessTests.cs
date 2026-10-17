@@ -99,6 +99,40 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void ResolveCameraIndex_UsesIndexWhenNameMatches()
+        {
+            // 同名 2 台でも保存した番号の方を選ぶこと
+            var cameras = new[] { "USB Camera", "USB Camera" };
+            Assert.That(TrackerProcess.ResolveCameraIndex(cameras, "USB Camera", 1), Is.EqualTo(1));
+            Assert.That(TrackerProcess.ResolveCameraIndex(cameras, "USB Camera", 0), Is.EqualTo(0));
+        }
+
+        [Test]
+        public void ResolveCameraIndex_FallsBackToUniqueName()
+        {
+            // 名前が一意なら番号が古くても名前で解決すること（旧設定）
+            var cameras = new[] { "Integrated Camera", "USB Camera" };
+            Assert.That(TrackerProcess.ResolveCameraIndex(cameras, "USB Camera", -1), Is.EqualTo(1));
+            Assert.That(TrackerProcess.ResolveCameraIndex(cameras, "USB Camera", 99), Is.EqualTo(1));
+        }
+
+        [Test]
+        public void ResolveCameraIndex_DuplicateWithoutMatchingIndex_ReturnsMinusOne()
+        {
+            // 同名が複数で番号が合わないときは曖昧なので選ばない
+            var cameras = new[] { "USB Camera", "USB Camera" };
+            Assert.That(TrackerProcess.ResolveCameraIndex(cameras, "USB Camera", -1), Is.EqualTo(-1));
+            Assert.That(TrackerProcess.ResolveCameraIndex(cameras, "USB Camera", 5), Is.EqualTo(-1));
+        }
+
+        [Test]
+        public void CameraDisplayNames_AddsIndexOnlyForDuplicates()
+        {
+            Assert.That(TrackerProcess.CameraDisplayNames(new[] { "A", "B", "A" }),
+                Is.EqualTo(new[] { "A (#0)", "B", "A (#2)" }));
+        }
+
+        [Test]
         public void DescribeExitCode_ExplainsKnownCodes()
         {
             // MediaPipe 版の終了コードと Windows の異常終了コードを説明し、不明なものは unknown

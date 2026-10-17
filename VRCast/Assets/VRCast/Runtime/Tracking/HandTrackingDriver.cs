@@ -425,8 +425,8 @@ namespace VRCast.Tracking
 
         private Vector3 ToAvatar(Vector3 cameraVector)
         {
-            // カメラ基準 → アバタールート基準（鏡像設定に従う）
-            return TrackingMath.ToAvatar(cameraVector, _settings.trackingMirror);
+            // カメラ基準 → 傾き補正 → アバタールート基準（鏡像設定に従う。補正未使用なら従来どおり）
+            return TrackingMath.ToAvatar(cameraVector, _settings.trackingMirror, _settings.TrackingTiltCorrection);
         }
 
         private void Apply(ArmRig rig)

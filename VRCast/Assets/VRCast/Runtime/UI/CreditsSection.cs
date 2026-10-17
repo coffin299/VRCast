@@ -126,6 +126,13 @@ namespace VRCast.UI
                 }
             }
 
+            GuiControls.Hint(Loc.T(
+                "Claude and his merry friends",
+                "Claudeと愉快な仲間たち",
+                "Claude와 유쾌한 친구들",
+                "Claude和他快乐的伙伴们",
+                "Claude和他快樂的夥伴們"));
+
             GuiControls.EndCard();
         }
 

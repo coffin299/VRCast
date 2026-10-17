@@ -15,7 +15,8 @@ namespace VRCast.Tracking
     /// <summary>
     /// 入力元のトラッカー（MediaPipe: vrcast_tracker.exe / OpenSeeFace: facetracker.exe）を管理する。アプリ全体で 1 つ。
     /// 既定は同梱した実行ファイル（ビルドでは StreamingAssets、エディターでは Trackers）を使い、trackingEnabled の間は選択カメラで自動起動・異常終了時は再起動する。
-    /// どちらも同じ引数（一覧 "-l 1"、起動 "-c 番号 -i 127.0.0.1 -p ポート"）で扱い、カメラはデバイス名で保存して起動時に番号へ解決する。
+    /// どちらも同じ引数（一覧 "-l 1"、起動 "-c 番号 -i 127.0.0.1 -p ポート"）で扱い、
+    /// カメラはデバイス名と番号で保存して起動時に番号へ解決する（同名が複数でも番号で区別できる）。
     /// </summary>
     public class TrackerProcess : MonoBehaviour
     {
@@ -98,6 +99,7 @@ namespace VRCast.Tracking
         private NativeProcess _process;
         private int _startedPort;
         private string _startedCamera;
+        private int _startedCameraIndex = -1;
         private TrackingSource _startedSource;
         private bool _startedHands;
         private bool _startedLowLoad;
@@ -252,29 +254,119 @@ namespace VRCast.Tracking
         /// </summary>
         public static string ChooseDefaultCamera(IReadOnlyList<string> cameras)
         {
-            string fallback = string.Empty;
-            foreach (string name in cameras)
+            return ChooseDefaultCameraIndex(cameras, out string name) >= 0 ? name : string.Empty;
+        }
+
+        /// <summary>
+        /// 既定に選ぶカメラの番号（顔を映せるカメラを優先し、無ければ先頭。一覧が空・名前が無ければ -1）。
+        /// </summary>
+        public static int ChooseDefaultCameraIndex(IReadOnlyList<string> cameras, out string name)
+        {
+            name = string.Empty;
+            int fallback = -1;
+            for (int i = 0; i < cameras.Count; i++)
             {
                 // 番号の欠けた空の名前は飛ばす
-                if (string.IsNullOrEmpty(name))
+                if (string.IsNullOrEmpty(cameras[i]))
                 {
                     continue;
                 }
 
                 // 実カメラらしい最初のものを採用
-                if (!IsLikelyUnusableCamera(name))
+                if (!IsLikelyUnusableCamera(cameras[i]))
                 {
-                    return name;
+                    name = cameras[i];
+                    return i;
                 }
 
                 // 仮想カメラしか無いときのために先頭を覚えておく
-                if (fallback.Length == 0)
+                if (fallback < 0)
                 {
-                    fallback = name;
+                    fallback = i;
+                    name = cameras[i];
                 }
             }
 
             return fallback;
+        }
+
+        /// <summary>
+        /// 保存済みのカメラ名と番号を、現在の一覧の番号へ解決する（見つからなければ -1）。
+        /// </summary>
+        public static int ResolveCameraIndex(IReadOnlyList<string> cameras, string name, int index)
+        {
+            // 番号が範囲内かつ名前が一致すればそれを使う（同名カメラの区別）
+            if (index >= 0 && index < cameras.Count && cameras[index] == name)
+            {
+                return index;
+            }
+
+            // 名前が空で番号だけ範囲内なら番号を採用（欠けたスロットは空文字）
+            if (string.IsNullOrEmpty(name) && index >= 0 && index < cameras.Count
+                && !string.IsNullOrEmpty(cameras[index]))
+            {
+                return index;
+            }
+
+            // 名前が一覧に 1 件だけならその番号（旧設定・抜き差し後のフォールバック）
+            if (!string.IsNullOrEmpty(name))
+            {
+                int found = -1;
+                int count = 0;
+                for (int i = 0; i < cameras.Count; i++)
+                {
+                    if (cameras[i] != name)
+                    {
+                        continue;
+                    }
+
+                    found = i;
+                    count++;
+                    if (count > 1)
+                    {
+                        break;
+                    }
+                }
+
+                if (count == 1)
+                {
+                    return found;
+                }
+            }
+
+            return -1;
+        }
+
+        /// <summary>
+        /// 同名があるときだけ番号を添えた表示名を返す（Selector 用）。
+        /// </summary>
+        public static List<string> CameraDisplayNames(IReadOnlyList<string> cameras)
+        {
+            var labels = new List<string>(cameras.Count);
+            for (int i = 0; i < cameras.Count; i++)
+            {
+                string name = cameras[i];
+                if (string.IsNullOrEmpty(name))
+                {
+                    labels.Add($"#{i}");
+                    continue;
+                }
+
+                // 同名が他にあれば番号を添える
+                bool duplicate = false;
+                for (int j = 0; j < cameras.Count; j++)
+                {
+                    if (j != i && cameras[j] == name)
+                    {
+                        duplicate = true;
+                        break;
+                    }
+                }
+
+                labels.Add(duplicate ? $"{name} (#{i})" : name);
+            }
+
+            return labels;
         }
 
         /// <summary>
@@ -394,6 +486,7 @@ namespace VRCast.Tracking
             // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・動作・なめらかさ・（OpenSeeFace の）軽量モードが変わったら起動し直す
             bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
             bool changed = _startedPort != _settings.trackingPort || _startedCamera != _settings.trackerCamera
+                || _startedCameraIndex != _settings.trackerCameraIndex
                 || _startedSource != BundledSource || _startedHands != UsesHands()
                 || (mediaPipe
                     ? _startedMode != _settings.trackerMode || _startedSmoothing != _settings.trackingSmoothing
@@ -538,8 +631,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 保存済みのカメラ名を現在の番号へ解決
-            int camera = string.IsNullOrEmpty(_settings.trackerCamera) ? -1 : _cameras.IndexOf(_settings.trackerCamera);
+            // 保存済みのカメラ名と番号を現在の番号へ解決
+            int camera = ResolveCameraIndex(_cameras, _settings.trackerCamera, _settings.trackerCameraIndex);
             if (camera < 0)
             {
                 // 保存済みのカメラが一覧に無いときは名前も添える（抜き差しで名前が変わった等の調査用）
@@ -555,7 +648,11 @@ namespace VRCast.Tracking
             {
                 // ループバックの受信ポートへ送らせる（MediaPipe で腕・手が無効なら手の推定を止める）
                 _startedPort = _settings.trackingPort;
-                _startedCamera = _settings.trackerCamera;
+                _startedCamera = _cameras[camera];
+                _startedCameraIndex = camera;
+                // 解決できた番号・名前を設定へ書き戻す（同名の区別と、名前だけの旧設定の更新）
+                _settings.trackerCamera = _startedCamera;
+                _settings.trackerCameraIndex = camera;
                 _startedSource = BundledSource;
                 _startedHands = UsesHands();
                 _startedLowLoad = _settings.lowLoadMode;
@@ -644,7 +741,18 @@ namespace VRCast.Tracking
             // 未選択なら実カメラらしいものを既定にする（保存済みの名前は外れていても上書きしない）
             if (string.IsNullOrEmpty(_settings.trackerCamera))
             {
-                _settings.trackerCamera = ChooseDefaultCamera(_cameras);
+                int index = ChooseDefaultCameraIndex(_cameras, out string name);
+                _settings.trackerCamera = name;
+                _settings.trackerCameraIndex = index;
+            }
+            else if (_settings.trackerCameraIndex < 0)
+            {
+                // 名前だけの旧設定は、解決できるときだけ番号を補う
+                int index = ResolveCameraIndex(_cameras, _settings.trackerCamera, -1);
+                if (index >= 0)
+                {
+                    _settings.trackerCameraIndex = index;
+                }
             }
 
             IsListing = false;

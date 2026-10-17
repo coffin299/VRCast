@@ -52,10 +52,26 @@ namespace VRCast.UI
         // 表情のキャリブレーション（登録の操作と記録の進行）
         private readonly ExpressionCalibrationControls _calibration = new ExpressionCalibrationControls();
 
+        // カメラの傾き補正（任意。押してから数秒後に記録）
+        private readonly TiltCalibrationRecorder _tiltCalibration = new TiltCalibrationRecorder();
+
+        // 傾きキャリブの案内オーバーレイ（テーマが替わったら作り直す）
+        private static GUIStyle _tiltPromptStyle;
+        private static UiTheme _tiltPromptTheme;
+        private const float TiltOverlayWidth = 560f;
+        private const float TiltOverlayHeight = 150f;
+        private const float TiltOverlayTop = 40f;
+        private const int TiltPromptFontSize = 30;
+
         /// <summary>
         /// 表情のキャリブレーションの記録係（画面中央の案内の表示用）。
         /// </summary>
         public ExpressionCalibrationRecorder CalibrationRecorder => _calibration.Recorder;
+
+        /// <summary>
+        /// カメラの傾き補正の記録係（画面中央の案内の表示用）。
+        /// </summary>
+        public TiltCalibrationRecorder TiltCalibration => _tiltCalibration;
 
         public TrackingSection(
             AvatarSession session, IFaceTrackingProvider tracker, TrackerProcess process,
@@ -79,11 +95,15 @@ namespace VRCast.UI
         }
 
         /// <summary>
-        /// 毎フレーム呼ぶ（パネルを隠していても表情のキャリブレーションの記録を進める）。
+        /// 毎フレーム呼ぶ（パネルを隠していても表情・傾きのキャリブレーションの記録を進める）。
         /// </summary>
         public void Update()
         {
             _calibration.Tick(_tracker, _settings);
+            if (_tiltCalibration.Tick(_tracker, _settings, Time.unscaledDeltaTime))
+            {
+                AppBootstrap.Save();
+            }
         }
 
         public void Draw()
@@ -923,13 +943,17 @@ namespace VRCast.UI
                 _settings.trackerPath = GUILayout.TextField(_settings.trackerPath);
             }
 
-            // カメラ選択（デバイス名で保存、変更するとトラッカーが起動し直す）
-            int current = IndexOfCamera(_settings.trackerCamera);
+            // カメラ選択（デバイス名と番号で保存、変更するとトラッカーが起動し直す。同名は表示に番号を添える）
+            IReadOnlyList<string> cameras = _process.Cameras;
+            int current = TrackerProcess.ResolveCameraIndex(
+                cameras, _settings.trackerCamera, _settings.trackerCameraIndex);
             int selected = GuiControls.Selector(
-                Loc.T("Camera", "カメラ", "카메라", "相机", "相機"), _process.Cameras, current, null);
-            if (selected != current && selected >= 0)
+                Loc.T("Camera", "カメラ", "카메라", "相机", "相機"),
+                TrackerProcess.CameraDisplayNames(cameras), current, null);
+            if (selected != current && selected >= 0 && selected < cameras.Count)
             {
-                _settings.trackerCamera = _process.Cameras[selected];
+                _settings.trackerCamera = cameras[selected];
+                _settings.trackerCameraIndex = selected;
             }
 
             // 仮想カメラ・赤外線カメラでは顔が映らないため、実際の Web カメラを選ぶよう促す
@@ -964,20 +988,6 @@ namespace VRCast.UI
             GUI.enabled = true;
             GUILayout.EndHorizontal();
             GuiControls.Hint(_process.Status);
-        }
-
-        private int IndexOfCamera(string name)
-        {
-            // 一覧内の位置（見つからなければ -1）
-            for (int i = 0; i < _process.Cameras.Count; i++)
-            {
-                if (_process.Cameras[i] == name)
-                {
-                    return i;
-                }
-            }
-
-            return -1;
         }
 
         private void DrawPort()
@@ -1071,7 +1081,95 @@ namespace VRCast.UI
                     + $"  x {offset.x:F2}  y {offset.y:F2}  z {offset.z:F2}");
             }
 
+            // カメラが斜めのときだけ使う任意の補正（使わなければ従来どおり）
+            GuiControls.Hint(Loc.T(
+                "Optional: if the camera is tilted, stand straight facing it and press Align camera tilt. After 5 seconds, head, arms and the raw skeleton use the same upright reference. Clear tilt correction restores the previous behavior.",
+                "任意: カメラが斜めのときだけ、まっすぐ立ってカメラを向き「カメラの傾きを合わせる」を押してください。5 秒後に頭・腕・確認用の骨格が同じ直立の基準になります。「傾き補正を解除」で今までどおりに戻せます。",
+                "선택: 카메라가 기울어져 있을 때만 바로 서서 카메라를 보고 \"카메라 기울기 맞추기\"를 누르세요. 5초 후 머리·팔·원시 골격이 같은 바른 기준을 씁니다. \"기울기 보정 해제\"로 이전처럼 되돌립니다.",
+                "可选：仅在摄像头倾斜时，直立面向摄像头并按下“对齐摄像头倾斜”。5 秒后头部、手臂和原始骨架使用同一直立基准。用“清除倾斜校正”可恢复原样。",
+                "可選：僅在攝影機傾斜時，直立面向攝影機並按下「對齊攝影機傾斜」。5 秒後頭部、手臂和原始骨架使用同一直立基準。用「清除傾斜校正」可恢復原樣。"));
+
+            GUILayout.BeginHorizontal();
+            bool tracking = _tracker.TryGetFrame(out _);
+            // カウント中にもう一度押すとやり直す
+            GUI.enabled = tracking;
+            if (GUILayout.Button(
+                    Loc.T("Align camera tilt", "カメラの傾きを合わせる", "카메라 기울기 맞추기", "对齐摄像头倾斜", "對齊攝影機傾斜"),
+                    GuiControls.Shrinkable))
+            {
+                _tiltCalibration.Start();
+            }
+
+            GUI.enabled = _settings.HasTrackingTiltCorrection;
+            if (GuiControls.DangerButton(
+                    Loc.T("Clear tilt correction", "傾き補正を解除", "기울기 보정 해제", "清除倾斜校正", "清除傾斜校正"),
+                    GuiControls.Shrinkable))
+            {
+                _tiltCalibration.Cancel();
+                _settings.TrackingTiltCorrection = Quaternion.identity;
+                AppBootstrap.Save();
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
+
+            if (_tiltCalibration.IsRunning)
+            {
+                int seconds = Mathf.CeilToInt(_tiltCalibration.Remaining);
+                GuiControls.Hint(Loc.T(
+                    $"Stand straight. Recording in {seconds}...",
+                    $"まっすぐ立ってください。{seconds} 秒後に記録します…",
+                    $"바로 서 주세요. {seconds}초 후 기록합니다…",
+                    $"请站直。{seconds} 秒后记录…",
+                    $"請站直。{seconds} 秒後記錄…"));
+            }
+            else if (_settings.HasTrackingTiltCorrection)
+            {
+                GuiControls.Hint(Loc.T("Tilt correction is on.", "傾き補正が有効です。", "기울기 보정이 켜져 있습니다.",
+                    "倾斜校正已开启。", "傾斜校正已開啟。"));
+            }
+
             GuiControls.EndCard();
+        }
+
+        /// <summary>
+        /// 傾きキャリブのカウントダウン中なら、画面の上中央に案内を出す（screenWidth は UI の倍率で割った幅）。
+        /// </summary>
+        public static void DrawTiltOverlay(TiltCalibrationRecorder recorder, float screenWidth)
+        {
+            if (recorder == null || !recorder.IsRunning)
+            {
+                return;
+            }
+
+            UiTheme theme = UiTheme.Current;
+            if (_tiltPromptStyle == null || _tiltPromptTheme != theme)
+            {
+                _tiltPromptTheme = theme;
+                _tiltPromptStyle = new GUIStyle(theme != null ? theme.Title : GUI.skin.label)
+                {
+                    fontSize = TiltPromptFontSize,
+                    alignment = TextAnchor.MiddleCenter,
+                    wordWrap = true,
+                };
+            }
+
+            float width = Mathf.Min(TiltOverlayWidth, screenWidth - 20f);
+            var rect = new Rect((screenWidth - width) * 0.5f, TiltOverlayTop, width, TiltOverlayHeight);
+            GUILayout.BeginArea(rect, theme != null ? theme.Card : GUI.skin.box);
+            GUILayout.FlexibleSpace();
+            GUILayout.Label(Loc.T(
+                "Stand straight and face the camera",
+                "まっすぐ立ってカメラを見てください",
+                "바로 서서 카메라를 봐 주세요",
+                "请站直并面向摄像头",
+                "請站直並面向攝影機"), _tiltPromptStyle);
+            int seconds = Mathf.CeilToInt(recorder.Remaining);
+            GUILayout.Label(Loc.T($"Recording in {seconds}...", $"{seconds} 秒後に記録します…",
+                $"{seconds}초 후 기록합니다…", $"{seconds} 秒后开始记录…", $"{seconds} 秒後開始記錄…"),
+                theme != null ? theme.Centered : GUI.skin.label);
+            GUILayout.FlexibleSpace();
+            GUILayout.EndArea();
         }
 
         private void DrawDebug()
