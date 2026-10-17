@@ -728,6 +728,7 @@ OBS のウィンドウキャプチャは透過に対応していないため、�
 .
 ├── .cursor/rules/changelog.mdc   CHANGELOG の追記・バージョン更新の手順 (Cursor 用)
 ├── CHANGELOG.txt                 更新履歴 (日本語 / 英語、配布 zip に同梱)
+├── CHANGELOG-VRCastExporter.txt  書き出しツールの更新履歴 (配布 zip に同梱)
 ├── docs/                         設計ドキュメント
 │   ├── architecture.md           Runtime / Editor 分離と依存ルール
 │   ├── avatar-package.md         .vrcaster フォーマット (v0)
@@ -881,10 +882,10 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 
 - 出力先: `dist\<バージョン>\`（`.gitignore` 済み）。中の本体 zip は `VRCast-<バージョン>-win64.zip`。
   バージョンの既定は Player Settings の Version（`bundleVersion`。ビルド時に `VRCastBuild` の `AppVersion` が設定される）。
-- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
+- 中身: `VRCast\` フォルダにビルド一式 + `LICENSE.txt` / `NOTICE.txt` / `CHANGELOG.txt` / `CHANGELOG-VRCastExporter.txt` / `README.txt`（利用者向けの日英の説明、`Tools/Package/README.txt`）。
   本体と取り違えないよう、別の `VRCast-Converter\` フォルダに書き出しツール `VRCast-Converter-<package.json の version>.unitypackage` と、
   「アバターのプロジェクトにインポートする」ことをファイル名で伝える説明（`Tools/Package/Converter/` の中身をそのまま複製）、
-  書き出しツールの更新履歴 `CHANGELOG-Converter.txt`（リポジトリ直下から複製）を入れる。
+  書き出しツールの更新履歴 `CHANGELOG-VRCastExporter.txt`（リポジトリ直下から複製。本体フォルダにも同梱）を入れる。
 - セットアップ EXE: `dist\<バージョン>\VRCast-setup.exe`（版なしの固定名。中身は入れない軽い EXE。実行時に GitHub から最新の本体 zip を取得して展開）。
   Jinxxy にはこの EXE だけを置く。`Tools/Setup`（C# / .NET Framework 4.8。Visual Studio 2022 付属の C# コンパイラーでビルド。無ければ警告を出して EXE だけ作らない）。
   取得先はアプリの自動更新と同じ `version.json`（無ければ GitHub Releases の latest）。選んだフォルダ（既定は EXE と同じ場所に作る `VRCast`）へ
@@ -902,7 +903,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
   書き出しツール（`Packages/com.vrcast.converter/package.json` の `version`）はアプリと別版で、converter に変更があるときだけ上げる（手順は `.cursor/rules/changelog.mdc`）。
 - 利用者に見える変更（バグ修正・機能追加など）は `CHANGELOG.txt` の先頭「未リリース / Unreleased」に日本語・英語で追記し、
   リリース時にバージョンと日付へ書き換える（手順は `.cursor/rules/changelog.mdc`）。
-  書き出しツールだけの変更は `CHANGELOG-Converter.txt` に追記する。
+  書き出しツールだけの変更は `CHANGELOG-VRCastExporter.txt` に追記する。
 - 配布 zip は GitHub の Release `v<バージョン>` に**名前を変えずに**添付して公開する
   （自動更新は `https://github.com/coffin299/VRCast/releases/download/v<バージョン>/VRCast-<バージョン>-win64.zip` を取りに行く）。
 - zip の公開を確かめてから、`webpage` ブランチの `version.json` を `package.bat` が作る `dist\<バージョン>\version.json`（`update` に zip の URL・大きさ・SHA-256）で置き換えて公開する。

@@ -36,7 +36,7 @@ MA で付けた衣装・小物は、アバターのボーンに付け替えて�
 https://coffin299.github.io/VRCast/help/
 
 ■ 更新履歴
-CHANGELOG.txt をご覧ください。
+CHANGELOG.txt（アプリ）と CHANGELOG-VRCastExporter.txt（書き出しツール）をご覧ください。
 
 ■ ご注意
 - 非公式ツールです。VRChat Inc. とは関係ありません。
@@ -93,7 +93,7 @@ To remove it, delete the Assets/VRCast/Converter folder.
 https://coffin299.github.io/VRCast/help/
 
 - Changelog
-See CHANGELOG.txt.
+See CHANGELOG.txt (app) and CHANGELOG-VRCastExporter.txt (exporter).
 
 - Notes
 - This is an unofficial tool and is not affiliated with VRChat Inc.

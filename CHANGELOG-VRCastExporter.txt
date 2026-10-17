@@ -1,8 +1,8 @@
-VRCast Converter（書き出しツール / unitypackage）更新履歴 / Changelog
+VRCast Exporter（書き出しツール / unitypackage）更新履歴 / Changelog
 ======================================================================
 
 `Packages/com.vrcast.converter`（アバターの Unity プロジェクトに入れる書き出しツール）の変更点です。
-本体アプリの履歴は `CHANGELOG.txt` を見てください。
+本体アプリの履歴は `CHANGELOG.txt` を見てください。配布 zip の `VRCast\` と `VRCast-Converter\` の両方に同梱されます。
 
 新しいものが上です。各節は、その変更が載ったときのアプリ版です（converter の `package.json` の版は、
 このファイルに追記するときだけ上げます。アプリだけのリリースでは触りません）。
@@ -14,10 +14,12 @@ Newest first. Section headers are the app version that shipped the change (raise
 [日本語]
 - 書き出したアバターがアプリで砂嵐やマゼンタになることがある問題を修正（書き出し時に、使っているシェーダーのバリエーションを集め同梱する。既に書き出したアバターは書き出し直しが必要）
 - 書き出しプレビューが Unity プロジェクト側のシェーダーで表示されているとき、アプリと見た目が違うことがある旨を警告するように追加
+- 配布 zip の本体フォルダにも更新履歴を同梱するように追加
 
 [English]
 - Fixed exported avatars sometimes showing noise or pink in the app (collect and include used shader variants at export; re-export existing avatars)
 - Added a warning when the export preview may be using shaders from the Unity project so the app can look different
+- Added including this changelog in the main folder of the distribution zip
 
 ■ 2.2.1 (2026-10-15)
 

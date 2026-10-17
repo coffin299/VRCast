@@ -37,10 +37,10 @@ alwaysApply: true
    `Packages/com.vrcast.converter/` 配下に利用者向けの変更があるときだけ上げる。
    アプリだけのリリースでは **触らない**（例: アプリ 3.0.1 でも converter は 3.0.0 のまま）。
    上げるときもアプリと同じく、修正なら z・機能なら y・互換破壊なら x。
-   converter に利用者向けの変更をしたら、同じ作業の中で `CHANGELOG-Converter.txt` にも追記する
+   converter に利用者向けの変更をしたら、同じ作業の中で `CHANGELOG-VRCastExporter.txt` にも追記する
    （形式は本体の `CHANGELOG.txt` と同じ。節の見出しはその変更が載るときのアプリ版でよい）。
-   本体の `CHANGELOG.txt` にも短い案内を書いてよいが、書き出しツールの詳細は `CHANGELOG-Converter.txt` 側に書く。
-4. 配布物は `Tools\Package\release.bat`（または `package.bat`。`CHANGELOG.txt` は本体 zip に自動で同梱される）。
+   本体の `CHANGELOG.txt` にも短い案内を書いてよいが、書き出しツールの詳細は `CHANGELOG-VRCastExporter.txt` 側に書く。
+4. 配布物は `Tools\Package\release.bat`（または `package.bat`。`CHANGELOG.txt` と `CHANGELOG-VRCastExporter.txt` は本体 zip に自動で同梱される）。
  出力先は `dist\<アプリ版>\`（版ごとにフォルダ分け）。中身は `VRCast-<アプリ版>-win64.zip`（GitHub 用の本体）、
  自動更新用の `version.json`（zip の大きさと SHA-256 入り）、
  Jinxxy 向けの `VRCast-setup.exe`（実行時に GitHub から最新 zip を取得。毎回同じ名前で差し替える）、

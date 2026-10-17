@@ -7,10 +7,12 @@ Newest first. Each version is written in Japanese, then English.
 ■ 3.0.2 (2026-10-18)
 
 [日本語]
-- 書き出しツール: 書き出したアバターがアプリで砂嵐やマゼンタになることがある問題を修正（必要なシェーダーのバリエーションを同梱。詳しくは CHANGELOG-Converter.txt）
+- 書き出しツール: 書き出したアバターがアプリで砂嵐やマゼンタになることがある問題を修正（必要なシェーダーのバリエーションを同梱。詳しくは書き出しツールの更新履歴）
+- 配布 zip に書き出しツールの更新履歴を同梱するように追加
 
 [English]
-- Converter: Fixed exported avatars sometimes showing noise or pink in the app (includes needed shader variants; see CHANGELOG-Converter.txt)
+- Converter: Fixed exported avatars sometimes showing noise or pink in the app (includes needed shader variants; see the exporter changelog)
+- Added the exporter changelog to the distribution zip
 
 ■ 3.0.1 (2026-10-17)
 
