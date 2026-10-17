@@ -58,6 +58,8 @@ namespace VRCast.Converter.Editor
         [NonSerialized] private int[] _armMuscles;
         [NonSerialized] private ConstraintSet _constraintSet;
         [NonSerialized] private List<ConstraintEvaluator> _constraints;
+        // Editor がプロジェクト側のシェーダーに差し替えたとき、プレビューだけではアプリの見た目を保証できない旨
+        [NonSerialized] private string _shaderRemapNote;
 
         public bool HasResult => _hasResult;
 
@@ -215,6 +217,11 @@ namespace VRCast.Converter.Editor
 
             EditorGUILayout.LabelField(T("Drag to rotate, scroll to zoom.", "ドラッグで回転、ホイールで拡大縮小。",
                 "드래그로 회전, 휠로 확대·축소.", "拖动旋转，滚轮缩放。", "拖曳旋轉，滾輪縮放。"), EditorStyles.miniLabel);
+            if (!string.IsNullOrEmpty(_shaderRemapNote))
+            {
+                EditorGUILayout.HelpBox(_shaderRemapNote, MessageType.Info);
+            }
+
             EditorGUILayout.HelpBox(T(
                 "PhysBones (hair, skirts and other swaying parts) do not move in this preview; they stay in their resting shape. " +
                 "They move in the VRCast app.",
@@ -388,6 +395,66 @@ namespace VRCast.Converter.Editor
             EvaluateConstraints();
             _bounds = CalculateBounds(_instance);
             ResetView();
+            _shaderRemapNote = DetectProjectShaderRemap(_instance);
+        }
+
+        /// <summary>
+        /// Editor が AssetBundle のシェーダーをプロジェクト内の同名シェーダーへ差し替えていないか調べる。
+        /// 差し替わっているとプレビューは綺麗でも、アプリでは bundle 内の（削られた）バリアントで砂嵐やマゼンタになり得る。
+        /// </summary>
+        private static string DetectProjectShaderRemap(GameObject root)
+        {
+            var names = new SortedSet<string>(StringComparer.Ordinal);
+            foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
+            {
+                Material[] shared = renderer.sharedMaterials;
+                if (shared == null)
+                {
+                    continue;
+                }
+
+                foreach (Material material in shared)
+                {
+                    if (material == null || material.shader == null)
+                    {
+                        continue;
+                    }
+
+                    string path = AssetDatabase.GetAssetPath(material.shader);
+                    if (string.IsNullOrEmpty(path))
+                    {
+                        continue;
+                    }
+
+                    // プロジェクト／パッケージ由来なら Editor が差し替えた可能性が高い
+                    if (path.StartsWith("Assets/", StringComparison.OrdinalIgnoreCase)
+                        || path.StartsWith("Packages/", StringComparison.OrdinalIgnoreCase))
+                    {
+                        names.Add(material.shader.name);
+                    }
+                }
+            }
+
+            if (names.Count == 0)
+            {
+                return null;
+            }
+
+            string list = string.Join(", ", names);
+            return T(
+                "This preview may use shaders from your Unity project (" + list + "), not only those inside the exported file. "
+                + "The VRCast app always uses the shaders in the file. If the app shows noise or pink while this preview looks fine, "
+                + "re-export with the latest converter (shader variants are included so the app keeps the look).",
+                "このプレビューは、書き出したファイル内だけでなく、Unity プロジェクト側のシェーダー（" + list + "）に差し替わって表示されていることがあります。"
+                + "VRCast のアプリはファイル内のシェーダーだけを使います。プレビューは普通なのにアプリだけ砂嵐やマゼンタになるときは、"
+                + "最新の書き出しツールで書き出し直してください（シェーダーバリアントを同梱し、アプリでも見た目が保たれるようにしています）。",
+                "이 미리보기는 내보낸 파일만이 아니라 Unity 프로젝트의 셰이더(" + list + ")로 바뀌어 표시될 수 있습니다. "
+                + "VRCast 앱은 파일 안의 셰이더만 씁니다. 미리보기는 정상인데 앱만 노이즈나 마젠타로 보이면 "
+                + "최신 내보내기 도구로 다시 내보내세요(셰이더 배리언트를 포함해 앱에서도 모습이 유지되도록 합니다).",
+                "此预览可能使用 Unity 项目中的着色器（" + list + "），而不只是导出文件内的。VRCast 应用始终使用文件内的着色器。"
+                + "若预览正常而应用出现噪点或品红，请用最新导出工具重新导出（已包含着色器变体以在应用中保持外观）。",
+                "此預覽可能使用 Unity 專案中的著色器（" + list + "），而不只是匯出檔案內的。VRCast 應用程式一律使用檔案內的著色器。"
+                + "若預覽正常而應用出現雜訊或洋紅，請用最新匯出工具重新匯出（已包含著色器變體以在應用中保持外觀）。");
         }
 
         private static ConstraintSet ReadConstraints(ZipArchive zip)
@@ -577,6 +644,8 @@ namespace VRCast.Converter.Editor
             {
                 _previewError = null;
             }
+
+            _shaderRemapNote = null;
         }
     }
 }

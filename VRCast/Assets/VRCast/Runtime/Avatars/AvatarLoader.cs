@@ -32,6 +32,21 @@ namespace VRCast.Avatars
                 yield break;
             }
 
+            // 書き出し時に同梱したシェーダーバリアントを先に温めてから Prefab を読む
+            // （無い古い .vrcaster では何も起きない）
+            AssetBundleRequest variantsRequest = bundle.LoadAllAssetsAsync(typeof(ShaderVariantCollection));
+            yield return variantsRequest;
+            if (variantsRequest.allAssets != null)
+            {
+                foreach (Object asset in variantsRequest.allAssets)
+                {
+                    if (asset is ShaderVariantCollection variants)
+                    {
+                        variants.WarmUp();
+                    }
+                }
+            }
+
             // 既定パスの Prefab を読み込む
             AssetBundleRequest assetRequest = bundle.LoadAssetAsync<GameObject>(AvatarPackageLayout.PrefabAssetPath);
             yield return assetRequest;

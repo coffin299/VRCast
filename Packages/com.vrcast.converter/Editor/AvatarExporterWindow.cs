@@ -1078,7 +1078,12 @@ namespace VRCast.Converter.Editor
                 $"{inactive}: {inactiveCount}, {fxToggles}: {report.FxToggleCount}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +
                 $"{missing}: {report.Strip.RemovedMissingScripts}, " +
-                $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}";
+                $"{editorOnly}: {report.Strip.RemovedEditorOnlyObjects}" +
+                (report.ShaderVariants > 0
+                    ? "\n" + L("Shader variants", "シェーダーバリアント", "셰이더 배리언트", "着色器变体", "著色器變體")
+                      + $": {report.ShaderVariants} ({report.ShaderVariantShaders} "
+                      + L("shaders", "種", "종", "种", "種") + ")"
+                    : string.Empty);
         }
     }
 }

@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 3.0.2 (2026-10-18)
+
+[日本語]
+- 書き出しツール: 書き出したアバターがアプリで砂嵐やマゼンタになることがある問題を修正（必要なシェーダーのバリエーションを同梱。詳しくは CHANGELOG-Converter.txt）
+
+[English]
+- Converter: Fixed exported avatars sometimes showing noise or pink in the app (includes needed shader variants; see CHANGELOG-Converter.txt)
+
 ■ 3.0.1 (2026-10-17)
 
 [日本語]

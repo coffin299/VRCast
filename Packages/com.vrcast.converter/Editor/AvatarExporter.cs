@@ -67,6 +67,8 @@ namespace VRCast.Converter.Editor
             public int FxToggleCount;
             public int MissingBoneRenderers;
             public int ReadableMeshes;
+            public int ShaderVariants;
+            public int ShaderVariantShaders;
             public ComponentStripper.Result Strip;
         }
 
@@ -369,10 +371,22 @@ namespace VRCast.Converter.Editor
                     throw new InvalidOperationException("Failed to save temporary prefab.");
                 }
 
+                // シェーダーバリアントを集め、bundle ビルド時に削られないようにする
+                // （Editor プレビューはプロジェクト側のシェーダーに差し替わることがあり、アプリだけ砂嵐／マゼンタになるのを防ぐ）
+                ShaderVariantCollector.Result variants = ShaderVariantCollector.Create(clone, tempFolder);
+                report.ShaderVariants = variants.Variants;
+                report.ShaderVariantShaders = variants.Shaders;
+                if (variants.Variants > 0)
+                {
+                    ExportLog.Info(
+                        $"Included {variants.Variants} shader variant(s) from {variants.Shaders} shader(s) so the app keeps the look.",
+                        $"シェーダー {variants.Shaders} 種・バリアント {variants.Variants} 件を同梱し、アプリでも見た目が保たれるようにしました。");
+                }
+
                 yield return ExportJob.Step.BuildingBundle;
 
-                // Prefab と依存アセット（Mesh / Material / Shader / Texture）を bundle 化
-                string bundlePath = BuildBundle(bundleDir);
+                // Prefab・シェーダーバリアントと依存アセット（Mesh / Material / Shader / Texture）を bundle 化
+                string bundlePath = BuildBundle(bundleDir, variants.AssetPath);
 
                 yield return ExportJob.Step.Writing;
 
@@ -565,18 +579,25 @@ namespace VRCast.Converter.Editor
             Debug.Log("[VRCast][Exporter][FaceEmo]\n" + string.Join("\n", lines));
         }
 
-        private static string BuildBundle(string bundleDir)
+        private static string BuildBundle(string bundleDir, string shaderVariantPath)
         {
             // 出力先を作成
             Directory.CreateDirectory(bundleDir);
 
-            // 一時 Prefab だけを明示指定して bundle を作る（プロジェクト内の bundle 名設定は無視される）
+            // Prefab と（あれば）ShaderVariantCollection を明示指定して bundle を作る
+            // （プロジェクト内の bundle 名設定は無視される。SVC を同じ bundle に入れるとバリアントが残りやすい）
+            var assets = new List<string> { AvatarPackageLayout.PrefabAssetPath };
+            if (!string.IsNullOrEmpty(shaderVariantPath))
+            {
+                assets.Add(shaderVariantPath);
+            }
+
             var builds = new[]
             {
                 new AssetBundleBuild
                 {
                     assetBundleName = AvatarPackageLayout.BundleEntry,
-                    assetNames = new[] { AvatarPackageLayout.PrefabAssetPath },
+                    assetNames = assets.ToArray(),
                 },
             };
 
