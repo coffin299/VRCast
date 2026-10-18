@@ -9,20 +9,14 @@ VRCast Converter（書き出しツール / unitypackage）更新履歴 / Changel
 Newest first. Section headers are the app version that shipped the change (raise
 `Packages/com.vrcast.converter/package.json` only when this file gets new entries).
 
-■ 未リリース / Unreleased
-
-[日本語]
-- 書き出したアバターがアプリで砂嵐になることがある問題を修正（書き出し中だけ Optimize Mesh Data を OFF にし、lilToon 等が使う UV が削られないようにする。既に書き出したアバターは書き出し直しが必要）
-
-[English]
-- Fixed exported avatars sometimes showing noise in the app (temporarily disable Optimize Mesh Data during export so UVs used by lilToon etc. are kept; re-export existing avatars)
-
 ■ 3.0.4 (2026-10-18)
 
 [日本語]
+- 書き出したアバターがアプリで砂嵐になることがある問題を修正（書き出し中だけ Optimize Mesh Data を OFF にし、lilToon 等が使う UV が削られないようにする。既に書き出したアバターは書き出し直しが必要）
 - 書き出したアバターがアプリで砂嵐やマゼンタになることがある問題をさらに修正（ライトマップ／フォグ／インスタンス用のバリエーションが削られないようにし、ライティング向けのキーワードも集める。既に書き出したアバターは書き出し直しが必要）
 
 [English]
+- Fixed exported avatars sometimes showing noise in the app (temporarily disable Optimize Mesh Data during export so UVs used by lilToon etc. are kept; re-export existing avatars)
 - Further fixed exported avatars sometimes showing noise or pink in the app (keep lightmap/fog/instancing variants and collect lighting keywords; re-export existing avatars)
 
 ■ 3.0.2 (2026-10-18)
