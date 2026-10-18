@@ -1,4 +1,4 @@
-VRCast Exporter（書き出しツール / unitypackage）更新履歴 / Changelog
+VRCast Converter（書き出しツール / unitypackage）更新履歴 / Changelog
 ======================================================================
 
 `Packages/com.vrcast.converter`（アバターの Unity プロジェクトに入れる書き出しツール）の変更点です。
