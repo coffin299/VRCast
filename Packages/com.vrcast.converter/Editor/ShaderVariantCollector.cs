@@ -15,9 +15,36 @@ namespace VRCast.Converter.Editor
         // 一時フォルダに保存するアセット名（Prefab と同じ bundle に入れる）
         public const string AssetFileName = "shader_variants.shadervariants";
 
+        // Built-in RP でアプリ側のライティングが使うことが多いキーワード（マテリアルのキーワードに足して候補にする）
+        // 全部の直積は爆発するので、よく使う組み合わせだけを重ねる
+        private static readonly string[][] BuiltinOverlays =
+        {
+            Array.Empty<string>(),
+            new[] { "DIRECTIONAL" },
+            new[] { "DIRECTIONAL", "LIGHTPROBE_SH" },
+            new[] { "DIRECTIONAL", "SHADOWS_SCREEN" },
+            new[] { "DIRECTIONAL", "SHADOWS_SCREEN", "LIGHTPROBE_SH" },
+            new[] { "DIRECTIONAL", "VERTEXLIGHT_ON" },
+            new[] { "DIRECTIONAL", "LIGHTPROBE_SH", "VERTEXLIGHT_ON" },
+            new[] { "POINT" },
+            new[] { "POINT", "SHADOWS_CUBE" },
+            new[] { "SPOT" },
+            new[] { "SPOT", "SHADOWS_DEPTH" },
+            new[] { "FOG_LINEAR" },
+            new[] { "FOG_EXP" },
+            new[] { "FOG_EXP2" },
+            new[] { "DIRECTIONAL", "FOG_LINEAR" },
+            new[] { "DIRECTIONAL", "LIGHTPROBE_SH", "FOG_LINEAR" },
+            new[] { "DIRECTIONAL", "SHADOWS_SCREEN", "LIGHTPROBE_SH", "FOG_LINEAR" },
+            new[] { "INSTANCING_ON" },
+            new[] { "DIRECTIONAL", "INSTANCING_ON" },
+            new[] { "DIRECTIONAL", "LIGHTPROBE_SH", "INSTANCING_ON" },
+        };
+
         public struct Result
         {
             public string AssetPath;
+            public string[] ShaderAssetPaths;
             public int Materials;
             public int Shaders;
             public int Variants;
@@ -31,6 +58,7 @@ namespace VRCast.Converter.Editor
         {
             var collection = new ShaderVariantCollection();
             var shaders = new HashSet<Shader>();
+            var shaderPaths = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
             int materials = 0;
 
             foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
@@ -50,6 +78,12 @@ namespace VRCast.Converter.Editor
 
                     materials++;
                     shaders.Add(material.shader);
+                    string shaderPath = AssetDatabase.GetAssetPath(material.shader);
+                    if (!string.IsNullOrEmpty(shaderPath))
+                    {
+                        shaderPaths.Add(shaderPath);
+                    }
+
                     AddMaterialVariants(collection, material);
                 }
             }
@@ -64,6 +98,7 @@ namespace VRCast.Converter.Editor
             return new Result
             {
                 AssetPath = path,
+                ShaderAssetPaths = new List<string>(shaderPaths).ToArray(),
                 Materials = materials,
                 Shaders = shaders.Count,
                 Variants = collection.variantCount,
@@ -73,15 +108,86 @@ namespace VRCast.Converter.Editor
         private static void AddMaterialVariants(ShaderVariantCollection collection, Material material)
         {
             Shader shader = material.shader;
-            string[] keywords = material.shaderKeywords ?? Array.Empty<string>();
+            string[] baseKeywords = CollectKeywords(material);
 
-            // マテリアルのキーワード付きと、キーワード無しの両方を候補にする
-            // （Pass によっては片方だけが有効）
-            TryAddAllPasses(collection, shader, keywords);
-            if (keywords.Length > 0)
+            // マテリアルのキーワード＋ライティング／フォグ／インスタンスのよく使う重ね合わせを候補にする
+            foreach (string[] overlay in BuiltinOverlays)
+            {
+                string[] keywords = MergeKeywords(baseKeywords, overlay);
+                TryAddAllPasses(collection, shader, keywords);
+            }
+
+            // キーワード無しも残す（Pass によってはこちらだけが有効）
+            if (baseKeywords.Length > 0)
             {
                 TryAddAllPasses(collection, shader, Array.Empty<string>());
             }
+        }
+
+        private static string[] CollectKeywords(Material material)
+        {
+            var names = new SortedSet<string>(StringComparer.Ordinal);
+            string[] legacy = material.shaderKeywords;
+            if (legacy != null)
+            {
+                foreach (string keyword in legacy)
+                {
+                    if (!string.IsNullOrEmpty(keyword))
+                    {
+                        names.Add(keyword);
+                    }
+                }
+            }
+
+            // LocalKeyword（lilToon 等）も拾う。shaderKeywords と重複してもよい
+            LocalKeyword[] enabled = material.enabledKeywords;
+            if (enabled != null)
+            {
+                foreach (LocalKeyword keyword in enabled)
+                {
+                    if (!string.IsNullOrEmpty(keyword.name))
+                    {
+                        names.Add(keyword.name);
+                    }
+                }
+            }
+
+            if (material.enableInstancing)
+            {
+                names.Add("INSTANCING_ON");
+            }
+
+            if (names.Count == 0)
+            {
+                return Array.Empty<string>();
+            }
+
+            var result = new string[names.Count];
+            names.CopyTo(result);
+            return result;
+        }
+
+        private static string[] MergeKeywords(string[] baseKeywords, string[] overlay)
+        {
+            if (overlay == null || overlay.Length == 0)
+            {
+                return baseKeywords;
+            }
+
+            if (baseKeywords == null || baseKeywords.Length == 0)
+            {
+                return overlay;
+            }
+
+            var names = new SortedSet<string>(baseKeywords, StringComparer.Ordinal);
+            foreach (string keyword in overlay)
+            {
+                names.Add(keyword);
+            }
+
+            var result = new string[names.Count];
+            names.CopyTo(result);
+            return result;
         }
 
         private static void TryAddAllPasses(ShaderVariantCollection collection, Shader shader, string[] keywords)

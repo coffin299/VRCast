@@ -385,8 +385,8 @@ namespace VRCast.Converter.Editor
 
                 yield return ExportJob.Step.BuildingBundle;
 
-                // Prefab・シェーダーバリアントと依存アセット（Mesh / Material / Shader / Texture）を bundle 化
-                string bundlePath = BuildBundle(bundleDir, variants.AssetPath);
+                // Prefab・シェーダーバリアント・シェーダー本体と依存アセット（Mesh / Material / Texture）を bundle 化
+                string bundlePath = BuildBundle(bundleDir, variants.AssetPath, variants.ShaderAssetPaths);
 
                 yield return ExportJob.Step.Writing;
 
@@ -579,17 +579,29 @@ namespace VRCast.Converter.Editor
             Debug.Log("[VRCast][Exporter][FaceEmo]\n" + string.Join("\n", lines));
         }
 
-        private static string BuildBundle(string bundleDir, string shaderVariantPath)
+        private static string BuildBundle(
+            string bundleDir, string shaderVariantPath, IReadOnlyList<string> shaderAssetPaths)
         {
             // 出力先を作成
             Directory.CreateDirectory(bundleDir);
 
-            // Prefab と（あれば）ShaderVariantCollection を明示指定して bundle を作る
-            // （プロジェクト内の bundle 名設定は無視される。SVC を同じ bundle に入れるとバリアントが残りやすい）
+            // Prefab・ShaderVariantCollection・シェーダー本体を同じ bundle に明示指定する
+            // （依存だけで入れるとバリアントが削られやすく、アプリだけ砂嵐／マゼンタになる）
             var assets = new List<string> { AvatarPackageLayout.PrefabAssetPath };
             if (!string.IsNullOrEmpty(shaderVariantPath))
             {
                 assets.Add(shaderVariantPath);
+            }
+
+            if (shaderAssetPaths != null)
+            {
+                foreach (string shaderPath in shaderAssetPaths)
+                {
+                    if (!string.IsNullOrEmpty(shaderPath) && !assets.Contains(shaderPath))
+                    {
+                        assets.Add(shaderPath);
+                    }
+                }
             }
 
             var builds = new[]
@@ -602,9 +614,15 @@ namespace VRCast.Converter.Editor
             };
 
             // LZ4 圧縮で部分読込を可能にし、エラーは厳格に扱う
+            // 書き出し中だけライトマップ／フォグ／インスタンスの削り込みを緩め、アプリ側のライティングでも使えるようにする
             const BuildAssetBundleOptions options =
                 BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.StrictMode;
-            AssetBundleManifest manifest = BuildPipeline.BuildAssetBundles(bundleDir, builds, options, BundleTarget);
+            AssetBundleManifest manifest;
+            using (new ShaderStrippingScope())
+            {
+                manifest = BuildPipeline.BuildAssetBundles(bundleDir, builds, options, BundleTarget);
+            }
+
             if (manifest == null)
             {
                 throw new InvalidOperationException("AssetBundle build failed. See Console for details.");
