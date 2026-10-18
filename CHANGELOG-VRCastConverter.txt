@@ -9,7 +9,7 @@ VRCast Converter（書き出しツール / unitypackage）更新履歴 / Changel
 Newest first. Section headers are the app version that shipped the change (raise
 `Packages/com.vrcast.converter/package.json` only when this file gets new entries).
 
-■ 未リリース / Unreleased
+■ 3.0.4 (2026-10-18)
 
 [日本語]
 - 書き出したアバターがアプリで砂嵐やマゼンタになることがある問題をさらに修正（ライトマップ／フォグ／インスタンス用のバリエーションが削られないようにし、ライティング向けのキーワードも集める。既に書き出したアバターは書き出し直しが必要）

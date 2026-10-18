@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 3.0.4 (2026-10-18)
 
 [日本語]
 - 書き出しツール: 書き出したアバターがアプリで砂嵐やマゼンタになることがある問題をさらに修正（詳しくは書き出しツールの更新履歴）
