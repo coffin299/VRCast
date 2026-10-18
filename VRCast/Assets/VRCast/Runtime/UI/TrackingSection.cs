@@ -15,6 +15,7 @@ namespace VRCast.UI
     {
         private readonly AvatarComponentCache _avatar;
         private readonly IFaceTrackingProvider _tracker;
+        private readonly IBodyTrackingProvider _body;
         private readonly TrackerProcess _process;
         private readonly TrackingSkeletonView _skeleton;
         private readonly AppSettings _settings;
@@ -79,6 +80,8 @@ namespace VRCast.UI
         {
             _avatar = new AvatarComponentCache(session);
             _tracker = tracker;
+            // 傾きキャリブは両肩が取れるとき体を優先する（顔プロバイダが体も実装している）
+            _body = tracker as IBodyTrackingProvider;
             _process = process;
             _skeleton = skeleton;
             _settings = settings;
@@ -100,7 +103,7 @@ namespace VRCast.UI
         public void Update()
         {
             _calibration.Tick(_tracker, _settings);
-            if (_tiltCalibration.Tick(_tracker, _settings, Time.unscaledDeltaTime))
+            if (_tiltCalibration.Tick(_tracker, _body, _settings, Time.unscaledDeltaTime))
             {
                 AppBootstrap.Save();
             }
@@ -1081,16 +1084,19 @@ namespace VRCast.UI
                     + $"  x {offset.x:F2}  y {offset.y:F2}  z {offset.z:F2}");
             }
 
-            // カメラが斜めのときだけ使う任意の補正（使わなければ従来どおり）
+            // カメラが斜めのときだけ使う任意の補正（使わなければ従来どおり。両肩が見えると背骨から取る）
             GuiControls.Hint(Loc.T(
-                "Optional: if the camera is tilted, stand straight facing it and press Align camera tilt. After 5 seconds, head, arms and the raw skeleton use the same upright reference. Clear tilt correction restores the previous behavior.",
-                "任意: カメラが斜めのときだけ、まっすぐ立ってカメラを向き「カメラの傾きを合わせる」を押してください。5 秒後に頭・腕・確認用の骨格が同じ直立の基準になります。「傾き補正を解除」で今までどおりに戻せます。",
-                "선택: 카메라가 기울어져 있을 때만 바로 서서 카메라를 보고 \"카메라 기울기 맞추기\"를 누르세요. 5초 후 머리·팔·원시 골격이 같은 바른 기준을 씁니다. \"기울기 보정 해제\"로 이전처럼 되돌립니다.",
-                "可选：仅在摄像头倾斜时，直立面向摄像头并按下“对齐摄像头倾斜”。5 秒后头部、手臂和原始骨架使用同一直立基准。用“清除倾斜校正”可恢复原样。",
-                "可選：僅在攝影機傾斜時，直立面向攝影機並按下「對齊攝影機傾斜」。5 秒後頭部、手臂和原始骨架使用同一直立基準。用「清除傾斜校正」可恢復原樣。"));
+                "Optional: if the camera is tilted, stand straight with both shoulders visible and press Align camera tilt. After 5 seconds, head, arms and the raw skeleton use the same upright reference (from your spine when the body is tracked). Clear tilt correction restores the previous behavior.",
+                "任意: カメラが斜めのときだけ、両肩が見えるようまっすぐ立って「カメラの傾きを合わせる」を押してください。5 秒後に頭・腕・確認用の骨格が同じ直立の基準になります（体が取れているときは背骨から合わせます）。「傾き補正を解除」で今までどおりに戻せます。",
+                "선택: 카메라가 기울어져 있을 때만 양어깨가 보이게 바로 서서 \"카메라 기울기 맞추기\"를 누르세요. 5초 후 머리·팔·원시 골격이 같은 바른 기준을 씁니다 (몸이 잡히면 척추 기준). \"기울기 보정 해제\"로 이전처럼 되돌립니다.",
+                "可选：仅在摄像头倾斜时，直立并露出双肩后按下“对齐摄像头倾斜”。5 秒后头部、手臂和原始骨架使用同一直立基准（能追踪身体时按脊柱对齐）。用“清除倾斜校正”可恢复原样。",
+                "可選：僅在攝影機傾斜時，直立並露出雙肩後按下「對齊攝影機傾斜」。5 秒後頭部、手臂和原始骨架使用同一直立基準（能追蹤身體時按脊椎對齊）。用「清除傾斜校正」可恢復原樣。"));
 
             GUILayout.BeginHorizontal();
-            bool tracking = _tracker.TryGetFrame(out _);
+            // 体か顔のどちらかが取れていれば開始できる
+            bool tracking = (_body != null && _body.TryGetBody(out BodyTrackingFrame bodyFrame)
+                    && bodyFrame.Left.HasShoulder && bodyFrame.Right.HasShoulder)
+                || _tracker.TryGetFrame(out _);
             // カウント中にもう一度押すとやり直す
             GUI.enabled = tracking;
             if (GUILayout.Button(
@@ -1170,11 +1176,11 @@ namespace VRCast.UI
             GUILayout.BeginArea(rect, theme != null ? theme.Card : GUI.skin.box);
             GUILayout.FlexibleSpace();
             GUILayout.Label(Loc.T(
-                "Stand straight and face the camera",
-                "まっすぐ立ってカメラを見てください",
-                "바로 서서 카메라를 봐 주세요",
-                "请站直并面向摄像头",
-                "請站直並面向攝影機"), _tiltPromptStyle);
+                "Stand straight — both shoulders visible",
+                "まっすぐ立ってください（両肩が見えるように）",
+                "바로 서 주세요 (양어깨가 보이게)",
+                "请站直（露出双肩）",
+                "請站直（露出雙肩）"), _tiltPromptStyle);
             int seconds = Mathf.CeilToInt(recorder.Remaining);
             GUILayout.Label(Loc.T($"Recording in {seconds}...", $"{seconds} 秒後に記録します…",
                 $"{seconds}초 후 기록합니다…", $"{seconds} 秒后开始记录…", $"{seconds} 秒後開始記錄…"),

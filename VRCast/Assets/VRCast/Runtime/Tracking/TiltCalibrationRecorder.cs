@@ -4,7 +4,8 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// カメラの傾き補正のカウントダウン記録。押してから数秒後に、そのときの頭の向きの逆を設定へ保存する。
+    /// カメラの傾き補正のカウントダウン記録。押してから数秒後に、両肩と背骨（なければ頭の向き）から補正を保存する。
+    /// MediaPipe の顔の行列は正面でも、体の world 座標だけカメラの俯角で傾くことがあるため、体を優先する。
     /// </summary>
     public sealed class TiltCalibrationRecorder
     {
@@ -12,6 +13,9 @@ namespace VRCast.Tracking
         /// ボタンを押してから記録するまでの秒数。
         /// </summary>
         public const float DelaySeconds = 5f;
+
+        // 背骨がこれより短い（m）ときは体から補正できない
+        private const float MinSpineLength = 0.05f;
 
         private float _remaining = -1f;
 
@@ -42,9 +46,10 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// 毎フレーム進める。時間切れで頭の向きから補正を保存したら true。
+        /// 毎フレーム進める。時間切れで補正を保存したら true。
         /// </summary>
-        public bool Tick(IFaceTrackingProvider tracker, AppSettings settings, float deltaTime)
+        public bool Tick(
+            IFaceTrackingProvider face, IBodyTrackingProvider body, AppSettings settings, float deltaTime)
         {
             if (!IsRunning)
             {
@@ -58,15 +63,60 @@ namespace VRCast.Tracking
             }
 
             _remaining = -1f;
-
-            // 顔が取れなければ補正しない（もう一度押してもらう）
-            if (tracker == null || settings == null || !tracker.TryGetFrame(out FaceTrackingFrame face))
+            if (settings == null)
             {
                 return false;
             }
 
-            // まっすぐ立ったときの頭の向きを正面のカメラ空間へ直す回転
-            settings.TrackingTiltCorrection = Quaternion.Inverse(face.HeadRotation);
+            // 体（両肩）が取れていれば背骨を直立にする補正を優先（顔だけの補正だと 0° のまま残ることがある）
+            if (TryCorrectionFromBody(body, out Quaternion correction))
+            {
+                settings.TrackingTiltCorrection = correction;
+                return true;
+            }
+
+            // 体が無いときだけ頭の向きの逆（OpenSeeFace 等）
+            if (face != null && face.TryGetFrame(out FaceTrackingFrame frame))
+            {
+                settings.TrackingTiltCorrection = Quaternion.Inverse(frame.HeadRotation);
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
+        /// 腰原点→両肩の中点を背骨とし、それを上向きにする回転を返す。
+        /// </summary>
+        public static bool TryCorrectionFromBody(IBodyTrackingProvider body, out Quaternion correction)
+        {
+            correction = Quaternion.identity;
+            return body != null && body.TryGetBody(out BodyTrackingFrame frame)
+                && TryCorrectionFromBody(frame, out correction);
+        }
+
+        /// <summary>
+        /// 腰原点→両肩の中点を背骨とし、それを上向きにする回転を返す。
+        /// </summary>
+        public static bool TryCorrectionFromBody(BodyTrackingFrame frame, out Quaternion correction)
+        {
+            correction = Quaternion.identity;
+
+            // 両肩が映っていなければ背骨が取れない
+            if (!frame.Left.HasShoulder || !frame.Right.HasShoulder)
+            {
+                return false;
+            }
+
+            // MediaPipe の world（ToUnity 後）は腰付近が原点。両肩の中点が首付近
+            Vector3 neck = (frame.Left.Shoulder + frame.Right.Shoulder) * 0.5f;
+            if (neck.sqrMagnitude < MinSpineLength * MinSpineLength)
+            {
+                return false;
+            }
+
+            // 今の背骨をワールド上向きへ（カメラの俯角・ロールで倒れている分を戻す）
+            correction = Quaternion.FromToRotation(neck.normalized, Vector3.up);
             return true;
         }
     }

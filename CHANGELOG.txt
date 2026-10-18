@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 3.0.3 (2026-10-18)
+
+[日本語]
+- 「カメラの傾きを合わせる」が顔の向きだけを見て補正 0° のままになることがあった問題を修正（両肩が見えているときは背骨を直立にする補正を使います）
+
+[English]
+- Fixed "Align camera tilt" sometimes saving 0° because it only used head orientation (when both shoulders are visible, it now uprights the spine)
+
 ■ 3.0.2 (2026-10-18)
 
 [日本語]
