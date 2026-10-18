@@ -253,6 +253,52 @@ namespace VRCast.Converter.Editor
                 EditorGUILayout.HelpBox(error, MessageType.Warning);
             }
 
+            // Android（Quest）向けのままだと砂嵐になりやすいので、Windows へ切り替えるボタンを出す
+            if (_job == null && !AvatarExporter.IsRequiredBuildTargetActive)
+            {
+                using (new EditorGUILayout.HorizontalScope())
+                {
+                    if (GUILayout.Button(T(
+                            "Switch build target to Windows...",
+                            "ビルドターゲットを Windows に切り替える...",
+                            "빌드 타겟을 Windows로 전환...",
+                            "将构建目标切换到 Windows...",
+                            "將建置目標切換到 Windows..."), GUILayout.Height(TopBarHeight)))
+                    {
+                        bool ok = EditorUtility.DisplayDialog(
+                            T("Switch build target", "ビルドターゲットの切り替え", "빌드 타겟 전환", "切换构建目标",
+                                "切換建置目標"),
+                            T(
+                                "Unity will switch to PC, Mac & Linux Standalone (Windows) and may reimport assets. "
+                                + "This can take a while. Export again after it finishes.",
+                                "Build Settings を PC, Mac & Linux Standalone（Windows）に切り替えます。"
+                                + "アセットの再インポートが走り、時間がかかることがあります。完了してから書き出してください。",
+                                "Build Settings를 PC, Mac & Linux Standalone(Windows)으로 바꿉니다. "
+                                + "에셋 재임포트가 진행되며 시간이 걸릴 수 있습니다. 끝난 뒤 다시 내보내세요.",
+                                "将把 Build Settings 切换到 PC, Mac & Linux Standalone（Windows）。"
+                                + "可能会重新导入资源并花费一些时间。完成后请再导出。",
+                                "會將 Build Settings 切換到 PC, Mac & Linux Standalone（Windows）。"
+                                + "可能會重新匯入資產並花費一些時間。完成後請再匯出。"),
+                            T("Switch", "切り替える", "전환", "切换", "切換"),
+                            T("Cancel", "キャンセル", "취소", "取消", "取消"));
+                        if (ok && !AvatarExporter.TrySwitchToRequiredBuildTarget())
+                        {
+                            EditorUtility.DisplayDialog(
+                                T("Switch failed", "切り替えに失敗", "전환 실패", "切换失败", "切換失敗"),
+                                T(
+                                    "Could not switch the build target. Change it manually in File > Build Settings.",
+                                    "ビルドターゲットを切り替えられませんでした。File > Build Settings から手動で変えてください。",
+                                    "빌드 타겟을 바꿀 수 없습니다. File > Build Settings에서 수동으로 변경하세요.",
+                                    "无法切换构建目标。请在 File > Build Settings 中手动更改。",
+                                    "無法切換建置目標。請在 File > Build Settings 中手動變更。"),
+                                "OK");
+                        }
+
+                        GUIUtility.ExitGUI();
+                    }
+                }
+            }
+
             DrawProgress();
         }
 

@@ -379,7 +379,7 @@ Runtime は読み込み時、メッシュを複製して形状を末尾に足し
 ## AssetBundle を使う場合の既知の問題
 
 - 別系列の Unity との互換性はない（書き出しは 2022.3.22f1、Runtime は同じ 2022.3 系列の最新 LTS。系列が違えば読込時に警告）。
-- シェーダーバリアントが bundle ビルド時に削られるとマゼンタや砂嵐表示になる。書き出し時にアバターのマテリアルから `ShaderVariantCollection` を作り、シェーダー本体と同じ bundle に同梱する（アプリ読込時に WarmUp）。ビルド中は Graphics のライトマップ／フォグ／インスタンス削り込みを一時的に緩め、Optimize Mesh Data を OFF にする（ON のままだと lilToon 等が使う UV1 以降が削られ砂嵐になる Unity 2022 の既知問題）。Editor のプレビューはプロジェクト側の同名シェーダーへ差し替わることがあり、プレビューだけではアプリの見た目を保証できない。
+- シェーダーバリアントが bundle ビルド時に削られるとマゼンタや砂嵐表示になる。書き出し時にアバターのマテリアルから `ShaderVariantCollection` を作り、シェーダー本体と同じ bundle に同梱する（アプリ読込時に WarmUp）。ビルド中は Graphics のライトマップ／フォグ／インスタンス削り込みを一時的に緩め、Optimize Mesh Data を OFF にする（ON のままだと lilToon 等が使う UV1 以降が削られ砂嵐になる Unity 2022 の既知問題）。アクティブなビルドターゲットが Android（Quest）のままだとテクスチャが ASTC 等になり砂嵐になるため、StandaloneWindows64 のときだけ書き出せる。[VRCQuestTools](https://kurotu.github.io/VRCQuestTools/ja/) は Android アクティブ時に `CompressTexture(ASTC)` でテクスチャを焼くことがあり、Standalone 上書きに ASTC / ETC が残る場合もある。書き出し中だけ PC 向け（DXT / Automatic）に直してから bundle 化し、終わったら元に戻す。Editor のプレビューはプロジェクト側の同名シェーダーへ差し替わることがあり、プレビューだけではアプリの見た目を保証できない。
 - bundle の中身は Unity 依存のため、将来別フォーマット（glTF/VRM 等）へ移行する可能性がある。
 - VRM（`.vrm`）は `.vrcaster` を経由せず Runtime が直接読み込む（`VrmLoader`）。表情・まぶた・リップシンク・SpringBone は
   読込時に上記 metadata と同じ型（`ExpressionSet` / `AvatarDescriptorData` / `PhysBoneSet`）へ変換し、同じ `Validate` を通す。

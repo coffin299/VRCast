@@ -9,6 +9,18 @@ VRCast Converter（書き出しツール / unitypackage）更新履歴 / Changel
 Newest first. Section headers are the app version that shipped the change (raise
 `Packages/com.vrcast.converter/package.json` only when this file gets new entries).
 
+■ 未リリース / Unreleased
+
+[日本語]
+- Android（Quest）向けビルドのまま書き出せないように変更（テクスチャが ASTC 等になりアプリで砂嵐になるのを防ぐ。ウィンドウから Windows へ切り替えて書き出し直す）
+- VRCQuestTools 等で Android 向けに焼かれたテクスチャ（ASTC / ETC）や Standalone 上書きが残っているとき、書き出し中だけ PC 向け（DXT）に直すように追加（既に書き出したアバターは書き出し直しが必要）
+
+[English]
+- Blocked export while the Unity build target is Android/Quest (ASTC etc. can look like noise in the app; switch to Windows from the exporter window and re-export)
+- Added temporarily converting VRCQuestTools etc. mobile-baked textures (ASTC/ETC) to PC formats (DXT) during export (re-export existing avatars)
+
+
+
 ■ 3.0.4 (2026-10-18)
 
 [日本語]

@@ -73,10 +73,52 @@ namespace VRCast.Converter.Editor
         }
 
         /// <summary>
+        /// AssetBundle の想定ビルドターゲット（VRCast アプリと同じ Windows x64）。
+        /// </summary>
+        public static BuildTarget RequiredBuildTarget => BundleTarget;
+
+        /// <summary>
+        /// アクティブなビルドターゲットが書き出し向け（StandaloneWindows64）か。
+        /// Android（Quest）のままだとテクスチャが ASTC 等になり、アプリで砂嵐になることがある。
+        /// </summary>
+        public static bool IsRequiredBuildTargetActive =>
+            EditorUserBuildSettings.activeBuildTarget == BundleTarget;
+
+        /// <summary>
+        /// 書き出し向けにアクティブなビルドターゲットを StandaloneWindows64 へ切り替える。
+        /// アセットの再インポートが走り、完了まで時間がかかることがある。
+        /// </summary>
+        public static bool TrySwitchToRequiredBuildTarget()
+        {
+            return EditorUserBuildSettings.SwitchActiveBuildTarget(BuildTargetGroup.Standalone, BundleTarget);
+        }
+
+        /// <summary>
         /// 書き出し前の検証。問題があればエラーメッセージ、無ければ null を返す。
         /// </summary>
         public static string Validate(GameObject source)
         {
+            // Android（Quest）向けのまま書き出すと、テクスチャ形式がずれてアプリで砂嵐になることがある
+            if (!IsRequiredBuildTargetActive)
+            {
+                return ExporterLoc.T(
+                    $"Active build target is {EditorUserBuildSettings.activeBuildTarget}. "
+                    + "Switch Build Settings to PC, Mac & Linux Standalone (Windows) before export. "
+                    + "Android/Quest texture formats can look like noise in the VRCast app.",
+                    $"アクティブなビルドターゲットが {EditorUserBuildSettings.activeBuildTarget} です。"
+                    + "書き出す前に Build Settings で「PC, Mac & Linux Standalone」（Windows）へ切り替えてください。"
+                    + "Android（Quest）向けのままだと、テクスチャ形式がずれて VRCast アプリで砂嵐になることがあります。",
+                    $"활성 빌드 타겟이 {EditorUserBuildSettings.activeBuildTarget}입니다. "
+                    + "내보내기 전에 Build Settings에서 PC, Mac & Linux Standalone(Windows)으로 바꾸세요. "
+                    + "Android/Quest용 텍스처 형식이면 VRCast 앱에서 노이즈로 보일 수 있습니다.",
+                    $"当前活动构建目标为 {EditorUserBuildSettings.activeBuildTarget}。"
+                    + "导出前请在 Build Settings 中切换到 PC, Mac & Linux Standalone（Windows）。"
+                    + "若保持 Android/Quest，纹理格式可能在 VRCast 应用中显示为噪点。",
+                    $"目前作用中的建置目標為 {EditorUserBuildSettings.activeBuildTarget}。"
+                    + "匯出前請在 Build Settings 切換到 PC, Mac & Linux Standalone（Windows）。"
+                    + "若維持 Android/Quest，紋理格式可能在 VRCast 應用程式中顯示為雜訊。");
+            }
+
             // 対象未指定
             if (source == null)
             {
@@ -621,20 +663,31 @@ namespace VRCast.Converter.Editor
             // LZ4 圧縮で部分読込を可能にし、エラーは厳格に扱う
             // 書き出し中だけバリアント削り込みと Optimize Mesh Data を抑え、アプリで砂嵐／マゼンタになるのを防ぐ
             // （VRChat プロジェクトは Optimize Mesh Data が ON のことが多く、lilToon の UV1 以降が削られる既知問題がある）
-            if (EditorUserBuildSettings.activeBuildTarget != BundleTarget)
+            // Android 向けのままここまで来ない想定（Validate で止める）だが、念のため落とす
+            if (!IsRequiredBuildTargetActive)
             {
-                ExportLog.Warn(
-                    $"Active build target is {EditorUserBuildSettings.activeBuildTarget}, not {BundleTarget}. "
-                    + "Textures may use the wrong format in the app. Switch Build Settings to PC, Mac & Linux Standalone and export again.",
-                    $"アクティブなビルドターゲットが {EditorUserBuildSettings.activeBuildTarget} です（想定は {BundleTarget}）。"
-                    + "テクスチャ形式がずれることがあります。Build Settings で PC, Mac & Linux Standalone に切り替えてから書き出してください。");
+                throw new InvalidOperationException(
+                    $"Active build target must be {BundleTarget}, but was {EditorUserBuildSettings.activeBuildTarget}.");
             }
 
             const BuildAssetBundleOptions options =
                 BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.StrictMode;
             AssetBundleManifest manifest;
+            // VRCQuestTools 等は Android アクティブ時に CompressTexture(ASTC) で焼く／Standalone に ASTC を載せる。
+            // Windows アプリで砂嵐になるので、bundle 化のあいだだけ PC 向け（DXT）に直してから戻す
+            string exportTempFolder = $"{TempFolderParent}/{TempFolderName}";
+            using (StandaloneTextureFixer textureFix = StandaloneTextureFixer.Apply(
+                       AssetDatabase.LoadAssetAtPath<GameObject>(AvatarPackageLayout.PrefabAssetPath),
+                       exportTempFolder))
             using (var buildScope = new AssetBundleBuildScope())
             {
+                if (textureFix.FixedCount > 0)
+                {
+                    ExportLog.Info(
+                        $"Temporarily converted {textureFix.FixedCount} texture(s) to PC formats (ASTC/ETC from VRCQuestTools etc.).",
+                        $"テクスチャ {textureFix.FixedCount} 枚を一時的に PC 向け形式へ直しました（VRCQuestTools 等の ASTC / ETC 対策）。");
+                }
+
                 if (buildScope.DisabledMeshOptimization)
                 {
                     ExportLog.Info(
