@@ -45,6 +45,7 @@ namespace VRCast.Converter.Editor
         {
             public string AssetPath;
             public string[] ShaderAssetPaths;
+            public string[] ShaderNames;
             public int Materials;
             public int Shaders;
             public int Variants;
@@ -59,6 +60,7 @@ namespace VRCast.Converter.Editor
             var collection = new ShaderVariantCollection();
             var shaders = new HashSet<Shader>();
             var shaderPaths = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+            var shaderNames = new SortedSet<string>(StringComparer.Ordinal);
             int materials = 0;
 
             foreach (Renderer renderer in root.GetComponentsInChildren<Renderer>(true))
@@ -78,6 +80,11 @@ namespace VRCast.Converter.Editor
 
                     materials++;
                     shaders.Add(material.shader);
+                    if (!string.IsNullOrEmpty(material.shader.name))
+                    {
+                        shaderNames.Add(material.shader.name);
+                    }
+
                     string shaderPath = AssetDatabase.GetAssetPath(material.shader);
                     if (!string.IsNullOrEmpty(shaderPath))
                     {
@@ -99,6 +106,7 @@ namespace VRCast.Converter.Editor
             {
                 AssetPath = path,
                 ShaderAssetPaths = new List<string>(shaderPaths).ToArray(),
+                ShaderNames = new List<string>(shaderNames).ToArray(),
                 Materials = materials,
                 Shaders = shaders.Count,
                 Variants = collection.variantCount,

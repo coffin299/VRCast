@@ -378,9 +378,14 @@ namespace VRCast.Converter.Editor
                 report.ShaderVariantShaders = variants.Shaders;
                 if (variants.Variants > 0)
                 {
+                    string shaderList = variants.ShaderNames != null && variants.ShaderNames.Length > 0
+                        ? string.Join(", ", variants.ShaderNames)
+                        : null;
                     ExportLog.Info(
-                        $"Included {variants.Variants} shader variant(s) from {variants.Shaders} shader(s) so the app keeps the look.",
-                        $"シェーダー {variants.Shaders} 種・バリアント {variants.Variants} 件を同梱し、アプリでも見た目が保たれるようにしました。");
+                        $"Included {variants.Variants} shader variant(s) from {variants.Shaders} shader(s) so the app keeps the look."
+                        + (shaderList != null ? $" ({shaderList})" : string.Empty),
+                        $"シェーダー {variants.Shaders} 種・バリアント {variants.Variants} 件を同梱し、アプリでも見た目が保たれるようにしました。"
+                        + (shaderList != null ? $"（{shaderList}）" : string.Empty));
                 }
 
                 yield return ExportJob.Step.BuildingBundle;
@@ -614,12 +619,29 @@ namespace VRCast.Converter.Editor
             };
 
             // LZ4 圧縮で部分読込を可能にし、エラーは厳格に扱う
-            // 書き出し中だけライトマップ／フォグ／インスタンスの削り込みを緩め、アプリ側のライティングでも使えるようにする
+            // 書き出し中だけバリアント削り込みと Optimize Mesh Data を抑え、アプリで砂嵐／マゼンタになるのを防ぐ
+            // （VRChat プロジェクトは Optimize Mesh Data が ON のことが多く、lilToon の UV1 以降が削られる既知問題がある）
+            if (EditorUserBuildSettings.activeBuildTarget != BundleTarget)
+            {
+                ExportLog.Warn(
+                    $"Active build target is {EditorUserBuildSettings.activeBuildTarget}, not {BundleTarget}. "
+                    + "Textures may use the wrong format in the app. Switch Build Settings to PC, Mac & Linux Standalone and export again.",
+                    $"アクティブなビルドターゲットが {EditorUserBuildSettings.activeBuildTarget} です（想定は {BundleTarget}）。"
+                    + "テクスチャ形式がずれることがあります。Build Settings で PC, Mac & Linux Standalone に切り替えてから書き出してください。");
+            }
+
             const BuildAssetBundleOptions options =
                 BuildAssetBundleOptions.ChunkBasedCompression | BuildAssetBundleOptions.StrictMode;
             AssetBundleManifest manifest;
-            using (new ShaderStrippingScope())
+            using (var buildScope = new AssetBundleBuildScope())
             {
+                if (buildScope.DisabledMeshOptimization)
+                {
+                    ExportLog.Info(
+                        "Temporarily disabled Optimize Mesh Data so UV channels stay in the bundle (lilToon etc.).",
+                        "Optimize Mesh Data を一時的に OFF にし、UV チャンネルが bundle に残るようにしました（lilToon 等向け）。");
+                }
+
                 manifest = BuildPipeline.BuildAssetBundles(bundleDir, builds, options, BundleTarget);
             }
 
