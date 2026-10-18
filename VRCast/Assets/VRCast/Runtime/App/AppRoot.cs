@@ -256,8 +256,9 @@ namespace VRCast.App
             // Constraint（揺れものの静止姿勢に反映されるよう先に初期化）
             avatar.Instance.AddComponent<ConstraintSolver>().Initialize(avatar.Animator, avatar.Constraints);
 
-            // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化）
-            avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(avatar.Animator, avatar.PhysBones, _settings);
+            // 揺れもの（静止姿勢を記録するため待機ポーズ適用後に初期化。チェーンの個別 ON/OFF はこのアバターの記録）
+            avatar.Instance.AddComponent<PhysBoneSimulator>().Initialize(
+                avatar.Animator, avatar.PhysBones, _settings, _settings.GetPhysBoneToggles(avatar.SourcePath));
 
             // オブジェクトの表示の ON/OFF（このアバターで前回切り替えたもの）。パーティクルの ON が非表示の親を表示できるよう先に当てる
             avatar.Instance.AddComponent<AvatarObjects>().Initialize(

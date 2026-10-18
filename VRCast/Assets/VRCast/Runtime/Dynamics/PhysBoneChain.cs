@@ -67,6 +67,16 @@ namespace VRCast.Dynamics
 
         public int ParticleCount => _particles.Count;
 
+        /// <summary>
+        /// physbones.json の rootPath（アバタールートからの相対パス。空ならルート自身）。
+        /// </summary>
+        public string RootPath { get; private set; } = string.Empty;
+
+        /// <summary>
+        /// 一覧に出す名前（root Transform の名前）。
+        /// </summary>
+        public string RootName { get; private set; } = string.Empty;
+
         private PhysBoneChain(PhysBoneData data, List<PhysBoneCollider> colliders)
         {
             _data = data;
@@ -138,7 +148,11 @@ namespace VRCast.Dynamics
             }
 
             // 階層を粒子に展開
-            var chain = new PhysBoneChain(data, colliders);
+            var chain = new PhysBoneChain(data, colliders)
+            {
+                RootPath = data.rootPath ?? string.Empty,
+                RootName = root.name,
+            };
             chain.AddRecursive(root, -1, false, ignored, humanBones, maxParticles);
 
             // root だけでは揺れるものが無い

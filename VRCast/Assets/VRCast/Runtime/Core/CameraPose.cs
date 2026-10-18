@@ -58,6 +58,7 @@ namespace VRCast.Core
         public List<BlendShapeLimit> blendShapeLimits = new List<BlendShapeLimit>();
         public List<ExpressionHotkey> expressionHotkeys = new List<ExpressionHotkey>();
         public List<ParticleToggle> particles = new List<ParticleToggle>();
+        public List<PhysBoneToggle> physBones = new List<PhysBoneToggle>();
         public List<ObjectToggle> objects = new List<ObjectToggle>();
         public string thumbnail = string.Empty;
         public long addedAt;

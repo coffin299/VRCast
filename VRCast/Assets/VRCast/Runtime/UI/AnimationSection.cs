@@ -11,20 +11,31 @@ namespace VRCast.UI
     /// </summary>
     public class AnimationSection
     {
+        // チェーン一覧の最大の高さ（これ以上はスクロール）
+        private const float MaxChainListHeight = 200f;
+        private const float ChainRowHeight = 22f;
+
+        private readonly AvatarSession _session;
         private readonly AvatarComponentCache _avatar;
         private readonly AppSettings _settings;
         private PoseController _pose;
         private IdleMotionController _idleMotion;
+        private PhysBoneSimulator _physics;
+
+        // チェーン一覧を出すトグル（既定 OFF。アバターが替わったら閉じる）とスクロール位置
+        private bool _showChainList;
+        private Vector2 _chainScroll;
 
         public AnimationSection(AvatarSession session, AppSettings settings)
         {
+            _session = session;
             _avatar = new AvatarComponentCache(session);
             _settings = settings;
         }
 
         public void Draw()
         {
-            // アバター未表示なら案内だけ（揺れものの ON/OFF は全アバター共通なので出す）
+            // アバター未表示なら案内だけ（揺れものの全体 ON/OFF は全アバター共通なので出す）
             if (!RefreshControllers())
             {
                 GuiControls.BeginCard(Loc.T("Pose", "ポーズ", "포즈", "姿势", "姿勢"));
@@ -44,11 +55,14 @@ namespace VRCast.UI
 
         private bool RefreshControllers()
         {
-            // アバターが替わったときだけ取り直す
+            // アバターが替わったときだけ取り直す（チェーン一覧は閉じる）
             if (_avatar.Refresh())
             {
                 _pose = _avatar.Get<PoseController>();
                 _idleMotion = _avatar.Get<IdleMotionController>();
+                _physics = _avatar.Get<PhysBoneSimulator>();
+                _showChainList = false;
+                _chainScroll = Vector2.zero;
             }
 
             return _avatar.HasAvatar;
@@ -208,15 +222,88 @@ namespace VRCast.UI
             // 揺れものが無いアバターでは注記、あればチェーン数を表示
             if (_avatar.HasAvatar)
             {
-                var physics = _avatar.Get<PhysBoneSimulator>();
-                int chains = physics != null ? physics.ChainCount : 0;
-                GuiControls.Hint(physics != null && physics.IsAvailable
+                if (_physics == null)
+                {
+                    _physics = _avatar.Get<PhysBoneSimulator>();
+                }
+
+                int chains = _physics != null ? _physics.ChainCount : 0;
+                GuiControls.Hint(_physics != null && _physics.IsAvailable
                     ? Loc.T($"{chains} chains", $"{chains} チェーン", $"{chains} 체인", $"{chains} 条链", $"{chains} 條鏈")
                     : Loc.T("No PhysBones in this avatar", "このアバターには PhysBone がありません",
                         "이 아바타에는 PhysBone이 없습니다", "此虚拟形象没有 PhysBone", "此虛擬形象沒有 PhysBone"));
+
+                // 全体 ON かつチェーンがあるときだけ、個別一覧を出すトグル（既定は閉じたまま）
+                if (_settings.physicsEnabled && _physics != null && _physics.IsAvailable)
+                {
+                    DrawPhysicsChains();
+                }
             }
 
             GuiControls.EndCard();
+        }
+
+        private void DrawPhysicsChains()
+        {
+            _showChainList = GUILayout.Toggle(
+                _showChainList, Loc.T("Choose chains", "チェーンを個別に選ぶ", "체인 개별 선택",
+                    "单独选择链条", "單獨選擇鏈條"));
+
+            // 閉じている間は一覧を出さない（個別の ON/OFF 自体は記録どおり効いたまま）
+            if (!_showChainList)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Turn on to show each PhysBone chain. Choices are saved per avatar.",
+                    "ON にすると各 PhysBone チェーンの一覧が出ます。選択はアバターごとに保存されます。",
+                    "켜면 각 PhysBone 체인 목록이 나옵니다. 선택은 아바타별로 저장됩니다.",
+                    "开启后显示各 PhysBone 链条。选择按虚拟形象分别保存。",
+                    "開啟後顯示各 PhysBone 鏈條。選擇依虛擬形象分別儲存。"));
+                return;
+            }
+
+            GuiControls.Hint(Loc.T(
+                $"{_physics.EnabledCount} / {_physics.ChainCount} on. Names are the PhysBone root objects. Saved per avatar.",
+                $"{_physics.EnabledCount} / {_physics.ChainCount} が ON。名前は PhysBone の root オブジェクトです。アバターごとに保存されます。",
+                $"{_physics.EnabledCount} / {_physics.ChainCount} 켜짐. 이름은 PhysBone root 오브젝트입니다. 아바타별로 저장됩니다.",
+                $"{_physics.EnabledCount} / {_physics.ChainCount} 开启。名称为 PhysBone 根对象。按虚拟形象分别保存。",
+                $"{_physics.EnabledCount} / {_physics.ChainCount} 開啟。名稱為 PhysBone 根物件。依虛擬形象分別儲存。"));
+
+            bool changed = false;
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T("All on", "すべて ON", "모두 켜기", "全部开启", "全部開啟"), GuiControls.Shrinkable))
+            {
+                _physics.SetAll(true);
+                changed = true;
+            }
+
+            if (GUILayout.Button(Loc.T("All off", "すべて OFF", "모두 끄기", "全部关闭", "全部關閉"), GuiControls.Shrinkable))
+            {
+                _physics.SetAll(false);
+                changed = true;
+            }
+
+            GUILayout.EndHorizontal();
+
+            float height = Mathf.Min(MaxChainListHeight, Mathf.Max(ChainRowHeight, _physics.ChainCount * ChainRowHeight));
+            _chainScroll = GUILayout.BeginScrollView(
+                _chainScroll, false, false, GUIStyle.none, GUI.skin.verticalScrollbar, GUILayout.Height(height));
+            foreach (PhysBoneSimulator.Chain chain in _physics.Chains)
+            {
+                bool enabled = GUILayout.Toggle(chain.Enabled, chain.Label, GuiControls.Shrinkable);
+                if (enabled != chain.Enabled)
+                {
+                    _physics.SetEnabled(chain, enabled);
+                    changed = true;
+                }
+            }
+
+            GUILayout.EndScrollView();
+
+            // 変えたらこのアバターの分として記録する（保存は終了時）
+            if (changed && _session.Current != null)
+            {
+                _settings.SetPhysBoneToggles(_session.Current.SourcePath, _physics.Export());
+            }
         }
 
         private void DrawPropAnimations()

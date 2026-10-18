@@ -744,6 +744,33 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// アバターの揺れものチェーンの ON/OFF を返す（未記録なら空。一覧は複製）。
+        /// </summary>
+        public List<PhysBoneToggle> GetPhysBoneToggles(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0
+                ? new List<PhysBoneToggle>(avatarCameras[index].physBones)
+                : new List<PhysBoneToggle>();
+        }
+
+        /// <summary>
+        /// アバターの揺れものチェーンの ON/OFF を記録する。カメラの視点を記録済みのアバターだけが対象（読込時に記録される）。
+        /// </summary>
+        public void SetPhysBoneToggles(string avatarPath, List<PhysBoneToggle> toggles)
+        {
+            // 記録の無いアバターは対象外（視点の無い記録を作らない）
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0)
+            {
+                return;
+            }
+
+            // パスの無いものは除いて複製を持つ
+            avatarCameras[index].physBones = toggles.FindAll(toggle => toggle != null && toggle.path != null);
+        }
+
+        /// <summary>
         /// アバターのオブジェクトの表示の ON/OFF（切り替えたものだけ）を返す（未記録なら空。一覧は複製）。
         /// </summary>
         public List<ObjectToggle> GetObjectToggles(string avatarPath)
@@ -1134,6 +1161,10 @@ namespace VRCast.Core
                 // パーティクルの ON/OFF はパスの無いものを捨てる（旧版の設定には無いので空の一覧にする）
                 entry.particles ??= new List<ParticleToggle>();
                 entry.particles.RemoveAll(toggle => toggle == null || toggle.path == null);
+
+                // 揺れものチェーンの ON/OFF はパスの無いものを捨てる（旧版の設定には無いので空の一覧にする）
+                entry.physBones ??= new List<PhysBoneToggle>();
+                entry.physBones.RemoveAll(toggle => toggle == null || toggle.path == null);
 
                 // オブジェクトの ON/OFF はルート自身と壊れたものを捨てる（旧版の設定には無いので空の一覧にする）
                 entry.objects ??= new List<ObjectToggle>();
