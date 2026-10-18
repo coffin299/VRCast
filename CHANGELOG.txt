@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 3.0.5 (2026-10-19)
 
 [日本語]
 - 書き出しツール: Android（Quest）向けビルドのままだと書き出せないように変更し、VRCQuestTools 等の Android 向けテクスチャ形式が残っていても PC 向けに直して書き出すように追加（詳しくは書き出しツールの更新履歴）
