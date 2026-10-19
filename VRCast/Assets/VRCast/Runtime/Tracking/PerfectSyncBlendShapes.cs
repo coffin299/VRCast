@@ -110,7 +110,7 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// 見つかった ARKit 名の種類数（0〜51）。
+        /// 見つかった ARKit 名の種類数（0〜BlendShapeNames.Length）。
         /// </summary>
         public int MatchedCount { get; }
 

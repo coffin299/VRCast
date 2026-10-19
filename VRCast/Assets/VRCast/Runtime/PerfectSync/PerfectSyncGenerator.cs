@@ -7,7 +7,7 @@ using VRCast.Tracking;
 namespace VRCast.PerfectSync
 {
     /// <summary>
-    /// 打った目印（FaceRig）から、ARKit 51 種の形状（頂点の移動量）を作る。
+    /// 打った目印（FaceRig）から、ARKit 互換の形状（頂点の移動量）を作る。
     /// 顔の各部位（目・眉・口・顎・頬・鼻）の領域をなめらかな重みで決め、部位ごとの向きに動かす。
     /// 歯・舌などの別メッシュは顎の形状（jawOpen 等）だけ一緒に動かす。
     /// </summary>

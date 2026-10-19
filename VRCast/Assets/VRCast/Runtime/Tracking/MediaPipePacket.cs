@@ -150,11 +150,20 @@ namespace VRCast.Tracking
             float[] m = message.matrix;
             float[] scores = message.blendshapes;
 
-            // 要素数の不一致・非有限値を含む顔は使わない
-            bool sized = m != null && m.Length == MatrixSize && scores != null && scores.Length == ArKitFace.BlendShapeNames.Length;
+            // 要素数の不一致・非有限値を含む顔は使わない（古いトラッカーの 51 種は末尾 tongueOut = 0 を足す）
+            int shapeCount = ArKitFace.BlendShapeNames.Length;
+            bool sized = m != null && m.Length == MatrixSize && scores != null
+                && (scores.Length == shapeCount || scores.Length == shapeCount - 1);
             if (!sized || !TrackingMath.AllFinite(m) || !TrackingMath.AllFinite(scores))
             {
                 return false;
+            }
+
+            if (scores.Length == shapeCount - 1)
+            {
+                var padded = new float[shapeCount];
+                Array.Copy(scores, padded, scores.Length);
+                scores = padded;
             }
 
             // 回転部分の Z 列（顔の正面）と Y 列（顔の上）。潰れた行列は使えない

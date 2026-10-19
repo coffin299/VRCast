@@ -71,6 +71,18 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Map_AssignsTongueOut()
+        {
+            // 日本語名・ tongue 名を tongueOut へ割り当てること
+            var candidates = new List<PerfectSyncAutoMapper.Candidate>
+            {
+                new PerfectSyncAutoMapper.Candidate("Face", "舌出し"),
+            };
+            List<PerfectSyncBinding> bindings = PerfectSyncAutoMapper.Map(candidates);
+            Assert.That(Find(bindings, "tongueOut")?.blendShape, Is.EqualTo("舌出し"));
+        }
+
+        [Test]
         public void Map_PrefersEarlierCandidatesAndSkipsArKitNames()
         {
             // 同じ名前は先に並べた（顔メッシュの）候補を使い、ARKit 名そのものは割り当てに使わないこと

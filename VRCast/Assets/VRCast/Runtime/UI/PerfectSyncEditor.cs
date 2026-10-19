@@ -15,7 +15,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// パーフェクトシンク化の編集画面。顔を大きく映し、顔メッシュの線の上に目印を打たせて ARKit 51 種の形状を作り、
+    /// パーフェクトシンク化の編集画面。顔を大きく映し、顔メッシュの線の上に目印を打たせて ARKit 互換の形状を作り、
     /// 既存の BlendShape の割り当てと合わせて試した後、元のファイルはそのままに別名の .vrcaster として保存する。
     /// 開いている間はメインのパネルの代わりに右側の細いパネルを出す（描画は PerfectSyncEditor.Panel.cs）。
     /// </summary>
@@ -671,10 +671,12 @@ namespace VRCast.UI
                 return;
             }
 
-            // 目の動きは目のボーンがあればボーンで動かすので、既定では作らない（無ければ顔に描いた瞳を動かす形状を作る）
-            for (int i = 0; HasEyeBones && i < _shapes.Length; i++)
+            // 目の動きは目のボーンがあればボーンで動かすので、既定では作らない（無ければ顔に描いた瞳を動かす形状を作る）。
+            // 舌出しは目印から自動生成できないので既定は「なし」（既存の BlendShape があれば AutoAssign で割り当てる）
+            for (int i = 0; i < _shapes.Length; i++)
             {
-                if (PerfectSyncLabels.IsEyeLook(ArKitFace.BlendShapeNames[i]))
+                string name = ArKitFace.BlendShapeNames[i];
+                if ((HasEyeBones && PerfectSyncLabels.IsEyeLook(name)) || name == "tongueOut")
                 {
                     _shapes[i].Source = PerfectSyncSet.SourceNone;
                 }

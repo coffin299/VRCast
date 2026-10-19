@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- パーフェクトシンクで舌出し（tongueOut）が動かない問題を修正（iPhone / VMC など。Web カメラの MediaPipe では舌は推定しません）
+
+[English]
+- Fixed tongueOut not moving in perfect sync (iPhone / VMC etc.; MediaPipe webcam tracking does not estimate the tongue)
+
 ■ 3.1.5 (2026-10-19)
 
 [日本語]

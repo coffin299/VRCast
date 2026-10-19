@@ -71,5 +71,16 @@ namespace VRCast.Tests
             Assert.That(IFacialMocapPacket.TryParse("hapihapi-10|=head#a,b,c|", out _), Is.False);
             Assert.That(IFacialMocapPacket.TryParse(string.Empty, out _), Is.False);
         }
+
+        [Test]
+        public void TryParse_TongueOut_IsAccepted()
+        {
+            // iPhone の tongueOut / tongue_out をパーフェクトシンク用の配列へ入れること
+            Assert.That(IFacialMocapPacket.TryParse("tongueOut-80|", out FaceTrackingFrame frame), Is.True);
+            Assert.That(frame.BlendShapes[ArKitFace.IndexOf("tongueOut")], Is.EqualTo(0.8f).Within(1e-5f));
+
+            Assert.That(IFacialMocapPacket.TryParse("tongue_out-50|", out FaceTrackingFrame underscored), Is.True);
+            Assert.That(underscored.BlendShapes[ArKitFace.IndexOf("tongueOut")], Is.EqualTo(0.5f).Within(1e-5f));
+        }
     }
 }

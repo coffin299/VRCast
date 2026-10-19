@@ -21,11 +21,11 @@ namespace VRCast.PerfectSync
     /// </summary>
     public static class FacePartRules
     {
-        // 口の中が見える（口を開ける・唇を離す）形状
+        // 口の中が見える（口を開ける・唇を離す・舌を出す）形状
         private static readonly string[] MouthInteriorShapes =
         {
             "jawOpen", "mouthClose", "mouthFunnel", "mouthLowerDownLeft", "mouthLowerDownRight",
-            "mouthUpperUpLeft", "mouthUpperUpRight",
+            "mouthUpperUpLeft", "mouthUpperUpRight", "tongueOut",
         };
 
         /// <summary>

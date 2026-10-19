@@ -65,6 +65,7 @@ namespace VRCast.PerfectSync
             ("eyeSquintLeft", new[] { "eyesquintl", "eyesquint" }, 1f),
             ("eyeSquintRight", new[] { "eyesquintr", "eyesquint" }, 1f),
             ("cheekPuff", new[] { "cheekpuff", "ぷくー", "ぷく", "puff" }, 1f),
+            ("tongueOut", new[] { "tongueout", "舌出し", "あかんべ", "tongue" }, 1f),
         };
 
         /// <summary>

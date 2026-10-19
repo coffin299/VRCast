@@ -48,6 +48,15 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Read_TongueOut_IsAccepted()
+        {
+            // tongueOut / tongue_out をパーフェクトシンク用の配列へ入れること
+            var vmc = new VmcPacket();
+            Read(vmc, Bundle(Blend("tongue_out", 0.9f), Apply()), out _, out FaceTrackingFrame frame);
+            Assert.That(frame.BlendShapes[ArKitFace.IndexOf("tongueOut")], Is.EqualTo(0.9f).Within(1e-5f));
+        }
+
+        [Test]
         public void Read_HeadBone_SetsHeadRotation()
         {
             // Head ボーンの回転（鏡像済み）を左右反転して頭の向きにし、ほかのボーンは無視すること

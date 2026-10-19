@@ -70,8 +70,8 @@ namespace VRCast.Tracking
     /// </summary>
     public static class ArKitFace
     {
-        // 共通の BlendShape の並び（ARKit 互換 51 種。MediaPipe の _neutral・iPhone の tongueOut は除く）。
-        // MediaPipe トラッカーの送信側と並びを一致させる
+        // 共通の BlendShape の並び（ARKit 互換 52 種。MediaPipe の _neutral は除く。tongueOut は末尾）。
+        // MediaPipe トラッカーの送信側と並びを一致させる（MediaPipe 本体に tongueOut は無く常に 0）
         public static readonly string[] BlendShapeNames =
         {
             "browDownLeft", "browDownRight", "browInnerUp", "browOuterUpLeft", "browOuterUpRight",
@@ -85,6 +85,7 @@ namespace VRCast.Tracking
             "mouthPucker", "mouthRight", "mouthRollLower", "mouthRollUpper", "mouthShrugLower", "mouthShrugUpper",
             "mouthSmileLeft", "mouthSmileRight", "mouthStretchLeft", "mouthStretchRight",
             "mouthUpperUpLeft", "mouthUpperUpRight", "noseSneerLeft", "noseSneerRight",
+            "tongueOut",
         };
 
         // 視線の BlendShape 1.0 あたりの角度（度）

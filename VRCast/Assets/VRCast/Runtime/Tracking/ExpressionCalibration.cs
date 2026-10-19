@@ -180,12 +180,13 @@ namespace VRCast.Tracking
 
         private static int[] BuildFeatures()
         {
-            // 視線（eyeLook*）以外の位置
+            // 視線（eyeLook*）と舌出しは、表情の判定を揺らさないよう除く
             var features = new List<int>();
             string[] names = ArKitFace.BlendShapeNames;
             for (int i = 0; i < names.Length; i++)
             {
-                if (!names[i].StartsWith("eyeLook", System.StringComparison.Ordinal))
+                if (!names[i].StartsWith("eyeLook", System.StringComparison.Ordinal)
+                    && names[i] != "tongueOut")
                 {
                     features.Add(i);
                 }

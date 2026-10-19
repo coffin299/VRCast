@@ -291,6 +291,21 @@ namespace VRCast.Tests
             Assert.That(MediaPipePacket.TryParse(string.Empty, out _, out _, out _), Is.False);
         }
 
+        [Test]
+        public void TryParse_Face_AcceptsLegacyBlendShapeCount()
+        {
+            // tongueOut 追加前の 51 種の配列も読み、末尾は 0 になること
+            MediaPipePacket.Message message = CreateMessage();
+            message.blendshapes = new float[ArKitFace.BlendShapeNames.Length - 1];
+            SetScore(message, "jawOpen", 0.6f);
+
+            Assert.That(Parse(message, out bool hasFace, out FaceTrackingFrame face, out _), Is.True);
+            Assert.That(hasFace, Is.True);
+            Assert.That(face.BlendShapes.Length, Is.EqualTo(ArKitFace.BlendShapeNames.Length));
+            Assert.That(face.BlendShapes[ArKitFace.IndexOf("tongueOut")], Is.EqualTo(0f));
+            Assert.That(face.MouthOpen, Is.EqualTo(1f).Within(1e-5f));
+        }
+
         private static MediaPipePacket.Message CreateMessage()
         {
             // 単位行列・全スコア 0 の顔だけを含むメッセージ

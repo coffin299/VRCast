@@ -1446,8 +1446,13 @@ namespace VRCast.Core
 
             // 傾き補正は不正値を identity へ
             TrackingTiltCorrection = TrackingTiltCorrection;
-            // 表情のキャリブレーションは壊れた記録を捨てる
+            // 表情のキャリブレーションは古い要素数を直し、壊れた記録を捨てる
             expressionCalibrations ??= new List<ExpressionCalibrationSample>();
+            foreach (ExpressionCalibrationSample sample in expressionCalibrations)
+            {
+                sample?.MigrateValues();
+            }
+
             expressionCalibrations.RemoveAll(sample => sample == null || !sample.IsValid);
             // 利用者のライティングプリセットも壊れたものを捨て、上限を超えた古いものから落とす
             lightingPresets ??= new List<LightingPresetEntry>();

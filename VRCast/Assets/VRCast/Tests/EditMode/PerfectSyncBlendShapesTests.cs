@@ -15,6 +15,7 @@ namespace VRCast.Tests
         public void Match_AcceptsCommonNamingVariants()
         {
             int blinkLeft = Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft");
+            int tongueOut = Array.IndexOf(ArKitFace.BlendShapeNames, "tongueOut");
 
             // 正式名・大文字始まり・区切り記号・L 表記・FBX の接頭辞付きは同じ名前とみなすこと
             Assert.That(PerfectSyncBlendShapes.Match("eyeBlinkLeft"), Is.EqualTo(blinkLeft));
@@ -22,6 +23,12 @@ namespace VRCast.Tests
             Assert.That(PerfectSyncBlendShapes.Match("eye_blink_left"), Is.EqualTo(blinkLeft));
             Assert.That(PerfectSyncBlendShapes.Match("eyeBlink_L"), Is.EqualTo(blinkLeft));
             Assert.That(PerfectSyncBlendShapes.Match("blendShape1.eyeBlinkLeft"), Is.EqualTo(blinkLeft));
+
+            // 舌出し（iPhone / VMC）も区切り記号の揺れを吸収すること
+            Assert.That(tongueOut, Is.GreaterThanOrEqualTo(0));
+            Assert.That(PerfectSyncBlendShapes.Match("tongueOut"), Is.EqualTo(tongueOut));
+            Assert.That(PerfectSyncBlendShapes.Match("tongue_out"), Is.EqualTo(tongueOut));
+            Assert.That(PerfectSyncBlendShapes.Match("TongueOut"), Is.EqualTo(tongueOut));
         }
 
         [Test]

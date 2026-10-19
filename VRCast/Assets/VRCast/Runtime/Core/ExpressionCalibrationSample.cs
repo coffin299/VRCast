@@ -12,7 +12,10 @@ namespace VRCast.Core
         /// <summary>
         /// values の要素数（ArKitFace.BlendShapeNames と同じ並び・数）。
         /// </summary>
-        public const int ValueCount = 51;
+        public const int ValueCount = 52;
+
+        // tongueOut 追加前の記録（末尾が無い 51 要素）
+        private const int LegacyValueCount = 51;
 
         // 記録したときの顔の入力元（入力元ごとに値の出方が違うため、同じ入力元のときだけ使う）
         public TrackingSource source;
@@ -45,6 +48,21 @@ namespace VRCast.Core
 
                 return true;
             }
+        }
+
+        /// <summary>
+        /// 古い記録（51 種）なら末尾に tongueOut = 0 を足して現在の要素数にする。
+        /// </summary>
+        public void MigrateValues()
+        {
+            if (values == null || values.Length != LegacyValueCount)
+            {
+                return;
+            }
+
+            var padded = new float[ValueCount];
+            Array.Copy(values, padded, LegacyValueCount);
+            values = padded;
         }
     }
 }

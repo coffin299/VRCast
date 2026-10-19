@@ -81,7 +81,8 @@ from mediapipe.tasks.python import vision  # noqa: E402
 # VRCast 側（MediaPipePacket.ProtocolVersion）と一致させるプロトコル番号
 PROTOCOL_VERSION = 1
 
-# 送信する BlendShape の並び（VRCast 側 ArKitFace.BlendShapeNames と一致させる）
+# 送信する BlendShape の並び（VRCast 側 ArKitFace.BlendShapeNames と一致させる）。
+# tongueOut は MediaPipe に無く常に 0（iPhone / VMC 向けの枠だけ末尾に置く）
 BLENDSHAPE_NAMES = (
     "browDownLeft", "browDownRight", "browInnerUp", "browOuterUpLeft",
     "browOuterUpRight",
@@ -99,6 +100,7 @@ BLENDSHAPE_NAMES = (
     "mouthSmileRight", "mouthStretchLeft", "mouthStretchRight",
     "mouthUpperUpLeft", "mouthUpperUpRight", "noseSneerLeft",
     "noseSneerRight",
+    "tongueOut",
 )
 
 # Pose Landmarker の点番号（左肩・右肩・左肘・右肘・左手首・右手首）

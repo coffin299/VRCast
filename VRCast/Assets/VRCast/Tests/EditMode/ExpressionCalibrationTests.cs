@@ -48,6 +48,22 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Sample_MigrateValues_PadsLegacyCount()
+        {
+            // tongueOut 追加前の 51 要素は末尾 0 を足して有効になること
+            var sample = new ExpressionCalibrationSample
+            {
+                expression = (int)FaceExpression.Neutral,
+                values = new float[ExpressionCalibrationSample.ValueCount - 1],
+            };
+            Assert.That(sample.IsValid, Is.False);
+            sample.MigrateValues();
+            Assert.That(sample.IsValid, Is.True);
+            Assert.That(sample.values.Length, Is.EqualTo(ExpressionCalibrationSample.ValueCount));
+            Assert.That(sample.values[ExpressionCalibrationSample.ValueCount - 1], Is.EqualTo(0f));
+        }
+
+        [Test]
         public void Score_IsZeroAtNeutralAndOneAtRegisteredFace()
         {
             float[] neutral = Face();

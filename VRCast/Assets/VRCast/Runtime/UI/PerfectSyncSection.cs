@@ -38,16 +38,16 @@ namespace VRCast.UI
 
             GuiControls.BeginCard(Loc.T("Perfect sync setup", "パーフェクトシンク化", "퍼펙트 싱크화", "完美同步化", "完美同步化"));
             GuiControls.Hint(Loc.T(
-                "Place points on the avatar's face to generate the ARKit face shapes (the 51 used by VRCast) automatically, " +
+                "Place points on the avatar's face to generate the ARKit face shapes (the 52 used by VRCast) automatically, " +
                 "and assign blend shapes the avatar already has. The result is saved as a new .vrcaster file; " +
                 "the original file is not changed.",
-                "アバターの顔に目印を打つと、ARKit の顔の形状（VRCast が使う 51 種）を自動で作り、" +
+                "アバターの顔に目印を打つと、ARKit の顔の形状（VRCast が使う 52 種）を自動で作り、" +
                 "アバターに元からある BlendShape も割り当てます。結果は別名の .vrcaster として保存し、元のファイルは変更しません。",
-                "아바타 얼굴에 표시를 찍으면 ARKit 얼굴 형상(VRCast가 쓰는 51종)을 자동으로 만들고, " +
+                "아바타 얼굴에 표시를 찍으면 ARKit 얼굴 형상(VRCast가 쓰는 52종)을 자동으로 만들고, " +
                 "아바타에 원래 있는 BlendShape도 할당합니다. 결과는 다른 이름의 .vrcaster로 저장하며 원본 파일은 변경하지 않습니다.",
-                "在虚拟形象脸上放置标记后，会自动生成 ARKit 面部形状（VRCast 使用的 51 种），" +
+                "在虚拟形象脸上放置标记后，会自动生成 ARKit 面部形状（VRCast 使用的 52 种），" +
                 "并分配形象原有的 BlendShape。结果另存为新的 .vrcaster 文件，不会修改原文件。",
-                "在虛擬形象臉上放置標記後，會自動生成 ARKit 臉部形狀（VRCast 使用的 51 種），" +
+                "在虛擬形象臉上放置標記後，會自動生成 ARKit 臉部形狀（VRCast 使用的 52 種），" +
                 "並分配形象原有的 BlendShape。結果另存為新的 .vrcaster 檔案，不會修改原檔案。"));
             GuiControls.Warning(PerfectSyncLabels.MissingPartsCaution());
 
