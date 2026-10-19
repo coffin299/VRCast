@@ -4,6 +4,22 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 3.1.7 (2026-10-19)
+
+[日本語]
+- 更新後などに VMC / iFacialMocap が届かないとき、トラッキングタブから Windows ファイアウォールの許可を付け直せるように追加
+- VMC の受信ポートの既定値を 39540 に変更
+- VMC と Web カメラ用トラッカーの UDP ポート変更に確定ボタンを追加
+- iFacialMocap で iPhone の IP アドレスを変えたとき、送信開始の合図をすぐ送り直すよう修正
+- iFacialMocap で顔の向きに合わせて上半身が軽く動くように追加
+
+[English]
+- Added a Tracking tab button to re-allow VRCast in Windows Firewall when VMC / iFacialMocap stop arriving (e.g. after an update)
+- Changed the default VMC receive port to 39540
+- Added an Apply button when changing the VMC or webcam tracker UDP port
+- Fixed iFacialMocap so changing the iPhone IP address resends the start command immediately
+- Added light upper-body follow of head orientation when using iFacialMocap
+
 ■ 3.1.6 (2026-10-19)
 
 [日本語]

@@ -9,6 +9,7 @@ namespace VRCast.Tracking
     /// <summary>
     /// フェイストラッキングをアバターへ適用する。頭の向きは首・頭ボーン、頭の位置は背骨・胸の傾き（前後・左右）と
     /// 腰の移動（前後・左右・上下、足も一緒に動く）のどちらかまたは両方、
+    /// iFacialMocap は頭の位置が無いため頭の向きの一部を上半身へ載せる、
     /// 両肩（MediaPipe の体）が映っていれば上半身のひねり・左右の傾きを肩の線から背骨・胸へ、
     /// 視線は目ボーンと、あれば視線用 BlendShape（「上を見る」等）、まばたき（左右別）・口は既存コントローラーへ外部入力として渡す。
     /// 表情（MediaPipe のみ）は判定結果が変わったときだけ、割り当てた表情プリセットへ切り替える。
@@ -48,6 +49,9 @@ namespace VRCast.Tracking
         // 頭の位置の差分 1 単位あたりの上半身の傾き（度、強さ 1 のとき）と上限（度）
         private const float LeanDegreesPerUnit = 10f;
         private const float MaxLeanAngle = 20f;
+
+        // iFacialMocap: 頭の向きのうち上半身へ載せる割合（強さ 1 のとき。頭の向きは首で打ち消して保つ）
+        private const float HeadRotationLeanShare = 0.3f;
 
         // 頭の位置の差分 1 単位あたりの体全体の移動量（m、強さ 1 のとき）と上限（m）
         private const float MoveMetersPerUnit = 0.1f;
@@ -892,16 +896,32 @@ namespace VRCast.Tracking
 
         private Quaternion CalculateLean(Vector3 offset, bool fromHead)
         {
-            // 前後の移動は前後の傾き（X 軸まわり）、左右の移動は横の傾き（Z 軸まわり）へ（頭の位置で傾けないモードは 0）
-            float degreesPerUnit = fromHead ? LeanDegreesPerUnit * _settings.trackingBodyLean : 0f;
-            float pitch = Mathf.Clamp(-offset.z * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
-            float roll = Mathf.Clamp(offset.x * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
+            // iFacialMocap は頭の位置が無いので、頭の向きの一部を上半身へ（軽く追従）
+            TrackingSource faceSource = _provider != null ? _provider.FaceSource : _settings.trackingSource;
+            float pitch;
+            float yaw = 0f;
+            float roll;
+            if (fromHead && faceSource == TrackingSource.IFacialMocap)
+            {
+                Vector3 euler = _current.eulerAngles;
+                float scale = HeadRotationLeanShare * _settings.trackingBodyLean;
+                pitch = Mathf.Clamp(Mathf.DeltaAngle(0f, euler.x) * scale, -MaxLeanAngle, MaxLeanAngle);
+                yaw = Mathf.Clamp(Mathf.DeltaAngle(0f, euler.y) * scale, -MaxTorsoYaw, MaxTorsoYaw);
+                roll = Mathf.Clamp(Mathf.DeltaAngle(0f, euler.z) * scale, -MaxLeanAngle, MaxLeanAngle);
+            }
+            else
+            {
+                // 前後の移動は前後の傾き（X 軸まわり）、左右の移動は横の傾き（Z 軸まわり）へ（頭の位置で傾けないモードは 0）
+                float degreesPerUnit = fromHead ? LeanDegreesPerUnit * _settings.trackingBodyLean : 0f;
+                pitch = Mathf.Clamp(-offset.z * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
+                roll = Mathf.Clamp(offset.x * degreesPerUnit, -MaxLeanAngle, MaxLeanAngle);
+            }
 
             // 両肩が映っている間は、横の傾きを肩の線に置き換え（頭の位置と二重に傾けない）、ひねりを加える。
-            // 前後の傾きは肩の奥行きが不安定なため頭の位置のまま
+            // 前後の傾きは肩の奥行きが不安定なため頭の位置（または iFacialMocap の頭の向き）のまま
             Quaternion torso = TorsoPose.ToRotation(_torsoAngles);
-            Quaternion head = Quaternion.Euler(pitch, 0f, roll);
-            Quaternion withoutRoll = Quaternion.Euler(pitch, 0f, 0f);
+            Quaternion head = Quaternion.Euler(pitch, yaw, roll);
+            Quaternion withoutRoll = Quaternion.Euler(pitch, yaw, 0f);
             return Quaternion.Slerp(head, withoutRoll * torso, _torsoWeight);
         }
 

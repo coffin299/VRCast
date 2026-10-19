@@ -42,7 +42,7 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 ## 現在の状態
 
-**バージョン 3.1.6（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
+**バージョン 3.1.7（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
 
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
@@ -530,8 +530,9 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 PC のアプリ（VirtualMotionCapture など）から VMC プロトコル（OSC over UDP）で顔・全身の値を受信する。
 
 1. PC とスマートフォンを同じ Wi-Fi につなぐ（同じ PC で動かすアプリなら送信先は `127.0.0.1` でよい）。
-2. パネルに出る **This PC's IP address**（LAN の IPv4。複数あればどれか）と **UDP port**（既定 39539）を、アプリの VMC プロトコルの送信先に入力する。
+2. パネルに出る **This PC's IP address**（LAN の IPv4。複数あればどれか）と **UDP port**（既定 39540）を、アプリの VMC プロトコルの送信先に入力する。
 3. 初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可する（Wi-Fi はプライベートネットワークにする）。
+   更新後などに届かないときは、トラッキングタブの **Allow in Windows Firewall** で許可を付け直す。UDP ポートは **Apply** で確定する。
 
 - 使うメッセージ: `/VMC/Ext/Blend/Val`（ARKit 名の値。名前の大文字・小文字や `_L` / `_R` は問わない）、`/VMC/Ext/Blend/Apply`（1 フレームの確定）、
   `/VMC/Ext/Bone/Pos`（`Head` は頭の向き、全ボーンは全身）、`/VMC/Ext/Root/Pos`（体全体の位置・向き）。
@@ -568,10 +569,12 @@ PC のアプリ（VirtualMotionCapture など）から VMC プロトコル（OSC
 2. iFacialMocap の画面上部に出る IP アドレスを、パネルの **iPhone IP address** に入力する。
 3. VRCast が UDP 49983 で待ち受け、データが来ない間は 2 秒ごとに iPhone へ送信開始の合図を送る（iFacialMocap はこの PC へ送り返してくる）。
 4. 初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可する。
+   更新後などに届かないときは、トラッキングタブの **Allow in Windows Firewall** で許可を付け直す。
 
 - 形式: `eyeBlink_L-35|jawOpen-60|...|=head#回転x,回転y,回転z,位置x,位置y,位置z|...`（値は 0〜100。`名前&値` の形式も可）。
   ARKit の値は本人基準の左右なので、MediaPipe と同じ扱いに入れ替えてから、まばたき・口・視線・表情の強さ・パーフェクトシンクに使う。
 - 頭の向きは ARKit（右手系）の回転角を Unity へ変換して使う。位置は単位が不明なため使わない。
+  位置の代わりに、頭の向きの一部を上半身（背骨・胸）へ載せて軽く追従させる（**Body** の傾きの強さで調整）。
 - 受信開始時（トラッキング ON・入力元やカメラの変更後）に、頭が 0.5 秒ほど静止したときの顔の向き・位置を正面とする。
   顔を手で隠すなどして見失っても正面は取り直さない（再検出直後の 0.3 秒は頭の向きを反映しない）。
   ずれたらカメラを見て、パネル下部の **Reset** の **Head**（頭・上半身・目線をまとめて正面に）を押す。

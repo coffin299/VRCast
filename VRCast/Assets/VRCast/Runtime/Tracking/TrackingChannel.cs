@@ -1,3 +1,4 @@
+using System;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
@@ -36,6 +37,9 @@ namespace VRCast.Tracking
         private const float StartCommandInterval = 2f;
         private float _nextStartCommandTime;
         private static readonly byte[] StartCommandBytes = Encoding.ASCII.GetBytes(IFacialMocapPacket.StartCommand);
+
+        // iFacialMocap: 直前に合図を送ろうとした宛先（変わったらすぐ送り直す）
+        private string _lastStartAddress = string.Empty;
 
         // iFacialMocap: 合図の送信失敗を警告する最短間隔（秒）と、次に警告してよい時刻
         private const float SendWarningInterval = 10f;
@@ -195,6 +199,7 @@ namespace VRCast.Tracking
                 _receivedSinceOpen = false;
                 _warnedNoData = false;
                 _nextStartCommandTime = 0f;
+                _lastStartAddress = string.Empty;
 
                 // 前の待ち受けで受け取った VMC の値を持ち越さない
                 _vmc.Reset();
@@ -224,10 +229,23 @@ namespace VRCast.Tracking
 
         private void SendStartCommandIfNeeded()
         {
-            // iFacialMocap で、受信が途絶えている間だけ間隔を空けて送る
+            // iFacialMocap 以外は送らない
+            if (_boundSource != TrackingSource.IFacialMocap)
+            {
+                return;
+            }
+
+            // iPhone の IP が変わったら間隔を待たずすぐ送り直す
+            string address = (_settings.iFacialMocapAddress ?? string.Empty).Trim();
+            if (!string.Equals(address, _lastStartAddress, StringComparison.Ordinal))
+            {
+                _lastStartAddress = address;
+                _nextStartCommandTime = 0f;
+            }
+
+            // 受信が途絶えている間だけ間隔を空けて送る
             float now = Time.unscaledTime;
-            if (_boundSource != TrackingSource.IFacialMocap || now < _nextStartCommandTime
-                || now - _lastPacketTime <= StaleSeconds)
+            if (now < _nextStartCommandTime || now - _lastPacketTime <= StaleSeconds)
             {
                 return;
             }
@@ -235,7 +253,7 @@ namespace VRCast.Tracking
             _nextStartCommandTime = now + StartCommandInterval;
 
             // iPhone の IP アドレスが未設定・不正なら送らない（状態表示で入力を促す）
-            if (!IPAddress.TryParse(_settings.iFacialMocapAddress, out IPAddress phone)
+            if (!IPAddress.TryParse(address, out IPAddress phone)
                 || phone.AddressFamily != AddressFamily.InterNetwork)
             {
                 return;

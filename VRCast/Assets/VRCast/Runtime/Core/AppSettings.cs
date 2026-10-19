@@ -68,8 +68,8 @@ namespace VRCast.Core
         public const int MinTrackingPort = 1024;
         public const int MaxTrackingPort = 65535;
 
-        // VMC プロトコルの受信ポートの既定値（VMC プロトコルの標準）
-        public const int DefaultVmcPort = 39539;
+        // VMC プロトコルの受信ポートの既定値
+        public const int DefaultVmcPort = 39540;
 
         // iFacialMocap のポート（アプリ側で固定。送信開始の合図の宛先と、受信の待ち受けの両方に使う）
         public const int IFacialMocapPort = 49983;

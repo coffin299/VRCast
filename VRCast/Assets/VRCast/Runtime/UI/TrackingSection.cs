@@ -1,9 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using VRCast.Animations;
 using VRCast.Avatars;
 using VRCast.Core;
+using VRCast.Platform;
 using VRCast.Tracking;
 
 namespace VRCast.UI
@@ -23,6 +25,11 @@ namespace VRCast.UI
         // 入力途中のポート文字列（同梱トラッカー用と VMC 用。確定するまで設定へ反映しない）
         private string _portInput;
         private string _vmcPortInput;
+
+        // ファイアウォール許可の実行中と結果（null = 未表示、空文字 = 成功、それ以外 = 失敗理由）
+        private Task<string> _firewallPending;
+        private bool _firewallHasResult;
+        private string _firewallError;
 
         // この PC の LAN のアドレス（VMC の送信先として表示。取得に時間がかかることがあるため間隔を空けて取り直す）
         private const float AddressRefreshSeconds = 5f;
@@ -615,10 +622,9 @@ namespace VRCast.UI
                 GUILayout.EndHorizontal();
             }
 
-            // VMC の受信ポート（範囲内の数値になったときだけ反映。受信側が追従する）
-            _settings.vmcPort = GuiControls.PortField(
-                Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"), ref _vmcPortInput,
-                _settings.vmcPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
+            // VMC の受信ポート（確定するまで設定へ反映しない）
+            DrawPortApply(Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"),
+                ref _vmcPortInput, ref _settings.vmcPort);
 
             DrawFirewallHint();
         }
@@ -653,15 +659,84 @@ namespace VRCast.UI
             DrawFirewallHint();
         }
 
-        private static void DrawFirewallHint()
+        private void DrawFirewallHint()
         {
-            // 届かないときの主な原因（初回のファイアウォールの許可）
+            // 届かないときの主な原因（初回・更新後のファイアウォール）
             GuiControls.Hint(Loc.T(
-                "If nothing arrives, allow VRCast on private networks in Windows Firewall (asked the first time) and set your Wi-Fi to a private network.",
-                "届かないときは、Windows ファイアウォールで VRCast をプライベートネットワークで許可し（初回に確認が出ます）、Wi-Fi をプライベートネットワークにしてください。",
-                "데이터가 오지 않으면 Windows 방화벽에서 VRCast를 개인 네트워크에서 허용하고 (처음에 확인 창이 나옵니다), Wi-Fi를 개인 네트워크로 설정하세요.",
-                "如果收不到数据，请在 Windows 防火墙中允许 VRCast 使用专用网络（首次会弹出确认），并将 Wi-Fi 设为专用网络。",
-                "如果收不到資料，請在 Windows 防火牆中允許 VRCast 使用私人網路（首次會跳出確認），並將 Wi-Fi 設為私人網路。"));
+                "If nothing arrives, allow VRCast on private networks in Windows Firewall (button below; also after an update) and set your Wi-Fi to a private network.",
+                "届かないときは、下のボタンで Windows ファイアウォールのプライベートネットワーク向け許可を付け直してください（更新後も同じ）。Wi-Fi はプライベートネットワークにしてください。",
+                "데이터가 오지 않으면 아래 버튼으로 Windows 방화벽의 개인 네트워크 허용을 다시 설정하세요 (업데이트 후에도 동일). Wi-Fi는 개인 네트워크로 설정하세요.",
+                "如果收不到数据，请用下方按钮重新允许 VRCast 通过 Windows 防火墙的专用网络（更新后也一样），并将 Wi-Fi 设为专用网络。",
+                "如果收不到資料，請用下方按鈕重新允許 VRCast 通過 Windows 防火牆的私人網路（更新後也一樣），並將 Wi-Fi 設為私人網路。"));
+
+            PollFirewall();
+
+            GUI.enabled = _firewallPending == null;
+            if (GUILayout.Button(Loc.T("Allow in Windows Firewall", "Windows ファイアウォールで許可",
+                    "Windows 방화벽에서 허용", "在 Windows 防火墙中允许", "在 Windows 防火牆中允許"),
+                    GuiControls.Shrinkable))
+            {
+                _firewallPending = WindowsFirewall.AllowUdpInboundAsync();
+                _firewallHasResult = false;
+                _firewallError = null;
+            }
+
+            GUI.enabled = true;
+
+            if (_firewallHasResult)
+            {
+                if (_firewallError == null)
+                {
+                    GuiControls.Status(Loc.T("Firewall rule updated", "ファイアウォールの許可を更新しました",
+                        "방화벽 허용이 업데이트됨", "已更新防火墙规则", "已更新防火牆規則"), true);
+                }
+                else if (_firewallError == "Cancelled")
+                {
+                    GuiControls.Hint(Loc.T("Cancelled (administrator permission was denied)",
+                        "キャンセルされました（管理者権限が拒否されました）",
+                        "취소됨 (관리자 권한이 거부됨)", "已取消（管理员权限被拒绝）", "已取消（管理員權限被拒絕）"));
+                }
+                else
+                {
+                    GuiControls.Status(Loc.T("Could not update the firewall rule", "ファイアウォールの許可を更新できませんでした",
+                        "방화벽 허용을 업데이트할 수 없음", "无法更新防火墙规则", "無法更新防火牆規則")
+                        + ": " + _firewallError, false);
+                }
+            }
+        }
+
+        private void PollFirewall()
+        {
+            // 別スレッドの結果が来たら表示用に取り込む
+            if (_firewallPending == null || !_firewallPending.IsCompleted)
+            {
+                return;
+            }
+
+            _firewallError = _firewallPending.IsFaulted
+                ? _firewallPending.Exception?.GetBaseException().Message ?? "Unknown error"
+                : _firewallPending.Result;
+            _firewallHasResult = true;
+            _firewallPending = null;
+        }
+
+        private static void DrawPortApply(string label, ref string input, ref int port)
+        {
+            // 入力中は設定へ書かず、確定で範囲内なら反映する
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, GUILayout.Width(130f));
+            input = GUILayout.TextField(input, 5, GuiControls.Shrinkable);
+            bool valid = int.TryParse(input, out int parsed)
+                && parsed >= AppSettings.MinTrackingPort && parsed <= AppSettings.MaxTrackingPort;
+            bool changed = valid && parsed != port;
+            GUI.enabled = changed;
+            if (GUILayout.Button(Loc.T("Apply", "確定", "적용", "确定", "確定"), GUILayout.Width(70f)) && changed)
+            {
+                port = parsed;
+            }
+
+            GUI.enabled = true;
+            GUILayout.EndHorizontal();
         }
 
         private void DrawBlink()
@@ -995,10 +1070,9 @@ namespace VRCast.UI
 
         private void DrawPort()
         {
-            // 範囲内の数値になったときだけ反映（受信側・起動中のトラッカーがポート変更に追従する）
-            _settings.trackingPort = GuiControls.PortField(
-                Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"), ref _portInput,
-                _settings.trackingPort, AppSettings.MinTrackingPort, AppSettings.MaxTrackingPort);
+            // 確定するまで設定へ反映しない（受信側・起動中のトラッカーがポート変更に追従する）
+            DrawPortApply(Loc.T("UDP port", "UDP ポート", "UDP 포트", "UDP 端口", "UDP 連接埠"),
+                ref _portInput, ref _settings.trackingPort);
         }
 
         private void DrawMotion()
