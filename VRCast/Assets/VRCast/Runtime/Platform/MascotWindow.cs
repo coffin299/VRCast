@@ -11,8 +11,10 @@ namespace VRCast.Platform
     /// </summary>
     public static class MascotWindow
     {
-        private const int Width = 480;
-        private const int Height = 700;
+        public const int BaseWidth = 480;
+        public const int BaseHeight = 700;
+        public const float MinScale = 0.25f;
+        public const float MaxScale = 3f;
         private const string ClassName = "VRCastMascotWindow";
 
         private const int WsPopup = unchecked((int)0x80000000);
@@ -27,8 +29,14 @@ namespace VRCast.Platform
 
         private const int WmNcHitTest = 0x0084;
         private const int WmDestroy = 0x0002;
+        private const int WmMouseMove = 0x0200;
+        private const int WmRButtonDown = 0x0204;
+        private const int WmRButtonUp = 0x0205;
+        private const int WmCaptureChanged = 0x0215;
         private const int HtTransparent = -1;
         private const int HtCaption = 2;
+        private const uint SwpNoZOrder = 0x0004;
+        private const uint SwpNoActivate = 0x0010;
         private const int OpaqueAlpha = 24;
 
         private const uint SpiGetWorkArea = 0x0030;
@@ -44,12 +52,43 @@ namespace VRCast.Platform
         private static byte[] _alpha = Array.Empty<byte>();
         private static int _alphaWidth;
         private static int _alphaHeight;
+        private static int _width = BaseWidth;
+        private static int _height = BaseHeight;
+        private static bool _draggingScale;
+        private static int _dragStartY;
+        private static float _dragStartScale;
 
         public static bool IsOpen => _hwnd != IntPtr.Zero;
 
-        public static int PixelWidth => Width;
+        public static int PixelWidth => _width;
 
-        public static int PixelHeight => Height;
+        public static int PixelHeight => _height;
+
+        /// <summary>今の表示倍率。1 で 480×700。</summary>
+        public static float Scale { get; private set; } = 1f;
+
+        /// <summary>アバター上を右ドラッグして大きさを変えている間。</summary>
+        public static bool DraggingScale => _draggingScale;
+
+        /// <summary>壊れた値は 100%、それ以外は 25%〜300% に収め、1% 刻みにする。</summary>
+        public static float ClampScale(float scale)
+        {
+            if (float.IsNaN(scale) || float.IsInfinity(scale) || scale <= 0f)
+            {
+                return 1f;
+            }
+
+            if (scale < MinScale)
+            {
+                scale = MinScale;
+            }
+            else if (scale > MaxScale)
+            {
+                scale = MaxScale;
+            }
+
+            return (float)Math.Round(scale, 2);
+        }
 
         /// <summary>
         /// ウィンドウの左上（画面座標、左上原点）と大きさ。開いていなければ空。
@@ -84,7 +123,7 @@ namespace VRCast.Platform
         /// <summary>
         /// ウィンドウを作る。x, y が負なら作業領域の右下に置く。
         /// </summary>
-        public static bool Open(int x, int y)
+        public static bool Open(int x, int y, float scale)
         {
             if (_hwnd != IntPtr.Zero)
             {
@@ -96,6 +135,7 @@ namespace VRCast.Platform
                 return false;
             }
 
+            ApplyScale(scale);
             if (x < 0 || y < 0)
             {
                 PlaceDefault(out x, out y);
@@ -108,8 +148,8 @@ namespace VRCast.Platform
                 WsPopup | WsVisible,
                 x,
                 y,
-                Width,
-                Height,
+                _width,
+                _height,
                 IntPtr.Zero,
                 IntPtr.Zero,
                 GetModuleHandleW(null),
@@ -162,7 +202,7 @@ namespace VRCast.Platform
                 return;
             }
 
-            int count = Width * Height;
+            int count = _width * _height;
             if (rgba.Length < count * 4)
             {
                 return;
@@ -171,8 +211,8 @@ namespace VRCast.Platform
             if (_alpha.Length != count)
             {
                 _alpha = new byte[count];
-                _alphaWidth = Width;
-                _alphaHeight = Height;
+                _alphaWidth = _width;
+                _alphaHeight = _height;
             }
 
             // DIB は下から上。読み取りも下から上なのでそのまま BGRA（乗算済み）へ並べる
@@ -193,7 +233,7 @@ namespace VRCast.Platform
             }
 
             var origin = new PointNative();
-            var size = new SizeNative { Cx = Width, Cy = Height };
+            var size = new SizeNative { Cx = _width, Cy = _height };
             var blend = new BlendFunction { BlendOp = AcSrcOver, SourceConstantAlpha = 255, AlphaFormat = AcSrcAlpha };
             UpdateLayeredWindow(_hwnd, IntPtr.Zero, IntPtr.Zero, ref size, _memDc, ref origin, 0, ref blend, UlwAlpha);
         }
@@ -208,8 +248,50 @@ namespace VRCast.Platform
                 return;
             }
 
-            x = Math.Max(work.Left, work.Right - Width - 24);
-            y = Math.Max(work.Top, work.Bottom - Height - 24);
+            x = Math.Max(work.Left, work.Right - _width - 24);
+            y = Math.Max(work.Top, work.Bottom - _height - 24);
+        }
+
+        /// <summary>
+        /// 倍率に合わせてウィンドウとビットマップを変える。開いていれば中心を保つ。
+        /// </summary>
+        public static void ApplyScale(float scale)
+        {
+            scale = ClampScale(scale);
+            int width = Math.Max(1, (int)Math.Round(BaseWidth * scale));
+            int height = Math.Max(1, (int)Math.Round(BaseHeight * scale));
+            Scale = scale;
+            if (_hwnd == IntPtr.Zero)
+            {
+                _width = width;
+                _height = height;
+                return;
+            }
+
+            if (width == _width && height == _height)
+            {
+                return;
+            }
+
+            int x = 0;
+            int y = 0;
+            if (GetWindowRect(_hwnd, out RectNative rect))
+            {
+                x = rect.Left + (_width - width) / 2;
+                y = rect.Top + (_height - height) / 2;
+            }
+
+            _width = width;
+            _height = height;
+            SetWindowPos(_hwnd, IntPtr.Zero, x, y, width, height, SwpNoZOrder | SwpNoActivate);
+            if (!EnsureBitmap())
+            {
+                return;
+            }
+
+            _alpha = Array.Empty<byte>();
+            _alphaWidth = 0;
+            _alphaHeight = 0;
         }
 
         private static bool EnsureClass()
@@ -238,8 +320,8 @@ namespace VRCast.Platform
             var infoHeader = new BitmapInfoHeader
             {
                 Size = Marshal.SizeOf<BitmapInfoHeader>(),
-                Width = Width,
-                Height = Height,
+                Width = _width,
+                Height = _height,
                 Planes = 1,
                 BitCount = 32,
             };
@@ -285,6 +367,34 @@ namespace VRCast.Platform
         [MonoPInvokeCallback(typeof(WndProc))]
         private static IntPtr OnMessage(IntPtr hwnd, uint message, IntPtr wParam, IntPtr lParam)
         {
+            if (message == WmRButtonDown && TryCursor(out int cursorX, out int cursorY) && OpaqueAt(cursorX, cursorY))
+            {
+                _draggingScale = true;
+                _dragStartY = cursorY;
+                _dragStartScale = Scale;
+                SetCapture(hwnd);
+                return IntPtr.Zero;
+            }
+
+            if (message == WmMouseMove && _draggingScale && TryCursor(out _, out int dragY))
+            {
+                // 上へドラッグすると大きく、下へドラッグすると小さく
+                ApplyScale(_dragStartScale + (_dragStartY - dragY) / (float)BaseHeight);
+                return IntPtr.Zero;
+            }
+
+            if (message == WmRButtonUp && _draggingScale)
+            {
+                _draggingScale = false;
+                ReleaseCapture();
+                return IntPtr.Zero;
+            }
+
+            if (message == WmCaptureChanged)
+            {
+                _draggingScale = false;
+            }
+
             if (message == WmNcHitTest)
             {
                 // 透明な画素は後ろのウィンドウへ。それ以外は掴んで移動できる
@@ -425,6 +535,15 @@ namespace VRCast.Platform
 
         [DllImport("user32.dll")]
         private static extern bool GetWindowRect(IntPtr hwnd, out RectNative rect);
+
+        [DllImport("user32.dll")]
+        private static extern bool SetWindowPos(IntPtr hwnd, IntPtr insertAfter, int x, int y, int width, int height, uint flags);
+
+        [DllImport("user32.dll")]
+        private static extern IntPtr SetCapture(IntPtr hwnd);
+
+        [DllImport("user32.dll")]
+        private static extern bool ReleaseCapture();
 
         [DllImport("user32.dll")]
         private static extern bool GetCursorPos(out PointNative point);

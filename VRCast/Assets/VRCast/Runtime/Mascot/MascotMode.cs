@@ -9,6 +9,7 @@ using VRCast.AvatarFormat;
 using VRCast.Avatars;
 using VRCast.Core;
 using VRCast.Platform;
+using VRCast.Rendering;
 using VRCast.Tracking;
 using VRCast.UI;
 
@@ -38,12 +39,14 @@ namespace VRCast.Mascot
 
         private Camera _view;
         private RenderTexture _target;
+        private RenderTexture _scene;
         private bool _readback;
         private PlayableGraph _graph;
         private int _graphClip = int.MinValue;
         private int _boundAvatar;
         private string _input = string.Empty;
         private Vector2 _scroll;
+        private string _scaleInput = "100";
         private Vector2 _chatScroll;
         private string _bubble = string.Empty;
         private TextMesh _text;
@@ -79,7 +82,7 @@ namespace VRCast.Mascot
             Active = true;
             EnsureView();
             HideFromMainCamera();
-            if (!MascotWindow.Open(_settings.mascotWindowX, _settings.mascotWindowY))
+            if (!MascotWindow.Open(_settings.mascotWindowX, _settings.mascotWindowY, _settings.mascotScale))
             {
                 VRCastLog.Warning("Mascot", "Could not open the mascot window.");
             }
@@ -168,13 +171,23 @@ namespace VRCast.Mascot
                 _settings.mascotWindowY = windowY;
             }
 
+            if (MascotWindow.DraggingScale)
+            {
+                _settings.mascotScale = MascotWindow.Scale;
+            }
+            else if (MascotWindow.IsOpen)
+            {
+                MascotWindow.ApplyScale(_settings.mascotScale);
+            }
+
             BindAvatar();
             FrameCamera();
+            SyncSceneTarget();
             UpdateBubble();
             SetSpeech(_tts.Level);
         }
 
-        public void Draw(float areaHeight)
+        public void Draw()
         {
             if (!MascotWindow.IsOpen)
             {
@@ -186,9 +199,9 @@ namespace VRCast.Mascot
                     "無法打開吉祥物視窗。"));
             }
 
-            // 言語・モードボタン・下の説明を残して、残りを設定のスクロールにする
-            float scrollHeight = Mathf.Max(160f, areaHeight - 360f);
-            _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.Height(scrollHeight));
+            // 言語・モードボタン・下の説明を残し、あいだを設定のスクロールにする
+            _scroll = GUILayout.BeginScrollView(_scroll, GUILayout.ExpandHeight(true));
+            DrawSize();
             DrawLanguageModel();
             DrawVoice();
             DrawPose();
@@ -208,11 +221,38 @@ namespace VRCast.Mascot
                 _target = null;
             }
 
+            if (_scene != null)
+            {
+                _scene.Release();
+                UnityEngine.Object.Destroy(_scene);
+                _scene = null;
+            }
+
             if (_view != null)
             {
                 UnityEngine.Object.Destroy(_view.gameObject);
                 _view = null;
             }
+        }
+
+        private void DrawSize()
+        {
+            GuiControls.BeginCard(Loc.T("Size", "大きさ", "크기", "大小", "大小"));
+            float percent = GuiControls.SliderOrField(
+                Loc.T("Avatar size", "アバターの大きさ", "아바타 크기", "形象大小", "形象大小"),
+                _settings.mascotScale * 100f,
+                MascotWindow.MinScale * 100f,
+                MascotWindow.MaxScale * 100f,
+                ref _scaleInput,
+                "mascot-scale");
+            _settings.mascotScale = MascotWindow.ClampScale(percent / 100f);
+            GuiControls.Hint(Loc.T(
+                "Type a percent or drag the slider. Right-drag up or down on the avatar to resize it too.",
+                "パーセントを入力するか、スライダーをドラッグします。アバターを右ボタンで上下にドラッグしても変えられます。",
+                "퍼센트를 입력하거나 슬라이더를 드래그하세요. 아바타 위에서 오른쪽 버튼으로 위아래 드래그해도 바뀝니다.",
+                "输入百分比，或拖动滑块。在形象上按住右键上下拖动也可以改变大小。",
+                "輸入百分比，或拖動滑桿。在形象上按住右鍵上下拖動也可以改變大小。"));
+            GuiControls.EndCard();
         }
 
         private void DrawLanguageModel()
@@ -579,12 +619,73 @@ namespace VRCast.Mascot
             _view.nearClipPlane = 0.05f;
             _view.farClipPlane = 50f;
             _view.cullingMask = 1 << AvatarLayer;
-            _view.allowMSAA = false;
             _view.depth = -50f;
-            _target = new RenderTexture(MascotWindow.PixelWidth, MascotWindow.PixelHeight, 16, RenderTextureFormat.ARGB32);
-            _target.Create();
-            _view.targetTexture = _target;
+            SyncSceneTarget();
             HideFromMainCamera();
+        }
+
+        /// <summary>
+        /// 配信と同じ MSAA・FXAA・高解像度で描き、ウィンドウの大きさへ縮めてから読み出す。
+        /// </summary>
+        private void SyncSceneTarget()
+        {
+            if (_view == null || _readback)
+            {
+                return;
+            }
+
+            float scale = CameraAntiAliasing.RenderScaleOf(_settings);
+            int samples = CameraAntiAliasing.MsaaSamplesOf(_settings);
+            int width = Mathf.Max(1, Mathf.RoundToInt(MascotWindow.PixelWidth * scale));
+            int height = Mathf.Max(1, Mathf.RoundToInt(MascotWindow.PixelHeight * scale));
+            _view.allowMSAA = samples > 1;
+            bool sceneMatches = _scene != null && _scene.width == width && _scene.height == height
+                && _scene.antiAliasing == samples;
+            bool outputMatches = _target != null && _target.width == MascotWindow.PixelWidth
+                && _target.height == MascotWindow.PixelHeight;
+            if (sceneMatches && outputMatches)
+            {
+                _view.targetTexture = _scene;
+                return;
+            }
+
+            if (!outputMatches)
+            {
+                if (_target != null)
+                {
+                    _target.Release();
+                    UnityEngine.Object.Destroy(_target);
+                }
+
+                _target = new RenderTexture(MascotWindow.PixelWidth, MascotWindow.PixelHeight, 0, RenderTextureFormat.ARGB32)
+                {
+                    name = "VRCast Mascot Output",
+                    filterMode = FilterMode.Bilinear,
+                    hideFlags = HideFlags.HideAndDontSave,
+                };
+                _target.Create();
+            }
+
+            if (_scene != null)
+            {
+                if (_view.targetTexture == _scene)
+                {
+                    _view.targetTexture = null;
+                }
+
+                _scene.Release();
+                UnityEngine.Object.Destroy(_scene);
+            }
+
+            _scene = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32)
+            {
+                name = "VRCast Mascot Scene",
+                antiAliasing = samples,
+                filterMode = FilterMode.Bilinear,
+                hideFlags = HideFlags.HideAndDontSave,
+            };
+            _scene.Create();
+            _view.targetTexture = _scene;
         }
 
         private void HideFromMainCamera()
@@ -786,6 +887,11 @@ namespace VRCast.Mascot
             while (Active)
             {
                 yield return new WaitForEndOfFrame();
+                if (_scene != null && _target != null)
+                {
+                    CameraAntiAliasing.BlitProcessed(_settings, _scene, _target);
+                }
+
                 RequestReadback();
             }
         }

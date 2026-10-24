@@ -272,6 +272,7 @@ namespace VRCast.Core
             nameof(AppSettings.mascotStandClip),
             nameof(AppSettings.mascotWindowX),
             nameof(AppSettings.mascotWindowY),
+            nameof(AppSettings.mascotScale),
         };
 
         /// <summary>

@@ -173,8 +173,59 @@ namespace VRCast.Rendering
 
         private int MsaaSamples()
         {
-            int samples = (int)_settings.antiAliasing;
+            return MsaaSamplesOf(_settings);
+        }
+
+        /// <summary>
+        /// 今の設定の MSAA サンプル数。MSAA 以外は 1。
+        /// </summary>
+        public static int MsaaSamplesOf(AppSettings settings)
+        {
+            if (settings == null || EffectiveModeOf(settings) != AntiAliasingMode.Msaa)
+            {
+                return 1;
+            }
+
+            int samples = (int)settings.antiAliasing;
             return samples == 2 || samples == 4 || samples == 8 ? samples : 4;
+        }
+
+        /// <summary>
+        /// 描いた絵を出力先へ移す。MSAA はここで解消し、高解像度は縮め、FXAA ならそれを掛ける。
+        /// </summary>
+        public static void BlitProcessed(AppSettings settings, RenderTexture source, RenderTexture destination)
+        {
+            if (source == null || destination == null)
+            {
+                return;
+            }
+
+            if (settings != null && EffectiveModeOf(settings) == AntiAliasingMode.Fxaa && EnsureSharedFxaa())
+            {
+                Graphics.Blit(source, destination, _sharedFxaa, 0);
+                return;
+            }
+
+            Graphics.Blit(source, destination);
+        }
+
+        private static Material _sharedFxaa;
+
+        private static bool EnsureSharedFxaa()
+        {
+            if (_sharedFxaa != null)
+            {
+                return true;
+            }
+
+            Shader shader = Shader.Find("Hidden/VRCast/FXAA");
+            if (shader == null)
+            {
+                return false;
+            }
+
+            _sharedFxaa = new Material(shader) { hideFlags = HideFlags.HideAndDontSave };
+            return true;
         }
 
         private void EnsureSceneRt(int width, int height, int samples)

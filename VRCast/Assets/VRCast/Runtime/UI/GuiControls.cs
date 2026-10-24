@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using UnityEngine;
 
 namespace VRCast.UI
@@ -21,8 +22,8 @@ namespace VRCast.UI
         private const float CopyButtonWidth = 80f;
         private const float CopiedSeconds = 1.5f;
 
-        // 最後にコピーした文字列と、「コピー済み」を消す時刻（どのタブのコピーボタンでも共通）
-        private static string _copied;
+        // 数値欄の直前のフォーカス。離したフレームだけ、入力途中の文字を値として確定する
+        private static readonly Dictionary<string, bool> FieldFocus = new Dictionary<string, bool>();
         private static float _copiedUntil;
 
         // 説明文の下の区切り線（線を含む余白の高さと線の太さ）
@@ -324,6 +325,46 @@ namespace VRCast.UI
             GUILayout.Label(result.ToString(format), theme != null ? theme.Value : GUI.skin.label, GUILayout.Width(ValueWidth));
             GUILayout.EndHorizontal();
             return result;
+        }
+
+        /// <summary>
+        /// ラベル + スライダー + 数値欄。ドラッグでも、欄へ任意の値を入れても変えられる。
+        /// input は入力途中の文字列（呼び出し側で保持）。controlName はフォーカス判定に使う。
+        /// </summary>
+        public static float SliderOrField(string label, float value, float min, float max, ref string input, string controlName)
+        {
+            bool focused = GUI.GetNameOfFocusedControl() == controlName;
+            bool wasFocused = FieldFocus.TryGetValue(controlName, out bool previous) && previous;
+            if (wasFocused && !focused && float.TryParse(input, NumberStyles.Float, CultureInfo.CurrentCulture, out float pending))
+            {
+                value = Mathf.Clamp(pending, min, max);
+            }
+
+            FieldFocus[controlName] = focused;
+            if (!focused)
+            {
+                input = value.ToString("0.#", CultureInfo.CurrentCulture);
+            }
+
+            GUILayout.BeginHorizontal();
+            GUILayout.Label(label, GUILayout.Width(LabelWidth), GUILayout.MinWidth(0f));
+            float slid = GUILayout.HorizontalSlider(value, min, max, Shrinkable);
+            GUI.SetNextControlName(controlName);
+            input = GUILayout.TextField(input ?? string.Empty, 8, GUILayout.Width(52f));
+            GUILayout.EndHorizontal();
+
+            if (focused && float.TryParse(input, NumberStyles.Float, CultureInfo.CurrentCulture, out float typed)
+                && typed >= min && typed <= max)
+            {
+                return typed;
+            }
+
+            if (Mathf.Abs(slid - value) > 0.05f)
+            {
+                return Mathf.Clamp(slid, min, max);
+            }
+
+            return value;
         }
 
         /// <summary>

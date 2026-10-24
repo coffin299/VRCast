@@ -19,7 +19,11 @@ namespace VRCast.UI
             int pick = 0;
             float column = Mathf.Min(Mathf.Max(0f, width - 24f), ContentWidth);
             float x = Mathf.Max(0f, (width - column) * 0.5f);
-            GUILayout.BeginArea(new Rect(x, 0f, column, height));
+            // 説明は下に固定し、マスコットの設定スクロールとは別の領域にする
+            float descriptionHeight = DescriptionHeight(theme, column);
+            float bodyHeight = Mathf.Max(0f, height - descriptionHeight);
+
+            GUILayout.BeginArea(new Rect(x, 0f, column, bodyHeight));
             GUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             GUILayout.Space(18f);
             DrawLanguages(settings, theme);
@@ -33,16 +37,19 @@ namespace VRCast.UI
             if (mascot)
             {
                 GUILayout.Space(8f);
-                mode.Draw(height);
+                mode.Draw();
             }
             else
             {
                 GUILayout.FlexibleSpace();
             }
 
-            DrawDescription(theme, column);
-            GUILayout.Space(14f);
             GUILayout.EndVertical();
+            GUILayout.EndArea();
+
+            GUILayout.BeginArea(new Rect(x, bodyHeight, column, descriptionHeight));
+            GUILayout.Space(12f);
+            DrawDescription(theme, column);
             GUILayout.EndArea();
             return pick;
         }
@@ -93,17 +100,46 @@ namespace VRCast.UI
 
         private static void DrawDescription(UiTheme theme, float width)
         {
+            DescriptionLines(out string broadcast, out string mascot, out string version);
             float panel = Mathf.Min(width - 36f, 820f);
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
             GUILayout.BeginVertical(theme.Card, GUILayout.Width(panel));
-            GUILayout.Label(Loc.T(
+            GUILayout.Label(broadcast, theme.Hint);
+            GUILayout.Label(mascot, theme.Hint);
+            GUILayout.Label(version, theme.Hint);
+            GUILayout.EndVertical();
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
+        }
+
+        /// <summary>
+        /// 説明欄が占める高さ（上の空きとカードの余白を含む）。
+        /// </summary>
+        private static float DescriptionHeight(UiTheme theme, float width)
+        {
+            DescriptionLines(out string broadcast, out string mascot, out string version);
+            float panel = Mathf.Min(width - 36f, 820f);
+            float inner = Mathf.Max(1f, panel - theme.Card.padding.left - theme.Card.padding.right);
+            GUIStyle hint = theme.Hint;
+            float text = hint.CalcHeight(new GUIContent(broadcast), inner)
+                + hint.CalcHeight(new GUIContent(mascot), inner)
+                + hint.CalcHeight(new GUIContent(version), inner);
+            float card = text + theme.Card.padding.top + theme.Card.padding.bottom
+                + theme.Card.margin.top + theme.Card.margin.bottom
+                + hint.margin.vertical * 3f;
+            return 12f + card + 16f;
+        }
+
+        private static void DescriptionLines(out string broadcast, out string mascot, out string version)
+        {
+            broadcast = Loc.T(
                 "Broadcast is the usual VRCast screen: send the avatar to a virtual camera or Spout.",
                 "配信モードは今までの VRCast です。アバターを仮想カメラや Spout に出して配信します。",
                 "방송 모드는 지금까지의 VRCast입니다. 아바타를 가상 카메라나 Spout으로 내보내 송출합니다.",
                 "直播模式就是原来的 VRCast。把虚拟形象送到虚拟摄像头或 Spout 进行播出。",
-                "直播模式就是原來的 VRCast。把虛擬形象送到虛擬攝影機或 Spout 進行播出。"), theme.Hint);
-            GUILayout.Label(Loc.T(
+                "直播模式就是原來的 VRCast。把虛擬形象送到虛擬攝影機或 Spout 進行播出。");
+            mascot = Loc.T(
                 "Mascot keeps this screen and shows the avatar in another window. It looks toward a nearby cursor, " +
                 "talks with a local language model such as LM Studio, and speaks with COEIROINK (recommended) or VOICEVOX. " +
                 "With COEIROINK you can train your own voice and use it here. Training is done in COEIROINK.",
@@ -118,11 +154,8 @@ namespace VRCast.UI
                 "COEIROINK 可以训练自己的声音，再用那个声音说话。训练在 COEIROINK 里进行。",
                 "吉祥物模式會留下這個畫面，並把虛擬形象顯示在另一個視窗。游標靠近時會看向游標，" +
                 "並與 LM Studio 等本地語言模型對話。回答由 COEIROINK（推薦）或 VOICEVOX 朗讀。" +
-                "COEIROINK 可以訓練自己的聲音，再用那個聲音說話。訓練在 COEIROINK 裡進行。"), theme.Hint);
-            GUILayout.Label("VRCast v" + Application.version, theme.Hint);
-            GUILayout.EndVertical();
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
+                "COEIROINK 可以訓練自己的聲音，再用那個聲音說話。訓練在 COEIROINK 裡進行。");
+            version = "VRCast v" + Application.version;
         }
     }
 }

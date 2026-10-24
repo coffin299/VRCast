@@ -496,6 +496,8 @@ namespace VRCast.Core
         public int mascotStandClip = -1;
         public int mascotWindowX = -1;
         public int mascotWindowY = -1;
+        // マスコットの表示倍率（1 = 480×700。ウィンドウごと拡縮する）
+        public float mascotScale = 1f;
 
         /// <summary>
         /// 顔（まばたき・パーフェクトシンク・視線）に使う鏡像の向き。顔の左右の入れ替えが ON なら鏡像設定と逆。
@@ -1476,6 +1478,16 @@ namespace VRCast.Core
             while (lightingPresets.Count > MaxLightingPresets)
             {
                 lightingPresets.RemoveAt(0);
+            }
+
+            // マスコットの大きさ。未設定や壊れた値は 100%。範囲は 25%〜300%
+            if (float.IsNaN(mascotScale) || float.IsInfinity(mascotScale) || mascotScale <= 0f)
+            {
+                mascotScale = 1f;
+            }
+            else
+            {
+                mascotScale = Mathf.Clamp(mascotScale, 0.25f, 3f);
             }
         }
 
