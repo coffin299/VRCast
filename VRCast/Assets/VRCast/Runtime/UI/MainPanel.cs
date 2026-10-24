@@ -119,6 +119,10 @@ namespace VRCast.UI
         private LaunchMode _launch = LaunchMode.Choose;
         private MascotMode _mascot;
 
+        // モードを選ぶまではメイン画面にアバターを出さない
+        private int _mainMask;
+        private bool _mainMaskHidden;
+
         // テーマ（最初の OnGUI で作成）
         private UiTheme _theme;
 
@@ -307,6 +311,7 @@ namespace VRCast.UI
             }
 
             _mascot.Tick();
+            ApplyChooserCamera();
 
             // パネル上にマウスがある間はカメラ操作を止める（Input は左下原点なので上下を反転し、UI の倍率で割る）
             float scale = _settings.uiScale;
@@ -333,6 +338,45 @@ namespace VRCast.UI
             }
 
             _orbit.InputBlocked = _visible && _windowRect.Contains(position);
+        }
+
+        private void ApplyChooserCamera()
+        {
+            Camera camera = _orbit.GetComponent<Camera>();
+            if (camera == null)
+            {
+                return;
+            }
+
+            if (_launch != LaunchMode.Choose)
+            {
+                ShowAvatarOnMainCamera();
+                return;
+            }
+
+            if (!_mainMaskHidden)
+            {
+                _mainMask = camera.cullingMask;
+                _mainMaskHidden = true;
+            }
+
+            camera.cullingMask = 0;
+        }
+
+        private void ShowAvatarOnMainCamera()
+        {
+            if (!_mainMaskHidden)
+            {
+                return;
+            }
+
+            Camera camera = _orbit.GetComponent<Camera>();
+            if (camera != null)
+            {
+                camera.cullingMask = _mainMask;
+            }
+
+            _mainMaskHidden = false;
         }
 
         private void SetVisible(bool visible)
@@ -385,12 +429,16 @@ namespace VRCast.UI
                     _settings, _theme, Screen.width / scale, Screen.height / scale, _launch == LaunchMode.Mascot, _mascot);
                 if (pick == 1)
                 {
+                    ShowAvatarOnMainCamera();
+                    _avatarSection.LoadStartupAvatar();
                     _mascot.Close();
                     _launch = LaunchMode.Broadcast;
                     SetVisible(true);
                 }
                 else if (pick == 2)
                 {
+                    ShowAvatarOnMainCamera();
+                    _avatarSection.LoadStartupAvatar();
                     _launch = LaunchMode.Mascot;
                     _mascot.Open();
                 }
@@ -479,7 +527,7 @@ namespace VRCast.UI
         {
             GUILayout.BeginHorizontal(GUILayout.Height(HeaderHeight - 12f));
             GUILayout.Label("VRCast", _theme.Title, GUILayout.ExpandWidth(false));
-            if (GUILayout.Button(Loc.T("Modes", "モード", "모드", "模式", "模式"), GUILayout.Width(72f)))
+            if (GUILayout.Button(Loc.T("Modes", "モード", "모드", "模式", "模式"), _theme.HeaderButton, GUILayout.Width(72f)))
             {
                 _launch = LaunchMode.Choose;
             }
@@ -494,7 +542,7 @@ namespace VRCast.UI
                 "[Tab] 全部隐藏并透明", "[Tab] 全部隱藏並透明"), _theme.KeyHint);
 
             // ヘルプページ（Web）
-            if (GUILayout.Button("?", GUILayout.Width(HelpButtonWidth)))
+            if (GUILayout.Button("?", _theme.HeaderButton, GUILayout.Width(HelpButtonWidth)))
             {
                 HelpPage.Open();
             }

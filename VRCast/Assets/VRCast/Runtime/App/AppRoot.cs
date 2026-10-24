@@ -1,5 +1,4 @@
 using System;
-using System.IO;
 using UnityEngine;
 using VRCast.Animations;
 using VRCast.Audio;
@@ -130,15 +129,6 @@ namespace VRCast.App
             gameObject.AddComponent<MainPanel>().Initialize(
                 _session, _orbit, _rendering, _microphone, _tracker, trackerProcess, _skeleton, virtualCamera, spout,
                 fileDrop, updates, remote, _settings, _initialAvatarPath);
-        }
-
-        private void Start()
-        {
-            // 起動時に指定または前回のアバターがあれば自動で読み込む
-            if (!string.IsNullOrEmpty(_initialAvatarPath) && File.Exists(_initialAvatarPath))
-            {
-                _session.Load(_initialAvatarPath);
-            }
         }
 
         private void LateUpdate()

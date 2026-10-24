@@ -122,6 +122,25 @@ namespace VRCast.UI
             _thumbnailError = _thumbnails.SetPng(avatar.SourcePath, AvatarFaceCapture.CapturePng(avatar, background));
         }
 
+        /// <summary>
+        /// モードを選んだあと、起動引数または前回のアバターを読み込む。未選択のあいだは呼ばない。
+        /// </summary>
+        public void LoadStartupAvatar()
+        {
+            if (_session.Current != null || _session.IsLoading)
+            {
+                return;
+            }
+
+            string path = PathUtility.NormalizeInput(_pathInput);
+            if (path.Length == 0 || !File.Exists(path))
+            {
+                return;
+            }
+
+            _session.Load(path);
+        }
+
         public void Draw()
         {
             DrawLoader();

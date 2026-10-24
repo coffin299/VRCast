@@ -206,6 +206,9 @@ namespace VRCast.UI
         public GUIStyle ModeButton { get; private set; }
         public GUIStyle FeatureModeButton { get; private set; }
 
+        // 配信画面の見出しにある「モード」と「?」。言語ボタンと区別する紫
+        public GUIStyle HeaderButton { get; private set; }
+
         // 短い文字のボタン（言語の切替など。代替フォントの字形が下へはみ出しても切らない）
         public GUIStyle OverflowButton { get; private set; }
 
@@ -583,6 +586,18 @@ namespace VRCast.UI
                 Rounded(Color.Lerp(FeatureColor, Color.white, 0.12f), ControlRadius), OnAccent);
             SetOnStates(FeatureModeButton, Rounded(Color.Lerp(FeatureColor, Color.white, 0.18f), ControlRadius),
                 Rounded(FeatureHover, ControlRadius), OnAccent);
+
+            // 見出しの「モード」とヘルプ。ベージュの地と下の言語ボタンから離して紫にする
+            HeaderButton = new GUIStyle(Skin.button)
+            {
+                fontStyle = FontStyle.Bold,
+                alignment = TextAnchor.MiddleCenter,
+                padding = new RectOffset(8, 8, 2, 2),
+                margin = new RectOffset(6, 6, 2, 2),
+                fixedHeight = 22f,
+            };
+            SetStates(HeaderButton, Rounded(FeatureColor, ControlRadius), Rounded(FeatureHover, ControlRadius),
+                Rounded(Color.Lerp(FeatureColor, Color.black, 0.15f), ControlRadius), OnAccent);
         }
 
         private static void SetStates(GUIStyle style, Texture2D normal, Texture2D hover, Texture2D active, Color text)

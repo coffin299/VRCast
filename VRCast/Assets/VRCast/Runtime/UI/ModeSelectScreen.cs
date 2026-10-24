@@ -10,11 +10,16 @@ namespace VRCast.UI
     /// </summary>
     public static class ModeSelectScreen
     {
+        // 配信パネル（680）より少し広いだけ。ウィンドウ幅いっぱいに伸ばさない
+        private const float ContentWidth = 720f;
+
         public static int Draw(AppSettings settings, UiTheme theme, float width, float height, bool mascot,
             MascotMode mode)
         {
             int pick = 0;
-            GUILayout.BeginArea(new Rect(0f, 0f, width, height));
+            float column = Mathf.Min(Mathf.Max(0f, width - 24f), ContentWidth);
+            float x = Mathf.Max(0f, (width - column) * 0.5f);
+            GUILayout.BeginArea(new Rect(x, 0f, column, height));
             GUILayout.BeginVertical(GUILayout.ExpandWidth(true), GUILayout.ExpandHeight(true));
             GUILayout.Space(18f);
             DrawLanguages(settings, theme);
@@ -24,7 +29,7 @@ namespace VRCast.UI
                 GUILayout.FlexibleSpace();
             }
 
-            pick = DrawModes(theme, width, mascot);
+            pick = DrawModes(theme, column, mascot);
             if (mascot)
             {
                 GUILayout.Space(8f);
@@ -35,7 +40,7 @@ namespace VRCast.UI
                 GUILayout.FlexibleSpace();
             }
 
-            DrawDescription(theme, width);
+            DrawDescription(theme, column);
             GUILayout.Space(14f);
             GUILayout.EndVertical();
             GUILayout.EndArea();
@@ -62,7 +67,7 @@ namespace VRCast.UI
 
         private static int DrawModes(UiTheme theme, float width, bool mascot)
         {
-            float buttonWidth = Mathf.Clamp((width - 80f) * 0.42f, 180f, 360f);
+            float buttonWidth = Mathf.Clamp((width - 32f) * 0.5f, 160f, 300f);
             int pick = 0;
             GUILayout.BeginHorizontal();
             GUILayout.FlexibleSpace();
