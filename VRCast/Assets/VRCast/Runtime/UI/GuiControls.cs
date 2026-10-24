@@ -331,14 +331,16 @@ namespace VRCast.UI
         }
 
         /// <summary>
-        /// ラベル + スライダー + 数値欄。ドラッグでも、欄へ任意の値を入れても変えられる。
+        /// ラベル + スライダー + 数値欄。ドラッグでも、欄へ数値を入れても変えられる（Enter か欄を離すと確定）。
         /// input は入力途中の文字列（呼び出し側で保持）。controlName はフォーカス判定に使う。
+        /// format は欄に出すときの書式（未指定は小数を必要な桁だけ）。
         /// </summary>
-        public static float SliderOrField(string label, float value, float min, float max, ref string input, string controlName)
+        public static float SliderOrField(string label, float value, float min, float max, ref string input,
+            string controlName, string format = "0.#")
         {
             bool focused = GUI.GetNameOfFocusedControl() == controlName;
             bool wasFocused = FieldFocus.TryGetValue(controlName, out bool previous) && previous;
-            if (wasFocused && !focused && float.TryParse(input, NumberStyles.Float, CultureInfo.CurrentCulture, out float pending))
+            if (wasFocused && !focused && TryParseField(input, out float pending))
             {
                 value = Mathf.Clamp(pending, min, max);
             }
@@ -346,28 +348,50 @@ namespace VRCast.UI
             FieldFocus[controlName] = focused;
             if (!focused)
             {
-                input = value.ToString("0.#", CultureInfo.CurrentCulture);
+                input = value.ToString(format, CultureInfo.CurrentCulture);
             }
 
             GUILayout.BeginHorizontal();
             GUILayout.Label(label, GUILayout.Width(LabelWidth), GUILayout.MinWidth(0f));
             float slid = GUILayout.HorizontalSlider(value, min, max, Shrinkable);
             GUI.SetNextControlName(controlName);
-            input = GUILayout.TextField(input ?? string.Empty, 8, GUILayout.Width(52f));
+            input = GUILayout.TextField(input ?? string.Empty, 12, GUILayout.Width(64f));
             GUILayout.EndHorizontal();
 
-            if (focused && float.TryParse(input, NumberStyles.Float, CultureInfo.CurrentCulture, out float typed)
-                && typed >= min && typed <= max)
+            // Enter で確定して欄を離す（範囲外は端へ寄せる）
+            Event current = Event.current;
+            if (focused && current != null && current.type == EventType.KeyDown
+                && (current.keyCode == KeyCode.Return || current.keyCode == KeyCode.KeypadEnter))
+            {
+                if (TryParseField(input, out float entered))
+                {
+                    value = Mathf.Clamp(entered, min, max);
+                }
+
+                GUIUtility.keyboardControl = 0;
+                FieldFocus[controlName] = false;
+                input = value.ToString(format, CultureInfo.CurrentCulture);
+                current.Use();
+                return value;
+            }
+
+            if (focused && TryParseField(input, out float typed) && typed >= min && typed <= max)
             {
                 return typed;
             }
 
-            if (Mathf.Abs(slid - value) > 0.05f)
+            // 欄を編集中でなければ、スライダーの動きを値にする
+            if (!focused && !Mathf.Approximately(slid, value))
             {
                 return Mathf.Clamp(slid, min, max);
             }
 
             return value;
+        }
+
+        private static bool TryParseField(string input, out float value)
+        {
+            return float.TryParse(input, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
         }
 
         /// <summary>

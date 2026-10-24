@@ -64,7 +64,7 @@ namespace VRCast.Tests
         [Test]
         public void ResetHotkeys_DefaultToNumpad1To4()
         {
-            // 既定はテンキーの 1〜4（顔の向き・視線・表情・カメラの順）
+            // 既定はテンキーの 1 から順（顔の向き・視線・表情・カメラ・カメラ目線・スクリーンショット・離席）
             var settings = new AppSettings();
             for (int i = 0; i < ResetHotkey.ActionCount; i++)
             {
@@ -180,6 +180,30 @@ namespace VRCast.Tests
             Assert.That(loaded.GetResetHotkey(ResetAction.Head), Is.EqualTo(new KeyCombo(0x70, false, false, false)));
             Assert.That(loaded.GetResetHotkey(ResetAction.Gaze).IsAssigned, Is.False);
             Assert.That(loaded.GetResetHotkey(ResetAction.Camera), Is.EqualTo(ResetHotkey.DefaultCombo(ResetAction.Camera)));
+            Assert.That(loaded.GetResetHotkey(ResetAction.Away), Is.EqualTo(ResetHotkey.DefaultCombo(ResetAction.Away)));
+        }
+
+        [Test]
+        public void ShouldSuspendTracking_AwayAndMissingFace()
+        {
+            var settings = new AppSettings();
+
+            // 配信中で顔が無くても、モードが OFF なら手や体は今までどおり動かす
+            Assert.That(settings.ShouldSuspendTracking(true, false), Is.False);
+
+            // 顔が無いとき止めるモードでは、顔が映っている間だけ書く
+            settings.trackingStopWithoutFace = true;
+            Assert.That(settings.ShouldSuspendTracking(true, false), Is.True);
+            Assert.That(settings.ShouldSuspendTracking(true, true), Is.False);
+
+            // 離席は顔の有無によらず止める
+            settings.trackingStopWithoutFace = false;
+            settings.trackingAway = true;
+            Assert.That(settings.ShouldSuspendTracking(true, true), Is.True);
+
+            // 配信以外は常に止める
+            settings.trackingAway = false;
+            Assert.That(settings.ShouldSuspendTracking(false, true), Is.True);
         }
 
         [Test]

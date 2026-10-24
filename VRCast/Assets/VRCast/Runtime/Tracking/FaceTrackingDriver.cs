@@ -122,11 +122,12 @@ namespace VRCast.Tracking
         private Quaternion _neckRest;
         private Quaternion _headRest;
 
-        // 目ボーンと読込時の回転
+        // 目ボーンと読込時の回転、瞳の陰影を視線の回転で飛ばさないためのライト方向
         private Transform _leftEye;
         private Transform _rightEye;
         private Quaternion _leftEyeRest;
         private Quaternion _rightEyeRest;
+        private readonly EyeLightStabilizer _eyeLight = new EyeLightStabilizer();
 
         // キャリブレーション時の頭の回転・位置（正面）と、平滑化済みの相対回転・位置
         private Quaternion _neutral = Quaternion.identity;
@@ -268,6 +269,12 @@ namespace VRCast.Tracking
         public bool Suspended { get; set; }
 
         /// <summary>
+        /// true の間は受信していないものとして扱い、頭・トラッキングの視線・表情を正面へ戻して止める。
+        /// カメラ目線は止めない（顔が見つからないあいだ手や体も止めるとき用）。
+        /// </summary>
+        public bool HoldInput { get; set; }
+
+        /// <summary>
         /// 正面位置からの頭の位置の差分（平滑化・鏡像適用済み、Provider の単位。UI での強さ調整用）。
         /// </summary>
         public Vector3 HeadOffset => _currentOffset;
@@ -307,6 +314,7 @@ namespace VRCast.Tracking
             // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口・視線の BlendShape だけ）
             if (animator == null || !animator.isHuman)
             {
+                _eyeLight.Bind(null, null, null);
                 return;
             }
 
@@ -330,6 +338,7 @@ namespace VRCast.Tracking
             _rightEye = animator.GetBoneTransform(HumanBodyBones.RightEye);
             _leftEyeRest = RestOf(_leftEye);
             _rightEyeRest = RestOf(_rightEye);
+            _eyeLight.Bind(transform, _leftEye, _rightEye);
         }
 
         /// <summary>
@@ -339,6 +348,7 @@ namespace VRCast.Tracking
         {
             _perfectSync?.Release();
             _gazeBlendShapes?.Release();
+            _eyeLight.Restore();
         }
 
         /// <summary>
@@ -351,6 +361,7 @@ namespace VRCast.Tracking
             _gazeBlendShapes?.Release();
             _perfectSync = PerfectSyncBlendShapes.Create(transform, bindings);
             _gazeBlendShapes = GazeBlendShapes.Create(transform);
+            _eyeLight.Bind(transform, _leftEye, _rightEye);
         }
 
         /// <summary>
@@ -418,8 +429,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 有効かつ受信中のときだけ値を使う（一時停止中は見失ったときと同じ扱い）
-            bool received = !Suspended && _settings.trackingEnabled && _provider != null
+            // 有効かつ受信中のときだけ値を使う（一時停止・入力を止める間は見失ったときと同じ扱い）
+            bool received = !Suspended && !HoldInput && _settings.trackingEnabled && _provider != null
                 && _provider.TryGetFrame(out _lastFrame);
 
             // 無効化中や顔の入力元（併用で iPhone と Web カメラが入れ替わったときを含む）・カメラの変更後は、
@@ -792,7 +803,7 @@ namespace VRCast.Tracking
             // 無効化・一時停止の後に正面へ戻り切ったらボーンを触らない（待機ポーズ等の変更を妨げない）
             bool settled = Quaternion.Angle(_current, Quaternion.identity) < 0.01f && _currentOffset.sqrMagnitude < 1e-6f
                 && _torsoWeight <= 0f;
-            if ((!_settings.trackingEnabled || Suspended) && settled)
+            if ((!_settings.trackingEnabled || Suspended || HoldInput) && settled)
             {
                 _current = Quaternion.identity;
                 _currentOffset = Vector3.zero;
@@ -1027,14 +1038,15 @@ namespace VRCast.Tracking
             _currentGaze = Vector2.Lerp(_currentGaze, _gazeTarget, blend);
 
             // 無効化後に正面へ戻り切ったらボーン・BlendShape を触らない（カメラ目線の間は動かし続ける）
-            if ((!_settings.trackingEnabled || Suspended) && view == null && _currentGaze.sqrMagnitude < 1e-4f)
+            if ((!_settings.trackingEnabled || Suspended || HoldInput) && view == null && _currentGaze.sqrMagnitude < 1e-4f)
             {
                 _currentGaze = Vector2.zero;
                 _gazeBlendShapes?.Release();
+                _eyeLight.Restore();
                 return;
             }
 
-            // 目ボーンがあれば読込時の回転へ戻してから回す
+            // 目ボーンがあれば読込時の回転へ戻してから回す。回した分だけライト方向も回し、陰影が端の色に飛ばないようにする
             if (hasBones)
             {
                 RestoreRest(_leftEye, _leftEyeRest);
@@ -1042,6 +1054,11 @@ namespace VRCast.Tracking
                 Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
                 RotateInFrame(_leftEye, headFrame, look);
                 RotateInFrame(_rightEye, headFrame, look);
+                _eyeLight.Apply(headFrame, look);
+            }
+            else
+            {
+                _eyeLight.Restore();
             }
 
             // 視線用 BlendShape。パーフェクトシンクが eyeLook* を動かしている間は二重に動かさない
@@ -1121,6 +1138,7 @@ namespace VRCast.Tracking
             SetMouth(0f);
             _perfectSync?.Release();
             _gazeBlendShapes?.Release();
+            _eyeLight.Restore();
         }
     }
 }

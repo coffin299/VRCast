@@ -15,11 +15,16 @@ namespace VRCast.UI
         // 表情名の列の幅
         private const float LabelWidth = 130f;
 
-        // 画面の案内の大きさと上端からの位置
+        // 画面の案内の大きさと上端からの位置。ウィンドウ ID は操作パネル（0x5643）と重ならない
         private const float OverlayWidth = 560f;
         private const float OverlayHeight = 150f;
         private const float OverlayTop = 40f;
         private const int PromptFontSize = 30;
+        private const int OverlayWindowId = 0x5660;
+
+        // ウィンドウ関数から読む、いま出している案内
+        private static ExpressionCalibrationRecorder _overlayRecorder;
+        private static UiTheme _overlayTheme;
 
         // 案内の大きな文字（テーマが替わったら作り直す）
         private static GUIStyle _promptStyle;
@@ -211,12 +216,18 @@ namespace VRCast.UI
 
             float width = Mathf.Min(OverlayWidth, screenWidth - 20f);
             var rect = new Rect((screenWidth - width) * 0.5f, OverlayTop, width, OverlayHeight);
-            GUILayout.BeginArea(rect, theme != null ? theme.Card : GUI.skin.box);
+            _overlayRecorder = recorder;
+            _overlayTheme = theme;
+            FrontPrompt.Draw(OverlayWindowId, rect, theme != null ? theme.Card : GUI.skin.box, DrawOverlayWindow);
+        }
+
+        private static void DrawOverlayWindow(int id)
+        {
+            UiTheme theme = _overlayTheme;
             GUILayout.FlexibleSpace();
-            GUILayout.Label(Prompt(recorder.Target), _promptStyle);
-            GUILayout.Label(ProgressText(recorder), theme != null ? theme.Centered : GUI.skin.label);
+            GUILayout.Label(Prompt(_overlayRecorder.Target), _promptStyle);
+            GUILayout.Label(ProgressText(_overlayRecorder), theme != null ? theme.Centered : GUI.skin.label);
             GUILayout.FlexibleSpace();
-            GUILayout.EndArea();
         }
 
         private static string ProgressText(ExpressionCalibrationRecorder recorder)

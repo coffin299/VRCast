@@ -128,9 +128,9 @@ namespace VRCast.Core
         public const float MinIdleMotionSpeed = 0.5f;
         public const float MaxIdleMotionSpeed = 2f;
 
-        // 表情に切り替わるしきい値の範囲（表情の強さ 0〜1 と同じ目盛り。小さいほど弱い表情でも反応する）
+        // 表情に切り替わるしきい値の範囲。強さは 0〜1 なので、1 より大きい値には届かず切り替わらない
         public const float MinExpressionThreshold = 0.1f;
-        public const float MaxExpressionThreshold = 0.8f;
+        public const float MaxExpressionThreshold = 3f;
 
         // 表情ごとのしきい値が未設定であることを表す値（範囲外の負の値）
         public const float UseCommonThreshold = -1f;
@@ -346,6 +346,12 @@ namespace VRCast.Core
 
         // トラッキング（入力元のトラッカーから UDP 受信。鏡像 = 本人の動きを鏡のように反映）
         public bool trackingEnabled;
+
+        // 離席（ON の間は顔・手・体をアバターへ書かず待機の姿勢へ戻す。パネル下部のボタンとショートカットキーで切り替える）
+        public bool trackingAway;
+
+        // 顔が映っていない間は、手・体を含むすべてのトラッキングを止める（既定 OFF。カメラは起動したまま、顔が戻ると再開）
+        public bool trackingStopWithoutFace;
         public TrackingSource trackingSource = TrackingSource.MediaPipe;
         public int trackingPort = DefaultTrackingPort;
         public bool trackingMirror = true;
@@ -439,7 +445,7 @@ namespace VRCast.Core
         // 表情一覧に、既定で非表示の表情（FX の小物の切り替え等から BlendShape だけを取り出したもの）も出す
         public bool showHiddenExpressions;
 
-        // リセット（顔の向き・視線・表情・カメラ）のショートカットキー（アプリ全体。既定はテンキー 1〜4）と、背面でも使うか
+        // リセット・カメラ目線・スクリーンショット・離席のショートカットキー（アプリ全体。既定はテンキー 1〜7）と、背面でも使うか
         public List<ResetHotkey> resetHotkeys = ResetHotkey.Defaults();
         public bool resetHotkeysInBackground = true;
 
@@ -506,6 +512,16 @@ namespace VRCast.Core
         /// 顔（まばたき・パーフェクトシンク・視線）に使う鏡像の向き。顔の左右の入れ替えが ON なら鏡像設定と逆。
         /// </summary>
         public bool FaceMirror => trackingMirror != trackingSwapFaceSides;
+
+        /// <summary>
+        /// アバターへトラッキングを書かないなら true。
+        /// 配信中でないとき、離席中、または「顔が見つからないときはトラッキングしない」で顔が映っていないとき。
+        /// 同梱トラッカーはここでは止めない（顔が戻ったことを知るため受信は続ける）。
+        /// </summary>
+        public bool ShouldSuspendTracking(bool broadcasting, bool facePresent)
+        {
+            return !broadcasting || trackingAway || (trackingStopWithoutFace && !facePresent);
+        }
 
         /// <summary>
         /// カメラの傾き補正（専用キャリブ未実施・不正値なら identity）。
@@ -923,7 +939,7 @@ namespace VRCast.Core
         }
 
         /// <summary>
-        /// リセットのショートカットキーを既定（テンキー 1〜4）に戻す。
+        /// リセットのショートカットキーを既定（テンキー 1〜7）に戻す。
         /// </summary>
         public void ResetResetHotkeys()
         {

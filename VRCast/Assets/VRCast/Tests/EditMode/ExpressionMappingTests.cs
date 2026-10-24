@@ -77,7 +77,8 @@ namespace VRCast.Tests
             // 負・NaN は未設定、設定済みは範囲内に制限すること
             Assert.That(AppSettings.SanitizeThreshold(-5f), Is.EqualTo(AppSettings.UseCommonThreshold));
             Assert.That(AppSettings.SanitizeThreshold(float.NaN), Is.EqualTo(AppSettings.UseCommonThreshold));
-            Assert.That(AppSettings.SanitizeThreshold(2f), Is.EqualTo(AppSettings.MaxExpressionThreshold));
+            Assert.That(AppSettings.SanitizeThreshold(4f), Is.EqualTo(AppSettings.MaxExpressionThreshold));
+            Assert.That(AppSettings.SanitizeThreshold(2f), Is.EqualTo(2f));
             Assert.That(AppSettings.SanitizeThreshold(0.5f), Is.EqualTo(0.5f));
         }
 

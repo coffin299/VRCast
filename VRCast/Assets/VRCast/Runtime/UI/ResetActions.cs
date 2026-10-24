@@ -8,7 +8,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// リセット（顔の向き・視線・表情・カメラ）とカメラ目線の切り替え、背景透過のスクリーンショットの実行と表示名。
+    /// リセット（顔の向き・視線・表情・カメラ）とカメラ目線の切り替え、背景透過のスクリーンショット、離席の実行と表示名。
     /// パネル下部のボタンとショートカットキーで共用する。
     /// </summary>
     public sealed class ResetActions
@@ -32,7 +32,7 @@ namespace VRCast.UI
         /// </summary>
         public static bool IsToggle(ResetAction action)
         {
-            return action == ResetAction.LookAtCamera;
+            return action == ResetAction.LookAtCamera || action == ResetAction.Away;
         }
 
         /// <summary>
@@ -40,7 +40,15 @@ namespace VRCast.UI
         /// </summary>
         public bool IsOn(ResetAction action)
         {
-            return action == ResetAction.LookAtCamera && _settings.trackingLookAtCamera;
+            switch (action)
+            {
+                case ResetAction.LookAtCamera:
+                    return _settings.trackingLookAtCamera;
+                case ResetAction.Away:
+                    return _settings.trackingAway;
+                default:
+                    return false;
+            }
         }
 
         /// <summary>
@@ -60,6 +68,8 @@ namespace VRCast.UI
                     return Loc.T("Look at camera", "カメラ目線", "카메라 시선", "看向镜头", "看向鏡頭");
                 case ResetAction.Screenshot:
                     return Loc.T("Screenshot", "スクショ", "스크린샷", "截图", "截圖");
+                case ResetAction.Away:
+                    return Loc.T("Away", "離席", "자리 비움", "离开", "離席");
                 default:
                     return Loc.T("Camera", "カメラ", "카메라", "相机", "相機");
             }
@@ -91,6 +101,9 @@ namespace VRCast.UI
                 case ResetAction.Screenshot:
                     // 撮るアバターがあるときだけ
                     return _avatar.HasAvatar;
+                case ResetAction.Away:
+                    // アバターが無くても切り替えておける（次に読み込んだアバターから効く）
+                    return true;
                 default:
                     return true;
             }
@@ -139,6 +152,10 @@ namespace VRCast.UI
                 case ResetAction.Screenshot:
                     // 背景を透過した PNG を保存先へ書く（結果は出力タブとログに出る）
                     _screenshot.Capture();
+                    break;
+                case ResetAction.Away:
+                    // 顔・手・体のトラッキングを止めるか、戻す
+                    _settings.trackingAway = !_settings.trackingAway;
                     break;
                 default:
                     // カメラを正面の既定位置へ

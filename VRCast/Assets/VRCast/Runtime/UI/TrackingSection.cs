@@ -26,6 +26,9 @@ namespace VRCast.UI
         private string _portInput;
         private string _vmcPortInput;
 
+        // 表情のしきい値の入力途中の文字列（表情ごとに保持）
+        private readonly Dictionary<string, string> _thresholdInputs = new Dictionary<string, string>();
+
         // ファイアウォール許可の実行中と結果（null = 未表示、空文字 = 成功、それ以外 = 失敗理由）
         private Task<string> _firewallPending;
         private bool _firewallHasResult;
@@ -70,6 +73,13 @@ namespace VRCast.UI
         private const float TiltOverlayHeight = 150f;
         private const float TiltOverlayTop = 40f;
         private const int TiltPromptFontSize = 30;
+
+        // 案内ウィンドウの ID（操作パネル 0x5643・表情の案内 0x5660 と重ならない）
+        private const int TiltOverlayWindowId = 0x5661;
+
+        // ウィンドウ関数から読む、いま出している案内
+        private static TiltCalibrationRecorder _tiltOverlayRecorder;
+        private static UiTheme _tiltOverlayTheme;
 
         /// <summary>
         /// 表情のキャリブレーションの記録係（画面中央の案内の表示用）。
@@ -151,6 +161,7 @@ namespace VRCast.UI
             // 無効時は ON/OFF だけ
             if (_settings.trackingEnabled)
             {
+                DrawHold();
                 DrawSource();
 
                 // 外部アプリ（併用を含む）は、接続に必要な IP アドレス・ポートを入力元のすぐ下に出す（見落とさないように）
@@ -178,6 +189,41 @@ namespace VRCast.UI
             }
 
             GuiControls.EndCard();
+        }
+
+        private void DrawHold()
+        {
+            // 顔が映っていない間は手・体も含めて止める（既定 OFF。カメラは起動したまま）
+            _settings.trackingStopWithoutFace = GUILayout.Toggle(
+                _settings.trackingStopWithoutFace,
+                Loc.T("Don't track unless a face is found", "顔が見つからないときはトラッキングしない",
+                    "얼굴을 찾지 못하면 트래킹하지 않기", "找不到脸时不进行追踪", "找不到臉時不進行追蹤"));
+            GuiControls.Hint(Loc.T(
+                "While this is on, the head, tracked gaze, expressions, hands and body all return to rest when your face is not in frame. Look at camera keeps working. The camera stays on, and tracking resumes when your face returns. Off by default.",
+                "ON の間は、顔が映っていないとき、頭・トラッキングの視線・表情・手・体をすべて止めて待機の姿勢に戻します。カメラ目線は続きます。カメラは起動したままなので、顔が戻ると再開します。既定は OFF です。",
+                "켜져 있는 동안 얼굴이 화면에 없으면 머리·트래킹 시선·표정·손·몸을 모두 멈추고 대기 자세로 되돌립니다. 카메라 시선은 계속됩니다. 카메라는 켜 둔 채로 얼굴이 돌아오면 다시 시작합니다. 기본값은 꺼짐입니다.",
+                "开启后，画面中没有脸时，头部、追踪的视线、表情、手和身体都会停止并回到待机姿势。看向镜头会继续。摄像头保持开启，脸回来后会继续追踪。默认关闭。",
+                "開啟後，畫面中沒有臉時，頭部、追蹤的視線、表情、手和身體都會停止並回到待機姿勢。看向鏡頭會繼續。攝影機保持開啟，臉回來後會繼續追蹤。預設關閉。"));
+
+            // 離席はパネル下部のボタンでも切り替える。止まっている理由を知らせる
+            if (_settings.trackingAway)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Away: tracking is paused. Press Away again, or its shortcut, to resume.",
+                    "離席中です。パネル下部の「離席」か、そのショートカットキーをもう一度押すと戻ります。",
+                    "자리 비움 중입니다. 패널 아래의 「자리 비움」이나 단축키를 다시 누르면 돌아옵니다.",
+                    "正在离开。再按一次面板底部的「离开」或其快捷键即可恢复。",
+                    "正在離席。再按一次面板底部的「離席」或其快捷鍵即可恢復。"));
+            }
+            else if (_settings.trackingStopWithoutFace && (_tracker == null || !_tracker.TryGetFrame(out _)))
+            {
+                GuiControls.Hint(Loc.T(
+                    "No face is in frame, so tracking is paused.",
+                    "顔が見つからないため、トラッキングを止めています。",
+                    "얼굴을 찾지 못해 트래킹을 멈추고 있습니다.",
+                    "找不到脸，因此已暂停追踪。",
+                    "找不到臉，因此已暫停追蹤。"));
+            }
         }
 
         private void DrawSource()
@@ -884,13 +930,13 @@ namespace VRCast.UI
                 return;
             }
 
-            // しきい値は表情ごと（下の割り当ての各行。生データ表示の数値と同じ目盛り）
+            // 強さは 0〜1。しきい値はその強さで切り替わる目安（1 より大きいと届かないので切り替わらない）
             GuiControls.Hint(Loc.T(
-                "Each expression switches when its value in the raw data reaches its threshold (lower = reacts more easily)",
-                "表情ごとに、生データの値がしきい値を超えると切り替わります（低いほど反応しやすい）",
-                "표정마다 원시 데이터의 값이 임계값을 넘으면 전환됩니다 (낮을수록 쉽게 반응)",
-                "每种表情在原始数据中的值超过其阈值时切换（越低越容易反应）",
-                "每種表情在原始資料中的值超過其閾值時切換（越低越容易反應）"));
+                "Raw view shows each expression's strength from 0 (not that face) to 1 (fully that face). It switches after the strength stays at or above the threshold for a moment. 0.1 reacts to a slight face, 0.3 (default) when it becomes clear, and about 1 only for a full one. Above 1 it never switches, because the strength does not go past 1. Type a number in the field, or drag the slider.",
+                "生データ表示の強さは 0（その顔をしていない）〜 1（はっきりその顔）です。強さがしきい値以上のまま少し続くと切り替わります。0.1 は少しの顔でも、0.3（既定）ははっきりし始めたら、1 前後はその顔をしっかりしたときだけ切り替わります。1 より大きいと強さは 1 までしか出ないので切り替わりません。欄に数値を入れるか、スライダーを動かします。",
+                "원시 데이터 표시의 세기는 0(그 표정이 아님)〜1(분명한 표정)입니다. 세기가 임계값 이상으로 잠시 유지되면 바뀝니다. 0.1은 약한 표정에도, 0.3(기본)은 분명해지면, 1 전후는 표정을 확실히 했을 때만 바뀝니다. 1보다 크면 세기는 1까지만 나오므로 바뀌지 않습니다. 칸에 숫자를 입력하거나 슬라이더를 움직이세요.",
+                "原始数据显示的强度为 0（不是该表情）到 1（明显是该表情）。强度达到阈值并保持片刻后才会切换。0.1 时轻微表情也会切换，0.3（默认）是表情开始明显时，1 左右只在表情做到位时切换。大于 1 时强度最高只有 1，因此不会切换。可在栏中输入数字，或拖动滑块。",
+                "原始資料顯示的強度為 0（不是該表情）到 1（明顯是該表情）。強度達到閾值並保持片刻後才會切換。0.1 時輕微表情也會切換，0.3（預設）是表情開始明顯時，1 左右只在表情做到位時切換。大於 1 時強度最高只有 1，因此不會切換。可在欄中輸入數字，或拖動滑桿。"));
 
             // アバター未表示なら割り当ては出さない
             if (expressions == null)
@@ -972,15 +1018,25 @@ namespace VRCast.UI
                 return;
             }
 
-            // その表情のしきい値（動かしたときだけ表情ごとの値として保存）
+            // その表情のしきい値（動かしたときだけ表情ごとの値として保存。欄へ直接入力もできる）
             float threshold = ExpressionMapping.GetThreshold(_settings, expression);
-            float moved = GuiControls.Slider(
-                "  " + Loc.T("Threshold", "しきい値", "임계값", "阈值", "閾值"),
-                threshold, AppSettings.MinExpressionThreshold, AppSettings.MaxExpressionThreshold);
-            if (moved != threshold)
+            float moved = ThresholdField(expression, threshold);
+            if (!Mathf.Approximately(moved, threshold))
             {
                 ExpressionMapping.SetThreshold(_settings, expression, moved);
             }
+        }
+
+        private float ThresholdField(FaceExpression expression, float value)
+        {
+            string id = expression.ToString();
+            _thresholdInputs.TryGetValue(id, out string input);
+            float result = GuiControls.SliderOrField(
+                "  " + Loc.T("Threshold", "しきい値", "임계값", "阈值", "閾值"),
+                value, AppSettings.MinExpressionThreshold, AppSettings.MaxExpressionThreshold,
+                ref input, "expr-" + id, "F2");
+            _thresholdInputs[id] = input ?? string.Empty;
+            return result;
         }
 
         internal static string ExpressionLabel(FaceExpression expression)
@@ -1247,7 +1303,14 @@ namespace VRCast.UI
 
             float width = Mathf.Min(TiltOverlayWidth, screenWidth - 20f);
             var rect = new Rect((screenWidth - width) * 0.5f, TiltOverlayTop, width, TiltOverlayHeight);
-            GUILayout.BeginArea(rect, theme != null ? theme.Card : GUI.skin.box);
+            _tiltOverlayRecorder = recorder;
+            _tiltOverlayTheme = theme;
+            FrontPrompt.Draw(TiltOverlayWindowId, rect, theme != null ? theme.Card : GUI.skin.box, DrawTiltWindow);
+        }
+
+        private static void DrawTiltWindow(int id)
+        {
+            UiTheme theme = _tiltOverlayTheme;
             GUILayout.FlexibleSpace();
             GUILayout.Label(Loc.T(
                 "Stand straight — both shoulders visible",
@@ -1255,12 +1318,11 @@ namespace VRCast.UI
                 "바로 서 주세요 (양어깨가 보이게)",
                 "请站直（露出双肩）",
                 "請站直（露出雙肩）"), _tiltPromptStyle);
-            int seconds = Mathf.CeilToInt(recorder.Remaining);
+            int seconds = Mathf.CeilToInt(_tiltOverlayRecorder.Remaining);
             GUILayout.Label(Loc.T($"Recording in {seconds}...", $"{seconds} 秒後に記録します…",
                 $"{seconds}초 후 기록합니다…", $"{seconds} 秒后开始记录…", $"{seconds} 秒後開始記錄…"),
                 theme != null ? theme.Centered : GUI.skin.label);
             GUILayout.FlexibleSpace();
-            GUILayout.EndArea();
         }
 
         private void DrawDebug()

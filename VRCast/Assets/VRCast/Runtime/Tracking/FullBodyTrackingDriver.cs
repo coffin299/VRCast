@@ -123,6 +123,11 @@ namespace VRCast.Tracking
         /// </summary>
         public bool Suspended { get; set; }
 
+        /// <summary>
+        /// true の間は受信していないものとして扱い、他の処理が作った姿勢へ戻す（顔が見つからないあいだ止めるとき用）。
+        /// </summary>
+        public bool HoldInput { get; set; }
+
         public void Initialize(Animator animator, IHumanoidPoseProvider provider, AppSettings settings)
         {
             _provider = provider;
@@ -279,16 +284,17 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 有効（VMC で全身 ON、一時停止中でない）で、腰と両腕を含む姿勢を受信中のときだけ使う
-            bool enabled = !Suspended && _settings.trackingEnabled && _settings.trackingVmcBody
+            // 有効（VMC で全身 ON、一時停止中でない）で、腰と両腕を含む姿勢を受信中のときだけ使う。
+            // 顔が無いあいだ止めるときは正面の基準を残す（顔が戻ったときに取り直してずれないように）
+            bool allowed = !Suspended && _settings.trackingEnabled && _settings.trackingVmcBody
                 && TrackingSourceInfo.HasFullBody(_settings.trackingSource);
             HumanoidPoseFrame pose = null;
-            bool received = enabled && _provider != null && _provider.TryGetPose(out pose) && pose.HasBody;
+            bool received = allowed && !HoldInput && _provider != null && _provider.TryGetPose(out pose) && pose.HasBody;
             IsTracking = received;
             ReceivedBones = received ? pose.ReceivedCount : 0;
 
             // 無効化中・入力元の変更後は、次に受信したときに正面を取り直す
-            if (!enabled)
+            if (!allowed)
             {
                 _calibrated = false;
             }

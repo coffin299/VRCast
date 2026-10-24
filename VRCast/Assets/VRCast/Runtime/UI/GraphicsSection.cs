@@ -7,7 +7,7 @@ using VRCast.Rendering;
 namespace VRCast.UI
 {
     /// <summary>
-    /// グラフィックタブ（背景、レガシー／最新ライティング、輪郭線）。
+    /// グラフィックタブ（背景、レガシー／最新ライティング、輪郭線）。数値はスライダーの横の欄へ直接入れられる。
     /// </summary>
     public class GraphicsSection
     {
@@ -22,12 +22,32 @@ namespace VRCast.UI
         // 利用者ライティングプリセットの名前入力
         private string _lightingPresetName = string.Empty;
 
+        // 数値欄の入力途中（id → 文字列）。スライダーと欄で同じ値を編集する
+        private readonly Dictionary<string, string> _numberInputs = new Dictionary<string, string>();
+
         public GraphicsSection(RenderingController rendering, AppSettings settings, Action reapply)
         {
             _rendering = rendering;
             _settings = settings;
             _reapply = reapply;
             _presets = new GraphicsPresetSection(settings, reapply);
+        }
+
+        /// <summary>
+        /// スライダーと、同じ値を打ち込める欄。
+        /// </summary>
+        private float Field(string id, string label, float value, float min, float max, string format = "F2")
+        {
+            _numberInputs.TryGetValue(id, out string input);
+            float result = GuiControls.SliderOrField(label, value, min, max, ref input, "gfx-" + id, format);
+            _numberInputs[id] = input ?? string.Empty;
+            // 色温度など整数表示の項目は、欄の数字と保存値がずれないよう整数にそろえる
+            if (format == "F0")
+            {
+                result = Mathf.Round(result);
+            }
+
+            return Mathf.Clamp(result, min, max);
         }
 
         public void Draw()
@@ -96,11 +116,11 @@ namespace VRCast.UI
                     "背景色（透明時僅在此視窗顯示，不會出現在 OBS 中）")
                 : Loc.T("Background color", "背景色", "배경색", "背景色", "背景色"));
 
-            // RGB スライダー（値が変わったときだけ反映）
+            // RGB（スライダーか、欄への数値入力。値が変わったときだけ反映）
             Color color = _rendering.BackgroundColor;
-            color.r = GuiControls.Slider(Loc.T("Red", "赤", "빨강", "红", "紅"), color.r, 0f, 1f);
-            color.g = GuiControls.Slider(Loc.T("Green", "緑", "초록", "绿", "綠"), color.g, 0f, 1f);
-            color.b = GuiControls.Slider(Loc.T("Blue", "青", "파랑", "蓝", "藍"), color.b, 0f, 1f);
+            color.r = Field("bg-r", Loc.T("Red", "赤", "빨강", "红", "紅"), color.r, 0f, 1f);
+            color.g = Field("bg-g", Loc.T("Green", "緑", "초록", "绿", "綠"), color.g, 0f, 1f);
+            color.b = Field("bg-b", Loc.T("Blue", "青", "파랑", "蓝", "藍"), color.b, 0f, 1f);
             if (color != _rendering.BackgroundColor)
             {
                 _rendering.BackgroundColor = color;
@@ -478,7 +498,7 @@ namespace VRCast.UI
                 Loc.T("Enable shadows", "影を付ける", "그림자 사용", "启用阴影", "啟用陰影"));
             if (_rendering.SoftShadows)
             {
-                float strength = GuiControls.Slider(
+                float strength = Field("shadow-strength",
                     Loc.T("Shadow density", "影の濃さ", "그림자 농도", "阴影浓度", "陰影濃度"),
                     _rendering.ShadowStrength, 0f, AppSettings.MaxShadowStrength);
                 if (!Mathf.Approximately(strength, _rendering.ShadowStrength))
@@ -486,7 +506,7 @@ namespace VRCast.UI
                     _rendering.ShadowStrength = strength;
                 }
 
-                float softness = GuiControls.Slider(
+                float softness = Field("shadow-softness",
                     Loc.T("Softness", "柔らかさ", "부드러움", "柔和度", "柔和度"),
                     _rendering.ShadowSoftness, 0f, AppSettings.MaxShadowSoftness);
                 if (!Mathf.Approximately(softness, _rendering.ShadowSoftness))
@@ -512,7 +532,7 @@ namespace VRCast.UI
                 Loc.T("Enable crease shadow", "くぼみの影を使う", "움푹한 그림자 사용", "启用凹陷阴影", "啟用凹陷陰影"));
             if (_rendering.SsaoEnabled)
             {
-                float intensity = GuiControls.Slider(
+                float intensity = Field("ssao-intensity",
                     Loc.T("Density", "濃さ", "농도", "浓度", "濃度"),
                     _rendering.SsaoIntensity, 0f, AppSettings.MaxSsaoIntensity);
                 if (!Mathf.Approximately(intensity, _rendering.SsaoIntensity))
@@ -520,7 +540,7 @@ namespace VRCast.UI
                     _rendering.SsaoIntensity = intensity;
                 }
 
-                float radius = GuiControls.Slider(
+                float radius = Field("ssao-radius",
                     Loc.T("Spread", "広がり", "범위", "范围", "範圍"),
                     _rendering.SsaoRadius, 0f, AppSettings.MaxSsaoRadius);
                 if (!Mathf.Approximately(radius, _rendering.SsaoRadius))
@@ -545,21 +565,21 @@ namespace VRCast.UI
                 Loc.T("Enable screen rim", "画面リムを使う", "화면 림 사용", "启用屏幕轮廓光", "啟用螢幕輪廓光"));
             if (_rendering.ScreenRimEnabled)
             {
-                float intensity = GuiControls.Slider(Loc.T("Strength", "強さ", "세기", "强度", "強度"),
+                float intensity = Field("screen-rim-intensity", Loc.T("Strength", "強さ", "세기", "强度", "強度"),
                     _rendering.ScreenRimIntensity, 0f, AppSettings.MaxScreenRimIntensity);
                 if (!Mathf.Approximately(intensity, _rendering.ScreenRimIntensity))
                 {
                     _rendering.ScreenRimIntensity = intensity;
                 }
 
-                float power = GuiControls.Slider(Loc.T("Falloff", "切れ方", "감쇠", "衰减", "衰減"),
+                float power = Field("screen-rim-power", Loc.T("Falloff", "切れ方", "감쇠", "衰减", "衰減"),
                     _rendering.ScreenRimPower, 0.5f, AppSettings.MaxScreenRimPower);
                 if (!Mathf.Approximately(power, _rendering.ScreenRimPower))
                 {
                     _rendering.ScreenRimPower = power;
                 }
 
-                float hue = GuiControls.Slider(Loc.T("Hue", "色相", "색상", "色相", "色相"),
+                float hue = Field("screen-rim-hue", Loc.T("Hue", "色相", "색상", "色相", "色相"),
                     _rendering.ScreenRimHue, 0f, 1f);
                 if (!Mathf.Approximately(hue, _rendering.ScreenRimHue))
                 {
@@ -584,14 +604,14 @@ namespace VRCast.UI
                 Loc.T("Bloom", "ブルーム", "블룸", "辉光", "輝光"));
             if (_rendering.BloomEnabled)
             {
-                float bloom = GuiControls.Slider(Loc.T("Bloom strength", "ブルームの強さ", "블룸 세기", "辉光强度", "輝光強度"),
+                float bloom = Field("bloom", Loc.T("Bloom strength", "ブルームの強さ", "블룸 세기", "辉光强度", "輝光強度"),
                     _rendering.BloomIntensity, 0f, AppSettings.MaxBloomIntensity);
                 if (!Mathf.Approximately(bloom, _rendering.BloomIntensity))
                 {
                     _rendering.BloomIntensity = bloom;
                 }
 
-                float threshold = GuiControls.Slider(Loc.T("Bloom threshold", "ブルームのしきい値", "블룸 임계값",
+                float threshold = Field("bloom-threshold", Loc.T("Bloom threshold", "ブルームのしきい値", "블룸 임계값",
                         "辉光阈值", "輝光閾值"),
                     _rendering.BloomThreshold, 0f, AppSettings.MaxBloomThreshold);
                 if (!Mathf.Approximately(threshold, _rendering.BloomThreshold))
@@ -604,7 +624,7 @@ namespace VRCast.UI
                 Loc.T("Tone mapping", "トーンマップ", "톤맵", "色调映射", "色調映射"));
             if (_rendering.TonemapEnabled)
             {
-                float tonemap = GuiControls.Slider(Loc.T("Tone map strength", "トーンマップの強さ", "톤맵 세기",
+                float tonemap = Field("tonemap", Loc.T("Tone map strength", "トーンマップの強さ", "톤맵 세기",
                         "色调映射强度", "色調映射強度"),
                     _rendering.TonemapStrength, 0f, AppSettings.MaxTonemapStrength);
                 if (!Mathf.Approximately(tonemap, _rendering.TonemapStrength))
@@ -629,28 +649,28 @@ namespace VRCast.UI
                 Loc.T("Enable color grading", "色調補正を使う", "색보정 사용", "启用调色", "啟用調色"));
             if (_rendering.ColorGradeEnabled)
             {
-                float exposure = GuiControls.Slider(Loc.T("Exposure", "露出", "노출", "曝光", "曝光"),
+                float exposure = Field("exposure", Loc.T("Exposure", "露出", "노출", "曝光", "曝光"),
                     _rendering.Exposure, AppSettings.MinExposure, AppSettings.MaxExposure);
                 if (!Mathf.Approximately(exposure, _rendering.Exposure))
                 {
                     _rendering.Exposure = exposure;
                 }
 
-                float contrast = GuiControls.Slider(Loc.T("Contrast", "コントラスト", "대비", "对比度", "對比度"),
+                float contrast = Field("contrast", Loc.T("Contrast", "コントラスト", "대비", "对比度", "對比度"),
                     _rendering.Contrast, AppSettings.MinContrast, AppSettings.MaxContrast);
                 if (!Mathf.Approximately(contrast, _rendering.Contrast))
                 {
                     _rendering.Contrast = contrast;
                 }
 
-                float saturation = GuiControls.Slider(Loc.T("Saturation", "彩度", "채도", "饱和度", "飽和度"),
+                float saturation = Field("saturation", Loc.T("Saturation", "彩度", "채도", "饱和度", "飽和度"),
                     _rendering.Saturation, 0f, AppSettings.MaxSaturation);
                 if (!Mathf.Approximately(saturation, _rendering.Saturation))
                 {
                     _rendering.Saturation = saturation;
                 }
 
-                float temperature = GuiControls.Slider(
+                float temperature = Field("grade-temperature",
                     Loc.T("Temperature (cool ← → warm)", "色温度（寒 ← → 暖）", "색온도 (냉 ← → 온)",
                         "色温（冷 ← → 暖）", "色溫（冷 ← → 暖）"),
                     _rendering.ColorTemperatureBalance, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance);
@@ -659,7 +679,7 @@ namespace VRCast.UI
                     _rendering.ColorTemperatureBalance = temperature;
                 }
 
-                float tint = GuiControls.Slider(
+                float tint = Field("grade-tint",
                     Loc.T("Tint (green ← → magenta)", "ティント（緑 ← → マゼンタ）", "틴트 (녹 ← → 마젠타)",
                         "色调（绿 ← → 品红）", "色調（綠 ← → 洋紅）"),
                     _rendering.ColorTint, -AppSettings.MaxColorBalance, AppSettings.MaxColorBalance);
@@ -686,7 +706,7 @@ namespace VRCast.UI
                 Loc.T("Sharpen", "シャープ", "샤픈", "锐化", "銳化"));
             if (_rendering.SharpenEnabled)
             {
-                float sharpen = GuiControls.Slider(Loc.T("Amount", "強さ", "세기", "强度", "強度"),
+                float sharpen = Field("sharpen", Loc.T("Amount", "強さ", "세기", "强度", "強度"),
                     _rendering.SharpenAmount, 0f, AppSettings.MaxSharpen);
                 if (!Mathf.Approximately(sharpen, _rendering.SharpenAmount))
                 {
@@ -698,7 +718,7 @@ namespace VRCast.UI
                 Loc.T("Vignette", "ビネット", "비네트", "暗角", "暗角"));
             if (_rendering.VignetteEnabled)
             {
-                float vignette = GuiControls.Slider(Loc.T("Strength", "強さ", "세기", "强度", "強度"),
+                float vignette = Field("vignette", Loc.T("Strength", "強さ", "세기", "强度", "強度"),
                     _rendering.VignetteIntensity, 0f, AppSettings.MaxVignette);
                 if (!Mathf.Approximately(vignette, _rendering.VignetteIntensity))
                 {
@@ -741,7 +761,8 @@ namespace VRCast.UI
 
         private void DrawAvatarBrightness()
         {
-            float brightness = GuiControls.Slider(Loc.T("Avatar brightness", "アバターの明るさ", "아바타 밝기", "虚拟形象亮度", "虛擬形象亮度"),
+            float brightness = Field("avatar-brightness",
+                Loc.T("Avatar brightness", "アバターの明るさ", "아바타 밝기", "虚拟形象亮度", "虛擬形象亮度"),
                 _rendering.AvatarBrightness, AppSettings.MinAvatarBrightness, AppSettings.MaxAvatarBrightness);
             if (!Mathf.Approximately(brightness, _rendering.AvatarBrightness))
             {
@@ -757,7 +778,7 @@ namespace VRCast.UI
 
         private void DrawAmbientSlider()
         {
-            float ambient = GuiControls.Slider(
+            float ambient = Field("ambient",
                 Loc.T("Ambient", "環境光", "환경광", "环境光", "環境光"), _rendering.AmbientIntensity, 0f,
                 AppSettings.MaxAmbientIntensity);
             if (!Mathf.Approximately(ambient, _rendering.AmbientIntensity))
@@ -768,29 +789,29 @@ namespace VRCast.UI
 
         private void DrawKeyLightSliders(string intensityLabel, string temperatureLabel)
         {
-            float intensity = GuiControls.Slider(intensityLabel, _rendering.LightIntensity, 0f,
+            float intensity = Field("key-intensity", intensityLabel, _rendering.LightIntensity, 0f,
                 AppSettings.MaxLightIntensity);
             if (!Mathf.Approximately(intensity, _rendering.LightIntensity))
             {
                 _rendering.LightIntensity = intensity;
             }
 
-            float temperature = GuiControls.Slider(temperatureLabel,
+            float temperature = Field("key-temp", temperatureLabel,
                 _rendering.LightTemperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature, "F0");
             if (!Mathf.Approximately(temperature, _rendering.LightTemperature))
             {
-                _rendering.LightTemperature = Mathf.Round(temperature / 100f) * 100f;
+                _rendering.LightTemperature = temperature;
             }
 
-            float yaw = GuiControls.Slider(
-                Loc.T("Direction", "向き", "방향", "方向", "方向"), _rendering.LightYaw, -180f, 180f, "F0");
+            float yaw = Field("key-yaw",
+                Loc.T("Direction", "向き", "방향", "方向", "方向"), _rendering.LightYaw, -180f, 180f, "F1");
             if (!Mathf.Approximately(yaw, _rendering.LightYaw))
             {
                 _rendering.LightYaw = yaw;
             }
 
-            float pitch = GuiControls.Slider(
-                Loc.T("Height", "高さ", "높이", "高度", "高度"), _rendering.LightPitch, -90f, 90f, "F0");
+            float pitch = Field("key-pitch",
+                Loc.T("Height", "高さ", "높이", "高度", "高度"), _rendering.LightPitch, -90f, 90f, "F1");
             if (!Mathf.Approximately(pitch, _rendering.LightPitch))
             {
                 _rendering.LightPitch = pitch;
@@ -799,29 +820,29 @@ namespace VRCast.UI
 
         private void DrawFillSliders()
         {
-            float intensity = GuiControls.Slider(Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
+            float intensity = Field("fill-intensity", Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
                 _rendering.FillIntensity, 0f, AppSettings.MaxLightIntensity);
             if (!Mathf.Approximately(intensity, _rendering.FillIntensity))
             {
                 _rendering.FillIntensity = intensity;
             }
 
-            float temperature = GuiControls.Slider(Loc.T("Color (K)", "色 (K)", "색 (K)", "颜色 (K)", "顏色 (K)"),
+            float temperature = Field("fill-temp", Loc.T("Color (K)", "色 (K)", "색 (K)", "颜色 (K)", "顏色 (K)"),
                 _rendering.FillTemperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature, "F0");
             if (!Mathf.Approximately(temperature, _rendering.FillTemperature))
             {
-                _rendering.FillTemperature = Mathf.Round(temperature / 100f) * 100f;
+                _rendering.FillTemperature = temperature;
             }
 
-            float yaw = GuiControls.Slider(Loc.T("Direction", "向き", "방향", "方向", "方向"),
-                _rendering.FillYaw, -180f, 180f, "F0");
+            float yaw = Field("fill-yaw", Loc.T("Direction", "向き", "방향", "方向", "方向"),
+                _rendering.FillYaw, -180f, 180f, "F1");
             if (!Mathf.Approximately(yaw, _rendering.FillYaw))
             {
                 _rendering.FillYaw = yaw;
             }
 
-            float pitch = GuiControls.Slider(Loc.T("Height", "高さ", "높이", "高度", "高度"),
-                _rendering.FillPitch, -90f, 90f, "F0");
+            float pitch = Field("fill-pitch", Loc.T("Height", "高さ", "높이", "高度", "高度"),
+                _rendering.FillPitch, -90f, 90f, "F1");
             if (!Mathf.Approximately(pitch, _rendering.FillPitch))
             {
                 _rendering.FillPitch = pitch;
@@ -830,29 +851,29 @@ namespace VRCast.UI
 
         private void DrawRimSliders()
         {
-            float intensity = GuiControls.Slider(Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
+            float intensity = Field("rim-intensity", Loc.T("Intensity", "強さ", "세기", "强度", "強度"),
                 _rendering.RimIntensity, 0f, AppSettings.MaxLightIntensity);
             if (!Mathf.Approximately(intensity, _rendering.RimIntensity))
             {
                 _rendering.RimIntensity = intensity;
             }
 
-            float temperature = GuiControls.Slider(Loc.T("Color (K)", "色 (K)", "색 (K)", "颜色 (K)", "顏色 (K)"),
+            float temperature = Field("rim-temp", Loc.T("Color (K)", "色 (K)", "색 (K)", "颜色 (K)", "顏色 (K)"),
                 _rendering.RimTemperature, AppSettings.MinLightTemperature, AppSettings.MaxLightTemperature, "F0");
             if (!Mathf.Approximately(temperature, _rendering.RimTemperature))
             {
-                _rendering.RimTemperature = Mathf.Round(temperature / 100f) * 100f;
+                _rendering.RimTemperature = temperature;
             }
 
-            float yaw = GuiControls.Slider(Loc.T("Direction", "向き", "방향", "方向", "方向"),
-                _rendering.RimYaw, -180f, 180f, "F0");
+            float yaw = Field("rim-yaw", Loc.T("Direction", "向き", "방향", "方向", "方向"),
+                _rendering.RimYaw, -180f, 180f, "F1");
             if (!Mathf.Approximately(yaw, _rendering.RimYaw))
             {
                 _rendering.RimYaw = yaw;
             }
 
-            float pitch = GuiControls.Slider(Loc.T("Height", "高さ", "높이", "高度", "高度"),
-                _rendering.RimPitch, -90f, 90f, "F0");
+            float pitch = Field("rim-pitch", Loc.T("Height", "高さ", "높이", "高度", "高度"),
+                _rendering.RimPitch, -90f, 90f, "F1");
             if (!Mathf.Approximately(pitch, _rendering.RimPitch))
             {
                 _rendering.RimPitch = pitch;
@@ -875,14 +896,14 @@ namespace VRCast.UI
                 _rendering.IblPreset = (IblPreset)preset;
             }
 
-            float ibl = GuiControls.Slider(Loc.T("IBL strength", "環境光の強さ", "환경광 세기", "环境光强度", "環境光強度"),
+            float ibl = Field("ibl", Loc.T("IBL strength", "環境光の強さ", "환경광 세기", "环境光强度", "環境光強度"),
                 _rendering.IblIntensity, 0f, AppSettings.MaxIblIntensity);
             if (!Mathf.Approximately(ibl, _rendering.IblIntensity))
             {
                 _rendering.IblIntensity = ibl;
             }
 
-            float reflection = GuiControls.Slider(
+            float reflection = Field("reflection",
                 Loc.T("Reflection", "反射", "반사", "反射", "反射"),
                 _rendering.ReflectionStrength, 0f, AppSettings.MaxReflectionStrength);
             if (!Mathf.Approximately(reflection, _rendering.ReflectionStrength))
@@ -901,8 +922,8 @@ namespace VRCast.UI
                 "调整虚拟形象轮廓线（lilToon / MToon / Poiyomi / UTS）的粗细。1 = 保持材质设置，0 = 无轮廓线。按虚拟形象分别记住。",
                 "調整虛擬形象輪廓線（lilToon / MToon / Poiyomi / UTS）的粗細。1 = 保持材質設定，0 = 無輪廓線。依虛擬形象分別記住。"));
 
-            // 太さの倍率（値が変わったときだけ反映）
-            float width = GuiControls.Slider(Loc.T("Thickness", "太さ", "굵기", "粗细", "粗細"),
+            // 太さの倍率（スライダーか欄への数値。値が変わったときだけ反映）
+            float width = Field("outline", Loc.T("Thickness", "太さ", "굵기", "粗细", "粗細"),
                 _rendering.OutlineWidth, 0f, AppSettings.MaxOutlineWidth);
             if (!Mathf.Approximately(width, _rendering.OutlineWidth))
             {

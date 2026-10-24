@@ -118,8 +118,10 @@ namespace VRCast.UI
 
         private LaunchMode _launch = LaunchMode.Choose;
         private MascotMode _mascot;
+        private IFaceTrackingProvider _tracker;
         private TrackerProcess _trackerProcess;
-        private bool _trackingHeld;
+        private bool _suspendHeld;
+        private bool _holdInputHeld;
 
         // モードを選ぶまではメイン画面にアバターを出さない
         private int _mainMask;
@@ -150,6 +152,7 @@ namespace VRCast.UI
             _updates = updates;
             _orbit = orbit;
             _settings = settings;
+            _tracker = tracker;
             _rendering = rendering;
             _virtualCamera = virtualCamera;
             _spout = spout;
@@ -352,43 +355,105 @@ namespace VRCast.UI
 
         /// <summary>
         /// 配信中だけトラッキングする。モード選択とマスコットではカメラを止め、アバターへ姿勢を書かない。
+        /// 離席中は顔・手・体とカメラ目線を止める。
+        /// 「顔が見つからないときはトラッキングしない」で顔が映っていない間は、カメラは動かしたまま
+        /// トラッキング入力だけ止める（カメラ目線は続ける。顔が戻ったことを知るため受信も続ける）。
         /// </summary>
         private void ApplyTrackingGate()
         {
-            bool pause = _launch != LaunchMode.Broadcast;
+            // 同梱トラッカー（カメラ）は配信以外のときだけ止める
+            bool broadcasting = _launch == LaunchMode.Broadcast;
             if (_trackerProcess != null)
             {
-                _trackerProcess.Paused = pause;
+                _trackerProcess.Paused = !broadcasting;
             }
 
-            if (!pause && !_trackingHeld)
+            bool suspend = !broadcasting || _settings.trackingAway;
+            bool hold = _settings.ShouldSuspendTracking(broadcasting, HasFreshFace()) && !suspend;
+            bool writeSuspend = suspend || _suspendHeld;
+            bool writeHold = hold || _holdInputHeld;
+            if (!writeSuspend && !writeHold)
             {
                 return;
+            }
+
+            // 編集画面が自分で止めている間は、離席を解除しても Suspended を外さない
+            if (!suspend && _perfectSyncEditor != null && _perfectSyncEditor.IsOpen)
+            {
+                writeSuspend = false;
+                _suspendHeld = false;
             }
 
             GameObject instance = _session.Current != null ? _session.Current.Instance : null;
             if (instance != null)
             {
                 FaceTrackingDriver face = instance.GetComponent<FaceTrackingDriver>();
-                if (face != null)
-                {
-                    face.Suspended = pause;
-                }
-
                 HandTrackingDriver hands = instance.GetComponent<HandTrackingDriver>();
-                if (hands != null)
+                FullBodyTrackingDriver body = instance.GetComponent<FullBodyTrackingDriver>();
+                if (writeSuspend)
                 {
-                    hands.Suspended = pause;
+                    SetSuspended(face, hands, body, suspend);
                 }
 
-                FullBodyTrackingDriver body = instance.GetComponent<FullBodyTrackingDriver>();
-                if (body != null)
+                if (writeHold)
                 {
-                    body.Suspended = pause;
+                    SetHoldInput(face, hands, body, hold);
                 }
             }
 
-            _trackingHeld = pause;
+            if (writeSuspend)
+            {
+                _suspendHeld = suspend;
+            }
+
+            if (writeHold)
+            {
+                _holdInputHeld = hold;
+            }
+        }
+
+        private static void SetSuspended(
+            FaceTrackingDriver face, HandTrackingDriver hands, FullBodyTrackingDriver body, bool suspend)
+        {
+            if (face != null)
+            {
+                face.Suspended = suspend;
+            }
+
+            if (hands != null)
+            {
+                hands.Suspended = suspend;
+            }
+
+            if (body != null)
+            {
+                body.Suspended = suspend;
+            }
+        }
+
+        private static void SetHoldInput(
+            FaceTrackingDriver face, HandTrackingDriver hands, FullBodyTrackingDriver body, bool hold)
+        {
+            if (face != null)
+            {
+                face.HoldInput = hold;
+            }
+
+            if (hands != null)
+            {
+                hands.HoldInput = hold;
+            }
+
+            if (body != null)
+            {
+                body.HoldInput = hold;
+            }
+        }
+
+        private bool HasFreshFace()
+        {
+            // 受信中の顔フレームがあるときだけ映っているとみなす（途絶の判定は受信側）
+            return _tracker != null && _tracker.TryGetFrame(out _);
         }
 
         private void ApplyChooserCamera()

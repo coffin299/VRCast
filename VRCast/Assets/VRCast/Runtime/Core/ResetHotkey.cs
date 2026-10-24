@@ -25,6 +25,9 @@ namespace VRCast.Core
 
         // アバターを背景透過の PNG で撮る
         Screenshot = 5,
+
+        // 離席（顔・手・体のトラッキングをすべて止める。もう一度で戻す）
+        Away = 6,
     }
 
     /// <summary>
@@ -36,7 +39,7 @@ namespace VRCast.Core
         /// <summary>
         /// リセットの種類の数（ResetAction の値は 0 から連続）。
         /// </summary>
-        public const int ActionCount = 6;
+        public const int ActionCount = 7;
 
         // テンキーの 1（VK_NUMPAD1）。既定は 1 から順に割り当てる
         private const int Numpad1 = 0x61;
@@ -44,7 +47,7 @@ namespace VRCast.Core
         public ResetAction action;
 
         /// <summary>
-        /// 既定の割り当て（顔の向き = テンキー 1、視線 = 2、表情 = 3、カメラ = 4、カメラ目線 = 5、スクリーンショット = 6）。
+        /// 既定の割り当て（顔の向き = テンキー 1、視線 = 2、表情 = 3、カメラ = 4、カメラ目線 = 5、スクリーンショット = 6、離席 = 7）。
         /// </summary>
         public static List<ResetHotkey> Defaults()
         {
