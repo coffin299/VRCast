@@ -24,6 +24,9 @@ namespace VRCast.UI
 
         // 数値欄の直前のフォーカス。離したフレームだけ、入力途中の文字を値として確定する
         private static readonly Dictionary<string, bool> FieldFocus = new Dictionary<string, bool>();
+
+        // 最後にコピーした文字列と、「コピー済み」を消す時刻（どのタブのコピーボタンでも共通）
+        private static string _copied;
         private static float _copiedUntil;
 
         // 説明文の下の区切り線（線を含む余白の高さと線の太さ）
