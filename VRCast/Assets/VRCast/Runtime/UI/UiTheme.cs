@@ -202,6 +202,10 @@ namespace VRCast.UI
         // ほかと分けて目立たせるタブ（パーフェクトシンク化。未選択でも紫の塗り、選択中はアクセント色）
         public GUIStyle FeatureTab { get; private set; }
 
+        // 起動時の大きいモードボタン（配信 = アクセント、マスコット = 紫）
+        public GUIStyle ModeButton { get; private set; }
+        public GUIStyle FeatureModeButton { get; private set; }
+
         // 短い文字のボタン（言語の切替など。代替フォントの字形が下へはみ出しても切らない）
         public GUIStyle OverflowButton { get; private set; }
 
@@ -560,6 +564,25 @@ namespace VRCast.UI
             FeatureTab = new GUIStyle(Tab) { fontStyle = FontStyle.Bold };
             SetStates(FeatureTab, Rounded(FeatureColor, ControlRadius), Rounded(FeatureHover, ControlRadius),
                 Rounded(Color.Lerp(FeatureColor, Color.black, 0.15f), ControlRadius), OnAccent);
+
+            // 起動時のモード選択。2 行入る高さにして、選んでいる方は少し明るくする
+            ModeButton = new GUIStyle(AccentButton)
+            {
+                fontSize = 22,
+                fixedHeight = 108f,
+                wordWrap = true,
+                alignment = TextAnchor.MiddleCenter,
+                padding = new RectOffset(16, 16, 14, 14),
+            };
+            SetStates(ModeButton, Rounded(Accent, ControlRadius), Rounded(AccentHover, ControlRadius),
+                Rounded(Color.Lerp(Accent, Color.white, 0.12f), ControlRadius), OnAccent);
+            SetOnStates(ModeButton, Rounded(Color.Lerp(Accent, Color.white, 0.18f), ControlRadius),
+                Rounded(AccentHover, ControlRadius), OnAccent);
+            FeatureModeButton = new GUIStyle(ModeButton);
+            SetStates(FeatureModeButton, Rounded(FeatureColor, ControlRadius), Rounded(FeatureHover, ControlRadius),
+                Rounded(Color.Lerp(FeatureColor, Color.white, 0.12f), ControlRadius), OnAccent);
+            SetOnStates(FeatureModeButton, Rounded(Color.Lerp(FeatureColor, Color.white, 0.18f), ControlRadius),
+                Rounded(FeatureHover, ControlRadius), OnAccent);
         }
 
         private static void SetStates(GUIStyle style, Texture2D normal, Texture2D hover, Texture2D active, Color text)

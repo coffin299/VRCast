@@ -486,6 +486,17 @@ namespace VRCast.Core
         // デバッグログタブの詳細ログ（トラッキングの受信統計・状態の変化など。調査時だけ ON にする想定で既定は OFF）
         public bool detailedLogging;
 
+        // マスコットモード（この PC のローカルサーバー。プリセットには入れない）
+        public string mascotLlmUrl = "http://127.0.0.1:1234/v1";
+        public string mascotLlmModel = string.Empty;
+        public string mascotSystemPrompt = string.Empty;
+        public int mascotTtsEngine;
+        public string mascotTtsUrl = "http://127.0.0.1:50032";
+        public int mascotTtsSpeaker;
+        public int mascotStandClip = -1;
+        public int mascotWindowX = -1;
+        public int mascotWindowY = -1;
+
         /// <summary>
         /// 顔（まばたき・パーフェクトシンク・視線）に使う鏡像の向き。顔の左右の入れ替えが ON なら鏡像設定と逆。
         /// </summary>

@@ -21,6 +21,7 @@ namespace VRCast.AvatarFormat
             typeof(MeshFilter),
             typeof(ParticleSystem),
             typeof(ParticleSystemRenderer),
+            typeof(StandClipHolder),
         };
 
         public static bool IsAllowed(Component component)

@@ -67,6 +67,11 @@ namespace VRCast.Animations
         public float ExternalLevel { get; set; }
 
         /// <summary>
+        /// 読み上げの口の開き（0〜1）。0 より大きい間はマイクよりこちらを使い、口を開く形にする。
+        /// </summary>
+        public float SpeechLevel { get; set; }
+
+        /// <summary>
         /// true の間はマイク・外部入力とも止めて口を元の形にする（パーフェクトシンク化の編集中など）。
         /// </summary>
         public bool Suspended { get; set; }
@@ -189,8 +194,15 @@ namespace VRCast.Animations
                 ? 0f
                 : Mathf.Clamp01(ExternalLevel);
 
-            // 口の開き具合はマイクの音量と外部入力（カメラの口の開き）の大きい方
-            float amount = Mathf.Max(level, external);
+            // 口の開き具合はマイクの音量と外部入力（カメラの口の開き）の大きい方。
+            // 読み上げ中はその音量だけで口を開き、マイクの母音では上書きしない
+            float speech = Suspended ? 0f : Mathf.Clamp01(SpeechLevel);
+            float amount = speech > 0f ? speech : Mathf.Max(level, external);
+            if (speech > 0f)
+            {
+                level = 0f;
+            }
+
             System.Array.Clear(_values, 0, _values.Length);
 
             // 声が出ている間はマイクの母音の重みで各 BlendShape へ配る（同じ BlendShape の母音は合算）。

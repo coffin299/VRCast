@@ -1121,6 +1121,7 @@ namespace VRCast.Converter.Editor
                 $"Blendshape Sync (MA): {report.BlendShapeSyncCount}\n" +
                 $"{particles}: {report.ParticleSystemCount}\n" +
                 $"{propAnimators}: {report.PropAnimators}{droppedAnimators}, {fxMotions}: {report.FxMotionClips}\n" +
+                $"{L("Standing clips", "立ちポーズ", "서 있는 포즈", "站立姿势", "站立姿勢")}: {report.StandClips}\n" +
                 $"{inactive}: {inactiveCount}, {fxToggles}: {report.FxToggleCount}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +
                 $"{missing}: {report.Strip.RemovedMissingScripts}, " +

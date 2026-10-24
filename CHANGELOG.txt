@@ -4,6 +4,26 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- 起動時に配信モードとマスコットモードを選べるように追加
+- マスコットモードで、起動時の画面を残したままアバターを別ウィンドウのデスクトップマスコットとして表示するように追加
+- マスコットが近くのマウスカーソルの方を向くように追加
+- マスコットの既定の立ちポーズを追加
+- VRChat の立ちポーズがあるアバターでは、それを選べるように追加（書き出し直しが必要）
+- マスコットが LM Studio などのローカル言語モデルと会話できるように追加
+- マスコットの返事を COEIROINK（推奨）または VOICEVOX で読み上げるように追加
+
+[English]
+- Added a startup choice between Broadcast mode and Mascot mode
+- Added a desktop mascot window for the avatar while the startup screen stays open for settings
+- Added looking toward a nearby mouse cursor
+- Added a default standing pose for the mascot
+- Added choosing a VRChat standing pose when the avatar has one (re-export required)
+- Added conversation with a local language model such as LM Studio
+- Added speaking replies with COEIROINK (recommended) or VOICEVOX
+
 ■ 3.1.7 (2026-10-19)
 
 [日本語]

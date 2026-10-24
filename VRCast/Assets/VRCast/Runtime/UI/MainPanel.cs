@@ -6,6 +6,7 @@ using VRCast.Audio;
 using VRCast.Avatars;
 using VRCast.Cameras;
 using VRCast.Core;
+using VRCast.Mascot;
 using VRCast.Output;
 using VRCast.Platform;
 using VRCast.Remote;
@@ -105,8 +106,18 @@ namespace VRCast.UI
         private InfoSection _infoSection;
         private readonly DiscordSection _discordSection = new DiscordSection();
         private ResetBar _resetBar;
-        private readonly SurveyBar _surveyBar = new SurveyBar();
         private PerformanceBar _performanceBar;
+        private readonly SurveyBar _surveyBar = new SurveyBar();
+        // 起動時はモード選択。配信は今までの画面、マスコットは選択画面を残して別ウィンドウにモデルを出す
+        private enum LaunchMode
+        {
+            Choose,
+            Broadcast,
+            Mascot,
+        }
+
+        private LaunchMode _launch = LaunchMode.Choose;
+        private MascotMode _mascot;
 
         // テーマ（最初の OnGUI で作成）
         private UiTheme _theme;
@@ -177,6 +188,7 @@ namespace VRCast.UI
             autoReset.Initialize(session, settings);
             _autoResetSection = new AutoResetSection(autoReset, settings);
             _performanceBar = new PerformanceBar(settings, tracker, trackerProcess);
+            _mascot = new MascotMode(this, session, orbit.GetComponent<Camera>(), settings);
 
             // ウィンドウへのドロップで読み込む
             _fileDrop.FilesDropped += OnFilesDropped;
@@ -188,6 +200,8 @@ namespace VRCast.UI
             string preset = FindPreset(paths);
             if (preset != null)
             {
+                _mascot.Close();
+                _launch = LaunchMode.Broadcast;
                 _presetSection.Open(preset);
                 SetVisible(true);
                 _tab = Tab.Settings;
@@ -197,6 +211,8 @@ namespace VRCast.UI
             // 非対応ファイルのときは隠していても表示し、エラーが見える Avatar タブへ
             if (!_avatarSection.LoadDropped(paths))
             {
+                _mascot.Close();
+                _launch = LaunchMode.Broadcast;
                 SetVisible(true);
                 _tab = Tab.Avatar;
             }
@@ -284,11 +300,13 @@ namespace VRCast.UI
             // 表情のキャリブレーションの記録を進める（タブを切り替えても続ける）
             _trackingSection.Update();
 
-            // 表示切替（隠すと背景も透過）。表情のキーの割り当て中は、押したキーでパネルを消さない
-            if (Input.GetKeyDown(ToggleKey) && !HotkeyPoller.Suspended)
+            // モード選択中はパネルを隠さない。配信中だけ、隠すと背景も透過する
+            if (Input.GetKeyDown(ToggleKey) && !HotkeyPoller.Suspended && _launch != LaunchMode.Choose)
             {
                 SetVisible(!_visible);
             }
+
+            _mascot.Tick();
 
             // パネル上にマウスがある間はカメラ操作を止める（Input は左下原点なので上下を反転し、UI の倍率で割る）
             float scale = _settings.uiScale;
@@ -299,7 +317,12 @@ namespace VRCast.UI
             _orbit.Locked = _settings.cameraLocked;
             _orbit.ZoomInsteadOfEntering = _settings.cameraZoomInsteadOfEntering;
 
-            // パーフェクトシンク化の編集中は、編集画面のパネルで判定し、顔を見回せるようカメラの固定を外す
+            // モード選択とマスコット中は、この画面全体を操作としてカメラを止める
+            if (_launch != LaunchMode.Broadcast)
+            {
+                _orbit.InputBlocked = _visible;
+                return;
+            }
             if (_perfectSyncEditor.IsOpen)
             {
                 bool overPanel = _visible && _perfectSyncEditor.IsOverPanel(position);
@@ -314,9 +337,9 @@ namespace VRCast.UI
 
         private void SetVisible(bool visible)
         {
-            // 隠している間は設定に関係なく背景を透過させ、表示に戻したら設定どおりに戻す
+            // 隠している間は、配信モードのときだけ設定に関係なく背景を透過させる
             _visible = visible;
-            _rendering.ForceTransparent = !visible;
+            _rendering.ForceTransparent = _launch == LaunchMode.Broadcast && !visible;
         }
 
         private void OnGUI()
@@ -355,8 +378,24 @@ namespace VRCast.UI
             GUI.backgroundColor = new Color(previousBackground.r, previousBackground.g, previousBackground.b,
                 previousBackground.a * _settings.uiOpacity);
 
-            // パーフェクトシンク化の編集中は、メインのパネルの代わりに編集画面を出す
-            if (_perfectSyncEditor.IsOpen)
+            // 起動時の画面（配信を選ぶまではこちら）。マスコット中も残し、下に設定を出す
+            if (_launch != LaunchMode.Broadcast)
+            {
+                int pick = ModeSelectScreen.Draw(
+                    _settings, _theme, Screen.width / scale, Screen.height / scale, _launch == LaunchMode.Mascot, _mascot);
+                if (pick == 1)
+                {
+                    _mascot.Close();
+                    _launch = LaunchMode.Broadcast;
+                    SetVisible(true);
+                }
+                else if (pick == 2)
+                {
+                    _launch = LaunchMode.Mascot;
+                    _mascot.Open();
+                }
+            }
+            else if (_perfectSyncEditor.IsOpen)
             {
                 _perfectSyncEditor.OnGUI(scale);
             }
@@ -388,6 +427,7 @@ namespace VRCast.UI
             // 生成したテクスチャ・フォントを破棄し、Discord の情報の取得を止める
             _theme?.Destroy();
             _theme = null;
+            _mascot?.Dispose();
             _discordSection.Dispose();
         }
 
@@ -439,6 +479,10 @@ namespace VRCast.UI
         {
             GUILayout.BeginHorizontal(GUILayout.Height(HeaderHeight - 12f));
             GUILayout.Label("VRCast", _theme.Title, GUILayout.ExpandWidth(false));
+            if (GUILayout.Button(Loc.T("Modes", "モード", "모드", "模式", "模式"), GUILayout.Width(72f)))
+            {
+                _launch = LaunchMode.Choose;
+            }
 
             // バージョン番号（見出しより小さい文字を下端にそろえる）
             GUILayout.BeginVertical(GUILayout.ExpandWidth(false));

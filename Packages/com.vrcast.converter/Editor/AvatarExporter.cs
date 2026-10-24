@@ -56,6 +56,7 @@ namespace VRCast.Converter.Editor
             public int PropAnimators;
             public int DroppedPropAnimators;
             public int FxMotionClips;
+            public int StandClips;
             public AvatarPreprocessor.Mode Preprocess;
             public int OptimizerBlendShapeSettingsDisabled;
             public int ModularAvatarFallbackFixes;
@@ -355,8 +356,15 @@ namespace VRCast.Converter.Editor
 
                 yield return ExportJob.Step.Cleaning;
 
+                // コントローラーを外す前に、立ち・待機クリップを控える（外したあとは参照が残る）
+                var standClips = new System.Collections.Generic.List<AnimationClip>();
+                var standLabels = new System.Collections.Generic.List<string>();
+                StandClipExporter.Collect(descriptor, standClips, standLabels);
+                report.StandClips = standClips.Count;
+
                 // 許可リスト外のコンポーネント等を除去
                 report.Strip = ComponentStripper.Strip(clone);
+                StandClipExporter.Attach(clone, standClips, standLabels);
                 report.IsHumanoid = clone.GetComponent<Animator>().isHuman;
 
                 // 書き出すパーティクルの数（アプリで ON/OFF できる）と、まとめて切り替える単位

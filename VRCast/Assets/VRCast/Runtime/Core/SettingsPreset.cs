@@ -263,6 +263,15 @@ namespace VRCast.Core
             nameof(AppSettings.remoteOscPort),
             nameof(AppSettings.remoteHttpPort),
             nameof(AppSettings.expressionCalibrations),
+            nameof(AppSettings.mascotLlmUrl),
+            nameof(AppSettings.mascotLlmModel),
+            nameof(AppSettings.mascotSystemPrompt),
+            nameof(AppSettings.mascotTtsEngine),
+            nameof(AppSettings.mascotTtsUrl),
+            nameof(AppSettings.mascotTtsSpeaker),
+            nameof(AppSettings.mascotStandClip),
+            nameof(AppSettings.mascotWindowX),
+            nameof(AppSettings.mascotWindowY),
         };
 
         /// <summary>
