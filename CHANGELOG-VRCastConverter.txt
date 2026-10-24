@@ -9,7 +9,7 @@ VRCast Converter（書き出しツール / unitypackage）更新履歴 / Changel
 Newest first. Section headers are the app version that shipped the change (raise
 `Packages/com.vrcast.converter/package.json` only when this file gets new entries).
 
-■ 未リリース / Unreleased
+■ 4.0.0 (2026-10-24)
 
 [日本語]
 - VRChat の Base / Action にある立ち・待機の Humanoid クリップを書き出し、アプリのマスコットモードで選べるように追加（既に書き出したアバターは書き出し直しが必要）
