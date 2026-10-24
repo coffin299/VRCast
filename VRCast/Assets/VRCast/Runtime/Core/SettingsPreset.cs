@@ -273,6 +273,7 @@ namespace VRCast.Core
             nameof(AppSettings.mascotWindowX),
             nameof(AppSettings.mascotWindowY),
             nameof(AppSettings.mascotScale),
+            nameof(AppSettings.mascotVoiceInput),
         };
 
         /// <summary>

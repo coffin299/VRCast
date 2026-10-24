@@ -53,6 +53,11 @@ namespace VRCast.Audio
         /// </summary>
         public float Level { get; private set; }
 
+        /// <summary>
+        /// true の間は録音を止めてマイクを空ける（マスコットの音声入力など）。リップシンクの設定は変えない。
+        /// </summary>
+        public bool Paused { get; set; }
+
         public bool IsRecording => _clip != null;
 
         /// <summary>
@@ -104,10 +109,10 @@ namespace VRCast.Audio
                 return;
             }
 
-            // 無効化されたら停止し、再有効化時はすぐ開始できるようにする
-            if (!_settings.lipSyncEnabled)
+            // 無効化された、または音声入力にマイクを渡している間は止める
+            if (!_settings.lipSyncEnabled || Paused)
             {
-                StopRecording("Disabled");
+                StopRecording(Paused ? "Paused" : "Disabled");
                 _nextRetryTime = 0f;
                 return;
             }

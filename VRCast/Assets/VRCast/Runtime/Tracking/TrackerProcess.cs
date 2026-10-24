@@ -403,6 +403,11 @@ namespace VRCast.Tracking
             _nextStartTime = 0f;
         }
 
+        /// <summary>
+        /// true の間はカメラを開かない（配信以外のモード）。設定のオン／オフは変えない。
+        /// </summary>
+        public bool Paused { get; set; }
+
         private void Update()
         {
             // 未初期化なら何もしない
@@ -414,14 +419,16 @@ namespace VRCast.Tracking
             ApplyPendingCameras();
             ReportSuppressedOutput();
 
-            // 受信を無効にしたら停止
-            if (!_settings.trackingEnabled)
+            // 受信を無効にした、または配信以外のモードなら停止する
+            if (!_settings.trackingEnabled || Paused)
             {
                 if (IsRunning)
                 {
                     StopProcess();
-                    Status = "Stopped";
-                    VRCastLog.Info(LogCategory, "Tracking disabled; tracker stopped");
+                    Status = Paused ? "Paused" : "Stopped";
+                    VRCastLog.Info(LogCategory, Paused
+                        ? "Left broadcast mode; tracker stopped"
+                        : "Tracking disabled; tracker stopped");
                 }
 
                 return;

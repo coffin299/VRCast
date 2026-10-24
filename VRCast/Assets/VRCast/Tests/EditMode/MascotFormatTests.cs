@@ -122,5 +122,13 @@ namespace VRCast.Tests
 
             return wav;
         }
+
+        [Test]
+        public void Speech_TrimsPhraseAndDropsBlank()
+        {
+            Assert.That(MascotSpeechInput.Normalize("  こんにちは  "), Is.EqualTo("こんにちは"));
+            Assert.That(MascotSpeechInput.Normalize("   "), Is.Null);
+            Assert.That(MascotSpeechInput.Normalize(null), Is.Null);
+        }
     }
 }

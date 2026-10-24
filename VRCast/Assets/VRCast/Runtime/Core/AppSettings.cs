@@ -499,6 +499,9 @@ namespace VRCast.Core
         // マスコットの表示倍率（1 = 480×700。ウィンドウごと拡縮する）
         public float mascotScale = 1f;
 
+        // マスコットへマイクで話しかける（Windows の音声認識。配信のマイク設定とは別に、既定のマイクを使う）
+        public bool mascotVoiceInput;
+
         /// <summary>
         /// 顔（まばたき・パーフェクトシンク・視線）に使う鏡像の向き。顔の左右の入れ替えが ON なら鏡像設定と逆。
         /// </summary>

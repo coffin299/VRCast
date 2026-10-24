@@ -118,6 +118,8 @@ namespace VRCast.UI
 
         private LaunchMode _launch = LaunchMode.Choose;
         private MascotMode _mascot;
+        private TrackerProcess _trackerProcess;
+        private bool _trackingHeld;
 
         // モードを選ぶまではメイン画面にアバターを出さない
         private int _mainMask;
@@ -192,7 +194,14 @@ namespace VRCast.UI
             autoReset.Initialize(session, settings);
             _autoResetSection = new AutoResetSection(autoReset, settings);
             _performanceBar = new PerformanceBar(settings, tracker, trackerProcess);
-            _mascot = new MascotMode(this, session, orbit.GetComponent<Camera>(), settings);
+            _trackerProcess = trackerProcess;
+            // 配信を選ぶまでカメラを開かない
+            if (_trackerProcess != null)
+            {
+                _trackerProcess.Paused = true;
+            }
+
+            _mascot = new MascotMode(this, session, orbit.GetComponent<Camera>(), settings, microphone);
 
             // ウィンドウへのドロップで読み込む
             _fileDrop.FilesDropped += OnFilesDropped;
@@ -312,6 +321,7 @@ namespace VRCast.UI
 
             _mascot.Tick();
             ApplyChooserCamera();
+            ApplyTrackingGate();
 
             // パネル上にマウスがある間はカメラ操作を止める（Input は左下原点なので上下を反転し、UI の倍率で割る）
             float scale = _settings.uiScale;
@@ -338,6 +348,47 @@ namespace VRCast.UI
             }
 
             _orbit.InputBlocked = _visible && _windowRect.Contains(position);
+        }
+
+        /// <summary>
+        /// 配信中だけトラッキングする。モード選択とマスコットではカメラを止め、アバターへ姿勢を書かない。
+        /// </summary>
+        private void ApplyTrackingGate()
+        {
+            bool pause = _launch != LaunchMode.Broadcast;
+            if (_trackerProcess != null)
+            {
+                _trackerProcess.Paused = pause;
+            }
+
+            if (!pause && !_trackingHeld)
+            {
+                return;
+            }
+
+            GameObject instance = _session.Current != null ? _session.Current.Instance : null;
+            if (instance != null)
+            {
+                FaceTrackingDriver face = instance.GetComponent<FaceTrackingDriver>();
+                if (face != null)
+                {
+                    face.Suspended = pause;
+                }
+
+                HandTrackingDriver hands = instance.GetComponent<HandTrackingDriver>();
+                if (hands != null)
+                {
+                    hands.Suspended = pause;
+                }
+
+                FullBodyTrackingDriver body = instance.GetComponent<FullBodyTrackingDriver>();
+                if (body != null)
+                {
+                    body.Suspended = pause;
+                }
+            }
+
+            _trackingHeld = pause;
         }
 
         private void ApplyChooserCamera()

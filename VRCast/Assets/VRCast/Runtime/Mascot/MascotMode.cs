@@ -5,6 +5,7 @@ using UnityEngine.Playables;
 using UnityEngine.Animations;
 using UnityEngine.Rendering;
 using VRCast.Animations;
+using VRCast.Audio;
 using VRCast.AvatarFormat;
 using VRCast.Avatars;
 using VRCast.Core;
@@ -31,6 +32,8 @@ namespace VRCast.Mascot
         private readonly AudioSource _audio;
         private readonly LocalLlmClient _llm = new LocalLlmClient();
         private readonly LocalTtsClient _tts;
+        private readonly MascotSpeechInput _speech = new MascotSpeechInput();
+        private readonly MicrophoneInput _microphone;
         private readonly List<LlmMessage> _history = new List<LlmMessage>();
         private readonly List<(bool mine, string text)> _log = new List<(bool, string)>();
         private readonly List<string> _models = new List<string>();
@@ -45,6 +48,7 @@ namespace VRCast.Mascot
         private int _graphClip = int.MinValue;
         private int _boundAvatar;
         private string _input = string.Empty;
+        private string _queuedVoice;
         private Vector2 _scroll;
         private string _scaleInput = "100";
         private Vector2 _chatScroll;
@@ -60,12 +64,14 @@ namespace VRCast.Mascot
 
         public bool Active { get; private set; }
 
-        public MascotMode(MonoBehaviour host, AvatarSession session, Camera main, AppSettings settings)
+        public MascotMode(MonoBehaviour host, AvatarSession session, Camera main, AppSettings settings,
+            MicrophoneInput microphone)
         {
             _host = host;
             _session = session;
             _main = main;
             _settings = settings;
+            _microphone = microphone;
             _audio = host.gameObject.AddComponent<AudioSource>();
             _audio.playOnAwake = false;
             _audio.spatialBlend = 0f;
@@ -134,6 +140,7 @@ namespace VRCast.Mascot
             RestoreMask();
             SetIdleSuspended(false);
             SetSpeech(0f);
+            ReleaseVoice();
             MascotWindow.Close();
             if (_textTransform != null)
             {
@@ -150,6 +157,7 @@ namespace VRCast.Mascot
 
             _llm.Tick();
             _tts.Tick();
+            UpdateVoice();
             if (_llm.TryTakeModels(_models) && string.IsNullOrEmpty(_settings.mascotLlmModel) && _models.Count > 0)
             {
                 _settings.mascotLlmModel = _models[0];
@@ -212,6 +220,7 @@ namespace VRCast.Mascot
         public void Dispose()
         {
             Close();
+            _speech.Dispose();
             _llm.Dispose();
             _tts.Dispose();
             if (_target != null)
@@ -422,6 +431,14 @@ namespace VRCast.Mascot
             }
 
             GUILayout.EndScrollView();
+            _settings.mascotVoiceInput = GUILayout.Toggle(
+                _settings.mascotVoiceInput,
+                Loc.T("Talk by voice", "音声で話しかける", "음성으로 말하기", "用语音说话", "用語音說話"));
+            if (_settings.mascotVoiceInput)
+            {
+                DrawVoiceStatus();
+            }
+
             GUI.SetNextControlName("mascot-input");
             _input = GUILayout.TextField(_input ?? string.Empty);
             bool enter = Event.current.type == EventType.KeyDown
@@ -448,6 +465,97 @@ namespace VRCast.Mascot
             GuiControls.EndCard();
         }
 
+        private void DrawVoiceStatus()
+        {
+            if (_speech.Problem == MascotSpeechProblem.Microphone)
+            {
+                GuiControls.Warning(Loc.T(
+                    "Couldn't use the microphone. Allow desktop apps in Windows microphone privacy settings.",
+                    "マイクを使えません。Windows のマイクのプライバシー設定で、デスクトップアプリを許可してください。",
+                    "마이크를 사용할 수 없습니다. Windows 마이크 개인 정보 설정에서 데스크톱 앱을 허용하세요.",
+                    "无法使用麦克风。请在 Windows 的麦克风隐私设置里允许桌面应用。",
+                    "無法使用麥克風。請在 Windows 的麥克風隱私設定裡允許桌面應用程式。"));
+                return;
+            }
+
+            if (_speech.Problem == MascotSpeechProblem.Network)
+            {
+                GuiControls.Warning(Loc.T(
+                    "Windows speech recognition couldn't connect. Check that online speech recognition is allowed.",
+                    "Windows の音声認識に繋がりません。オンライン音声認識が許可されているか確認してください。",
+                    "Windows 음성 인식에 연결하지 못했습니다. 온라인 음성 인식이 허용되어 있는지 확인하세요.",
+                    "连不上 Windows 语音识别。请确认已允许联机语音识别。",
+                    "連不上 Windows 語音辨識。請確認已允許線上語音辨識。"));
+                return;
+            }
+
+            if (_speech.Problem != MascotSpeechProblem.None)
+            {
+                GuiControls.Warning(Loc.T(
+                    "Couldn't start speech recognition. Turn on Windows speech recognition and try again.",
+                    "音声認識を開始できません。Windows の音声認識を有効にして、もう一度オンにしてください。",
+                    "음성 인식을 시작하지 못했습니다. Windows 음성 인식을 켜고 다시 시도하세요.",
+                    "无法开始语音识别。请启用 Windows 语音识别后再打开一次。",
+                    "無法開始語音辨識。請啟用 Windows 語音辨識後再開啟一次。"));
+                return;
+            }
+
+            if (_tts.Busy)
+            {
+                return;
+            }
+
+            string heard = MascotSpeechInput.Normalize(_speech.Hypothesis);
+            GuiControls.Hint(heard != null
+                ? heard
+                : Loc.T(
+                    "Listening. A short pause sends what you said. This uses the Windows default microphone, and VRCast should be the active window.",
+                    "聞いています。少し間を置くと、話した内容を送ります。Windows の既定のマイクを使い、VRCast が手前のウィンドウである必要があります。",
+                    "듣는 중입니다. 잠깐 멈추면 말한 내용을 보냅니다. Windows 기본 마이크를 쓰며, VRCast가 활성 창이어야 합니다.",
+                    "正在听。稍作停顿就会送出你说的话。使用 Windows 的默认麦克风，并且 VRCast 需要在前台。",
+                    "正在聽。稍作停頓就會送出你說的話。使用 Windows 的預設麥克風，並且 VRCast 需要在前景。"));
+        }
+
+        private void UpdateVoice()
+        {
+            bool listen = _settings.mascotVoiceInput && !_tts.Busy;
+            if (_microphone != null)
+            {
+                _microphone.Paused = _settings.mascotVoiceInput;
+            }
+
+            bool micFree = _microphone == null || !_microphone.IsRecording;
+            _speech.Tick(listen && micFree);
+            if (_speech.TryTake(out string said))
+            {
+                if (_llm.Busy)
+                {
+                    _queuedVoice = said;
+                }
+                else
+                {
+                    Submit(said);
+                }
+            }
+
+            if (!_llm.Busy && !_tts.Busy && !string.IsNullOrEmpty(_queuedVoice))
+            {
+                string queued = _queuedVoice;
+                _queuedVoice = null;
+                Submit(queued);
+            }
+        }
+
+        private void ReleaseVoice()
+        {
+            _speech.Tick(false);
+            _queuedVoice = null;
+            if (_microphone != null)
+            {
+                _microphone.Paused = false;
+            }
+        }
+
         private void Send()
         {
             string text = (_input ?? string.Empty).Trim();
@@ -457,6 +565,17 @@ namespace VRCast.Mascot
             }
 
             _input = string.Empty;
+            Submit(text);
+        }
+
+        private void Submit(string text)
+        {
+            text = MascotSpeechInput.Normalize(text);
+            if (text == null || _llm.Busy)
+            {
+                return;
+            }
+
             _history.Add(new LlmMessage("user", text));
             _log.Add((true, text));
             TrimHistory();
