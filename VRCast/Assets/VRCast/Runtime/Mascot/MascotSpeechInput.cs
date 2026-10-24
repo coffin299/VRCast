@@ -91,7 +91,7 @@ namespace VRCast.Mascot
 #if UNITY_STANDALONE_WIN || UNITY_EDITOR_WIN
             if (_recognizer != null)
             {
-                if (_recognizer.IsRunning)
+                if (Listening)
                 {
                     _recognizer.Stop();
                 }
@@ -125,19 +125,13 @@ namespace VRCast.Mascot
                 }
 
                 _open = true;
-
-                if (_recognizer.IsRunning)
+                if (Listening)
                 {
-                    Listening = true;
                     return;
                 }
 
-                UnityEngine.Windows.Speech.SpeechSystemStatus status = _recognizer.Start();
-                Listening = status == UnityEngine.Windows.Speech.SpeechSystemStatus.Running;
-                if (!Listening)
-                {
-                    Problem = MascotSpeechProblem.Failed;
-                }
+                _recognizer.Start();
+                Listening = true;
             }
             catch (Exception)
             {
