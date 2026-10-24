@@ -148,14 +148,17 @@ namespace VRCast.Animations
             float headY = ScreenRect.y + (1f - viewport.y) * ScreenRect.height;
             Vector2 cursor = MascotCursor.Screen;
             float distance = Vector2.Distance(cursor, new Vector2(headX, headY));
-            if (distance >= NearPixels)
+            float reach = NearPixels * Mathf.Max(1f,
+                Mathf.Max(ScreenRect.width / MascotWindow.BaseWidth, ScreenRect.height / MascotWindow.BaseHeight));
+            if (distance >= reach)
             {
                 return true;
             }
 
-            closeness = 1f - distance / NearPixels;
+            closeness = 1f - distance / reach;
 
-            // カーソルを、頭を通るカメラ正面の平面へ落として向きを決める
+            // カーソルを、頭を通るカメラ正面の平面へ落とす。
+            // その点は頭とほぼ同じ奥行きにあるので、角度はカメラから頭までの距離で決める
             float u = (cursor.x - ScreenRect.x) / ScreenRect.width;
             float v = 1f - (cursor.y - ScreenRect.y) / ScreenRect.height;
             Ray ray = View.ViewportPointToRay(new Vector3(u, v, 0f));
@@ -166,9 +169,9 @@ namespace VRCast.Animations
             }
 
             Vector3 local = transform.InverseTransformDirection(ray.GetPoint(enter) - _aim.position);
-            yaw = Mathf.Clamp(Mathf.Atan2(local.x, local.z) * Mathf.Rad2Deg, -MaxYaw, MaxYaw);
-            float flat = new Vector2(local.x, local.z).magnitude;
-            pitch = Mathf.Clamp(-Mathf.Atan2(local.y, flat) * Mathf.Rad2Deg, -MaxPitch, MaxPitch);
+            float depth = Mathf.Max(0.2f, Vector3.Dot(_aim.position - View.transform.position, View.transform.forward));
+            yaw = Mathf.Clamp(Mathf.Atan2(local.x, depth) * Mathf.Rad2Deg, -MaxYaw, MaxYaw);
+            pitch = Mathf.Clamp(-Mathf.Atan2(local.y, depth) * Mathf.Rad2Deg, -MaxPitch, MaxPitch);
             return true;
         }
 
