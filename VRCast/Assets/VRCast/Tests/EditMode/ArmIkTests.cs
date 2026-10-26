@@ -32,6 +32,36 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void KeepHandInFrontOfFace_PushesFingersOverTheFace()
+        {
+            // 手首は顎の下（顔の正面の円の外）で、指先だけが顔に重なって奥にある
+            var wrist = new Vector3(0.05f, -0.2f, 0.04f);
+            var points = new Vector3[2];
+            points[1] = new Vector3(0.02f, 0.02f, -0.03f) - wrist;
+
+            // 指先が顔の手前まで出る分だけ、手首を前へ動かすこと（横・縦は変えない）
+            Vector3 pushed = ArmIk.KeepHandInFrontOfFace(wrist, points, 0);
+            Assert.That(pushed.z, Is.EqualTo(0.13f).Within(1e-4f));
+            Assert.That(pushed.x, Is.EqualTo(wrist.x).Within(1e-5f));
+            Assert.That(pushed.y, Is.EqualTo(wrist.y).Within(1e-5f));
+
+            // 頭の横の手と、顔より明らかに奥の指、すでに手前の指は動かさないこと
+            var beside = new Vector3(0.2f, 0f, -0.05f);
+            Assert.That(ArmIk.KeepHandInFrontOfFace(beside, new[] { Vector3.zero, new Vector3(0.02f, 0f, 0f) }, 0).z,
+                Is.EqualTo(beside.z).Within(1e-5f));
+            var deepFinger = new Vector3(0.02f, 0.02f, -0.25f) - wrist;
+            Assert.That(ArmIk.KeepHandInFrontOfFace(wrist, new[] { Vector3.zero, deepFinger }, 0).z,
+                Is.EqualTo(wrist.z).Within(1e-5f));
+            var forwardFinger = new Vector3(0.02f, 0.02f, 0.2f) - wrist;
+            Assert.That(ArmIk.KeepHandInFrontOfFace(wrist, new[] { Vector3.zero, forwardFinger }, 0).z,
+                Is.EqualTo(wrist.z).Within(1e-5f));
+
+            // 手の点が無ければ、手首だけの補正と同じであること
+            var front = new Vector3(0f, -0.02f, 0.01f);
+            Assert.That(ArmIk.KeepHandInFrontOfFace(front, null, 0).z, Is.EqualTo(ArmIk.FaceClearance).Within(1e-5f));
+        }
+
+        [Test]
         public void SolveElbow_ReachableTarget_KeepsBoneLengthsAndBendSide()
         {
             // 長さ 0.3 + 0.25 の腕で、前方 0.4 の目標へ、下に肘を曲げる

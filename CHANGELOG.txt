@@ -4,9 +4,10 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 4.1.0 (2026-10-26)
 
 [日本語]
+- 顔の前でピースなどをしたときに、手が顔の後ろへ入ってしまうのを抑える設定を追加（腕・手の「手の位置をアバターに合わせる」の下。既定は ON）
 - 表情のしきい値を 3 まで指定でき、欄へ数値を直接入力できるように変更。値によって表情がどう切り替わるかの説明も追加
 - 目を動かしたときに、目の明るさやグラデーションが一番濃い色や一番薄い色になってしまう問題を修正
 - トラッキングのキャリブレーション中の案内が、パネルの後ろに隠れる問題を修正
@@ -15,6 +16,7 @@ Newest first. Each version is written in Japanese, then English.
 - グラフィックの数値を、スライダーの横の欄へ直接入力できるように追加
 
 [English]
+- Added an option that keeps a peace sign and similar poses from sinking behind the face (under Match hand positions to the avatar, in Arms / hands. On by default)
 - Raised the expression threshold limit to 3, added typing the number into the field, and added an explanation of how each value changes when the expression switches
 - Fixed the eyes' brightness and gradient jumping to the darkest or lightest color when they move
 - Fixed the tracking calibration prompt hiding behind the panel

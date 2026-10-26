@@ -18,6 +18,13 @@ namespace VRCast.Tracking
         public const float FaceClearance = 0.06f;
         public const float FaceFrontRadius = 0.08f;
 
+        // 顔の前の手を奥へ入れないときの、顔に重なるとみなす範囲（両目の中点からの横・縦、本人の m。
+        // ピースの指は頬にかかるが、手首は顎の下にあり FaceFrontRadius の外になりやすい）と、
+        // これより奥の点は本当に頭の後ろにあるものとして押し出さない（本人の m）
+        public const float FaceOverlapHalfWidth = 0.11f;
+        public const float FaceOverlapHalfHeight = 0.13f;
+        public const float FaceDepthGlitch = 0.12f;
+
         // 腕を伸ばし切らない・畳み切らない余裕（長さに対する割合。肘の向きが定まらなくなるのを防ぐ）
         private const float ReachMargin = 0.001f;
 
@@ -44,6 +51,60 @@ namespace VRCast.Tracking
             // 手前に十分あればそのまま、足りなければ正面に近いほど手前へ出す（横へ外れるにつれてなめらかに元の奥行きへ）
             wristFromFace.z = Mathf.Lerp(wristFromFace.z, Mathf.Max(wristFromFace.z, FaceClearance), front);
             return wristFromFace;
+        }
+
+        /// <summary>
+        /// <see cref="KeepInFrontOfFace"/> に加え、顔の範囲に重なる手の点（指先など）も手前に残す。
+        /// 手の点はアバタールート基準の絶対位置。手首が顎の下にあっても、顔に重なる指が奥なら手首ごと前へ出す。
+        /// 頭の横の手と、顔の面より明らかに奥の手は動かさない。
+        /// </summary>
+        public static Vector3 KeepHandInFrontOfFace(Vector3 wristFromFace, Vector3[] handPoints, int wristIndex)
+        {
+            Vector3 adjusted = KeepInFrontOfFace(wristFromFace);
+            if (handPoints == null || wristIndex < 0 || wristIndex >= handPoints.Length)
+            {
+                return adjusted;
+            }
+
+            // 手首を先に動かした分だけ、指も同じだけ前へ来ている
+            Vector3 wristPoint = handPoints[wristIndex];
+            float shift = adjusted.z - wristFromFace.z;
+            float minZ = float.PositiveInfinity;
+            for (int i = 0; i < handPoints.Length; i++)
+            {
+                Vector3 fromFace = wristFromFace + (handPoints[i] - wristPoint);
+                if (!OverlapsFace(fromFace.x, fromFace.y))
+                {
+                    continue;
+                }
+
+                float z = fromFace.z + shift;
+                if (z < -FaceDepthGlitch)
+                {
+                    continue;
+                }
+
+                if (z < minZ)
+                {
+                    minZ = z;
+                }
+            }
+
+            // 顔に重なる点のうち一番奥のものを、めり込まない手前まで出す
+            if (minZ < FaceClearance)
+            {
+                adjusted.z += FaceClearance - minZ;
+            }
+
+            return adjusted;
+        }
+
+        /// <summary>顔（両目の中点）の正面の楕円の中なら true。</summary>
+        public static bool OverlapsFace(float x, float y)
+        {
+            float nx = x / FaceOverlapHalfWidth;
+            float ny = y / FaceOverlapHalfHeight;
+            return nx * nx + ny * ny <= 1f;
         }
 
         /// <summary>

@@ -392,6 +392,9 @@ namespace VRCast.Core
         // 腕の位置をアバターの体格に合わせる（手首の位置を写して IK で届かせ、顔の近くの手は顔を基準にする。OFF なら腕の向きだけ合わせる）
         public bool trackingArmMatchAvatar = true;
 
+        // 顔の前の手を奥へ入れない（ピースなどで指が顔に重なるとき、奥行きの推定がずれても顔の手前に残す。頭の横の手はそのまま。既定 ON）
+        public bool trackingKeepHandsInFront = true;
+
         // 上半身の向き（両肩の線から背骨・胸のひねり・左右の傾き。腕・手が ON のときだけ。MediaPipe のみ）
         public bool trackingTorso = true;
 

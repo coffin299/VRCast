@@ -501,7 +501,7 @@ namespace VRCast.Tracking
                 float near = ArmIk.FaceWeight(rig.WristFromFace.magnitude) * rig.FaceWeight;
                 if (near > 0f)
                 {
-                    Vector3 fromFace = ArmIk.KeepInFrontOfFace(rig.WristFromFace) * scale;
+                    Vector3 fromFace = WristInFrontOfFace(rig) * scale;
                     target = Vector3.Lerp(target, face + root * fromFace, near);
                 }
             }
@@ -515,6 +515,17 @@ namespace VRCast.Tracking
             Quaternion toRoot = Quaternion.Inverse(root);
             Aim(rig, UpperArm, toRoot * (elbow - upper.position), rig.ArmWeight);
             Aim(rig, LowerArm, toRoot * (target - lower.position), rig.ArmWeight);
+        }
+
+        // 顔の正面の手首をめり込まない手前に置く。設定 ON で手が映っているときは、顔に重なる指も手前に残す
+        private Vector3 WristInFrontOfFace(ArmRig rig)
+        {
+            if (_settings.trackingKeepHandsInFront && rig.HandWeight > 0f)
+            {
+                return ArmIk.KeepHandInFrontOfFace(rig.WristFromFace, rig.HandPoints, WristPoint);
+            }
+
+            return ArmIk.KeepInFrontOfFace(rig.WristFromFace);
         }
 
         private void Aim(ArmRig rig, int index, Vector3 avatarDirection, float weight)

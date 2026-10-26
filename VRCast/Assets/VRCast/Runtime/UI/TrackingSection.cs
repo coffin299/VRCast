@@ -535,14 +535,30 @@ namespace VRCast.UI
                     "让手的位置匹配虚拟形象", "讓手的位置符合虛擬形象"));
 
             // ON の間だけ、何をするかを案内する
-            if (_settings.trackingArmMatchAvatar)
+            if (!_settings.trackingArmMatchAvatar)
+            {
+                return;
+            }
+
+            GuiControls.Hint(Loc.T(
+                "Places the hands by the avatar's body size instead of only copying arm angles. A hand in front of your face stays in front of the avatar's face. Turn off for the previous behavior.",
+                "腕の角度をまねるだけでなく、アバターの体格に合わせて手の位置を決めます。顔の前の手はアバターの顔の前に来ます。OFF で以前の動きに戻ります。",
+                "팔의 각도만 따라 하지 않고 아바타의 체격에 맞춰 손 위치를 정합니다. 얼굴 앞의 손은 아바타의 얼굴 앞에 옵니다. 끄면 이전 동작으로 돌아갑니다.",
+                "不只是模仿手臂角度，而是按虚拟形象的体型决定手的位置。脸前的手会位于虚拟形象的脸前。关闭则恢复以前的动作。",
+                "不只是模仿手臂角度，而是依虛擬形象的體型決定手的位置。臉前的手會位於虛擬形象的臉前。關閉則恢復以前的動作。"));
+
+            _settings.trackingKeepHandsInFront = GUILayout.Toggle(
+                _settings.trackingKeepHandsInFront,
+                Loc.T("Keep a hand in front of the face", "顔の前の手を後ろに入れない", "얼굴 앞의 손을 뒤로 넣지 않기",
+                    "不让脸前的手穿到脸后", "不讓臉前的手穿到臉後"));
+            if (_settings.trackingKeepHandsInFront)
             {
                 GuiControls.Hint(Loc.T(
-                    "Places the hands by the avatar's body size instead of only copying arm angles. A hand in front of your face stays in front of the avatar's face. Turn off for the previous behavior.",
-                    "腕の角度をまねるだけでなく、アバターの体格に合わせて手の位置を決めます。顔の前の手はアバターの顔の前に来ます。OFF で以前の動きに戻ります。",
-                    "팔의 각도만 따라 하지 않고 아바타의 체격에 맞춰 손 위치를 정합니다. 얼굴 앞의 손은 아바타의 얼굴 앞에 옵니다. 끄면 이전 동작으로 돌아갑니다.",
-                    "不只是模仿手臂角度，而是按虚拟形象的体型决定手的位置。脸前的手会位于虚拟形象的脸前。关闭则恢复以前的动作。",
-                    "不只是模仿手臂角度，而是依虛擬形象的體型決定手的位置。臉前的手會位於虛擬形象的臉前。關閉則恢復以前的動作。"));
+                    "A peace sign or similar pose in front of the face stays in front, even when the depth estimate puts the fingers behind the face. Hands beside the head stay where they are.",
+                    "顔の前のピースなどが、奥行きの推定のずれで指が顔の後ろへ入るのを抑えます。頭の横の手はそのままです。",
+                    "얼굴 앞에서 피스 등을 할 때, 깊이 추정이 어긋나 손가락이 얼굴 뒤로 들어가는 것을 줄입니다. 머리 옆의 손은 그대로입니다.",
+                    "在脸前比耶等姿势时，减轻深度估计偏差导致手指穿到脸后的情况。头侧面的手保持原样。",
+                    "在臉前比耶等姿勢時，減輕深度估計偏差導致手指穿到臉後的情況。頭側面的手保持原樣。"));
             }
         }
 
