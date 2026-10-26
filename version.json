@@ -1,10 +1,10 @@
 {
-    "version":  "4.0.0",
+    "version":  "4.1.0",
     "url":  "https://github.com/coffin299/VRCast/releases/",
     "boothUrl":  "https://coffin299.booth.pm/items/8933317",
     "update":  {
-                   "zipUrl":  "https://github.com/coffin299/VRCast/releases/download/v4.0.0/VRCast-4.0.0-win64.zip",
-                   "size":  274962745,
-                   "sha256":  "a27aee807525789e932d0c399cbd85294a398de9569634676136715656788743"
+                   "zipUrl":  "https://github.com/coffin299/VRCast/releases/download/v4.1.0/VRCast-4.1.0-win64.zip",
+                   "size":  274984431,
+                   "sha256":  "9df2f46ba806003648169d625c20dded2c8ceb4962386f320c4145f265ab1695"
                }
 }
