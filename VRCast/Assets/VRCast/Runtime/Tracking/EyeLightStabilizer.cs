@@ -23,7 +23,9 @@ namespace VRCast.Tracking
 
         private readonly List<Slot> _slots = new List<Slot>();
         private Light[] _lights = System.Array.Empty<Light>();
-        private bool _loggedWeightFailure;
+
+        // 読めないメッシュの警告は、アバターを読み直しても一度だけ出す
+        private static bool _loggedWeightFailure;
 
         /// <summary>
         /// アバターの瞳マテリアルを探し直す。目ボーンが無ければ何もしない。前のアバターへ書いた値は戻す。
@@ -315,17 +317,18 @@ namespace VRCast.Tracking
 
         private static bool IsEyeSubmeshUnchecked(Mesh mesh, int submesh, int leftBone, int rightBone)
         {
+            // ボーンウェイトは Mesh 本体から読む（MeshData の取得は Unity 2022.3 には無い）
+            Unity.Collections.NativeArray<byte> bonesPerVertex = mesh.GetBonesPerVertex();
+            Unity.Collections.NativeArray<BoneWeight1> weights = mesh.GetAllBoneWeights();
             Mesh.MeshDataArray data = Mesh.AcquireReadOnlyMeshData(mesh);
             try
             {
-                Mesh.MeshData meshData = data[0];
-                Unity.Collections.NativeArray<byte> bonesPerVertex = meshData.GetBonesPerVertex();
                 if (bonesPerVertex.Length == 0)
                 {
                     return false;
                 }
 
-                Unity.Collections.NativeArray<BoneWeight1> weights = meshData.GetBoneWeights();
+                Mesh.MeshData meshData = data[0];
                 var offsets = new int[bonesPerVertex.Length];
                 int cursor = 0;
                 for (int vertex = 0; vertex < bonesPerVertex.Length; vertex++)
@@ -354,6 +357,8 @@ namespace VRCast.Tracking
             finally
             {
                 data.Dispose();
+                bonesPerVertex.Dispose();
+                weights.Dispose();
             }
         }
 
