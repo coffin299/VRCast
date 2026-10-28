@@ -18,6 +18,14 @@ namespace VRCast.UI
         // GPU の一覧（初回表示時に取得）
         private List<GpuAdapter> _adapters;
 
+        // FPS 上限の欄への直接入力用
+        private string _frameRateInput = string.Empty;
+
+        // Fast Sync / VRR が NVIDIA 向けか（初回だけ調べる）、ドライバー書き込みの失敗理由・再起動案内
+        private bool? _nvidiaVSyncAvailable;
+        private string _vSyncError;
+        private bool _vSyncRestartPending;
+
         private readonly AppSettings _settings;
         private readonly RenderingController _rendering;
 
@@ -54,21 +62,55 @@ namespace VRCast.UI
             }
 
             GuiControls.Hint(Loc.T(
-                $"Use this with games or OBS: drawing is limited to {RenderingController.LowLoadFrameRate} fps " +
-                $"(normally {RenderingController.NormalFrameRate}) and OpenSeeFace uses a lighter model. " +
+                $"Use this with games or OBS: caps drawing at {RenderingController.LowLoadFrameRate} fps " +
+                $"(or your FPS limit if lower) when V-Sync is not On, and OpenSeeFace uses a lighter model. " +
                 "For MediaPipe, choose Eco in the Tracking tab's Tracker mode.",
-                $"ゲームや OBS と同時に使うときに。描画を {RenderingController.LowLoadFrameRate}fps " +
-                $"（通常は {RenderingController.NormalFrameRate}fps）に抑え、OpenSeeFace は軽いモデルを使います。" +
+                $"ゲームや OBS と同時に使うときに。垂直同期が On 以外のとき描画を {RenderingController.LowLoadFrameRate}fps" +
+                "（またはそれより低い FPS 上限）に抑え、OpenSeeFace は軽いモデルを使います。" +
                 "MediaPipe はトラッキングタブの「トラッカーの動作」でエコを選んでください。",
-                $"게임이나 OBS와 함께 쓸 때 사용하세요. 화면을 {RenderingController.LowLoadFrameRate}fps" +
-                $"(평소 {RenderingController.NormalFrameRate}fps)로 제한하고 OpenSeeFace는 가벼운 모델을 씁니다. " +
+                $"게임이나 OBS와 함께 쓸 때 사용하세요. V-Sync가 On이 아니면 화면을 {RenderingController.LowLoadFrameRate}fps" +
+                "(또는 그보다 낮은 FPS 상한)으로 제한하고 OpenSeeFace는 가벼운 모델을 씁니다. " +
                 "MediaPipe는 트래킹 탭의 「트래커 동작」에서 절약을 선택하세요.",
-                $"与游戏或 OBS 同时使用时开启。将画面限制为 {RenderingController.LowLoadFrameRate}fps" +
-                $"（通常为 {RenderingController.NormalFrameRate}fps），OpenSeeFace 使用较轻的模型。" +
+                $"与游戏或 OBS 同时使用时开启。垂直同步非 On 时将画面限制为 {RenderingController.LowLoadFrameRate}fps" +
+                "（或更低的 FPS 上限），OpenSeeFace 使用较轻的模型。" +
                 "MediaPipe 请在追踪标签页的“追踪器模式”中选择节能。",
-                $"與遊戲或 OBS 同時使用時開啟。將畫面限制為 {RenderingController.LowLoadFrameRate}fps" +
-                $"（通常為 {RenderingController.NormalFrameRate}fps），OpenSeeFace 使用較輕的模型。" +
+                $"與遊戲或 OBS 同時使用時開啟。垂直同步非 On 時將畫面限制為 {RenderingController.LowLoadFrameRate}fps" +
+                "（或更低的 FPS 上限），OpenSeeFace 使用較輕的模型。" +
                 "MediaPipe 請在追蹤分頁的「追蹤器模式」中選擇節能。"));
+
+            DrawVSync();
+
+            // FPS 上限（通常の V-Sync On のときだけ効かない）
+            bool fpsLimitActive = _rendering.VSyncMode != VSyncMode.On;
+            GUI.enabled = fpsLimitActive;
+            int frameRate = Mathf.RoundToInt(GuiControls.SliderOrField(
+                Loc.T("FPS limit", "FPS 上限", "FPS 상한", "FPS 上限", "FPS 上限"),
+                _rendering.TargetFrameRate, AppSettings.MinTargetFrameRate, AppSettings.MaxTargetFrameRate,
+                ref _frameRateInput, "perf-fps", "F0"));
+            if (frameRate != _rendering.TargetFrameRate)
+            {
+                _rendering.TargetFrameRate = frameRate;
+            }
+
+            GUI.enabled = true;
+            if (!fpsLimitActive)
+            {
+                GuiControls.Hint(Loc.T(
+                    "FPS limit is unused while V-Sync is On.",
+                    "垂直同期が On のため、FPS 上限は使われていません。",
+                    "수직 동기화가 On이라 FPS 상한은 사용되지 않습니다.",
+                    "垂直同步为 On 时不使用 FPS 上限。",
+                    "垂直同步為 On 時不使用 FPS 上限。"));
+            }
+            else if (_rendering.LowLoadMode && _rendering.TargetFrameRate > RenderingController.LowLoadFrameRate)
+            {
+                GuiControls.Hint(Loc.T(
+                    $"Low load mode caps drawing at {RenderingController.LowLoadFrameRate} fps right now.",
+                    $"軽量モードのため、いまの描画は {RenderingController.LowLoadFrameRate}fps に抑えられています。",
+                    $"저부하 모드라 지금은 {RenderingController.LowLoadFrameRate}fps로 제한됩니다.",
+                    $"低负载模式当前将画面限制为 {RenderingController.LowLoadFrameRate}fps。",
+                    $"低負載模式目前將畫面限制為 {RenderingController.LowLoadFrameRate}fps。"));
+            }
 
             // パネル下部の動作状況（表示は英語のみ）
             _settings.showPerformanceStats = GUILayout.Toggle(_settings.showPerformanceStats, Loc.T(
@@ -82,6 +124,102 @@ namespace VRCast.UI
 
             DrawPriority();
             GuiControls.EndCard();
+        }
+
+        private void DrawVSync()
+        {
+            _nvidiaVSyncAvailable ??= NvidiaVerticalSync.IsAvailable;
+            bool nvidia = _nvidiaVSyncAvailable == true;
+
+            string[] labels = nvidia
+                ? new[]
+                {
+                    Loc.T("Off", "オフ", "끔", "关", "關"),
+                    Loc.T("On", "オン", "켬", "开", "開"),
+                    "Fast Sync",
+                    "VRR",
+                }
+                : new[]
+                {
+                    Loc.T("Off", "オフ", "끔", "关", "關"),
+                    Loc.T("On", "オン", "켬", "开", "開"),
+                    "VRR",
+                };
+
+            var previous = _rendering.VSyncMode;
+            int index = ModeToLabelIndex(previous, nvidia);
+            index = GuiControls.EnumSelector(
+                Loc.T("V-Sync", "垂直同期（V-Sync）", "수직 동기화(V-Sync)", "垂直同步（V-Sync）", "垂直同步（V-Sync）"),
+                labels, index);
+            var selected = LabelIndexToMode(index, nvidia);
+            if (selected != previous)
+            {
+                _rendering.VSyncMode = selected;
+                _vSyncError = NvidiaVerticalSync.Apply(selected);
+                bool needsRestart = selected == VSyncMode.FastSync || (selected == VSyncMode.Vrr && nvidia);
+                _vSyncRestartPending = needsRestart && string.IsNullOrEmpty(_vSyncError);
+            }
+
+            GuiControls.Hint(Loc.T(
+                "On locks to the refresh rate (FPS limit ignored). Fast Sync (NVIDIA) and VRR reduce tearing without that lock. VRR needs a compatible monitor (enable G-Sync/FreeSync for windowed mode if needed).",
+                "On はリフレッシュに固定します（FPS 上限は使いません）。Fast Sync（NVIDIA）と VRR は固定せずティアリングを抑えます。VRR は対応モニターが必要で、ウィンドウモード向けの G-Sync / FreeSync も有効にしておくことが多いです。",
+                "On은 주사율에 고정합니다(FPS 상한 미사용). Fast Sync(NVIDIA)와 VRR은 고정하지 않고 티어링을 줄입니다. VRR은 지원 모니터가 필요하며, 창 모드용 G-Sync/FreeSync도 켜 두는 경우가 많습니다.",
+                "On 锁定刷新率（忽略 FPS 上限）。Fast Sync（NVIDIA）和 VRR 不锁定也能减轻撕裂。VRR 需要兼容显示器，窗口模式往往还要开启 G-Sync/FreeSync。",
+                "On 鎖定重新整理率（忽略 FPS 上限）。Fast Sync（NVIDIA）與 VRR 不鎖定也能減輕撕裂。VRR 需要相容顯示器，視窗模式往往還要開啟 G-Sync/FreeSync。"));
+
+            if (!nvidia)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Fast Sync needs an NVIDIA GPU.",
+                    "Fast Sync は NVIDIA の GPU が必要です。",
+                    "Fast Sync에는 NVIDIA GPU가 필요합니다.",
+                    "Fast Sync 需要 NVIDIA GPU。",
+                    "Fast Sync 需要 NVIDIA GPU。"));
+            }
+
+            if (_vSyncRestartPending)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Restart VRCast for the driver display setting to take effect.",
+                    "ドライバーの表示設定を反映するには VRCast を再起動してください。",
+                    "드라이버 표시 설정을 적용하려면 VRCast를 다시 시작하세요.",
+                    "请重启 VRCast 以使驱动显示设置生效。",
+                    "請重新啟動 VRCast 以使驅動顯示設定生效。"));
+            }
+
+            if (!string.IsNullOrEmpty(_vSyncError))
+            {
+                GuiControls.Hint(Loc.T(
+                    $"Could not update the NVIDIA display setting: {_vSyncError}",
+                    $"NVIDIA の表示設定を書けませんでした: {_vSyncError}",
+                    $"NVIDIA 표시 설정을 쓰지 못했습니다: {_vSyncError}",
+                    $"无法写入 NVIDIA 显示设置：{_vSyncError}",
+                    $"無法寫入 NVIDIA 顯示設定：{_vSyncError}"));
+            }
+        }
+
+        private static int ModeToLabelIndex(VSyncMode mode, bool nvidia)
+        {
+            if (nvidia)
+            {
+                return mode == VSyncMode.Vrr ? 3
+                    : mode == VSyncMode.FastSync ? 2
+                    : (int)mode;
+            }
+
+            return mode == VSyncMode.Vrr ? 2 : mode == VSyncMode.On ? 1 : 0;
+        }
+
+        private static VSyncMode LabelIndexToMode(int index, bool nvidia)
+        {
+            if (nvidia)
+            {
+                return index == 3 ? VSyncMode.Vrr
+                    : index == 2 ? VSyncMode.FastSync
+                    : (VSyncMode)index;
+            }
+
+            return index == 2 ? VSyncMode.Vrr : index == 1 ? VSyncMode.On : VSyncMode.Off;
         }
 
         private void DrawCpu()

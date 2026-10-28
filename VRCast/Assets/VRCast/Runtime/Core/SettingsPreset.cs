@@ -154,7 +154,9 @@ namespace VRCast.Core
         public static readonly IReadOnlyList<PresetCategory> Categories = new[]
         {
             new PresetCategory("performance", false,
-                nameof(AppSettings.lowLoadMode), nameof(AppSettings.showPerformanceStats), nameof(AppSettings.trackerMode),
+                nameof(AppSettings.lowLoadMode), nameof(AppSettings.vSyncMode), nameof(AppSettings.targetFrameRate),
+                nameof(AppSettings.showPerformanceStats), nameof(AppSettings.trackerMode),
+                nameof(AppSettings.trackingFps),
                 nameof(AppSettings.processPriority), nameof(AppSettings.avoidCacheCcd), nameof(AppSettings.hybridCores),
                 nameof(AppSettings.gpuPreference)),
             new PresetCategory("display", false,

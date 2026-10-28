@@ -29,9 +29,11 @@ namespace VRCast.Rendering
         // カメラ正面（アバターの正面）から当てるときのワールドの向き。カメラは +Z 側から -Z を向く
         private const float FrontYaw = 180f;
 
-        // 描画のフレームレートの上限（通常 / 軽量モード）。上限が無いと GPU を使い切ってゲーム・OBS を圧迫する
-        public const int NormalFrameRate = 60;
+        // 軽量モード時の描画 FPS の上限（設定の targetFrameRate より高いときはこちらに抑える）
         public const int LowLoadFrameRate = 30;
+
+        // 表示・旧ドキュメント向けの通常の既定 FPS（設定の既定値と同じ）
+        public const int NormalFrameRate = 60;
 
         // アバター向けの影距離（短くしてセルフシャドウの解像度を稼ぐ）
         private const float ModernShadowDistance = 12f;
@@ -537,6 +539,33 @@ namespace VRCast.Rendering
             }
         }
 
+        /// <summary>
+        /// 垂直同期の方式。On のときモニターのリフレッシュに合わせ、FPS 上限は使わない。
+        /// Fast Sync は NVIDIA ドライバーへも書く（呼び出し側で NvidiaVerticalSync.Apply する）。
+        /// </summary>
+        public VSyncMode VSyncMode
+        {
+            get => _settings.vSyncMode;
+            set
+            {
+                _settings.vSyncMode = value;
+                ApplyFrameRate();
+            }
+        }
+
+        /// <summary>
+        /// 描画の FPS 上限（VSync OFF のとき。軽量モードならこれと LowLoadFrameRate の小さい方）。
+        /// </summary>
+        public int TargetFrameRate
+        {
+            get => _settings.targetFrameRate;
+            set
+            {
+                _settings.targetFrameRate = Mathf.Clamp(value, AppSettings.MinTargetFrameRate, AppSettings.MaxTargetFrameRate);
+                ApplyFrameRate();
+            }
+        }
+
         public int Width => Screen.width;
         public int Height => Screen.height;
 
@@ -760,9 +789,23 @@ namespace VRCast.Rendering
 
         private void ApplyFrameRate()
         {
-            // 垂直同期に任せるとモニターのリフレッシュレート（144Hz 等）で描画するため、止めて上限を明示する
+            // 通常の垂直同期: モニターのリフレッシュに合わせる（ティアリング抑制。targetFrameRate は効かない）
+            if (_settings.vSyncMode == VSyncMode.On)
+            {
+                QualitySettings.vSyncCount = 1;
+                Application.targetFrameRate = -1;
+                return;
+            }
+
+            // Off / Fast Sync / VRR: アプリは待たない（VRR・Fast Sync はドライバー／モニター側がリフレッシュを合わせる）
             QualitySettings.vSyncCount = 0;
-            Application.targetFrameRate = _settings.lowLoadMode ? LowLoadFrameRate : NormalFrameRate;
+            int rate = Mathf.Clamp(_settings.targetFrameRate, AppSettings.MinTargetFrameRate, AppSettings.MaxTargetFrameRate);
+            if (_settings.lowLoadMode)
+            {
+                rate = Mathf.Min(rate, LowLoadFrameRate);
+            }
+
+            Application.targetFrameRate = rate;
         }
 
         private void ApplyBackground()

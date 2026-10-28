@@ -29,6 +29,9 @@ namespace VRCast.UI
         // 表情のしきい値の入力途中の文字列（表情ごとに保持）
         private readonly Dictionary<string, string> _thresholdInputs = new Dictionary<string, string>();
 
+        // トラッキング FPS の欄への直接入力用
+        private string _trackingFpsInput = string.Empty;
+
         // ファイアウォール許可の実行中と結果（null = 未表示、空文字 = 成功、それ以外 = 失敗理由）
         private Task<string> _firewallPending;
         private bool _firewallHasResult;
@@ -490,17 +493,33 @@ namespace VRCast.UI
                     "絲滑：每格估計臉部、手臂和手，手臂和手指以最小的延遲跟隨攝影機。CPU 負載會增加。")
                 : _settings.trackerMode == TrackerMode.Eco
                 ? Loc.T(
-                    "Eco: up to 20 fps, arms and hands update every other frame. About 2/3 of the PC load of Smooth.",
-                    "エコ: 最大 20fps。腕・手は 2 フレームに 1 回の更新で、PC 負荷は「なめらか」の 3 分の 2 ほどです。",
-                    "절약: 최대 20fps. 팔·손은 2프레임에 1번 갱신하며, PC 부하는 「부드럽게」의 3분의 2 정도입니다.",
-                    "节能：最高 20fps，手臂和手每 2 帧更新 1 次，电脑负载约为“流畅”的三分之二。",
-                    "節能：最高 20fps，手臂和手每 2 格更新 1 次，電腦負載約為「流暢」的三分之二。")
+                    "Eco: arms and hands update less often. About 2/3 of the PC load of Smooth. Tracking FPS below still applies.",
+                    "エコ: 腕・手の更新を間引き、PC 負荷は「なめらか」の 3 分の 2 ほどです。下のトラッキング FPS はそのまま使います。",
+                    "절약: 팔·손 갱신을 줄여 PC 부하는 「부드럽게」의 3분의 2 정도입니다. 아래 트래킹 FPS는 그대로 씁니다.",
+                    "节能：减少手臂和手的更新，电脑负载约为“流畅”的三分之二。下方追踪 FPS 仍生效。",
+                    "節能：減少手臂和手的更新，電腦負載約為「流暢」的三分之二。下方追蹤 FPS 仍生效。")
                 : Loc.T(
-                    "Smooth: face and expressions follow at the camera's frame rate (up to 30 fps). Arms and hands update every other frame.",
-                    "なめらか: 顔・表情をカメラのフレームレート（最大 30fps）で追従します。腕・手は 2 フレームに 1 回の更新です。",
-                    "부드럽게: 얼굴·표정을 카메라 프레임 레이트(최대 30fps)로 따라갑니다. 팔·손은 2프레임에 1번 갱신합니다.",
-                    "流畅：面部和表情以摄像头帧率（最高 30fps）跟随。手臂和手每 2 帧更新 1 次。",
-                    "流暢：臉部和表情以攝影機影格率（最高 30fps）跟隨。手臂和手每 2 格更新 1 次。"));
+                    "Smooth: face and expressions follow every frame within Tracking FPS. Arms and hands update every other frame.",
+                    "なめらか: 顔・表情はトラッキング FPS の範囲で毎フレーム追従します。腕・手は 2 フレームに 1 回の更新です。",
+                    "부드럽게: 얼굴·표정은 트래킹 FPS 범위에서 매 프레임 따라갑니다. 팔·손은 2프레임에 1번 갱신합니다.",
+                    "流畅：面部和表情在追踪 FPS 内每帧跟随。手臂和手每 2 帧更新 1 次。",
+                    "流暢：臉部和表情在追蹤 FPS 內每格跟隨。手臂和手每 2 格更新 1 次。"));
+
+            int trackingFps = Mathf.RoundToInt(GuiControls.SliderOrField(
+                Loc.T("Tracking FPS", "トラッキング FPS", "트래킹 FPS", "追踪 FPS", "追蹤 FPS"),
+                _settings.trackingFps, AppSettings.MinTrackingFps, AppSettings.MaxTrackingFps,
+                ref _trackingFpsInput, "track-fps", "F0"));
+            if (trackingFps != _settings.trackingFps)
+            {
+                _settings.trackingFps = trackingFps;
+            }
+
+            GuiControls.Hint(Loc.T(
+                "Camera capture and face/pose inference target rate (15–120). Higher uses more CPU. The tracker restarts when you change it.",
+                "カメラ取得と顔・体の推定の目標（15〜120）。高いほど CPU を使います。変えるとトラッカーが起動し直します。",
+                "카메라 캡처와 얼굴·포즈 추정 목표(15~120). 높을수록 CPU를 더 씁니다. 바꾸면 트래커가 다시 시작합니다.",
+                "摄像头采集与面部/姿态估计目标（15–120）。越高越耗 CPU。更改后会重启追踪器。",
+                "攝影機擷取與臉部／姿態估計目標（15–120）。越高越耗 CPU。變更後會重新啟動追蹤器。"));
         }
 
         private void DrawHands()

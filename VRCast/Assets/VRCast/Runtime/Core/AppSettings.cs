@@ -179,11 +179,24 @@ namespace VRCast.Core
         // 配信ではゲーム・OBS と併用することが多いため既定は ON
         public bool lowLoadMode = true;
 
+        // 垂直同期（Off / On / Fast Sync。On のとき FPS 上限は効かない。Fast Sync は NVIDIA のみ）
+        public VSyncMode vSyncMode = VSyncMode.Off;
+
+        // 描画の FPS 上限（VSync OFF のとき。軽量モード ON ならこの値と 30 の小さい方）
+        public const int MinTargetFrameRate = 15;
+        public const int MaxTargetFrameRate = 400;
+        public int targetFrameRate = 60;
+
         // パネルの一番下に動作状況（fps・CPU・GPU・トラッキング）を表示するか
         public bool showPerformanceStats = true;
 
         // 同梱の MediaPipe トラッカーの動作（ぬるぬる / なめらか / エコ）
         public TrackerMode trackerMode = TrackerMode.Fluid;
+
+        // MediaPipe トラッカーのカメラ取得・推定の目標 FPS（--fps / --max-fps。エコの間引きとは別）
+        public const int MinTrackingFps = 15;
+        public const int MaxTrackingFps = 120;
+        public int trackingFps = 30;
 
         // VRCast 本体と同梱トラッカーのプロセスの優先度（両方に同じ値を使う）
         public ProcessPriority processPriority = ProcessPriority.Normal;
@@ -1231,6 +1244,12 @@ namespace VRCast.Core
 
             // パネルの背景の不透明度も範囲内に制限
             uiOpacity = Mathf.Clamp(uiOpacity, MinUiOpacity, MaxUiOpacity);
+
+            // 描画の FPS 上限は範囲内に制限（0 以下の古い・壊れた値は既定 60）
+            if (targetFrameRate < MinTargetFrameRate || targetFrameRate > MaxTargetFrameRate)
+            {
+                targetFrameRate = targetFrameRate <= 0 ? 60 : Mathf.Clamp(targetFrameRate, MinTargetFrameRate, MaxTargetFrameRate);
+            }
             // 未知の優先度（リアルタイム等の手編集）は通常へ
             if (!Enum.IsDefined(typeof(ProcessPriority), processPriority))
             {
@@ -1259,6 +1278,18 @@ namespace VRCast.Core
             if (!Enum.IsDefined(typeof(PerfectSyncNamingMode), trackingPerfectSyncNaming))
             {
                 trackingPerfectSyncNaming = PerfectSyncNamingMode.Auto;
+            }
+
+            // 未知の垂直同期は OFF へ
+            if (!Enum.IsDefined(typeof(VSyncMode), vSyncMode))
+            {
+                vSyncMode = VSyncMode.Off;
+            }
+
+            // トラッキング FPS は範囲内に制限（0 以下は既定 30）
+            if (trackingFps < MinTrackingFps || trackingFps > MaxTrackingFps)
+            {
+                trackingFps = trackingFps <= 0 ? 30 : Mathf.Clamp(trackingFps, MinTrackingFps, MaxTrackingFps);
             }
 
             // 未知の GPU の優先設定は Windows に任せる

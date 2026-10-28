@@ -8,9 +8,13 @@ Newest first. Each version is written in Japanese, then English.
 
 [日本語]
 - パーフェクトシンクで VRCFaceTracking の Unified Expressions 名の BlendShape に対応（自動 / ARKit / Unified Expressions を選べ、今使っている系統と件数も表示します）
+- パフォーマンスタブに垂直同期（オフ / オン / NVIDIA Fast Sync / VRR）と FPS 上限（15〜400）の設定を追加
+- トラッキングタブにトラッキング FPS（カメラ取得・推定の目標、15〜120）の設定を追加
 
 [English]
 - Added Perfect sync support for VRCFaceTracking Unified Expressions blend shape names (choose Auto / ARKit / Unified Expressions, and see which set is in use and how many shapes match)
+- Added V-Sync (Off / On / NVIDIA Fast Sync / VRR) and FPS limit (15–400) settings to the Performance tab
+- Added a Tracking FPS setting (camera capture and inference target, 15–120) to the Tracking tab
 
 ■ 4.1.0 (2026-10-26)
 

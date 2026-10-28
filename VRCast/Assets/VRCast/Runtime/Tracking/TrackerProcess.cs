@@ -42,8 +42,9 @@ namespace VRCast.Tracking
         private const string ParentPidArgument = " --parent-pid ";
 
         // MediaPipe 版のトラッカーの動作ごとの引数（推定回数の上限・体と手の間引き・手が映っていない間に探す頻度）
+        // エコの推定上限は設定の trackingFps で渡す（ここには体・手の間引きだけ）
         private const string SmoothMediaPipeArgument = " --pose-every 2 --hand-search-every 2";
-        private const string EcoMediaPipeArgument = " --max-fps 20 --pose-every 2 --hand-search-every 3";
+        private const string EcoMediaPipeArgument = " --pose-every 2 --hand-search-every 3";
         private const string FluidMediaPipeArgument = " --hand-search-every 2";
 
         // 軽量モードの引数（OpenSeeFace: 既定（3）より軽いモデル。MediaPipe 版はトラッカーの動作で決める）
@@ -105,6 +106,7 @@ namespace VRCast.Tracking
         private bool _startedLowLoad;
         private TrackerMode _startedMode;
         private MotionSmoothing _startedSmoothing;
+        private int _startedTrackingFps;
         private ProcessPriority _appliedPriority;
         private ulong _appliedCoreMask;
         private float _nextStartTime;
@@ -490,13 +492,14 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・動作・なめらかさ・（OpenSeeFace の）軽量モードが変わったら起動し直す
+            // 受信ポート・カメラ・入力元・（MediaPipe の）手の有無・動作・なめらかさ・目標 FPS・（OpenSeeFace の）軽量モードが変わったら起動し直す
             bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
             bool changed = _startedPort != _settings.trackingPort || _startedCamera != _settings.trackerCamera
                 || _startedCameraIndex != _settings.trackerCameraIndex
                 || _startedSource != BundledSource || _startedHands != UsesHands()
                 || (mediaPipe
                     ? _startedMode != _settings.trackerMode || _startedSmoothing != _settings.trackingSmoothing
+                        || _startedTrackingFps != TrackingFps()
                     : _startedLowLoad != _settings.lowLoadMode);
             if (changed)
             {
@@ -559,6 +562,20 @@ namespace VRCast.Tracking
         public static string MediaPipeSmoothingArgument(MotionSmoothing smoothing)
         {
             return smoothing == MotionSmoothing.Lowest ? string.Empty : SmoothingArgument + (int)smoothing;
+        }
+
+        /// <summary>
+        /// MediaPipe 版へ渡す、カメラ取得と推定の目標 FPS（--fps / --max-fps）。
+        /// </summary>
+        public static string MediaPipeFpsArgument(int fps)
+        {
+            int rate = Mathf.Clamp(fps, AppSettings.MinTrackingFps, AppSettings.MaxTrackingFps);
+            return $" --fps {rate} --max-fps {rate}";
+        }
+
+        private int TrackingFps()
+        {
+            return Mathf.Clamp(_settings.trackingFps, AppSettings.MinTrackingFps, AppSettings.MaxTrackingFps);
         }
 
         /// <summary>
@@ -665,6 +682,7 @@ namespace VRCast.Tracking
                 _startedLowLoad = _settings.lowLoadMode;
                 _startedMode = _settings.trackerMode;
                 _startedSmoothing = _settings.trackingSmoothing;
+                _startedTrackingFps = TrackingFps();
                 bool mediaPipe = _startedSource == TrackingSource.MediaPipe;
                 string arguments = $"-c {camera} -i 127.0.0.1 -p {_startedPort}";
                 if (mediaPipe && !_startedHands)
@@ -672,10 +690,11 @@ namespace VRCast.Tracking
                     arguments += NoHandsArgument;
                 }
 
-                // MediaPipe 版はトラッカーの動作、OpenSeeFace は軽量モードで処理の重さを決める
+                // MediaPipe 版はトラッカーの動作・目標 FPS、OpenSeeFace は軽量モードで処理の重さを決める
                 if (mediaPipe)
                 {
                     arguments += MediaPipeModeArgument(_startedMode);
+                    arguments += MediaPipeFpsArgument(_startedTrackingFps);
                     arguments += MediaPipeSmoothingArgument(_startedSmoothing);
                 }
                 else if (_startedLowLoad)
