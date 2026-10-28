@@ -13,6 +13,7 @@ namespace VRCast.UI
     {
         Avatar,
         Face,
+        Body,
         Tracking,
         Graphics,
         Performance,
@@ -46,7 +47,6 @@ namespace VRCast.UI
         public void Draw()
         {
             DrawWelcome();
-            DrawQuickSettings();
             DrawLoadStep();
             DrawTransparentStep();
             DrawObsStep();
@@ -70,49 +70,6 @@ namespace VRCast.UI
                     "打开帮助（浏览器）", "開啟說明（瀏覽器）")))
             {
                 HelpPage.Open();
-            }
-
-            GuiControls.EndCard();
-        }
-
-        private void DrawQuickSettings()
-        {
-            GuiControls.BeginCard(Loc.T("Quick settings", "クイック設定", "빠른 설정", "快捷设置", "快速設定"));
-            GuiControls.Hint(Loc.T(
-                "Jump to the tabs you use most. Output is at the bottom.",
-                "よく使うタブへすぐ移れます。出力は一番下です。",
-                "자주 쓰는 탭으로 바로 이동합니다. 출력은 맨 아래입니다.",
-                "可快速跳到常用标签页。输出在最下方。",
-                "可快速跳到常用分頁。輸出在最下方。"));
-
-            if (GUILayout.Button(Loc.T("Avatar", "アバター", "아바타", "虚拟形象", "虛擬形象")))
-            {
-                _open(StartLink.Avatar);
-            }
-
-            if (GUILayout.Button(Loc.T("Tracking camera", "トラッキングカメラ", "트래킹 카메라", "追踪摄像头", "追蹤攝影機")))
-            {
-                _open(StartLink.Tracking);
-            }
-
-            if (GUILayout.Button(Loc.T("Tracking settings", "トラッキング設定", "트래킹 설정", "追踪设置", "追蹤設定")))
-            {
-                _open(StartLink.Tracking);
-            }
-
-            if (GUILayout.Button(Loc.T("Graphics settings", "グラフィック設定", "그래픽 설정", "图形设置", "圖形設定")))
-            {
-                _open(StartLink.Graphics);
-            }
-
-            if (GUILayout.Button(Loc.T("Performance", "パフォーマンス", "성능", "性能", "效能")))
-            {
-                _open(StartLink.Performance);
-            }
-
-            if (GUILayout.Button(Loc.T("Output", "出力", "출력", "输出", "輸出")))
-            {
-                _open(StartLink.Output);
             }
 
             GuiControls.EndCard();

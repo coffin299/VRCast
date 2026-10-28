@@ -16,7 +16,7 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（はじめに / アバター・オブジェクト・シェイプキー / 顔・表情・体・ポーズ・トラッキング /
+    /// IMGUI の操作パネル。左のタブ（はじめに / クイック設定 / アバター・オブジェクト・シェイプキー / 顔・表情・体・ポーズ・トラッキング /
     /// 表示・グラフィック・出力 / 操作・連携・パフォーマンス・設定・情報・公式 Discord / パーフェクトシンク化）で表示するセクションを切り替え、
     /// 内容は縦スクロールする（タブ列も収まらなければ縦スクロール）。下部にはリセットボタン・動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
@@ -53,6 +53,7 @@ namespace VRCast.UI
         private enum Tab
         {
             Start,
+            QuickSettings,
             Avatar,
             Objects,
             ShapeKeys,
@@ -72,7 +73,7 @@ namespace VRCast.UI
 
         private static readonly int TabCount = Enum.GetValues(typeof(Tab)).Length;
 
-        // 前に余白を空けて、まとまりの先頭にするタブ
+        // 前に余白を空けて、まとまりの先頭にするタブ（はじめに＋クイック設定のあと、アバターから区切る）
         private static readonly Tab[] GroupStarts = { Tab.Avatar, Tab.Face, Tab.Display, Tab.Control, Tab.PerfectSync };
 
         private AvatarSession _session;
@@ -84,6 +85,7 @@ namespace VRCast.UI
         private VirtualCameraOutput _virtualCamera;
         private SpoutOutput _spout;
         private StartSection _startSection;
+        private QuickSettingsSection _quickSettingsSection;
         private AvatarSection _avatarSection;
         private AnimationSection _animationSection;
         private ObjectSection _objectSection;
@@ -158,6 +160,8 @@ namespace VRCast.UI
             _spout = spout;
             _avatarSection = new AvatarSection(session, settings, initialPath);
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
+            _quickSettingsSection = new QuickSettingsSection(
+                session, _avatarSection, trackerProcess, rendering, virtualCamera, spout, settings, OpenLink);
             _animationSection = new AnimationSection(session, settings);
             _objectSection = new ObjectSection(session, settings);
             _particleSection = new ParticleSection(session, settings);
@@ -241,6 +245,9 @@ namespace VRCast.UI
             {
                 case StartLink.Face:
                     _tab = Tab.Face;
+                    break;
+                case StartLink.Body:
+                    _tab = Tab.Body;
                     break;
                 case StartLink.Tracking:
                     _tab = Tab.Tracking;
@@ -833,6 +840,9 @@ namespace VRCast.UI
                 case Tab.Start:
                     _startSection.Draw();
                     break;
+                case Tab.QuickSettings:
+                    _quickSettingsSection.Draw();
+                    break;
                 case Tab.Avatar:
                     _avatarSection.Draw();
                     break;
@@ -894,6 +904,8 @@ namespace VRCast.UI
             {
                 case Tab.Start:
                     return Loc.T("Start", "はじめに", "시작하기", "开始", "開始");
+                case Tab.QuickSettings:
+                    return Loc.T("Quick settings", "クイック設定", "빠른 설정", "快捷设置", "快速設定");
                 case Tab.Avatar:
                     return Loc.T("Avatar", "アバター", "아바타", "虚拟形象", "虛擬形象");
                 case Tab.Objects:
