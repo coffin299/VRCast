@@ -1197,9 +1197,29 @@ namespace VRCast.UI
                 _process.Restart();
             }
 
+            // MediaPipe: 開いているカメラの DirectShow プロパティ（露出・FPS など）を開く
+            if (TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe)
+            {
+                GUI.enabled = _process.IsRunning;
+                if (GUILayout.Button(Loc.T("Camera settings", "カメラ設定", "카메라 설정", "摄像头设置", "攝影機設定"),
+                        GuiControls.Shrinkable))
+                {
+                    _process.OpenCameraSettings();
+                }
+            }
+
             GUI.enabled = true;
             GUILayout.EndHorizontal();
             GuiControls.Hint(_process.Status);
+            if (TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Camera settings opens the driver’s property page (exposure, frame rate, etc.). Use it if low light auto-exposure drops the real capture FPS — Tracking FPS alone cannot lock that. Not all cameras show a dialog. The dialog is modal while open.",
+                    "カメラ設定はドライバーのプロパティ画面（露出・フレームレートなど）を開きます。暗いと自動露出で実 FPS が落ちるときはここで固定できます（トラッキング FPS だけでは防げません）。機種によっては画面が出ません。開いている間はモーダルです。",
+                    "카메라 설정은 드라이버 속성 창(노출·프레임레이트 등)을 엽니다. 어두운 곳의 자동 노출로 실제 FPS가 떨어질 때 여기서 고정하세요. Tracking FPS만으로는 막을 수 없습니다. 기기에 따라 창이 없을 수 있으며, 열린 동안은 모달입니다.",
+                    "摄像头设置会打开驱动属性页（曝光、帧率等）。光线不足导致自动曝光拉低实际 FPS 时，可在此锁定（仅靠追踪 FPS 无法防止）。部分摄像头不会显示对话框。打开期间为模态。",
+                    "攝影機設定會開啟驅動程式屬性頁（曝光、影格率等）。光線不足導致自動曝光拉低實際 FPS 時，可在此鎖定（僅靠追蹤 FPS 無法防止）。部分攝影機會沒有對話框。開啟期間為模態。"));
+            }
         }
 
         private void DrawPort()

@@ -46,6 +46,10 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     ERROR: ...  終了につながる失敗（エラー出力）
     STATS: ...  --status-interval 秒ごとの統計（標準出力。VRCast では DEBUG 扱い）
 
+標準入力コマンド（1 行 1 コマンド。VRCast の TrackerProcess が送る）:
+    camera-settings  開いているカメラの DirectShow プロパティ画面を出す（露出・FPS など。
+                     読み取りスレッド上でモーダル。非対応のカメラは WARN）
+
 終了コード（VRCast 側 TrackerProcess.DescribeExitCode と一致させる）:
     0 正常終了 / 1 カメラが開けない・エラー / 2 カメラからフレームが届かなくなった
 
@@ -318,6 +322,10 @@ class Stats:
         self._clear()
 
 
+# VRCast の TrackerProcess が標準入力へ送るコマンド（1 行）
+COMMAND_CAMERA_SETTINGS = "camera-settings"
+
+
 class FrameGrabber:
     """カメラを別スレッドで読み続け、最新のフレームだけを保持する。
 
@@ -337,6 +345,8 @@ class FrameGrabber:
         self._reads = 0
         self._read_failures = 0
         self._stopped = False
+        # DirectShow のプロパティ画面を次の読み取りの合間に開く要求
+        self._settings_requested = False
         self._thread = threading.Thread(
             target=self._run, name="camera", daemon=True)
 
@@ -344,10 +354,16 @@ class FrameGrabber:
         """読み取りを始める。"""
         self._thread.start()
 
+    def request_settings(self):
+        """カメラの DirectShow 設定画面を開くよう要求する（読み取りスレッドで処理）。"""
+        with self._condition:
+            self._settings_requested = True
+
     def stop(self):
         """読み取りを止めてスレッドの終了を待つ（カメラの解放は呼び出し側）。"""
         with self._condition:
             self._stopped = True
+            self._condition.notify_all()
         self._thread.join(GRABBER_JOIN_TIMEOUT)
 
     @property
@@ -380,11 +396,17 @@ class FrameGrabber:
     def _run(self):
         """止めるか、連続で読めなくなるまで読み続ける。"""
         while True:
-            # 止める指示・読み取りの断念を確認する
+            # 止める指示・読み取りの断念・設定画面の要求を確認する
             with self._condition:
                 if self._stopped or self.gave_up:
                     self._condition.notify_all()
                     return
+                open_settings = self._settings_requested
+                self._settings_requested = False
+            # 読み取りと同じスレッドで開く（他スレッドとの競合を避ける。ダイアログ中は読み取りが止まる）
+            if open_settings:
+                open_camera_settings(self._capture)
+                continue
             ok, frame = self._capture.read()
             with self._condition:
                 if ok:
@@ -937,6 +959,40 @@ def open_camera(index, width, height, fps):
     return capture
 
 
+def open_camera_settings(capture):
+    """開いているカメラの DirectShow プロパティ画面を出す（モーダル。非対応なら WARN）。"""
+    log("INFO", "Opening camera settings dialog")
+    try:
+        # CAP_PROP_SETTINGS は DirectShow のプロパティページ。戻るまでブロックする
+        ok = capture.set(cv2.CAP_PROP_SETTINGS, 1)
+    except cv2.error as error:
+        log("WARN", f"Camera settings failed: {error}")
+        return
+    if ok:
+        log("INFO", "Camera settings dialog closed")
+    else:
+        log("WARN",
+            "Camera settings dialog is not supported by this device")
+
+
+def start_command_reader(grabber):
+    """標準入力からコマンドを読み、grabber へ渡すスレッドを始める。"""
+
+    def run():
+        try:
+            for line in sys.stdin:
+                command = line.strip().lower()
+                if command == COMMAND_CAMERA_SETTINGS:
+                    grabber.request_settings()
+        except (OSError, ValueError):
+            # 親が標準入力を閉じた・リダイレクト無し などは無視
+            pass
+
+    thread = threading.Thread(target=run, name="commands", daemon=True)
+    thread.start()
+    return thread
+
+
 def describe_camera(capture):
     """カメラの実際のバックエンド・解像度・フレームレートを文字列にする。"""
     # 古い OpenCV には getBackendName が無い
@@ -1222,6 +1278,8 @@ def run(arguments):
     # カメラは別スレッドで読み続ける（推定は最新のフレームだけを使う）
     grabber = FrameGrabber(capture)
     grabber.start()
+    # VRCast からの標準入力コマンド（カメラ設定など）
+    start_command_reader(grabber)
     last_sequence = 0
     # 最初のフレームを記録したか・次に読み取り失敗 / 送信失敗を警告してよい時刻
     first_frame = True

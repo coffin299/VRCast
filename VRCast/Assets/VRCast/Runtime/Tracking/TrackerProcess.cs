@@ -405,6 +405,23 @@ namespace VRCast.Tracking
             _nextStartTime = 0f;
         }
 
+        // MediaPipe トラッカーへ標準入力で送るコマンド（vrcast_tracker.py の COMMAND_CAMERA_SETTINGS と一致）
+        private const string CameraSettingsCommand = "camera-settings";
+
+        /// <summary>
+        /// 起動中の MediaPipe トラッカーに、開いているカメラの DirectShow 設定画面を開かせる。
+        /// 送れなければ false（未起動・OpenSeeFace・古いトラッカーなど）。
+        /// </summary>
+        public bool OpenCameraSettings()
+        {
+            if (_process == null || BundledSource != TrackingSource.MediaPipe)
+            {
+                return false;
+            }
+
+            return _process.TryWriteLine(CameraSettingsCommand);
+        }
+
         /// <summary>
         /// true の間はカメラを開かない（配信以外のモード）。設定のオン／オフは変えない。
         /// </summary>

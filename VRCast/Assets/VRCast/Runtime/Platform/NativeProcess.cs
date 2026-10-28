@@ -11,6 +11,7 @@ namespace VRCast.Platform
     /// 起動に失敗する（"Native error= Success"）ため、トラッカーの起動・VRCast の起動し直しはこちらを使う。
     /// UseShellExecute = true（管理者権限での起動など）も同様に失敗するため、ShellExecuteExW で起動する RunElevated を使う。
     /// 出力を受け取る場合は標準出力と標準エラー出力を 1 本のパイプにまとめ、行ごとに別スレッドから通知する。
+    /// そのとき標準入力もパイプし、<see cref="TryWriteLine"/> でコマンドを送れる。
     /// </summary>
     public sealed class NativeProcess : IDisposable
     {
@@ -124,6 +125,9 @@ namespace VRCast.Platform
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool ReadFile(IntPtr file, byte[] buffer, int toRead, out int read, IntPtr overlapped);
 
+        [DllImport("kernel32.dll", SetLastError = true)]
+        private static extern bool WriteFile(IntPtr file, byte[] buffer, int toWrite, out int written, IntPtr overlapped);
+
         [DllImport("kernel32.dll")]
         private static extern uint WaitForSingleObject(IntPtr handle, uint milliseconds);
 
@@ -140,12 +144,15 @@ namespace VRCast.Platform
         private static extern uint GetCurrentProcessId();
 
         private IntPtr _handle;
+        private IntPtr _stdinWrite;
+        private readonly object _stdinLock = new object();
         private Thread _reader;
 
-        private NativeProcess(IntPtr handle, int id)
+        private NativeProcess(IntPtr handle, int id, IntPtr stdinWrite)
         {
             _handle = handle;
             Id = id;
+            _stdinWrite = stdinWrite;
         }
 
         /// <summary>
@@ -165,7 +172,8 @@ namespace VRCast.Platform
 
         /// <summary>
         /// 起動する。onLine を渡すとコンソールを出さずに出力を行ごとに受け取る（別スレッドから呼ばれる）。
-        /// null なら出力はそのまま（GUI アプリの起動用）。起動できなければ Win32Exception。
+        /// そのとき標準入力もパイプし、<see cref="TryWriteLine"/> でコマンドを送れる。
+        /// null なら入出力はそのまま（GUI アプリの起動用）。起動できなければ Win32Exception。
         /// </summary>
         public static NativeProcess Start(string path, string arguments, string workingDirectory,
             Encoding outputEncoding = null, Action<string> onLine = null)
@@ -180,10 +188,12 @@ namespace VRCast.Platform
             var startup = new StartupInfo { Size = Marshal.SizeOf<StartupInfo>() };
             IntPtr readPipe = IntPtr.Zero;
             IntPtr writePipe = IntPtr.Zero;
+            IntPtr stdinRead = IntPtr.Zero;
+            IntPtr stdinWrite = IntPtr.Zero;
             bool redirect = onLine != null;
             if (redirect)
             {
-                // 子に継承させるパイプを作り、読む側だけ継承を外す
+                // 子に継承させるパイプを作り、親側だけ継承を外す
                 var attributes = new SecurityAttributes
                 {
                     Length = Marshal.SizeOf<SecurityAttributes>(),
@@ -196,8 +206,18 @@ namespace VRCast.Platform
 
                 SetHandleInformation(readPipe, HandleFlagInherit, 0);
 
-                // 標準出力・標準エラー出力の両方を同じパイプへ（標準入力は渡さない）
+                if (!CreatePipe(out stdinRead, out stdinWrite, ref attributes, 0))
+                {
+                    CloseHandle(readPipe);
+                    CloseHandle(writePipe);
+                    throw Failure("CreatePipe");
+                }
+
+                SetHandleInformation(stdinWrite, HandleFlagInherit, 0);
+
+                // 標準出力・標準エラー出力を同じパイプへ、標準入力は親から書くパイプへ
                 startup.Flags = UseStdHandles;
+                startup.StdInput = stdinRead;
                 startup.StdOutput = writePipe;
                 startup.StdError = writePipe;
             }
@@ -208,10 +228,15 @@ namespace VRCast.Platform
                 ref startup, out ProcessInformation information);
             Win32Exception error = started ? null : Failure("CreateProcess");
 
-            // 書く側は子だけが持つ（親が閉じないと子の終了後も読み取りが終わらない）
+            // 子側の端は親が閉じる（親が閉じないと子の終了後も読み取りが終わらない / 入力が閉じない）
             if (writePipe != IntPtr.Zero)
             {
                 CloseHandle(writePipe);
+            }
+
+            if (stdinRead != IntPtr.Zero)
+            {
+                CloseHandle(stdinRead);
             }
 
             if (!started)
@@ -221,12 +246,17 @@ namespace VRCast.Platform
                     CloseHandle(readPipe);
                 }
 
+                if (stdinWrite != IntPtr.Zero)
+                {
+                    CloseHandle(stdinWrite);
+                }
+
                 throw error;
             }
 
             // スレッドのハンドルは使わない
             CloseHandle(information.Thread);
-            var process = new NativeProcess(information.Process, information.ProcessId);
+            var process = new NativeProcess(information.Process, information.ProcessId, stdinWrite);
             if (redirect)
             {
                 // 出力は終了まで別スレッドで読み続ける（読まないとパイプが詰まって子が止まる）
@@ -240,6 +270,28 @@ namespace VRCast.Platform
             }
 
             return process;
+        }
+
+        /// <summary>
+        /// 標準入力へ 1 行書く（末尾に改行を付ける）。パイプしていなければ false。
+        /// </summary>
+        public bool TryWriteLine(string line)
+        {
+            if (_stdinWrite == IntPtr.Zero || line == null)
+            {
+                return false;
+            }
+
+            byte[] bytes = Encoding.UTF8.GetBytes(line.EndsWith("\n", StringComparison.Ordinal) ? line : line + "\n");
+            lock (_stdinLock)
+            {
+                if (_stdinWrite == IntPtr.Zero)
+                {
+                    return false;
+                }
+
+                return WriteFile(_stdinWrite, bytes, bytes.Length, out int written, IntPtr.Zero) && written == bytes.Length;
+            }
         }
 
         /// <summary>
@@ -323,6 +375,8 @@ namespace VRCast.Platform
         /// </summary>
         public void Kill()
         {
+            // 先に標準入力を閉じ、子が EOF で気づけるようにする
+            CloseStdin();
             if (!HasExited)
             {
                 TerminateProcess(_handle, KilledExitCode);
@@ -331,11 +385,25 @@ namespace VRCast.Platform
 
         public void Dispose()
         {
+            CloseStdin();
+
             // プロセスのハンドルを閉じる（プロセス自体は終了させない）
             if (_handle != IntPtr.Zero)
             {
                 CloseHandle(_handle);
                 _handle = IntPtr.Zero;
+            }
+        }
+
+        private void CloseStdin()
+        {
+            lock (_stdinLock)
+            {
+                if (_stdinWrite != IntPtr.Zero)
+                {
+                    CloseHandle(_stdinWrite);
+                    _stdinWrite = IntPtr.Zero;
+                }
             }
         }
 

@@ -162,7 +162,8 @@ PhysBone 相当（Bone Chain, Pull, Spring, Stiffness, Gravity, Radius, Collider
 - Runtime `Dynamics/`（`UnityEngine.Physics` と衝突しないよう `VRCast.Dynamics`）
   - `PhysBoneSimulator`: 60Hz 固定ステップ（1 フレーム最大 3 ステップ）、アバター 1 体 4096 粒子まで
   - `PhysBoneChain`: 毎フレーム静止回転へ戻して静止位置を求め、Verlet（慣性 = spring、引き戻し = pull、形状維持 = stiffness、
-    重力 = gravity × falloff）→ コライダー → 角度制限 → 長さ拘束、最後に親から順に子粒子方向へ回転
+    重力 = gravity × Gravity Falloff。Falloff は静止姿勢からの角度で弱める＝VRC と同じ意味。1 なら静止時は重力 0、約 90° でフル）→
+    コライダー → 角度制限 → 長さ拘束、最後に親から順に子粒子方向へ回転
   - `PhysBoneCollider`: 球・カプセル・平面（insideBounds 対応）。粒子の点ではなく**ボーン線分（半径付き）**と
     コライダー芯の最近接点で判定し、めり込み量をてこ比（1/接触位置）で子粒子へ伝える（ボーン数の少ないスカートのすり抜け対策）。
     親粒子が既にコライダー内にある場合は子の点のみで押し出す。押し出し量は速度に含めない（前回位置も同量ずらす）。

@@ -343,9 +343,9 @@ namespace VRCast.Dynamics
                 Vector3 velocity = (particle.Position - particle.PreviousPosition) * particle.Momentum;
                 velocity += (target - particle.Position) * (particle.Pull * PullStrength);
 
-                // 重力。静止時に下を向いているほど gravityFalloff で弱める
-                float downness = Mathf.Max(0f, Vector3.Dot(restVector.normalized, Vector3.down));
-                float gravity = particle.Gravity * (1f - _data.gravityFalloff * downness);
+                // 重力。静止姿勢に近いほど gravityFalloff で弱める（VRC と同じ意味。1 なら静止時は 0、約 90° でフル）
+                float angleFromRest = Vector3.Angle(restVector, particle.Position - parent.Position);
+                float gravity = particle.Gravity * GravityFalloffFactor(_data.gravityFalloff, angleFromRest);
                 velocity += Vector3.down * (gravity * GravityAcceleration * dt * dt);
 
                 // 位置を更新
@@ -378,6 +378,16 @@ namespace VRCast.Dynamics
                     particle.PreviousPosition += particle.Position - beforeCollision;
                 }
             }
+        }
+
+        /// <summary>
+        /// Gravity Falloff 適用後の重力倍率（1 = フル、0 = 無し）。
+        /// 静止方向からの角度が 0° なら falloff 分だけ弱め、90° 以上でフル。
+        /// </summary>
+        public static float GravityFalloffFactor(float gravityFalloff, float angleFromRestDegrees)
+        {
+            float away = Mathf.Clamp01(angleFromRestDegrees / 90f);
+            return 1f - Mathf.Clamp01(gravityFalloff) * (1f - away);
         }
 
         private static void KeepLength(Particle particle, Vector3 parentPosition, Vector3 restVector, Vector3 target)
