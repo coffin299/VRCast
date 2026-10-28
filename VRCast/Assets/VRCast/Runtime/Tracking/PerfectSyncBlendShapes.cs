@@ -8,7 +8,8 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// パーフェクトシンク: MediaPipe の ARKit 互換 BlendShape の値を、アバターの同名 BlendShape へそのまま書き込む。
+    /// パーフェクトシンク: MediaPipe の ARKit 互換 BlendShape の値を、アバターの同名（または Unified Expressions 名）の
+    /// BlendShape へ書き込む。
     /// 名前は大文字小文字・区切り記号・FBX の接頭辞（"blendShape1." 等）を無視し、末尾の Left / Right は L / R も受け付ける。
     /// 同名の BlendShape が複数のメッシュ（顔・歯・舌など）にあれば全部動かす。
     /// 表情プリセット等の値を壊さないよう BlendShapeOverlay で「元の値と大きい方」を書く。
@@ -32,8 +33,9 @@ namespace VRCast.Tracking
         /// </summary>
         public MotionSmoothing Smoothing { get; set; }
 
-        // ARKit 名（正規化済み）→ BlendShapeNames 内の位置
-        private static readonly Dictionary<string, int> NameToIndex = BuildNameTable();
+        // 名前の系統ごとの正規化名 → ARKit 枠の位置（両目まとめは左右 2 つ）
+        private static readonly Dictionary<string, int[]> ArKitNameToIndices = BuildArKitNameTable();
+        private static readonly Dictionary<string, int[]> UnifiedNameToIndices = BuildUnifiedNameTable();
 
         // 左右を入れ替えた相手の位置（左右の無い名前は自分自身）
         private static readonly int[] Opposite = BuildOpposites();
@@ -98,7 +100,8 @@ namespace VRCast.Tracking
             }
         }
 
-        private PerfectSyncBlendShapes(List<Target>[] targets, List<BlendShapeOverlay> slots, int matched)
+        private PerfectSyncBlendShapes(
+            List<Target>[] targets, List<BlendShapeOverlay> slots, int matched, PerfectSyncNaming naming)
         {
             _targets = targets;
             _slots = slots.ToArray();
@@ -107,10 +110,16 @@ namespace VRCast.Tracking
             _slotActive = new bool[_slots.Length];
             _current = new float[targets.Length];
             MatchedCount = matched;
+            Naming = naming;
         }
 
         /// <summary>
-        /// 見つかった ARKit 名の種類数（0〜BlendShapeNames.Length）。
+        /// このインスタンスが使っている名前の系統。
+        /// </summary>
+        public PerfectSyncNaming Naming { get; }
+
+        /// <summary>
+        /// 見つかった ARKit 枠の種類数（0〜BlendShapeNames.Length）。
         /// </summary>
         public int MatchedCount { get; }
 
@@ -148,7 +157,7 @@ namespace VRCast.Tracking
                 string[] names = ArKitFace.BlendShapeNames;
                 for (int i = 0; i < _targets.Length; i++)
                 {
-                    if (_targets[i] != null && names[i].StartsWith("eyeLook", System.StringComparison.Ordinal))
+                    if (_targets[i] != null && names[i].StartsWith("eyeLook", StringComparison.Ordinal))
                     {
                         return true;
                     }
@@ -159,12 +168,64 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// root 以下の全 SkinnedMeshRenderer から ARKit 名の BlendShape を探す。
-        /// bindings（パーフェクトシンク化で既存の BlendShape を ARKit 名に割り当てたもの）があれば、その ARKit 名は割り当てを使い、
-        /// 残りの ARKit 名を名前の照合で探す。
+        /// root 以下の BlendShape 名から ARKit / Unified それぞれの一致数を数え、使う系統を決める。
+        /// 両方とも有効条件を満たすときは件数が多い方（同数なら ARKit）。片方だけ満たすときはそちら。
+        /// どちらも足りなければ件数が多い方（同数なら ARKit）。
+        /// bindings（パーフェクトシンク化の割り当て）があれば ARKit 固定。
         /// </summary>
-        public static PerfectSyncBlendShapes Create(Transform root, IReadOnlyList<PerfectSyncBinding> bindings = null)
+        public static PerfectSyncNaming DetectNaming(
+            Transform root, bool anyShape = false, IReadOnlyList<PerfectSyncBinding> bindings = null)
         {
+            // パーフェクトシンク化の割り当ては ARKit 名キーなので ARKit 固定
+            if (bindings != null && bindings.Count > 0)
+            {
+                return PerfectSyncNaming.ArKit;
+            }
+
+            CountMatches(root, out int arKit, out int unified);
+            int required = anyShape ? 1 : MinMatchedShapes;
+            bool arKitOk = arKit >= required;
+            bool unifiedOk = unified >= required;
+
+            // 両方足りるときは多い方（同数は ARKit）。UE 専用名が多いアバターを誤って ARKit にしない
+            if (arKitOk && unifiedOk)
+            {
+                return arKit >= unified ? PerfectSyncNaming.ArKit : PerfectSyncNaming.Unified;
+            }
+
+            if (arKitOk)
+            {
+                return PerfectSyncNaming.ArKit;
+            }
+
+            if (unifiedOk)
+            {
+                return PerfectSyncNaming.Unified;
+            }
+
+            return arKit >= unified ? PerfectSyncNaming.ArKit : PerfectSyncNaming.Unified;
+        }
+
+        /// <summary>
+        /// root 以下で、ARKit 名 / Unified Expressions 名として一致する ARKit 枠の種類数を数える。
+        /// </summary>
+        public static void CountMatches(Transform root, out int arKitCount, out int unifiedCount)
+        {
+            arKitCount = CountMatches(root, PerfectSyncNaming.ArKit);
+            unifiedCount = CountMatches(root, PerfectSyncNaming.Unified);
+        }
+
+        /// <summary>
+        /// root 以下の全 SkinnedMeshRenderer から、指定の名前系統の BlendShape を探す。
+        /// naming を省略すると DetectNaming で自動選択する（bindings があれば ARKit）。
+        /// bindings（パーフェクトシンク化で既存の BlendShape を ARKit 名に割り当てたもの）があれば、その ARKit 名は割り当てを使い、
+        /// 残りの名前を照合で探す。
+        /// </summary>
+        public static PerfectSyncBlendShapes Create(
+            Transform root, IReadOnlyList<PerfectSyncBinding> bindings = null, bool anyShape = false,
+            PerfectSyncNaming? naming = null)
+        {
+            PerfectSyncNaming mode = naming ?? DetectNaming(root, anyShape, bindings);
             var targets = new List<Target>[ArKitFace.BlendShapeNames.Length];
             var slots = new SlotTable();
             int matched = AddBindings(root, bindings, targets, slots);
@@ -185,25 +246,74 @@ namespace VRCast.Tracking
 
                 for (int shape = 0; shape < mesh.blendShapeCount; shape++)
                 {
-                    // ARKit 名でない・割り当て済みの ARKit 名は対象外
-                    int index = Match(mesh.GetBlendShapeName(shape));
-                    if (index < 0 || bound[index])
+                    // 選んだ系統の名前でない・割り当て済みの枠は対象外
+                    if (!TryMatchIndices(mesh.GetBlendShapeName(shape), mode, out int[] indices))
                     {
                         continue;
                     }
 
-                    // 初めて見つかった名前なら種類数を数える
-                    if (targets[index] == null)
+                    int slot = slots.Get(renderer, shape);
+                    for (int n = 0; n < indices.Length; n++)
                     {
-                        targets[index] = new List<Target>();
-                        matched++;
-                    }
+                        int index = indices[n];
+                        if (bound[index])
+                        {
+                            continue;
+                        }
 
-                    targets[index].Add(new Target(slots.Get(renderer, shape), 1f));
+                        // 初めて見つかった枠なら種類数を数える
+                        if (targets[index] == null)
+                        {
+                            targets[index] = new List<Target>();
+                            matched++;
+                        }
+
+                        targets[index].Add(new Target(slot, 1f));
+                    }
                 }
             }
 
-            return new PerfectSyncBlendShapes(targets, slots.Overlays, matched);
+            return new PerfectSyncBlendShapes(targets, slots.Overlays, matched, mode);
+        }
+
+        private static int CountMatches(Transform root, PerfectSyncNaming naming)
+        {
+            // アバターが無いときは 0
+            if (root == null)
+            {
+                return 0;
+            }
+
+            var found = new bool[ArKitFace.BlendShapeNames.Length];
+            int matched = 0;
+            foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                Mesh mesh = renderer.sharedMesh;
+                if (mesh == null)
+                {
+                    continue;
+                }
+
+                for (int shape = 0; shape < mesh.blendShapeCount; shape++)
+                {
+                    if (!TryMatchIndices(mesh.GetBlendShapeName(shape), naming, out int[] indices))
+                    {
+                        continue;
+                    }
+
+                    for (int n = 0; n < indices.Length; n++)
+                    {
+                        int index = indices[n];
+                        if (!found[index])
+                        {
+                            found[index] = true;
+                            matched++;
+                        }
+                    }
+                }
+            }
+
+            return matched;
         }
 
         private static int AddBindings(Transform root, IReadOnlyList<PerfectSyncBinding> bindings, List<Target>[] targets,
@@ -245,20 +355,28 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// BlendShape 名に対応する ARKit 名の位置（BlendShapeNames 内）。対応しなければ -1。
+        /// BlendShape 名に対応する ARKit 名の位置（BlendShapeNames 内）。ARKit 系統で照合。対応しなければ -1。
         /// </summary>
         public static int Match(string blendShapeName)
         {
-            // 空の名前は対象外
-            if (string.IsNullOrEmpty(blendShapeName))
-            {
-                return -1;
-            }
+            return Match(blendShapeName, PerfectSyncNaming.ArKit);
+        }
 
-            // FBX の取り込みで付く "blendShape1." のような接頭辞を外してから正規化
-            int dot = blendShapeName.LastIndexOf('.');
-            string name = Normalize(dot >= 0 ? blendShapeName.Substring(dot + 1) : blendShapeName);
-            return NameToIndex.TryGetValue(name, out int index) ? index : -1;
+        /// <summary>
+        /// 指定の名前系統で BlendShape 名に対応する ARKit 枠の位置。両目まとめは左側の位置。対応しなければ -1。
+        /// </summary>
+        public static int Match(string blendShapeName, PerfectSyncNaming naming)
+        {
+            return TryMatchIndices(blendShapeName, naming, out int[] indices) ? indices[0] : -1;
+        }
+
+        /// <summary>
+        /// ARKit または Unified Expressions のどちらかで一致すれば、その ARKit 枠の位置（受信側の名前ゆれ用）。
+        /// </summary>
+        public static int MatchAny(string blendShapeName)
+        {
+            int index = Match(blendShapeName, PerfectSyncNaming.ArKit);
+            return index >= 0 ? index : Match(blendShapeName, PerfectSyncNaming.Unified);
         }
 
         /// <summary>
@@ -380,6 +498,23 @@ namespace VRCast.Tracking
             }
         }
 
+        private static bool TryMatchIndices(string blendShapeName, PerfectSyncNaming naming, out int[] indices)
+        {
+            indices = null;
+            if (string.IsNullOrEmpty(blendShapeName))
+            {
+                return false;
+            }
+
+            // FBX の取り込みで付く "blendShape1." のような接頭辞を外してから正規化
+            int dot = blendShapeName.LastIndexOf('.');
+            string name = Normalize(dot >= 0 ? blendShapeName.Substring(dot + 1) : blendShapeName);
+            Dictionary<string, int[]> table = naming == PerfectSyncNaming.Unified
+                ? UnifiedNameToIndices
+                : ArKitNameToIndices;
+            return table.TryGetValue(name, out indices);
+        }
+
         private static string Normalize(string name)
         {
             // 英数字だけを小文字で残す（"Eye_Blink_Left" と "eyeBlinkLeft" を同じにする）
@@ -396,26 +531,133 @@ namespace VRCast.Tracking
             return new string(chars, 0, length);
         }
 
-        private static Dictionary<string, int> BuildNameTable()
+        private static Dictionary<string, int[]> BuildArKitNameTable()
         {
-            var table = new Dictionary<string, int>();
+            var table = new Dictionary<string, int[]>();
             string[] names = ArKitFace.BlendShapeNames;
             for (int i = 0; i < names.Length; i++)
             {
-                // 正式な名前と、末尾の Left / Right を L / R にした名前（"eyeBlink_L" 等）を登録
-                string normalized = Normalize(names[i]);
-                table[normalized] = i;
-                if (normalized.EndsWith("left", StringComparison.Ordinal))
-                {
-                    table[normalized.Substring(0, normalized.Length - 4) + "l"] = i;
-                }
-                else if (normalized.EndsWith("right", StringComparison.Ordinal))
-                {
-                    table[normalized.Substring(0, normalized.Length - 5) + "r"] = i;
-                }
+                Register(table, names[i], i);
             }
 
             return table;
+        }
+
+        private static Dictionary<string, int[]> BuildUnifiedNameTable()
+        {
+            var table = new Dictionary<string, int[]>();
+            string[] names = ArKitFace.BlendShapeNames;
+
+            // Unified では別名に置き換わる ARKit 名（正規化後）は表に入れない（二重駆動を防ぐ）
+            var replaced = new HashSet<string>
+            {
+                Normalize("eyeBlinkLeft"), Normalize("eyeBlinkRight"),
+                Normalize("mouthClose"),
+                Normalize("mouthRollUpper"), Normalize("mouthRollLower"),
+                Normalize("mouthFunnel"), Normalize("mouthPucker"),
+                Normalize("mouthShrugUpper"), Normalize("mouthShrugLower"),
+            };
+
+            for (int i = 0; i < names.Length; i++)
+            {
+                if (!replaced.Contains(Normalize(names[i])))
+                {
+                    Register(table, names[i], i);
+                }
+            }
+
+            // VRCFT ARKit 比較表の別名と、よくある左右分割・両目まとめ
+            int blinkL = IndexOf("eyeBlinkLeft");
+            int blinkR = IndexOf("eyeBlinkRight");
+            int wideL = IndexOf("eyeWideLeft");
+            int wideR = IndexOf("eyeWideRight");
+            int squintL = IndexOf("eyeSquintLeft");
+            int squintR = IndexOf("eyeSquintRight");
+            int rollU = IndexOf("mouthRollUpper");
+            int rollL = IndexOf("mouthRollLower");
+            int funnel = IndexOf("mouthFunnel");
+            int pucker = IndexOf("mouthPucker");
+            int close = IndexOf("mouthClose");
+            int shrugU = IndexOf("mouthShrugUpper");
+            int shrugL = IndexOf("mouthShrugLower");
+            int cheek = IndexOf("cheekPuff");
+            int browL = IndexOf("browDownLeft");
+            int browR = IndexOf("browDownRight");
+            int smileL = IndexOf("mouthSmileLeft");
+            int smileR = IndexOf("mouthSmileRight");
+
+            Register(table, "EyeClosedLeft", blinkL);
+            Register(table, "EyeClosedRight", blinkR);
+            Register(table, "EyeClosed", blinkL, blinkR);
+            Register(table, "EyeWide", wideL, wideR);
+            Register(table, "EyeSquint", squintL, squintR);
+
+            Register(table, "MouthClosed", close);
+
+            Register(table, "LipSuckUpper", rollU);
+            Register(table, "LipSuckLower", rollL);
+            Register(table, "LipSuckUpperLeft", rollU);
+            Register(table, "LipSuckUpperRight", rollU);
+            Register(table, "LipSuckLowerLeft", rollL);
+            Register(table, "LipSuckLowerRight", rollL);
+            Register(table, "LipSuck", rollU, rollL);
+
+            Register(table, "LipFunnel", funnel);
+            Register(table, "LipFunnelUpper", funnel);
+            Register(table, "LipFunnelLower", funnel);
+            Register(table, "LipFunnelUpperLeft", funnel);
+            Register(table, "LipFunnelUpperRight", funnel);
+            Register(table, "LipFunnelLowerLeft", funnel);
+            Register(table, "LipFunnelLowerRight", funnel);
+
+            Register(table, "LipPucker", pucker);
+            Register(table, "LipPuckerUpper", pucker);
+            Register(table, "LipPuckerLower", pucker);
+            Register(table, "LipPuckerUpperLeft", pucker);
+            Register(table, "LipPuckerUpperRight", pucker);
+            Register(table, "LipPuckerLowerLeft", pucker);
+            Register(table, "LipPuckerLowerRight", pucker);
+
+            Register(table, "MouthRaiserUpper", shrugU);
+            Register(table, "MouthRaiserLower", shrugL);
+
+            Register(table, "CheekPuffLeft", cheek);
+            Register(table, "CheekPuffRight", cheek);
+
+            Register(table, "BrowLowererLeft", browL);
+            Register(table, "BrowLowererRight", browR);
+
+            Register(table, "MouthCornerPullLeft", smileL);
+            Register(table, "MouthCornerPullRight", smileR);
+
+            return table;
+        }
+
+        private static void Register(Dictionary<string, int[]> table, string name, params int[] indices)
+        {
+            // 空や不正な枠は登録しない
+            if (string.IsNullOrEmpty(name) || indices == null || indices.Length == 0)
+            {
+                return;
+            }
+
+            string normalized = Normalize(name);
+            table[normalized] = indices;
+
+            // 末尾の Left / Right を L / R にした名前（"EyeClosed_L" 等）も受け付ける
+            if (normalized.EndsWith("left", StringComparison.Ordinal))
+            {
+                table[normalized.Substring(0, normalized.Length - 4) + "l"] = indices;
+            }
+            else if (normalized.EndsWith("right", StringComparison.Ordinal))
+            {
+                table[normalized.Substring(0, normalized.Length - 5) + "r"] = indices;
+            }
+        }
+
+        private static int IndexOf(string name)
+        {
+            return Array.IndexOf(ArKitFace.BlendShapeNames, name);
         }
 
         private static int[] BuildOpposites()

@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- パーフェクトシンクで VRCFaceTracking の Unified Expressions 名の BlendShape に対応（読み込み時に ARKit 名と UE 名の多い方を自動で選びます）
+
+[English]
+- Added Perfect sync support for VRCFaceTracking Unified Expressions blend shape names (on load, picks ARKit or UE names automatically by which matches more)
+
 ■ 4.1.0 (2026-10-26)
 
 [日本語]

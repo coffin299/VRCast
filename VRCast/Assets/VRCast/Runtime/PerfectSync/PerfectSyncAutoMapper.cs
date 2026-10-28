@@ -77,8 +77,8 @@ namespace VRCast.PerfectSync
             var byName = new Dictionary<string, Candidate>();
             foreach (Candidate candidate in candidates)
             {
-                // ARKit 名そのものは名前の照合で使われるので候補にしない
-                if (PerfectSyncBlendShapes.Match(candidate.Name) >= 0)
+                // ARKit / Unified Expressions 名そのものは名前の照合で使われるので候補にしない
+                if (PerfectSyncBlendShapes.MatchAny(candidate.Name) >= 0)
                 {
                     continue;
                 }

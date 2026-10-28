@@ -77,7 +77,7 @@ VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポー�
 | iFacialMocap からの顔トラッキング（独自形式の受信） | 済 |
 | iPhone の顔 + MediaPipe の腕・手の併用（VMC / iFacialMocap。iPhone が途絶えたら顔も Web カメラ） | 済 |
 | 表情反映（MediaPipe・VMC・iFacialMocap のみ。笑顔・驚き・怒り・悲しみ → 表情プリセット） | 済 |
-| パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit 名の BlendShape を直接動かす） | 済 |
+| パーフェクトシンク（MediaPipe・VMC・iFacialMocap のみ。ARKit / Unified Expressions 名の BlendShape を直接動かす） | 済 |
 | パーフェクトシンク化（顔に目印を打って ARKit 52 種を自動生成・既存の BlendShape を割り当て、別名の .vrcaster に保存。.vrcaster のみ） | 済 |
 | 表示言語（英語 / 日本語 / 韓国語 / 中国語 簡体字・繁体字）・クレジットタブ | 済 |
 | デバッグログ（Info タブ。重要度・カテゴリ・文字列の絞り込み、環境の要約、コピー） | 済 |
@@ -639,8 +639,9 @@ PC のアプリ（VirtualMotionCapture など）から VMC プロトコル（OSC
   - パーフェクトシンク中は止まる（顔の動きそのもので表情が出るため）。
 - **Perfect sync**（パーフェクトシンク、MediaPipe のみ、既定 ON）: ARKit 名（`eyeBlinkLeft` / `jawOpen` / `mouthSmileLeft` / `tongueOut` など 52 種）の BlendShape を
   持つアバターでは、トラッカーが送る値をそのまま書き込み、眉・頬・口の形まで顔の動きに追従させる。
+  - VRCFaceTracking の Unified Expressions 名（`EyeClosedLeft` / `LipPucker` / `MouthRaiserUpper` など）にも対応。読み込み時に ARKit 名と UE 名の一致数を比べ、有効条件を満たす方（両方なら件数が多い方・同数は ARKit）を自動で使う。トラッキングの値は ARKit 互換のまま写す。CheekSuck や舌の向きなど、入力に値が無い Shape は動かさない。
   - 名前は大文字小文字・区切り記号・FBX の接頭辞（`blendShape1.` 等）を無視し、`eyeBlink_L` のような L / R 表記も受け付ける。同名の BlendShape が顔・歯・舌などに分かれていれば全部動かす。
-  - 有効にする条件はトグルの下で排他で選べる。既定は「20 種類以上」で、まばたき用の `eyeBlinkLeft` / `Right` だけを持つアバターは従来どおり。「1 種類でも」にすると、見つかった BlendShape だけを動かす（20 種類未満のときは表情の反映も併用する）。対応状況はその下に件数で出る。
+  - 有効にする条件はトグルの下で排他で選べる。既定は「20 種類以上」で、まばたき用の `eyeBlinkLeft` / `Right` だけを持つアバターは従来どおり。「1 種類でも」にすると、見つかった BlendShape だけを動かす（20 種類未満のときは表情の反映も併用する）。対応状況はその下に、選ばれた系統（ARKit / Unified Expressions）と件数で出る。
   - 「口の開き（パーフェクトシンク）」: パーフェクトシンクで動かしている間の `jawOpen` を補正する。「無視する開き」（0〜0.5、既定 0）までの開きは閉じた口とみなして残りを 0〜1 に広げ、「強さ」（0.2〜3、既定 1）倍する。真顔でも口が少し開く（MediaPipe は真顔でも `jawOpen` が 0.2 前後出ることがある）なら「無視する開き」を、開きすぎ・開かなすぎなら「強さ」を調整する。トラッキング中は受信値と反映後の値が出る。「口・頬の動きを強調」の ON/OFF とは別に効く。
   - 「口・頬の動きを強調」（既定 ON）: パーフェクトシンクで動かしている間だけ、カメラでは弱く出やすい「ふくれっ面（`mouthPucker` / `mouthFunnel`）」「口の左右（`mouthLeft` / `mouthRight`）」「頬をふくらませる（`cheekPuff`）」「唇（`mouthRoll*` / `mouthShrug*` / `mouthPress*`）」の値を倍率（1〜5、既定 2 / 1 / 1.5 / 1）で強める。MediaPipe の `cheekPuff` と `mouthLeft` / `mouthRight` は弱いので、トラッカーが顔の点から「頬の下側の輪郭の幅（両目の幅との比）が真顔の基準より何 % 広がったか」（`cheekWiden`）と「口の中心が鼻に対して映像の左右どちらへずれたか（両目の幅に対する割合）」（`mouthShift`）を測って送り、VRCast が頬は「頬のふくらみの検出」の「出し始め（%）」〜「最大（%）」（既定 1.5〜6%）で、口の左右はずれ 2〜8% で 0〜1 にして、受信値と大きい方を使う（頬は口を開けている・笑っているときは弱める。口の左右は Mirror に合わせる）。基準は開始後に自動で覚えるので、最初の数秒は真顔にしておく。設定の下に今の広がり・口の左右と推定値が出るので、真顔と動かしたときの値を見てしきい値を決める（デバッグログの `STATS` 行の `cheek widen max` / `mouth shift max` にも出る）。
   - 同じ設定は、パーフェクトシンク化の「実際のトラッキングで試す」中に左側の「口・頬の調整」パネルにも出し、動きを見ながら調整できる。変えた値はトラッキングタブへすぐ反映される。パネルの「設定を保存」で設定ファイルへ書き、「元に戻す」で試し始めた（最後に保存した）値へ戻す。

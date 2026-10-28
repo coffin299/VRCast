@@ -1,6 +1,8 @@
 using System;
+using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using VRCast.AvatarFormat;
 using VRCast.Core;
 using VRCast.Tracking;
 
@@ -94,6 +96,180 @@ namespace VRCast.Tests
             Assert.That(PerfectSyncBlendShapes.Match("blink"), Is.EqualTo(-1));
             Assert.That(PerfectSyncBlendShapes.Match(string.Empty), Is.EqualTo(-1));
             Assert.That(PerfectSyncBlendShapes.Match(null), Is.EqualTo(-1));
+        }
+
+        [Test]
+        public void Match_UnifiedAliasesMapToArKitSlots()
+        {
+            int blinkLeft = Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft");
+            int blinkRight = Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkRight");
+            int jawOpen = Array.IndexOf(ArKitFace.BlendShapeNames, "jawOpen");
+            int mouthClose = Array.IndexOf(ArKitFace.BlendShapeNames, "mouthClose");
+            int mouthFunnel = Array.IndexOf(ArKitFace.BlendShapeNames, "mouthFunnel");
+            int mouthPucker = Array.IndexOf(ArKitFace.BlendShapeNames, "mouthPucker");
+            int cheekPuff = Array.IndexOf(ArKitFace.BlendShapeNames, "cheekPuff");
+
+            // Unified Expressions の別名は Unified 系統でのみ ARKit 枠へ当たること
+            Assert.That(PerfectSyncBlendShapes.Match("EyeClosedLeft", PerfectSyncNaming.Unified), Is.EqualTo(blinkLeft));
+            Assert.That(PerfectSyncBlendShapes.Match("EyeClosedRight", PerfectSyncNaming.Unified), Is.EqualTo(blinkRight));
+            Assert.That(PerfectSyncBlendShapes.Match("MouthClosed", PerfectSyncNaming.Unified), Is.EqualTo(mouthClose));
+            Assert.That(PerfectSyncBlendShapes.Match("LipFunnel", PerfectSyncNaming.Unified), Is.EqualTo(mouthFunnel));
+            Assert.That(PerfectSyncBlendShapes.Match("LipPuckerUpperLeft", PerfectSyncNaming.Unified), Is.EqualTo(mouthPucker));
+            Assert.That(PerfectSyncBlendShapes.Match("CheekPuffLeft", PerfectSyncNaming.Unified), Is.EqualTo(cheekPuff));
+            Assert.That(PerfectSyncBlendShapes.Match("JawOpen", PerfectSyncNaming.Unified), Is.EqualTo(jawOpen));
+
+            // ARKit 系統では UE の別名は拾わない（eyeBlink と EyeClosed の二重駆動を防ぐ）
+            Assert.That(PerfectSyncBlendShapes.Match("EyeClosedLeft", PerfectSyncNaming.ArKit), Is.EqualTo(-1));
+            Assert.That(PerfectSyncBlendShapes.Match("LipFunnel", PerfectSyncNaming.ArKit), Is.EqualTo(-1));
+
+            // MatchAny はどちらの系統でも拾う
+            Assert.That(PerfectSyncBlendShapes.MatchAny("EyeClosedLeft"), Is.EqualTo(blinkLeft));
+            Assert.That(PerfectSyncBlendShapes.MatchAny("eyeBlinkLeft"), Is.EqualTo(blinkLeft));
+        }
+
+        [Test]
+        public void DetectNaming_PrefersArKitThenUnified()
+        {
+            string[] arKitNames = ArKitFace.BlendShapeNames;
+            var arKitRoot = MakeFace("ArKitAvatar", arKitNames);
+            var ueNames = new List<string>();
+            foreach (string name in arKitNames)
+            {
+                // ARKit のまばたき・口まわりを UE 別名に置き換えたセット
+                if (name == "eyeBlinkLeft")
+                {
+                    ueNames.Add("EyeClosedLeft");
+                }
+                else if (name == "eyeBlinkRight")
+                {
+                    ueNames.Add("EyeClosedRight");
+                }
+                else if (name == "mouthClose")
+                {
+                    ueNames.Add("MouthClosed");
+                }
+                else if (name == "mouthFunnel")
+                {
+                    ueNames.Add("LipFunnel");
+                }
+                else if (name == "mouthPucker")
+                {
+                    ueNames.Add("LipPucker");
+                }
+                else if (name == "mouthRollUpper")
+                {
+                    ueNames.Add("LipSuckUpper");
+                }
+                else if (name == "mouthRollLower")
+                {
+                    ueNames.Add("LipSuckLower");
+                }
+                else if (name == "mouthShrugUpper")
+                {
+                    ueNames.Add("MouthRaiserUpper");
+                }
+                else if (name == "mouthShrugLower")
+                {
+                    ueNames.Add("MouthRaiserLower");
+                }
+                else
+                {
+                    ueNames.Add(name);
+                }
+            }
+
+            var ueRoot = MakeFace("UeAvatar", ueNames);
+            var mixedRoot = MakeFace("Mixed", new[] { "eyeBlinkLeft", "eyeBlinkRight", "JawOpen", "EyeClosedLeft" });
+            try
+            {
+                // ARKit 名が多いアバターは ARKit、UE 別名が多いアバターは Unified（両方足りても多い方）
+                Assert.That(PerfectSyncBlendShapes.DetectNaming(arKitRoot.transform), Is.EqualTo(PerfectSyncNaming.ArKit));
+                Assert.That(PerfectSyncBlendShapes.DetectNaming(ueRoot.transform), Is.EqualTo(PerfectSyncNaming.Unified));
+                PerfectSyncBlendShapes.CountMatches(ueRoot.transform, out int ueArKit, out int ueUnified);
+                Assert.That(ueUnified, Is.GreaterThan(ueArKit));
+
+                // どちらも規定数未満なら件数が多い方（同数なら ARKit）
+                Assert.That(PerfectSyncBlendShapes.DetectNaming(mixedRoot.transform), Is.EqualTo(PerfectSyncNaming.ArKit));
+
+                // 割り当てがあれば ARKit 固定
+                var bindings = new[]
+                {
+                    new PerfectSyncBinding { name = "jawOpen", path = "", blendShape = "JawOpen", weight = 1f },
+                };
+                Assert.That(PerfectSyncBlendShapes.DetectNaming(ueRoot.transform, bindings: bindings),
+                    Is.EqualTo(PerfectSyncNaming.ArKit));
+            }
+            finally
+            {
+                DestroyFace(arKitRoot);
+                DestroyFace(ueRoot);
+                DestroyFace(mixedRoot);
+            }
+        }
+
+        [Test]
+        public void Create_UnifiedModeWritesUeNamedShapes()
+        {
+            // UE 別名だけの顔（まばたき・口）
+            var root = MakeFace("UeFace", new[]
+            {
+                "EyeClosedLeft", "EyeClosedRight", "JawOpen", "LipPucker", "MouthSmileLeft", "MouthSmileRight",
+            });
+            var renderer = root.GetComponentInChildren<SkinnedMeshRenderer>();
+            try
+            {
+                PerfectSyncBlendShapes sync = PerfectSyncBlendShapes.Create(
+                    root.transform, naming: PerfectSyncNaming.Unified);
+                Assert.That(sync.Naming, Is.EqualTo(PerfectSyncNaming.Unified));
+                Assert.That(sync.DrivesBlink, Is.True);
+                Assert.That(sync.DrivesJaw, Is.True);
+
+                var scores = new float[ArKitFace.BlendShapeNames.Length];
+                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft")] = 1f;
+                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "jawOpen")] = 0.5f;
+                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "mouthPucker")] = 1f;
+                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "mouthSmileLeft")] = 1f;
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true);
+
+                // 鏡像 OFF: 映像の左まばたき → アバターの右（EyeClosedRight）
+                Assert.That(Weight(renderer, "EyeClosedRight"), Is.EqualTo(100f).Within(0.01f));
+                Assert.That(Weight(renderer, "JawOpen"), Is.EqualTo(50f).Within(0.01f));
+                Assert.That(Weight(renderer, "LipPucker"), Is.EqualTo(100f).Within(0.01f));
+                Assert.That(Weight(renderer, "MouthSmileRight"), Is.EqualTo(100f).Within(0.01f));
+            }
+            finally
+            {
+                DestroyFace(root);
+            }
+        }
+
+        [Test]
+        public void Create_DoesNotDriveBothNamingsAtOnce()
+        {
+            // ARKit と UE のまばたきが両方あるとき、ARKit モードでは EyeClosed を動かさない
+            var root = MakeFace("Both", new[] { "eyeBlinkLeft", "eyeBlinkRight", "EyeClosedLeft", "EyeClosedRight" });
+            var renderer = root.GetComponentInChildren<SkinnedMeshRenderer>();
+            try
+            {
+                PerfectSyncBlendShapes arKit = PerfectSyncBlendShapes.Create(
+                    root.transform, naming: PerfectSyncNaming.ArKit);
+                var scores = new float[ArKitFace.BlendShapeNames.Length];
+                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft")] = 1f;
+                arKit.Apply(scores, ArKitRange.MediaPipe, false, 10f, true);
+                Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(100f).Within(0.01f));
+                Assert.That(Weight(renderer, "EyeClosedRight"), Is.EqualTo(0f).Within(0.01f));
+                arKit.Release();
+
+                PerfectSyncBlendShapes unified = PerfectSyncBlendShapes.Create(
+                    root.transform, naming: PerfectSyncNaming.Unified);
+                unified.Apply(scores, ArKitRange.MediaPipe, false, 10f, true);
+                Assert.That(Weight(renderer, "EyeClosedRight"), Is.EqualTo(100f).Within(0.01f));
+                Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(0f).Within(0.01f));
+            }
+            finally
+            {
+                DestroyFace(root);
+            }
         }
 
         [Test]
@@ -235,6 +411,37 @@ namespace VRCast.Tests
         {
             // 名前で BlendShape の現在値を読む
             return renderer.GetBlendShapeWeight(renderer.sharedMesh.GetBlendShapeIndex(name));
+        }
+
+        private static GameObject MakeFace(string name, IEnumerable<string> shapeNames)
+        {
+            var root = new GameObject(name);
+            var renderer = root.AddComponent<SkinnedMeshRenderer>();
+            var mesh = new Mesh { vertices = new[] { Vector3.zero, Vector3.right, Vector3.up } };
+            var deltas = new Vector3[3];
+            foreach (string shape in shapeNames)
+            {
+                mesh.AddBlendShapeFrame(shape, 100f, deltas, null, null);
+            }
+
+            renderer.sharedMesh = mesh;
+            return root;
+        }
+
+        private static void DestroyFace(GameObject root)
+        {
+            if (root == null)
+            {
+                return;
+            }
+
+            var renderer = root.GetComponentInChildren<SkinnedMeshRenderer>();
+            Mesh mesh = renderer != null ? renderer.sharedMesh : null;
+            UnityEngine.Object.DestroyImmediate(root);
+            if (mesh != null)
+            {
+                UnityEngine.Object.DestroyImmediate(mesh);
+            }
         }
     }
 }

@@ -268,8 +268,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // ARKit 名（大文字小文字・区切り記号・_L / _R の揺れはパーフェクトシンクと同じ照合）
-            int index = PerfectSyncBlendShapes.Match(name);
+            // ARKit / Unified Expressions 名（大文字小文字・区切り記号・_L / _R の揺れはパーフェクトシンクと同じ照合）
+            int index = PerfectSyncBlendShapes.MatchAny(name);
             if (index >= 0)
             {
                 // 初めて届いた名前なら数を数える（値が 0 のままの名前も数えるため、値ではなく受信の有無で判定）

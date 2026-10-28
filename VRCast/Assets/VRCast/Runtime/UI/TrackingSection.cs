@@ -859,19 +859,25 @@ namespace VRCast.UI
                 return;
             }
 
-            // 有効にする条件（ARKit 名が規定数以上 / 1 種類でも）。排他で選ぶ
+            // 有効にする条件（規定数以上 / 1 種類でも）。排他で選ぶ。変わると ARKit / UE の自動選択も変わる
             int min = PerfectSyncBlendShapes.MinMatchedShapes;
             string[] labels =
             {
                 Loc.T($"{min}+ shapes", $"{min} 種類以上", $"{min}종 이상", $"{min} 种以上", $"{min} 種以上"),
                 Loc.T("Any shape", "1 種類でも", "1종이라도", "有 1 种即可", "有 1 種即可"),
             };
+            bool anyShape = _settings.trackingPerfectSyncAnyShape;
             _settings.trackingPerfectSyncAnyShape = GuiControls.EnumSelector(
                 Loc.T("Enable when", "有効にする条件", "활성화 조건", "启用条件", "啟用條件"),
-                labels, _settings.trackingPerfectSyncAnyShape ? 1 : 0) == 1;
+                labels, anyShape ? 1 : 0) == 1;
 
             // 口の開きの補正と口・頬の強調（アバター未表示でも設定はできる）
             var driver = _avatar.Get<FaceTrackingDriver>();
+            if (driver != null && anyShape != _settings.trackingPerfectSyncAnyShape)
+            {
+                driver.RefreshPerfectSyncNaming();
+            }
+
             PerfectSyncBoostControls.Draw(_settings, driver);
 
             // アバター未表示なら状態を出さない
@@ -880,21 +886,35 @@ namespace VRCast.UI
                 return;
             }
 
-            // 対応状況（見つかった ARKit 名の数）
+            // 対応状況（選ばれた名前系統と見つかった種類数）
             int count = driver.PerfectSyncShapeCount;
             int total = ArKitFace.BlendShapeNames.Length;
             int required = _settings.trackingPerfectSyncAnyShape ? 1 : min;
+            string naming = driver.ActivePerfectSyncNaming == PerfectSyncNaming.Unified
+                ? "Unified Expressions"
+                : "ARKit";
+            string namingJa = driver.ActivePerfectSyncNaming == PerfectSyncNaming.Unified
+                ? "Unified Expressions"
+                : "ARKit";
             GuiControls.Hint(driver.SupportsPerfectSync
-                ? Loc.T($"Supported ({count}/{total} ARKit blend shapes)",
-                    $"対応アバター（ARKit 名の BlendShape {count}/{total} 個）",
-                    $"지원 아바타 (ARKit 이름의 BlendShape {count}/{total}개)",
-                    $"支持的虚拟形象（ARKit 名称的 BlendShape {count}/{total} 个）",
-                    $"支援的虛擬形象（ARKit 名稱的 BlendShape {count}/{total} 個）")
-                : Loc.T($"This avatar does not support it ({count}/{total} ARKit blend shapes, needs {required}+)",
-                    $"このアバターは非対応です（ARKit 名の BlendShape {count}/{total} 個、{required} 個以上で対応）",
-                    $"이 아바타는 지원하지 않습니다 (ARKit 이름의 BlendShape {count}/{total}개, {required}개 이상 필요)",
-                    $"此虚拟形象不支持（ARKit 名称的 BlendShape {count}/{total} 个，需要 {required} 个以上）",
-                    $"此虛擬形象不支援（ARKit 名稱的 BlendShape {count}/{total} 個，需要 {required} 個以上）"));
+                ? Loc.T($"Supported ({naming} {count}/{total})",
+                    $"対応アバター（{namingJa} {count}/{total}）",
+                    $"지원 아바타 ({naming} {count}/{total})",
+                    $"支持的虚拟形象（{naming} {count}/{total}）",
+                    $"支援的虛擬形象（{naming} {count}/{total}）")
+                : Loc.T($"This avatar does not support it ({naming} {count}/{total}, needs {required}+)",
+                    $"このアバターは非対応です（{namingJa} {count}/{total}、{required} 個以上で対応）",
+                    $"이 아바타는 지원하지 않습니다 ({naming} {count}/{total}, {required}개 이상 필요)",
+                    $"此虚拟形象不支持（{naming} {count}/{total}，需要 {required} 个以上）",
+                    $"此虛擬形象不支援（{naming} {count}/{total}，需要 {required} 個以上）"));
+
+            // ARKit / Unified Expressions の自動選択を伝える
+            GuiControls.Hint(Loc.T(
+                "Picks ARKit or Unified Expressions names automatically (whichever matches more)",
+                "ARKit 名と Unified Expressions 名の多い方を自動で使います",
+                "ARKit 이름과 Unified Expressions 이름 중 더 많이 맞는 쪽을 자동으로 사용합니다",
+                "自动选用匹配更多的 ARKit 或 Unified Expressions 名称",
+                "自動選用匹配較多的 ARKit 或 Unified Expressions 名稱"));
 
             // 規定数未満で動かしている間は、表情プリセットも併用されることを伝える
             if (driver.SupportsPerfectSync && count < min)

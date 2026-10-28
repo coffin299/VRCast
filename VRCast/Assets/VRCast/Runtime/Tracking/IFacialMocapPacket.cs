@@ -108,8 +108,8 @@ namespace VRCast.Tracking
                 return false;
             }
 
-            // ARKit 名（_L / _R の揺れはパーフェクトシンクと同じ照合）だけ使う
-            index = PerfectSyncBlendShapes.Match(item.Substring(0, separator));
+            // ARKit / Unified Expressions 名（_L / _R の揺れはパーフェクトシンクと同じ照合）だけ使う
+            index = PerfectSyncBlendShapes.MatchAny(item.Substring(0, separator));
             value = Mathf.Clamp01(raw / ValueScale);
             return index >= 0;
         }

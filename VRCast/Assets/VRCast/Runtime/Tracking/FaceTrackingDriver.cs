@@ -174,14 +174,21 @@ namespace VRCast.Tracking
         private float _eyesClosed;
         private FaceTrackingFrame _lastFrame;
 
-        // パーフェクトシンクの書き込み先（ARKit 名の BlendShape）と、視線用 BlendShape（両目まとめの名前）
+        // パーフェクトシンクの書き込み先と、視線用 BlendShape（両目まとめの名前）、割り当て直し用の控え
         private PerfectSyncBlendShapes _perfectSync;
         private GazeBlendShapes _gazeBlendShapes;
+        private IReadOnlyList<PerfectSyncBinding> _perfectSyncBindings;
 
         /// <summary>
-        /// アバターで見つかった ARKit 名の BlendShape の種類数（パーフェクトシンクの対応状況の表示用）。
+        /// アバターで見つかったパーフェクトシンク用 BlendShape の種類数（対応状況の表示用）。
         /// </summary>
         public int PerfectSyncShapeCount => _perfectSync != null ? _perfectSync.MatchedCount : 0;
+
+        /// <summary>
+        /// いま使っている名前の系統（ARKit / Unified Expressions。未構築なら ARKit）。
+        /// </summary>
+        public PerfectSyncNaming ActivePerfectSyncNaming =>
+            _perfectSync != null ? _perfectSync.Naming : PerfectSyncNaming.ArKit;
 
         /// <summary>
         /// アバターがパーフェクトシンクを有効にする条件（設定の種類数）を満たしていれば true。
@@ -306,9 +313,11 @@ namespace VRCast.Tracking
             _expressions = expressions;
             _settings = settings;
 
-            // ARKit 名の BlendShape（パーフェクトシンク化で割り当てた既存の BlendShape を含む）と、
+            // ARKit / Unified Expressions 名の BlendShape（パーフェクトシンク化で割り当てた既存の BlendShape を含む）と、
             // 視線用 BlendShape（「上を見る」等）を探しておく（Humanoid でなくても顔は動かせる）
-            _perfectSync = PerfectSyncBlendShapes.Create(transform, perfectSyncBindings);
+            _perfectSyncBindings = perfectSyncBindings;
+            _perfectSync = PerfectSyncBlendShapes.Create(
+                transform, _perfectSyncBindings, settings != null && settings.trackingPerfectSyncAnyShape);
             _gazeBlendShapes = GazeBlendShapes.Create(transform);
 
             // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口・視線の BlendShape だけ）
@@ -352,16 +361,27 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// パーフェクトシンクの書き込み先を探し直す（パーフェクトシンク化の編集で、メッシュの形状や割り当てが変わったとき）。
+        /// パーフェクトシンクの書き込み先を探し直す（パーフェクトシンク化の編集で、メッシュの形状や割り当てが変わったとき。
+        /// 有効条件の切替で ARKit / Unified Expressions の選択が変わるときにも呼ぶ）。
         /// </summary>
         public void RebuildPerfectSync(IReadOnlyList<PerfectSyncBinding> bindings)
         {
             // 今の書き込みを元の値へ戻してから作り直す（次のフレームから新しい書き込み先で動く）
+            _perfectSyncBindings = bindings;
             _perfectSync?.Release();
             _gazeBlendShapes?.Release();
-            _perfectSync = PerfectSyncBlendShapes.Create(transform, bindings);
+            _perfectSync = PerfectSyncBlendShapes.Create(
+                transform, _perfectSyncBindings, _settings != null && _settings.trackingPerfectSyncAnyShape);
             _gazeBlendShapes = GazeBlendShapes.Create(transform);
             _eyeLight.Bind(transform, _leftEye, _rightEye);
+        }
+
+        /// <summary>
+        /// 名前の系統を設定の有効条件に合わせて選び直す（割り当ては前回のまま）。
+        /// </summary>
+        public void RefreshPerfectSyncNaming()
+        {
+            RebuildPerfectSync(_perfectSyncBindings);
         }
 
         /// <summary>
