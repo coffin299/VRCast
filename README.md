@@ -952,6 +952,10 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
   読込時にパッケージ構造・サイズ・ハッシュを検証し、許可リスト外のコンポーネントを除去する。
   VRM はサイズ（1 GiB まで）を確認して UniVRM で読み込み、UniVRM のコンポーネントは表情・揺れもの等を変換した後に除去する。
 
+## Contributing
+
+バグ修正・機能追加などのプルリクエストを歓迎します（AI による貢献も可）。手順は [CONTRIBUTING.md](CONTRIBUTING.md)（日本語 / 英語）。
+
 ## License
 
 [Apache License 2.0](LICENSE)
