@@ -416,7 +416,7 @@ namespace VRCast.UI
                     "臉部來自 iPhone，手臂和手來自網路攝影機（MediaPipe）。iPhone 沒有資料時改用網路攝影機的臉部。"));
             }
 
-            DrawSmoothing();
+            DrawMotionSmoothing();
 
             // トラッカーの動作は同梱の MediaPipe 版（併用を含む）のみ
             if (TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe)
@@ -444,7 +444,10 @@ namespace VRCast.UI
             }
         }
 
-        private void DrawSmoothing()
+        /// <summary>
+        /// 動きのなめらかさ。クイック設定からも同じ UI を出す。
+        /// </summary>
+        public void DrawMotionSmoothing()
         {
             // 低い順（MotionSmoothing の数値の順）。変更すると MediaPipe 版はトラッカーを起動し直す（揺れを抑えるフィルターの強さが変わる）
             string[] labels =

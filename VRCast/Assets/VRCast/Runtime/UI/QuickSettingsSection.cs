@@ -112,8 +112,9 @@ namespace VRCast.UI
                 return;
             }
 
-            // 入力元（方式）はトラッキングタブと同じ UI
+            // 入力元・動きのなめらかさはトラッキングタブと同じ UI
             _trackingSection.DrawInputSource();
+            _trackingSection.DrawMotionSmoothing();
 
             _settings.trackingMirror = GUILayout.Toggle(
                 _settings.trackingMirror,

@@ -77,10 +77,11 @@ namespace VRCast.UI
             DangerActive = new Color32(158, 42, 38, 255),
             Success = new Color32(52, 130, 76, 255),
             Warning = new Color32(160, 104, 0, 255),
-            Home = new Color32(96, 122, 88, 255),
-            HomeHover = new Color32(112, 138, 102, 255),
-            Feature = new Color32(72, 112, 128, 255),
-            FeatureHover = new Color32(90, 130, 146, 255),
+            // #7C8660 / #66818A（ホバーは少し明るく）
+            Home = new Color32(0x7C, 0x86, 0x60, 255),
+            HomeHover = new Color32(0x8E, 0x98, 0x72, 255),
+            Feature = new Color32(0x66, 0x81, 0x8A, 255),
+            FeatureHover = new Color32(0x78, 0x93, 0x9C, 255),
         };
 
         // ダーク（暗い焦げ茶の地、生成り色の文字、暗い地でも見えるよう明るめのキャラメル色のアクセント）
@@ -106,10 +107,11 @@ namespace VRCast.UI
             DangerActive = new Color32(166, 48, 42, 255),
             Success = new Color32(104, 186, 126, 255),
             Warning = new Color32(232, 184, 72, 255),
-            Home = new Color32(118, 152, 110, 255),
-            HomeHover = new Color32(136, 170, 128, 255),
-            Feature = new Color32(96, 140, 156, 255),
-            FeatureHover = new Color32(114, 158, 174, 255),
+            // ライトと同じ色相で、暗い地でも読めるよう少し明るく
+            Home = new Color32(0x9A, 0xA4, 0x7E, 255),
+            HomeHover = new Color32(0xAC, 0xB6, 0x90, 255),
+            Feature = new Color32(0x84, 0x9F, 0xA8, 255),
+            FeatureHover = new Color32(0x96, 0xB1, 0xBA, 255),
         };
 
         // 使用中の配色（以下の名前で各 Build から参照する）
