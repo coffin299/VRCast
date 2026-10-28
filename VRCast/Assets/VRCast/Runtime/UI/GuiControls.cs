@@ -152,17 +152,65 @@ namespace VRCast.UI
 
         /// <summary>
         /// 補足・状態表示用の控えめな文字。カード内では、後ろに別の部品が続くとき下に区切り線を引き、
-        /// 説明文がどの項目のものか（上の項目）を分かるようにする。
+        /// 説明文がどの項目のものか（上の項目）を分かるようにする（注意文が続くときは間に線を引かない）。
         /// </summary>
         public static void Hint(string text)
         {
-            // 直前の説明文の続きかどうかを先に調べる（説明文が続くときは間に線を引かない）
-            ResolvePendingHint();
+            DrawCardNote(text, theme => theme != null ? theme.Hint : GUI.skin.label, continuePrevious: false);
+        }
+
+        /// <summary>
+        /// 状態の 1 行（ok なら緑、そうでなければ控えめな文字。大きさは同じで、切り替わっても UI がずれない）。
+        /// </summary>
+        public static void Status(string text, bool ok)
+        {
+            UiTheme theme = UiTheme.Current;
+            GUIStyle style = theme == null ? GUI.skin.label : ok ? theme.HintSuccess : theme.Hint;
+            GUILayout.Label(text, style);
+        }
+
+        /// <summary>
+        /// 注意の 1 行（黄色の太字。設定の競合など、動くが意図と違うかもしれない状態）。
+        /// 直前の説明文の続きとして扱い、間に区切り線は引かない。
+        /// </summary>
+        public static void Warning(string text)
+        {
+            DrawCardNote(text, theme => theme != null ? theme.WarningText : GUI.skin.label, continuePrevious: true);
+        }
+
+        /// <summary>
+        /// 制限・失敗などの 1 行（テーマの赤。折り返しあり）。
+        /// 直前の説明文の続きとして扱い、間に区切り線は引かない。
+        /// </summary>
+        public static void Error(string text)
+        {
+            DrawCardNote(text, theme => theme != null ? theme.ErrorWrapped : GUI.skin.label, continuePrevious: true);
+        }
+
+        /// <summary>
+        /// カード内の説明・注意。continuePrevious なら直前の説明の下に線を入れず同じまとまりにする。
+        /// </summary>
+        private static void DrawCardNote(string text, System.Func<UiTheme, GUIStyle> styleOf, bool continuePrevious)
+        {
+            if (continuePrevious && _pendingHint)
+            {
+                // 直前の Hint / Note の続き → 間の線は無し
+                if (Event.current.type == EventType.Repaint)
+                {
+                    NextDividers[_pendingKey] = false;
+                }
+
+                _pendingHint = false;
+            }
+            else
+            {
+                // 直前の説明文の続きかどうかを先に調べる（説明文が続くときは間に線を引かない）
+                ResolvePendingHint();
+            }
 
             UiTheme theme = UiTheme.Current;
             // 長い説明がスクロール内容の幅を押し広げて右が見切れないよう、親の幅に合わせて折り返す
-            GUILayout.Label(text, theme != null ? theme.Hint : GUI.skin.label,
-                GUILayout.MinWidth(0f), GUILayout.ExpandWidth(true));
+            GUILayout.Label(text, styleOf(theme), GUILayout.MinWidth(0f), GUILayout.ExpandWidth(true));
             if (!_inCard)
             {
                 return;
@@ -187,7 +235,8 @@ namespace VRCast.UI
             {
                 Color previous = GUI.color;
                 GUI.color = theme != null ? theme.Divider : Color.gray;
-                float y = label.yMax + (theme != null ? theme.Hint.margin.bottom : 0f) + DividerSpacing * 0.5f;
+                GUIStyle style = styleOf(theme);
+                float y = label.yMax + style.margin.bottom + DividerSpacing * 0.5f;
                 GUI.DrawTexture(new Rect(label.x, Mathf.Round(y), label.width, DividerThickness), Texture2D.whiteTexture);
                 GUI.color = previous;
             }
@@ -196,34 +245,6 @@ namespace VRCast.UI
             _pendingHint = true;
             _pendingKey = key;
             _pendingRect = GUILayoutUtility.GetLastRect();
-        }
-
-        /// <summary>
-        /// 状態の 1 行（ok なら緑、そうでなければ控えめな文字。大きさは同じで、切り替わっても UI がずれない）。
-        /// </summary>
-        public static void Status(string text, bool ok)
-        {
-            UiTheme theme = UiTheme.Current;
-            GUIStyle style = theme == null ? GUI.skin.label : ok ? theme.HintSuccess : theme.Hint;
-            GUILayout.Label(text, style);
-        }
-
-        /// <summary>
-        /// 注意の 1 行（黄色の太字。設定の競合など、動くが意図と違うかもしれない状態）。
-        /// </summary>
-        public static void Warning(string text)
-        {
-            UiTheme theme = UiTheme.Current;
-            GUILayout.Label(text, theme == null ? GUI.skin.label : theme.WarningText);
-        }
-
-        /// <summary>
-        /// 制限・失敗などの 1 行（テーマの赤。折り返しあり）。
-        /// </summary>
-        public static void Error(string text)
-        {
-            UiTheme theme = UiTheme.Current;
-            GUILayout.Label(text, theme == null ? GUI.skin.label : theme.ErrorWrapped);
         }
 
         /// <summary>

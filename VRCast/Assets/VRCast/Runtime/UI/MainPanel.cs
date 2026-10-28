@@ -236,7 +236,7 @@ namespace VRCast.UI
 
         private void OpenLink(StartLink link)
         {
-            // Start タブの案内から各タブへ
+            // Start タブの案内・クイック設定から各タブへ
             switch (link)
             {
                 case StartLink.Face:
@@ -245,6 +245,12 @@ namespace VRCast.UI
                 case StartLink.Tracking:
                     _tab = Tab.Tracking;
                     break;
+                case StartLink.Graphics:
+                    _tab = Tab.Graphics;
+                    break;
+                case StartLink.Performance:
+                    _tab = Tab.Performance;
+                    break;
                 case StartLink.Output:
                     _tab = Tab.Output;
                     break;
@@ -252,6 +258,9 @@ namespace VRCast.UI
                     _tab = Tab.Avatar;
                     break;
             }
+
+            // タブを開いたら横スクロールを戻す（サイドバー切替と同じ）
+            _scroll[(int)_tab].x = 0f;
         }
 
         private static string FindPreset(IReadOnlyList<string> paths)

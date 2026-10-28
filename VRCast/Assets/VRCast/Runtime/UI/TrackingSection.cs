@@ -1219,12 +1219,18 @@ namespace VRCast.UI
             GuiControls.Hint(_process.Status);
             if (TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe)
             {
-                GuiControls.Warning(Loc.T(
-                    "Camera settings opens the driver’s property page in front (Image / Camera Control: exposure, frame rate, etc.). Use it if low light auto-exposure drops the real capture FPS — Tracking FPS alone cannot lock that. Not all cameras show a dialog. Tracking pauses while it is open.",
-                    "カメラ設定はドライバーのプロパティ画面を前面に出します（画像の調整 / カメラ制御：露出・フレームレートなど）。暗いと自動露出で実 FPS が落ちるときはここで固定できます（トラッキング FPS だけでは防げません）。機種によっては画面が出ません。開いている間はトラッキングが止まります。",
-                    "카메라 설정은 드라이버 속성 창을 앞으로 엽니다(이미지 조정/카메라 제어: 노출·프레임레이트 등). 어두운 곳의 자동 노출로 실제 FPS가 떨어질 때 여기서 고정하세요. Tracking FPS만으로는 막을 수 없습니다. 기기에 따라 창이 없을 수 있으며, 열린 동안 트래킹이 멈춥니다.",
-                    "摄像头设置会把驱动属性页提到前面（图像调整/相机控制：曝光、帧率等）。光线不足导致自动曝光拉低实际 FPS 时，可在此锁定（仅靠追踪 FPS 无法防止）。部分摄像头不会显示对话框。打开期间追踪会暂停。",
-                    "攝影機設定會把驅動程式屬性頁提到前面（影像調整／攝影機控制：曝光、影格率等）。光線不足導致自動曝光拉低實際 FPS 時，可在此鎖定（僅靠追蹤 FPS 無法防止）。部分攝影機會沒有對話框。開啟期間追蹤會暫停。"));
+                GuiControls.Hint(Loc.T(
+                    "Opens the Windows camera driver property page in front (Image / Camera Control: exposure, frame rate, etc.). Use it if low light auto-exposure drops the real capture FPS — Tracking FPS alone cannot lock that. Not all cameras show a dialog. Tracking pauses while it is open.",
+                    "Windows のカメラドライバー設定画面を前面に出します（画像の調整 / カメラ制御：露出・フレームレートなど）。暗いと自動露出で実 FPS が落ちるときはここで固定できます（トラッキング FPS だけでは防げません）。機種によっては画面が出ません。開いている間はトラッキングが止まります。",
+                    "Windows 카메라 드라이버 설정 창을 앞으로 엽니다(이미지 조정/카메라 제어: 노출·프레임레이트 등). 어두운 곳의 자동 노출로 실제 FPS가 떨어질 때 여기서 고정하세요. Tracking FPS만으로는 막을 수 없습니다. 기기에 따라 창이 없을 수 있으며, 열린 동안 트래킹이 멈춥니다.",
+                    "会把 Windows 摄像头驱动属性页提到前面（图像调整/相机控制：曝光、帧率等）。光线不足导致自动曝光拉低实际 FPS 时，可在此锁定（仅靠追踪 FPS 无法防止）。部分摄像头不会显示对话框。打开期间追踪会暂停。",
+                    "會把 Windows 攝影機驅動程式屬性頁提到前面（影像調整／攝影機控制：曝光、影格率等）。光線不足導致自動曝光拉低實際 FPS 時，可在此鎖定（僅靠追蹤 FPS 無法防止）。部分攝影機會沒有對話框。開啟期間追蹤會暫停。"));
+                GuiControls.Error(Loc.T(
+                    "These are the camera’s own settings, so they also apply in other apps that use the same camera (OBS, meetings, etc.).",
+                    "カメラ本体の設定なので、同じカメラを使う他のアプリ（OBS・会議など）にもそのまま影響します。",
+                    "카메라 자체의 설정이므로 같은 카메라를 쓰는 다른 앱(OBS·회의 등)에도 그대로 영향을 줍니다.",
+                    "这是摄像头本身的设置，因此也会影响使用同一摄像头的其他应用（OBS、会议等）。",
+                    "這是攝影機本身的設定，因此也會影響使用同一攝影機的其他應用程式（OBS、會議等）。"));
             }
         }
 
