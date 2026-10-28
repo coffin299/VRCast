@@ -21,9 +21,9 @@ namespace VRCast.UI
             TrackerMode.Fluid, TrackerMode.Smooth, TrackerMode.Eco,
         };
 
-        private readonly AvatarSession _session;
         private readonly AvatarComponentCache _avatar;
         private readonly AvatarSection _avatarSection;
+        private readonly TrackingSection _trackingSection;
         private readonly TrackerProcess _process;
         private readonly RenderingController _rendering;
         private readonly VirtualCameraOutput _virtualCamera;
@@ -36,13 +36,13 @@ namespace VRCast.UI
         private bool? _nvidiaVSyncAvailable;
 
         public QuickSettingsSection(
-            AvatarSession session, AvatarSection avatarSection, TrackerProcess process,
-            RenderingController rendering, VirtualCameraOutput virtualCamera, SpoutOutput spout,
-            AppSettings settings, Action<StartLink> open)
+            AvatarSession session, AvatarSection avatarSection, TrackingSection trackingSection,
+            TrackerProcess process, RenderingController rendering, VirtualCameraOutput virtualCamera,
+            SpoutOutput spout, AppSettings settings, Action<StartLink> open)
         {
-            _session = session;
             _avatar = new AvatarComponentCache(session);
             _avatarSection = avatarSection;
+            _trackingSection = trackingSection;
             _process = process;
             _rendering = rendering;
             _virtualCamera = virtualCamera;
@@ -62,7 +62,9 @@ namespace VRCast.UI
                 "与其他标签页是同一套设置。此处的更改会同步到各处。",
                 "與其他分頁是同一套設定。此處的變更會同步到各處。"));
 
-            DrawAvatar();
+            DrawTheme();
+            // アバタータブと同じ画面（読込・最近使ったアバター）
+            _avatarSection.Draw();
             DrawTracking();
             DrawFace();
             DrawBody();
@@ -71,55 +73,27 @@ namespace VRCast.UI
             DrawOutput();
         }
 
-        private void DrawAvatar()
+        private void DrawTheme()
         {
-            GuiControls.BeginCard(Loc.T("Avatar", "アバター", "아바타", "虚拟形象", "虛擬形象"));
-
-            GUILayout.BeginHorizontal();
-            GUI.enabled = !_session.IsLoading;
-            if (GUILayout.Button(Loc.T("Choose file...", "ファイルを選ぶ...", "파일 선택...", "选择文件...", "選擇檔案..."),
-                    GuiControls.Shrinkable))
+            GuiControls.BeginCard(Loc.T("Theme", "テーマ", "테마", "主题", "主題"));
+            string[] labels =
             {
-                _avatarSection.Browse();
+                Loc.T("Light", "ライト", "라이트", "浅色", "淺色"),
+                Loc.T("Dark", "ダーク", "다크", "深色", "深色"),
+            };
+            int current = _rendering.DarkMode ? 1 : 0;
+            int selected = GuiControls.LabeledChoice(Loc.T("Theme", "テーマ", "테마", "主题", "主題"), labels, current);
+            if (selected != current)
+            {
+                _rendering.DarkMode = selected == 1;
             }
 
-            GUI.enabled = true;
-            if (GUILayout.Button(Loc.T("Avatar tab", "アバタータブへ", "아바타 탭으로", "前往虚拟形象标签页", "前往虛擬形象分頁"),
-                    GuiControls.Shrinkable))
-            {
-                _open(StartLink.Avatar);
-            }
-
-            GUILayout.EndHorizontal();
-
-            if (_session.IsLoading)
-            {
-                GUILayout.Label(Loc.T("Loading...", "読み込み中...", "불러오는 중...", "加载中...", "載入中..."));
-            }
-            else if (_avatarSection.HasError)
-            {
-                GuiControls.Error(Loc.T(
-                    "Could not load. See the Avatar tab for details.",
-                    "読み込めませんでした。詳しくはアバタータブを見てください。",
-                    "불러오지 못했습니다. 자세한 내용은 아바타 탭을 확인하세요.",
-                    "加载失败。详情请查看虚拟形象标签页。",
-                    "載入失敗。詳細請查看虛擬形象分頁。"));
-            }
-            else if (_session.Current != null)
-            {
-                GuiControls.Hint(Loc.T("Loaded: ", "読み込み済み: ", "불러옴: ", "已加载：", "已載入：")
-                    + _session.Current.Name);
-            }
-            else
-            {
-                GuiControls.Hint(Loc.T(
-                    "Drag and drop a .vrcaster or .vrm file, or choose one above.",
-                    ".vrcaster / .vrm をドラッグ＆ドロップするか、上のボタンで選んでください。",
-                    ".vrcaster / .vrm 을 드래그 앤 드롭하거나 위 버튼으로 선택하세요.",
-                    "拖放 .vrcaster / .vrm，或用上方按钮选择。",
-                    "拖放 .vrcaster / .vrm，或用上方按鈕選擇。"));
-            }
-
+            GuiControls.Hint(Loc.T(
+                "Panel colors. Background color follows the theme unless you changed it (same switch on Settings / Graphics).",
+                "パネルの配色です。背景色は変更していなければテーマに合わせます（設定・グラフィックタブと同じ切替）。",
+                "패널 배색입니다. 배경색을 바꾸지 않았다면 테마에 맞춥니다(설정·그래픽 탭과 같은 전환).",
+                "面板配色。若未更改背景色会随主题切换（与设置 / 图形标签页相同）。",
+                "面板配色。若未變更背景色會隨主題切換（與設定／圖形分頁相同）。"));
             GuiControls.EndCard();
         }
 
@@ -138,6 +112,9 @@ namespace VRCast.UI
                 return;
             }
 
+            // 入力元（方式）はトラッキングタブと同じ UI
+            _trackingSection.DrawInputSource();
+
             _settings.trackingMirror = GUILayout.Toggle(
                 _settings.trackingMirror,
                 Loc.T("Mirror (move like a mirror)", "ミラー（鏡のように動かす）", "미러 (거울처럼 움직이기)",
@@ -149,19 +126,26 @@ namespace VRCast.UI
                     _settings.trackingHands, Loc.T("Arms / hands", "腕・手", "팔·손", "手臂 / 手", "手臂 / 手"));
             }
 
-            if (TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe)
+            bool mediaPipe = TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe;
+            if (mediaPipe)
             {
                 DrawTrackerModeAndFps();
-                DrawCameraLauncher();
             }
-            else
+
+            if (TrackingSourceInfo.UsesBundledTracker(_settings.trackingSource))
+            {
+                DrawCameraLauncher(mediaPipe);
+            }
+
+            TrackingSource network = TrackingSourceInfo.NetworkSourceOf(_settings.trackingSource);
+            if (network == TrackingSource.Vmc || network == TrackingSource.IFacialMocap)
             {
                 GuiControls.Hint(Loc.T(
-                    "Camera and tracker mode are for the webcam (MediaPipe) source. Change the source in the Tracking tab.",
-                    "カメラとトラッカーの動作は Web カメラ（MediaPipe）向けです。入力元の切替はトラッキングタブで。",
-                    "카메라와 트래커 동작은 웹캠(MediaPipe)용입니다. 입력 전환은 트래킹 탭에서.",
-                    "摄像头与追踪器模式适用于摄像头（MediaPipe）。请在追踪标签页切换输入源。",
-                    "攝影機與追蹤器模式適用於網路攝影機（MediaPipe）。請在追蹤分頁切換輸入來源。"));
+                    "IP address and ports for external apps are on the Tracking tab.",
+                    "外部アプリの IP アドレスやポートはトラッキングタブで設定します。",
+                    "외부 앱 IP·포트는 트래킹 탭에서 설정합니다.",
+                    "外部应用的 IP 和端口请在追踪标签页设置。",
+                    "外部應用程式的 IP 與連接埠請在追蹤分頁設定。"));
             }
 
             if (_process != null && !string.IsNullOrEmpty(_process.Status))
@@ -204,7 +188,7 @@ namespace VRCast.UI
                 "無法超過攝影機實際輸出的影格率（多數為 30fps）。"));
         }
 
-        private void DrawCameraLauncher()
+        private void DrawCameraLauncher(bool mediaPipe)
         {
             IReadOnlyList<string> cameras = _process.Cameras;
             int current = TrackerProcess.ResolveCameraIndex(
@@ -234,22 +218,28 @@ namespace VRCast.UI
                 _process.Restart();
             }
 
-            GUI.enabled = _process.IsRunning;
-            if (GUILayout.Button(Loc.T("Camera settings", "カメラ設定", "카메라 설정", "摄像头设置", "攝影機設定"),
-                    GuiControls.Shrinkable))
+            if (mediaPipe)
             {
-                _process.OpenCameraSettings();
+                GUI.enabled = _process.IsRunning;
+                if (GUILayout.Button(Loc.T("Camera settings", "カメラ設定", "카메라 설정", "摄像头设置", "攝影機設定"),
+                        GuiControls.Shrinkable))
+                {
+                    _process.OpenCameraSettings();
+                }
             }
 
             GUI.enabled = true;
             GUILayout.EndHorizontal();
 
-            GuiControls.Error(Loc.T(
-                "Camera settings are the camera’s own Windows settings, so they also apply in other apps.",
-                "カメラ設定は Windows のカメラ本体の設定なので、他のアプリにも影響します。",
-                "카메라 설정은 Windows 카메라 자체 설정이므로 다른 앱에도 영향을 줍니다.",
-                "摄像头设置是 Windows 摄像头本身的设置，也会影响其他应用。",
-                "攝影機設定是 Windows 攝影機本身的設定，也會影響其他應用程式。"));
+            if (mediaPipe)
+            {
+                GuiControls.Error(Loc.T(
+                    "Camera settings are the camera’s own Windows settings, so they also apply in other apps.",
+                    "カメラ設定は Windows のカメラ本体の設定なので、他のアプリにも影響します。",
+                    "카메라 설정은 Windows 카메라 자체 설정이므로 다른 앱에도 영향을 줍니다.",
+                    "摄像头设置是 Windows 摄像头本身的设置，也会影响其他应用。",
+                    "攝影機設定是 Windows 攝影機本身的設定，也會影響其他應用程式。"));
+            }
         }
 
         private void DrawFace()
@@ -353,7 +343,12 @@ namespace VRCast.UI
 
             _rendering.LowLoadMode = GUILayout.Toggle(
                 _rendering.LowLoadMode,
-                Loc.T("Low load mode", "軽量モード", "저부하 모드", "低负载模式", "低負載模式"));
+                Loc.T(
+                    $"Low load mode ({RenderingController.LowLoadFrameRate} fps cap)",
+                    $"軽量モード（{RenderingController.LowLoadFrameRate}fps 制限）",
+                    $"저부하 모드 ({RenderingController.LowLoadFrameRate}fps 제한)",
+                    $"低负载模式（{RenderingController.LowLoadFrameRate}fps 限制）",
+                    $"低負載模式（{RenderingController.LowLoadFrameRate}fps 限制）"));
 
             DrawVSync();
 

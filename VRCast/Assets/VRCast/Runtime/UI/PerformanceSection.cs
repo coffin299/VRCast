@@ -55,7 +55,11 @@ namespace VRCast.UI
 
             // 値が変わったときだけ反映（トラッカーは TrackerProcess が設定の変化を見て再起動する）
             bool lowLoad = GUILayout.Toggle(_rendering.LowLoadMode, Loc.T(
-                "Low load mode", "軽量モード", "저부하 모드", "低负载模式", "低負載模式"));
+                $"Low load mode ({RenderingController.LowLoadFrameRate} fps cap)",
+                    $"軽量モード（{RenderingController.LowLoadFrameRate}fps 制限）",
+                    $"저부하 모드 ({RenderingController.LowLoadFrameRate}fps 제한)",
+                    $"低负载模式（{RenderingController.LowLoadFrameRate}fps 限制）",
+                    $"低負載模式（{RenderingController.LowLoadFrameRate}fps 限制）"));
             if (lowLoad != _rendering.LowLoadMode)
             {
                 _rendering.LowLoadMode = lowLoad;

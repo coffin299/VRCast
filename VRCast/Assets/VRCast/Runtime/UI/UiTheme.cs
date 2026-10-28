@@ -46,6 +46,10 @@ namespace VRCast.UI
             public Color DangerActive;
             public Color Success;
             public Color Warning;
+            // はじめに・クイック設定（セージ緑。ベージュ／茶系に馴染む案内用）
+            public Color Home;
+            public Color HomeHover;
+            // パーフェクトシンク化・モード切替など（くすみティール。紫ではなく茶系テーマ向け）
             public Color Feature;
             public Color FeatureHover;
         }
@@ -73,8 +77,10 @@ namespace VRCast.UI
             DangerActive = new Color32(158, 42, 38, 255),
             Success = new Color32(52, 130, 76, 255),
             Warning = new Color32(160, 104, 0, 255),
-            Feature = new Color32(112, 84, 156, 255),
-            FeatureHover = new Color32(130, 102, 174, 255),
+            Home = new Color32(96, 122, 88, 255),
+            HomeHover = new Color32(112, 138, 102, 255),
+            Feature = new Color32(72, 112, 128, 255),
+            FeatureHover = new Color32(90, 130, 146, 255),
         };
 
         // ダーク（暗い焦げ茶の地、生成り色の文字、暗い地でも見えるよう明るめのキャラメル色のアクセント）
@@ -100,8 +106,10 @@ namespace VRCast.UI
             DangerActive = new Color32(166, 48, 42, 255),
             Success = new Color32(104, 186, 126, 255),
             Warning = new Color32(232, 184, 72, 255),
-            Feature = new Color32(118, 88, 166, 255),
-            FeatureHover = new Color32(136, 106, 184, 255),
+            Home = new Color32(118, 152, 110, 255),
+            HomeHover = new Color32(136, 170, 128, 255),
+            Feature = new Color32(96, 140, 156, 255),
+            FeatureHover = new Color32(114, 158, 174, 255),
         };
 
         // 使用中の配色（以下の名前で各 Build から参照する）
@@ -126,6 +134,8 @@ namespace VRCast.UI
         private Color DangerActive => _colors.DangerActive;
         private Color SuccessColor => _colors.Success;
         private Color WarningColor => _colors.Warning;
+        private Color HomeColor => _colors.Home;
+        private Color HomeHover => _colors.HomeHover;
         private Color FeatureColor => _colors.Feature;
         private Color FeatureHover => _colors.FeatureHover;
 
@@ -199,14 +209,17 @@ namespace VRCast.UI
         public GUIStyle Sidebar { get; private set; }
         public GUIStyle Tab { get; private set; }
 
-        // ほかと分けて目立たせるタブ（パーフェクトシンク化。未選択でも紫の塗り、選択中はアクセント色）
+        // はじめに・クイック設定（セージ緑。未選択でも塗り、選択中はアクセント色）
+        public GUIStyle HomeTab { get; private set; }
+
+        // ほかと分けて目立たせるタブ（パーフェクトシンク化。未選択でもくすみティールの塗り、選択中はアクセント色）
         public GUIStyle FeatureTab { get; private set; }
 
-        // 起動時の大きいモードボタン（配信 = アクセント、マスコット = 紫）
+        // 起動時の大きいモードボタン（配信 = アクセント、マスコット = くすみティール）
         public GUIStyle ModeButton { get; private set; }
         public GUIStyle FeatureModeButton { get; private set; }
 
-        // 配信画面の見出しにある「モード」と「?」。言語ボタンと区別する紫
+        // 配信画面の見出しにある「モード」と「?」。言語ボタンと区別するくすみティール
         public GUIStyle HeaderButton { get; private set; }
 
         // 短い文字のボタン（言語の切替など。代替フォントの字形が下へはみ出しても切らない）
@@ -563,7 +576,12 @@ namespace VRCast.UI
             SetStates(Tab, null, Rounded(ControlHover, ControlRadius), Rounded(ControlActive, ControlRadius), TextDim);
             Tab.hover.textColor = TextColor;
 
-            // 目立たせるタブ（太字・紫の塗り。押している間は少し暗く）
+            // はじめに・クイック設定（太字・セージ緑。押している間は少し暗く）
+            HomeTab = new GUIStyle(Tab) { fontStyle = FontStyle.Bold };
+            SetStates(HomeTab, Rounded(HomeColor, ControlRadius), Rounded(HomeHover, ControlRadius),
+                Rounded(Color.Lerp(HomeColor, Color.black, 0.15f), ControlRadius), OnAccent);
+
+            // パーフェクトシンク化など（太字・くすみティール。押している間は少し暗く）
             FeatureTab = new GUIStyle(Tab) { fontStyle = FontStyle.Bold };
             SetStates(FeatureTab, Rounded(FeatureColor, ControlRadius), Rounded(FeatureHover, ControlRadius),
                 Rounded(Color.Lerp(FeatureColor, Color.black, 0.15f), ControlRadius), OnAccent);

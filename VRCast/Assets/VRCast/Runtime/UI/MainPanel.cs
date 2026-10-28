@@ -160,8 +160,6 @@ namespace VRCast.UI
             _spout = spout;
             _avatarSection = new AvatarSection(session, settings, initialPath);
             _startSection = new StartSection(session, _avatarSection, rendering, virtualCamera, OpenLink);
-            _quickSettingsSection = new QuickSettingsSection(
-                session, _avatarSection, trackerProcess, rendering, virtualCamera, spout, settings, OpenLink);
             _animationSection = new AnimationSection(session, settings);
             _objectSection = new ObjectSection(session, settings);
             _particleSection = new ParticleSection(session, settings);
@@ -171,6 +169,9 @@ namespace VRCast.UI
             _perfectSyncEditor = new PerfectSyncEditor(session, orbit, settings);
             _perfectSyncSection = new PerfectSyncSection(session, _perfectSyncEditor);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
+            _quickSettingsSection = new QuickSettingsSection(
+                session, _avatarSection, _trackingSection, trackerProcess, rendering, virtualCamera, spout,
+                settings, OpenLink);
             _displaySection = new DisplaySection(orbit, rendering, settings);
             _graphicsSection = new GraphicsSection(rendering, settings, ReapplySettings);
 
@@ -792,7 +793,7 @@ namespace VRCast.UI
             for (int i = 0; i < TabCount; i++)
             {
                 var tab = (Tab)i;
-                GUIStyle style = tab == Tab.PerfectSync ? _theme.FeatureTab : _theme.Tab;
+                GUIStyle style = SidebarTabStyle(tab);
                 widest = Mathf.Max(widest, style.CalcSize(new GUIContent(TabLabel(tab))).x + style.margin.horizontal);
             }
 
@@ -818,9 +819,8 @@ namespace VRCast.UI
                     GUILayout.Space(TabGroupSpacing);
                 }
 
-                // パーフェクトシンク化だけは別の色で目立たせる
-                GUIStyle style = tab == Tab.PerfectSync ? _theme.FeatureTab : _theme.Tab;
-                if (GUILayout.Toggle(_tab == tab, TabLabel(tab), style) && _tab != tab)
+                // はじめに・クイック設定はセージ、パーフェクトシンク化はくすみティールで分ける
+                if (GUILayout.Toggle(_tab == tab, TabLabel(tab), SidebarTabStyle(tab)) && _tab != tab)
                 {
                     _tab = tab;
                     // 前のタブの横幅計算の名残で右が見切れないよう、移動先の横スクロールを戻す
@@ -830,6 +830,21 @@ namespace VRCast.UI
 
             GUILayout.EndScrollView();
             GUILayout.EndVertical();
+        }
+
+        private GUIStyle SidebarTabStyle(Tab tab)
+        {
+            if (tab == Tab.Start || tab == Tab.QuickSettings)
+            {
+                return _theme.HomeTab;
+            }
+
+            if (tab == Tab.PerfectSync)
+            {
+                return _theme.FeatureTab;
+            }
+
+            return _theme.Tab;
         }
 
         private void DrawContent()

@@ -165,7 +165,7 @@ namespace VRCast.UI
             if (_settings.trackingEnabled)
             {
                 DrawHold();
-                DrawSource();
+                DrawInputSource();
 
                 // 外部アプリ（併用を含む）は、接続に必要な IP アドレス・ポートを入力元のすぐ下に出す（見落とさないように）
                 TrackingSource network = TrackingSourceInfo.NetworkSourceOf(_settings.trackingSource);
@@ -229,7 +229,10 @@ namespace VRCast.UI
             }
         }
 
-        private void DrawSource()
+        /// <summary>
+        /// 入力元（方式）の選択。クイック設定からも同じ UI を出す。
+        /// </summary>
+        public void DrawInputSource()
         {
             // 入力元ごとのスイッチを縦に並べ、ON にしたものへ切り替える（変更するとトラッカー・受信が起動し直す）
             GUILayout.Label(Loc.T("Source", "入力元", "입력 소스", "输入源", "輸入來源"));
