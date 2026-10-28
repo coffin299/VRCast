@@ -198,6 +198,14 @@ namespace VRCast.Tests
                 };
                 Assert.That(PerfectSyncBlendShapes.DetectNaming(ueRoot.transform, bindings: bindings),
                     Is.EqualTo(PerfectSyncNaming.ArKit));
+
+                // 設定で系統を固定できること（自動なら UE になるアバターでも ARKit を選べる）
+                Assert.That(
+                    PerfectSyncBlendShapes.DetectNaming(ueRoot.transform, mode: PerfectSyncNamingMode.ArKit),
+                    Is.EqualTo(PerfectSyncNaming.ArKit));
+                Assert.That(
+                    PerfectSyncBlendShapes.DetectNaming(arKitRoot.transform, mode: PerfectSyncNamingMode.Unified),
+                    Is.EqualTo(PerfectSyncNaming.Unified));
             }
             finally
             {

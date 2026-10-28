@@ -859,7 +859,7 @@ namespace VRCast.UI
                 return;
             }
 
-            // 有効にする条件（規定数以上 / 1 種類でも）。排他で選ぶ。変わると ARKit / UE の自動選択も変わる
+            // 有効にする条件（規定数以上 / 1 種類でも）。排他で選ぶ。変わると自動選択の判定も変わる
             int min = PerfectSyncBlendShapes.MinMatchedShapes;
             string[] labels =
             {
@@ -871,9 +871,23 @@ namespace VRCast.UI
                 Loc.T("Enable when", "有効にする条件", "활성화 조건", "启用条件", "啟用條件"),
                 labels, anyShape ? 1 : 0) == 1;
 
+            // 名前系統（自動 / ARKit / Unified Expressions）
+            string[] namingLabels =
+            {
+                Loc.T("Auto", "自動", "자동", "自动", "自動"),
+                "ARKit",
+                "Unified Expressions",
+            };
+            var namingMode = _settings.trackingPerfectSyncNaming;
+            _settings.trackingPerfectSyncNaming = (PerfectSyncNamingMode)GuiControls.EnumSelector(
+                Loc.T("Blend shape names", "BlendShape の名前", "BlendShape 이름", "BlendShape 名称", "BlendShape 名稱"),
+                namingLabels, (int)namingMode);
+
             // 口の開きの補正と口・頬の強調（アバター未表示でも設定はできる）
             var driver = _avatar.Get<FaceTrackingDriver>();
-            if (driver != null && anyShape != _settings.trackingPerfectSyncAnyShape)
+            if (driver != null
+                && (anyShape != _settings.trackingPerfectSyncAnyShape
+                    || namingMode != _settings.trackingPerfectSyncNaming))
             {
                 driver.RefreshPerfectSyncNaming();
             }
@@ -886,35 +900,44 @@ namespace VRCast.UI
                 return;
             }
 
-            // 対応状況（選ばれた名前系統と見つかった種類数）
+            // 対応状況（いま使っている系統・件数と、アバター上の両系統の件数）
             int count = driver.PerfectSyncShapeCount;
             int total = ArKitFace.BlendShapeNames.Length;
             int required = _settings.trackingPerfectSyncAnyShape ? 1 : min;
+            driver.GetPerfectSyncNameCounts(out int arKitCount, out int unifiedCount);
             string naming = driver.ActivePerfectSyncNaming == PerfectSyncNaming.Unified
                 ? "Unified Expressions"
                 : "ARKit";
-            string namingJa = driver.ActivePerfectSyncNaming == PerfectSyncNaming.Unified
-                ? "Unified Expressions"
-                : "ARKit";
-            GuiControls.Hint(driver.SupportsPerfectSync
-                ? Loc.T($"Supported ({naming} {count}/{total})",
-                    $"対応アバター（{namingJa} {count}/{total}）",
-                    $"지원 아바타 ({naming} {count}/{total})",
-                    $"支持的虚拟形象（{naming} {count}/{total}）",
-                    $"支援的虛擬形象（{naming} {count}/{total}）")
-                : Loc.T($"This avatar does not support it ({naming} {count}/{total}, needs {required}+)",
-                    $"このアバターは非対応です（{namingJa} {count}/{total}、{required} 個以上で対応）",
-                    $"이 아바타는 지원하지 않습니다 ({naming} {count}/{total}, {required}개 이상 필요)",
-                    $"此虚拟形象不支持（{naming} {count}/{total}，需要 {required} 个以上）",
-                    $"此虛擬形象不支援（{naming} {count}/{total}，需要 {required} 個以上）"));
-
-            // ARKit / Unified Expressions の自動選択を伝える
             GuiControls.Hint(Loc.T(
-                "Picks ARKit or Unified Expressions names automatically (whichever matches more)",
-                "ARKit 名と Unified Expressions 名の多い方を自動で使います",
-                "ARKit 이름과 Unified Expressions 이름 중 더 많이 맞는 쪽을 자동으로 사용합니다",
-                "自动选用匹配更多的 ARKit 或 Unified Expressions 名称",
-                "自動選用匹配較多的 ARKit 或 Unified Expressions 名稱"));
+                $"Using: {naming} ({count}/{total})",
+                $"使用中: {naming}（{count}/{total}）",
+                $"사용 중: {naming} ({count}/{total})",
+                $"正在使用: {naming}（{count}/{total}）",
+                $"使用中: {naming}（{count}/{total}）"));
+            GuiControls.Hint(Loc.T(
+                $"On this avatar: ARKit {arKitCount}, Unified Expressions {unifiedCount}",
+                $"このアバター: ARKit {arKitCount}、Unified Expressions {unifiedCount}",
+                $"이 아바타: ARKit {arKitCount}, Unified Expressions {unifiedCount}",
+                $"此虚拟形象: ARKit {arKitCount}、Unified Expressions {unifiedCount}",
+                $"此虛擬形象: ARKit {arKitCount}、Unified Expressions {unifiedCount}"));
+            GuiControls.Hint(driver.SupportsPerfectSync
+                ? Loc.T("Supported", "対応アバター", "지원 아바타", "支持的虚拟形象", "支援的虛擬形象")
+                : Loc.T($"This avatar does not support it (needs {required}+)",
+                    $"このアバターは非対応です（{required} 個以上で対応）",
+                    $"이 아바타는 지원하지 않습니다 ({required}개 이상 필요)",
+                    $"此虚拟形象不支持（需要 {required} 个以上）",
+                    $"此虛擬形象不支援（需要 {required} 個以上）"));
+
+            // 自動のときの選び方を伝える
+            if (_settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Auto)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Auto picks whichever name set matches more",
+                    "自動は一致数の多い名前系統を選びます",
+                    "자동은 일치 수가 많은 이름 체계를 고릅니다",
+                    "自动会选用匹配更多的名称体系",
+                    "自動會選用匹配較多的名稱體系"));
+            }
 
             // 規定数未満で動かしている間は、表情プリセットも併用されることを伝える
             if (driver.SupportsPerfectSync && count < min)

@@ -169,17 +169,29 @@ namespace VRCast.Tracking
 
         /// <summary>
         /// root 以下の BlendShape 名から ARKit / Unified それぞれの一致数を数え、使う系統を決める。
-        /// 両方とも有効条件を満たすときは件数が多い方（同数なら ARKit）。片方だけ満たすときはそちら。
+        /// mode が Auto 以外ならその系統を使う（bindings があるときだけ常に ARKit）。
+        /// Auto のときは、両方とも有効条件を満たすなら件数が多い方（同数なら ARKit）。片方だけ満たすときはそちら。
         /// どちらも足りなければ件数が多い方（同数なら ARKit）。
-        /// bindings（パーフェクトシンク化の割り当て）があれば ARKit 固定。
         /// </summary>
         public static PerfectSyncNaming DetectNaming(
-            Transform root, bool anyShape = false, IReadOnlyList<PerfectSyncBinding> bindings = null)
+            Transform root, bool anyShape = false, IReadOnlyList<PerfectSyncBinding> bindings = null,
+            PerfectSyncNamingMode mode = PerfectSyncNamingMode.Auto)
         {
             // パーフェクトシンク化の割り当ては ARKit 名キーなので ARKit 固定
             if (bindings != null && bindings.Count > 0)
             {
                 return PerfectSyncNaming.ArKit;
+            }
+
+            // 設定で系統を固定しているとき
+            if (mode == PerfectSyncNamingMode.ArKit)
+            {
+                return PerfectSyncNaming.ArKit;
+            }
+
+            if (mode == PerfectSyncNamingMode.Unified)
+            {
+                return PerfectSyncNaming.Unified;
             }
 
             CountMatches(root, out int arKit, out int unified);
@@ -223,9 +235,9 @@ namespace VRCast.Tracking
         /// </summary>
         public static PerfectSyncBlendShapes Create(
             Transform root, IReadOnlyList<PerfectSyncBinding> bindings = null, bool anyShape = false,
-            PerfectSyncNaming? naming = null)
+            PerfectSyncNaming? naming = null, PerfectSyncNamingMode namingMode = PerfectSyncNamingMode.Auto)
         {
-            PerfectSyncNaming mode = naming ?? DetectNaming(root, anyShape, bindings);
+            PerfectSyncNaming mode = naming ?? DetectNaming(root, anyShape, bindings, namingMode);
             var targets = new List<Target>[ArKitFace.BlendShapeNames.Length];
             var slots = new SlotTable();
             int matched = AddBindings(root, bindings, targets, slots);

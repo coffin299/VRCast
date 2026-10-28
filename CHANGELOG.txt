@@ -7,10 +7,10 @@ Newest first. Each version is written in Japanese, then English.
 ■ 4.2.0 (2026-10-29)
 
 [日本語]
-- パーフェクトシンクで VRCFaceTracking の Unified Expressions 名の BlendShape に対応（読み込み時に ARKit 名と UE 名の多い方を自動で選びます）
+- パーフェクトシンクで VRCFaceTracking の Unified Expressions 名の BlendShape に対応（自動 / ARKit / Unified Expressions を選べ、今使っている系統と件数も表示します）
 
 [English]
-- Added Perfect sync support for VRCFaceTracking Unified Expressions blend shape names (on load, picks ARKit or UE names automatically by which matches more)
+- Added Perfect sync support for VRCFaceTracking Unified Expressions blend shape names (choose Auto / ARKit / Unified Expressions, and see which set is in use and how many shapes match)
 
 ■ 4.1.0 (2026-10-26)
 

@@ -317,7 +317,8 @@ namespace VRCast.Tracking
             // 視線用 BlendShape（「上を見る」等）を探しておく（Humanoid でなくても顔は動かせる）
             _perfectSyncBindings = perfectSyncBindings;
             _perfectSync = PerfectSyncBlendShapes.Create(
-                transform, _perfectSyncBindings, settings != null && settings.trackingPerfectSyncAnyShape);
+                transform, _perfectSyncBindings, settings != null && settings.trackingPerfectSyncAnyShape,
+                namingMode: settings != null ? settings.trackingPerfectSyncNaming : PerfectSyncNamingMode.Auto);
             _gazeBlendShapes = GazeBlendShapes.Create(transform);
 
             // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口・視線の BlendShape だけ）
@@ -371,17 +372,26 @@ namespace VRCast.Tracking
             _perfectSync?.Release();
             _gazeBlendShapes?.Release();
             _perfectSync = PerfectSyncBlendShapes.Create(
-                transform, _perfectSyncBindings, _settings != null && _settings.trackingPerfectSyncAnyShape);
+                transform, _perfectSyncBindings, _settings != null && _settings.trackingPerfectSyncAnyShape,
+                namingMode: _settings != null ? _settings.trackingPerfectSyncNaming : PerfectSyncNamingMode.Auto);
             _gazeBlendShapes = GazeBlendShapes.Create(transform);
             _eyeLight.Bind(transform, _leftEye, _rightEye);
         }
 
         /// <summary>
-        /// 名前の系統を設定の有効条件に合わせて選び直す（割り当ては前回のまま）。
+        /// 名前の系統を設定に合わせて選び直す（割り当ては前回のまま）。
         /// </summary>
         public void RefreshPerfectSyncNaming()
         {
             RebuildPerfectSync(_perfectSyncBindings);
+        }
+
+        /// <summary>
+        /// このアバターでの ARKit / Unified Expressions 名の一致数（表示用）。
+        /// </summary>
+        public void GetPerfectSyncNameCounts(out int arKitCount, out int unifiedCount)
+        {
+            PerfectSyncBlendShapes.CountMatches(transform, out arKitCount, out unifiedCount);
         }
 
         /// <summary>

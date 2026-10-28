@@ -413,6 +413,9 @@ namespace VRCast.Core
         // パーフェクトシンクを有効にする条件（false = ARKit 名が MinMatchedShapes 種類以上、true = 1 種類でもあれば）
         public bool trackingPerfectSyncAnyShape;
 
+        // パーフェクトシンクの名前系統（Auto = 一致数で自動、ArKit / Unified で固定）
+        public PerfectSyncNamingMode trackingPerfectSyncNaming = PerfectSyncNamingMode.Auto;
+
         // パーフェクトシンクの口の開き（jawOpen）: この開きまでは閉じた口とみなし、残りを倍率で抑える・強める
         public float trackingJawOpenDeadzone;
         public float trackingJawOpenGain = 1f;
@@ -1250,6 +1253,12 @@ namespace VRCast.Core
             if (!Enum.IsDefined(typeof(MotionSmoothing), trackingSmoothing))
             {
                 trackingSmoothing = MotionSmoothing.Lowest;
+            }
+
+            // 未知のパーフェクトシンクの名前系統は自動へ
+            if (!Enum.IsDefined(typeof(PerfectSyncNamingMode), trackingPerfectSyncNaming))
+            {
+                trackingPerfectSyncNaming = PerfectSyncNamingMode.Auto;
             }
 
             // 未知の GPU の優先設定は Windows に任せる
