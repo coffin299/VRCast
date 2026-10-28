@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
@@ -408,8 +409,12 @@ namespace VRCast.Tracking
         // MediaPipe トラッカーへ標準入力で送るコマンド（vrcast_tracker.py の COMMAND_CAMERA_SETTINGS と一致）
         private const string CameraSettingsCommand = "camera-settings";
 
+        // トラッカーがカメラ設定ダイアログを前面に出せるよう、フォーカス移動を許可する
+        [DllImport("user32.dll")]
+        private static extern bool AllowSetForegroundWindow(int processId);
+
         /// <summary>
-        /// 起動中の MediaPipe トラッカーに、開いているカメラの DirectShow 設定画面を開かせる。
+        /// 起動中の MediaPipe トラッカーに、開いているカメラの DirectShow 設定画面を前面に開かせる。
         /// 送れなければ false（未起動・OpenSeeFace・古いトラッカーなど）。
         /// </summary>
         public bool OpenCameraSettings()
@@ -419,6 +424,8 @@ namespace VRCast.Tracking
                 return false;
             }
 
+            // Windows のフォーカス制限を外し、トラッカー側でダイアログを前面化できるようにする
+            AllowSetForegroundWindow(_process.Id);
             return _process.TryWriteLine(CameraSettingsCommand);
         }
 

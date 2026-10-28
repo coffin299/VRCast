@@ -959,15 +959,88 @@ def open_camera(index, width, height, fps):
     return capture
 
 
+def _raise_owned_dialogs(stop_event):
+    """このプロセスのダイアログ（カメラ設定）を前面・最前面にする（CAP_PROP_SETTINGS 中に並行実行）。"""
+    import ctypes
+    from ctypes import wintypes
+
+    user32 = ctypes.windll.user32
+    kernel32 = ctypes.windll.kernel32
+    our_pid = os.getpid()
+    dialog_class = "#32770"
+    hwnd_topmost = -1
+    hwnd_notopmost = -2
+    swp_nosize = 0x0001
+    swp_nomove = 0x0002
+    swp_showwindow = 0x0040
+    sw_restore = 9
+    raised = set()
+
+    @ctypes.WINFUNCTYPE(wintypes.BOOL, wintypes.HWND, wintypes.LPARAM)
+    def enum_proc(hwnd, _lparam):
+        if not user32.IsWindowVisible(hwnd):
+            return True
+        pid = wintypes.DWORD()
+        user32.GetWindowThreadProcessId(hwnd, ctypes.byref(pid))
+        if pid.value != our_pid:
+            return True
+        class_name = ctypes.create_unicode_buffer(256)
+        user32.GetClassNameW(hwnd, class_name, 256)
+        if class_name.value != dialog_class:
+            return True
+        # 最小化されていれば戻し、最前面にしてフォーカスを渡す
+        user32.ShowWindow(hwnd, sw_restore)
+        user32.SetWindowPos(
+            hwnd, hwnd_topmost, 0, 0, 0, 0,
+            swp_nomove | swp_nosize | swp_showwindow)
+        foreground = user32.GetForegroundWindow()
+        if foreground:
+            foreground_tid = user32.GetWindowThreadProcessId(foreground, None)
+            our_tid = kernel32.GetCurrentThreadId()
+            attached = False
+            if foreground_tid and foreground_tid != our_tid:
+                attached = bool(user32.AttachThreadInput(
+                    our_tid, foreground_tid, True))
+            user32.BringWindowToTop(hwnd)
+            user32.SetForegroundWindow(hwnd)
+            if attached:
+                user32.AttachThreadInput(our_tid, foreground_tid, False)
+        else:
+            user32.BringWindowToTop(hwnd)
+            user32.SetForegroundWindow(hwnd)
+        raised.add(hwnd)
+        return True
+
+    # ダイアログが出るまで繰り返し前面化する（閉じたら stop）
+    while not stop_event.wait(0.12):
+        user32.EnumWindows(enum_proc, 0)
+
+    # 閉じたあと最前面固定を外す（残っていれば）
+    for hwnd in raised:
+        if user32.IsWindow(hwnd):
+            user32.SetWindowPos(
+                hwnd, hwnd_notopmost, 0, 0, 0, 0,
+                swp_nomove | swp_nosize)
+
+
 def open_camera_settings(capture):
-    """開いているカメラの DirectShow プロパティ画面を出す（モーダル。非対応なら WARN）。"""
+    """開いているカメラの DirectShow プロパティ画面を VRCast の前面に出す（モーダル。非対応なら WARN）。"""
     log("INFO", "Opening camera settings dialog")
+    stop = threading.Event()
+    raiser = threading.Thread(
+        target=_raise_owned_dialogs, args=(stop,),
+        name="camera-settings-raise", daemon=True)
+    raiser.start()
+    ok = False
     try:
         # CAP_PROP_SETTINGS は DirectShow のプロパティページ。戻るまでブロックする
-        ok = capture.set(cv2.CAP_PROP_SETTINGS, 1)
+        ok = bool(capture.set(cv2.CAP_PROP_SETTINGS, 1))
     except cv2.error as error:
         log("WARN", f"Camera settings failed: {error}")
         return
+    finally:
+        stop.set()
+        raiser.join(2.0)
     if ok:
         log("INFO", "Camera settings dialog closed")
     else:

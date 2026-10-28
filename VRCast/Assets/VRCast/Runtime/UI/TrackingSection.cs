@@ -520,6 +520,12 @@ namespace VRCast.UI
                 "카메라 캡처와 얼굴·포즈 추정 목표(15~120). 높을수록 CPU를 더 씁니다. 바꾸면 트래커가 다시 시작합니다.",
                 "摄像头采集与面部/姿态估计目标（15–120）。越高越耗 CPU。更改后会重启追踪器。",
                 "攝影機擷取與臉部／姿態估計目標（15–120）。越高越耗 CPU。變更後會重新啟動追蹤器。"));
+            GuiControls.Error(Loc.T(
+                "Cannot go above what the camera actually delivers (often 30 fps). Setting this higher will not invent frames.",
+                "カメラが実際に出せるフレームレートより上にはなりません（多くのカメラは 30fps 止まり）。高く設定しても映像が増えるわけではありません。",
+                "카메라가 실제로 내는 프레임레이트보다 높게는 되지 않습니다(대개 30fps). 더 높게 설정해도 영상이 늘지는 않습니다.",
+                "无法超过摄像头实际输出的帧率（多数为 30fps）。设得再高也不会多出画面。",
+                "無法超過攝影機實際輸出的影格率（多數為 30fps）。設得再高也不會多出畫面。"));
         }
 
         private void DrawHands()
@@ -1213,12 +1219,12 @@ namespace VRCast.UI
             GuiControls.Hint(_process.Status);
             if (TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe)
             {
-                GuiControls.Hint(Loc.T(
-                    "Camera settings opens the driver’s property page (exposure, frame rate, etc.). Use it if low light auto-exposure drops the real capture FPS — Tracking FPS alone cannot lock that. Not all cameras show a dialog. The dialog is modal while open.",
-                    "カメラ設定はドライバーのプロパティ画面（露出・フレームレートなど）を開きます。暗いと自動露出で実 FPS が落ちるときはここで固定できます（トラッキング FPS だけでは防げません）。機種によっては画面が出ません。開いている間はモーダルです。",
-                    "카메라 설정은 드라이버 속성 창(노출·프레임레이트 등)을 엽니다. 어두운 곳의 자동 노출로 실제 FPS가 떨어질 때 여기서 고정하세요. Tracking FPS만으로는 막을 수 없습니다. 기기에 따라 창이 없을 수 있으며, 열린 동안은 모달입니다.",
-                    "摄像头设置会打开驱动属性页（曝光、帧率等）。光线不足导致自动曝光拉低实际 FPS 时，可在此锁定（仅靠追踪 FPS 无法防止）。部分摄像头不会显示对话框。打开期间为模态。",
-                    "攝影機設定會開啟驅動程式屬性頁（曝光、影格率等）。光線不足導致自動曝光拉低實際 FPS 時，可在此鎖定（僅靠追蹤 FPS 無法防止）。部分攝影機會沒有對話框。開啟期間為模態。"));
+                GuiControls.Warning(Loc.T(
+                    "Camera settings opens the driver’s property page in front (Image / Camera Control: exposure, frame rate, etc.). Use it if low light auto-exposure drops the real capture FPS — Tracking FPS alone cannot lock that. Not all cameras show a dialog. Tracking pauses while it is open.",
+                    "カメラ設定はドライバーのプロパティ画面を前面に出します（画像の調整 / カメラ制御：露出・フレームレートなど）。暗いと自動露出で実 FPS が落ちるときはここで固定できます（トラッキング FPS だけでは防げません）。機種によっては画面が出ません。開いている間はトラッキングが止まります。",
+                    "카메라 설정은 드라이버 속성 창을 앞으로 엽니다(이미지 조정/카메라 제어: 노출·프레임레이트 등). 어두운 곳의 자동 노출로 실제 FPS가 떨어질 때 여기서 고정하세요. Tracking FPS만으로는 막을 수 없습니다. 기기에 따라 창이 없을 수 있으며, 열린 동안 트래킹이 멈춥니다.",
+                    "摄像头设置会把驱动属性页提到前面（图像调整/相机控制：曝光、帧率等）。光线不足导致自动曝光拉低实际 FPS 时，可在此锁定（仅靠追踪 FPS 无法防止）。部分摄像头不会显示对话框。打开期间追踪会暂停。",
+                    "攝影機設定會把驅動程式屬性頁提到前面（影像調整／攝影機控制：曝光、影格率等）。光線不足導致自動曝光拉低實際 FPS 時，可在此鎖定（僅靠追蹤 FPS 無法防止）。部分攝影機會沒有對話框。開啟期間追蹤會暫停。"));
             }
         }
 

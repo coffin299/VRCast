@@ -9,15 +9,15 @@ Newest first. Each version is written in Japanese, then English.
 [日本語]
 - パーフェクトシンクで VRCFaceTracking の Unified Expressions 名の BlendShape に対応（自動 / ARKit / Unified Expressions を選べ、今使っている系統と件数も表示します）
 - パフォーマンスタブに垂直同期（オフ / オン / NVIDIA Fast Sync / VRR）と FPS 上限（15〜400）の設定を追加
-- トラッキングタブにトラッキング FPS（カメラ取得・推定の目標、15〜120）の設定を追加
-- トラッキングタブに、起動中の Web カメラの設定画面（露出・フレームレートなど）を開くボタンを追加
+- トラッキングタブにトラッキング FPS（カメラ取得・推定の目標、15〜120）の設定を追加（カメラ性能以上には上がらない旨を表示）
+- トラッキングタブに、起動中の Web カメラの設定画面（露出・フレームレートなど）を前面に開くボタンを追加
 - PhysBone の Gravity Falloff が、静止姿勢に近いほど重力を弱める正しい動きになるよう修正（胸など横向きのボーンが Limit まで垂れにくくなります）
 
 [English]
 - Added Perfect sync support for VRCFaceTracking Unified Expressions blend shape names (choose Auto / ARKit / Unified Expressions, and see which set is in use and how many shapes match)
 - Added V-Sync (Off / On / NVIDIA Fast Sync / VRR) and FPS limit (15–400) settings to the Performance tab
-- Added a Tracking FPS setting (camera capture and inference target, 15–120) to the Tracking tab
-- Added a Tracking tab button that opens the running webcam’s settings dialog (exposure, frame rate, and so on)
+- Added a Tracking FPS setting (camera capture and inference target, 15–120) to the Tracking tab, with a note that it cannot exceed what the camera delivers
+- Added a Tracking tab button that opens the running webcam’s settings dialog in front (exposure, frame rate, and so on)
 - Fixed PhysBone Gravity Falloff so gravity weakens as bones approach their rest pose (chest and similar sideways bones are less likely to droop to the angle limit)
 
 ■ 4.1.0 (2026-10-26)

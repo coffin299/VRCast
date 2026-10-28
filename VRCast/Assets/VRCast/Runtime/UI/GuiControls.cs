@@ -218,6 +218,15 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// 制限・失敗などの 1 行（テーマの赤。折り返しあり）。
+        /// </summary>
+        public static void Error(string text)
+        {
+            UiTheme theme = UiTheme.Current;
+            GUILayout.Label(text, theme == null ? GUI.skin.label : theme.ErrorWrapped);
+        }
+
+        /// <summary>
         /// ラベル + ボタンの 1 行を描画し、ボタンが押されたら true。
         /// </summary>
         public static bool LabeledButton(string label, string text)
