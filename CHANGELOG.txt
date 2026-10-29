@@ -10,13 +10,13 @@ Newest first. Each version is written in Japanese, then English.
 - パーフェクトシンクの BlendShape 名に「手動生成」を追加（自動 / ARKit / Unified Expressions / 手動生成から選べます。手動生成は ARKit 名優先で、足りない枠だけ Unified 名も使います）
 - Unified Expressions 選択時、別名が無い ARKit 名（eyeBlinkLeft など）にもフォールバックするよう修正
 - Unified Expressions の両目・両側まとめ名（EyeLookUp / MouthSmile / BrowDown など）をしきい値の対象になるよう対応
-- パーフェクトシンクが「見る」方向の BlendShape を動かしているとき、目のボーンと視線用 BlendShape を二重に動かさないよう修正（しきい値が効くように）
+- 目ボーンがあるアバターでは「見る」方向をボーンに任せ、eyeLook の BlendShape と二重に動かさないよう修正（目が止まってしまう問題）
 
 [English]
 - Added Handmade to perfect sync blend shape names (choose Auto / ARKit / Unified Expressions / Handmade; Handmade prefers ARKit names and fills gaps with Unified names)
 - Fixed Unified Expressions mode to fall back to ARKit names (such as eyeBlinkLeft) when Unified aliases are absent
 - Added Unified Expressions combined shapes (EyeLookUp, MouthSmile, BrowDown, and similar) so thresholds apply to them
-- Fixed perfect sync look shapes so eye bones and gaze blend shapes are not driven at the same time (thresholds apply as expected)
+- Fixed eye look so avatars with eye bones use the bones (and do not freeze when eyeLook blend shapes are also present)
 
 ■ 4.3.0 (2026-10-29)
 

@@ -344,6 +344,38 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Create_SkipEyeLookLeavesLookShapesUndriven()
+        {
+            // 目ボーンがあるときは eyeLook を書かず、まばたきなど他は動かす
+            var root = MakeFace("BonesAndLook", new[]
+            {
+                "eyeBlinkLeft", "eyeBlinkRight", "eyeLookUpLeft", "eyeLookUpRight", "jawOpen",
+            });
+            var renderer = root.GetComponentInChildren<SkinnedMeshRenderer>();
+            try
+            {
+                PerfectSyncBlendShapes sync = PerfectSyncBlendShapes.Create(
+                    root.transform, naming: PerfectSyncNaming.ArKit, skipEyeLook: true);
+                Assert.That(sync.DrivesEyeLook, Is.False);
+                Assert.That(sync.DrivesBlink, Is.True);
+
+                var scores = new float[ArKitFace.BlendShapeNames.Length];
+                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft")] = 1f;
+                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeLookUpLeft")] = 1f;
+                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeLookUpRight")] = 1f;
+                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true);
+
+                Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(100f).Within(0.01f));
+                Assert.That(Weight(renderer, "eyeLookUpLeft"), Is.EqualTo(0f).Within(0.01f));
+                Assert.That(Weight(renderer, "eyeLookUpRight"), Is.EqualTo(0f).Within(0.01f));
+            }
+            finally
+            {
+                DestroyFace(root);
+            }
+        }
+
+        [Test]
         public void Create_HandmadePrefersArKitThenFillsUnified()
         {
             // 手動生成: ARKit のまばたきを優先し、無い見る方向だけ Unified の両目まとめを使う

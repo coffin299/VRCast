@@ -328,17 +328,16 @@ namespace VRCast.Tracking
             _expressions = expressions;
             _settings = settings;
 
-            // ARKit / Unified Expressions 名の BlendShape（パーフェクトシンク化で割り当てた既存の BlendShape を含む）と、
-            // 視線用 BlendShape（「上を見る」等）を探しておく（Humanoid でなくても顔は動かせる）
             _perfectSyncBindings = perfectSyncBindings;
-            _perfectSync = PerfectSyncBlendShapes.Create(
-                transform, _perfectSyncBindings, settings != null && settings.trackingPerfectSyncAnyShape,
-                namingMode: settings != null ? settings.trackingPerfectSyncNaming : PerfectSyncNamingMode.Auto);
             _gazeBlendShapes = GazeBlendShapes.Create(transform);
 
-            // Humanoid のみ頭を動かす（非 Humanoid はまばたき・口・視線の BlendShape だけ）
+            // Humanoid のみ頭・目ボーンを動かす（非 Humanoid はまばたき・口・視線の BlendShape だけ）
             if (animator == null || !animator.isHuman)
             {
+                // 目ボーンが無いので eyeLook* もパーフェクトシンクで動かす
+                _perfectSync = PerfectSyncBlendShapes.Create(
+                    transform, _perfectSyncBindings, settings != null && settings.trackingPerfectSyncAnyShape,
+                    namingMode: settings != null ? settings.trackingPerfectSyncNaming : PerfectSyncNamingMode.Auto);
                 _eyeLight.Bind(null, null, null);
                 return;
             }
@@ -358,11 +357,15 @@ namespace VRCast.Tracking
             _neckRest = RestOf(_neck);
             _headRest = RestOf(_head);
 
-            // 目ボーン（無ければ視線は GazeBlendShapes のみ）
+            // 目ボーンを先に取り、あれば見る方向はボーンに任せる（eyeLook* との二重駆動で目が止まるのを防ぐ）
             _leftEye = animator.GetBoneTransform(HumanBodyBones.LeftEye);
             _rightEye = animator.GetBoneTransform(HumanBodyBones.RightEye);
             _leftEyeRest = RestOf(_leftEye);
             _rightEyeRest = RestOf(_rightEye);
+            _perfectSync = PerfectSyncBlendShapes.Create(
+                transform, _perfectSyncBindings, settings != null && settings.trackingPerfectSyncAnyShape,
+                namingMode: settings != null ? settings.trackingPerfectSyncNaming : PerfectSyncNamingMode.Auto,
+                skipEyeLook: HasEyeBones);
             _eyeLight.Bind(transform, _leftEye, _rightEye);
         }
 
@@ -388,7 +391,8 @@ namespace VRCast.Tracking
             _gazeBlendShapes?.Release();
             _perfectSync = PerfectSyncBlendShapes.Create(
                 transform, _perfectSyncBindings, _settings != null && _settings.trackingPerfectSyncAnyShape,
-                namingMode: _settings != null ? _settings.trackingPerfectSyncNaming : PerfectSyncNamingMode.Auto);
+                namingMode: _settings != null ? _settings.trackingPerfectSyncNaming : PerfectSyncNamingMode.Auto,
+                skipEyeLook: HasEyeBones);
             _gazeBlendShapes = GazeBlendShapes.Create(transform);
             _eyeLight.Bind(transform, _leftEye, _rightEye);
         }
@@ -1092,34 +1096,24 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // パーフェクトシンクが eyeLook* を動かしている間は、目ボーンも視線用 BlendShape も回さない
-            // （お手製でボーンと eyeLook の両方があるアバターで、しきい値が効かない二重駆動を防ぐ）
-            bool perfectSyncOwnsLook = IsPerfectSyncActive && _perfectSync != null && _perfectSync.DrivesEyeLook;
-
-            // 目ボーンがあれば読込時の回転へ戻す。パーフェクトシンクが見ていなければここから回す
+            // 目ボーンがあれば読込時の回転へ戻してから回す（目の動きの上限もここ経由）。
+            // 目ボーンがあるアバターでは Create 時に eyeLook* を外してあるので、ボーンが視線の本体になる
             if (hasBones)
             {
                 RestoreRest(_leftEye, _leftEyeRest);
                 RestoreRest(_rightEye, _rightEyeRest);
-                if (!perfectSyncOwnsLook)
-                {
-                    Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
-                    RotateInFrame(_leftEye, headFrame, look);
-                    RotateInFrame(_rightEye, headFrame, look);
-                    _eyeLight.Apply(headFrame, look);
-                }
-                else
-                {
-                    _eyeLight.Restore();
-                }
+                Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
+                RotateInFrame(_leftEye, headFrame, look);
+                RotateInFrame(_rightEye, headFrame, look);
+                _eyeLight.Apply(headFrame, look);
             }
             else
             {
                 _eyeLight.Restore();
             }
 
-            // 視線用 BlendShape。パーフェクトシンクが eyeLook* を動かしている間は二重に動かさない
-            if (hasShapes && !perfectSyncOwnsLook)
+            // 視線用 BlendShape。パーフェクトシンクが eyeLook* を動かしている間（目ボーン無し）は二重に動かさない
+            if (hasShapes && !(IsPerfectSyncActive && _perfectSync != null && _perfectSync.DrivesEyeLook))
             {
                 _gazeBlendShapes.Apply(_currentGaze.x, _currentGaze.y);
             }

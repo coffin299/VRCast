@@ -248,15 +248,17 @@ namespace VRCast.Tracking
         /// naming を省略すると DetectNaming で自動選択する（bindings があれば ARKit）。
         /// bindings（パーフェクトシンク化で既存の BlendShape を ARKit 名に割り当てたもの）があれば、その ARKit 名は割り当てを使い、
         /// 残りの名前を照合で探す。
+        /// skipEyeLook は目ボーンがあるとき true（見る方向はボーンに任せ、eyeLook* は書かない）。
         /// </summary>
         public static PerfectSyncBlendShapes Create(
             Transform root, IReadOnlyList<PerfectSyncBinding> bindings = null, bool anyShape = false,
-            PerfectSyncNaming? naming = null, PerfectSyncNamingMode namingMode = PerfectSyncNamingMode.Auto)
+            PerfectSyncNaming? naming = null, PerfectSyncNamingMode namingMode = PerfectSyncNamingMode.Auto,
+            bool skipEyeLook = false)
         {
             PerfectSyncNaming mode = naming ?? DetectNaming(root, anyShape, bindings, namingMode);
             var targets = new List<Target>[ArKitFace.BlendShapeNames.Length];
             var slots = new SlotTable();
-            int matched = AddBindings(root, bindings, targets, slots);
+            int matched = AddBindings(root, bindings, targets, slots, skipEyeLook);
             var bound = new bool[targets.Length];
             for (int i = 0; i < targets.Length; i++)
             {
@@ -267,19 +269,19 @@ namespace VRCast.Tracking
             if (mode == PerfectSyncNaming.Handmade)
             {
                 // 手動生成: ARKit 名を優先し、足りない枠だけ Unified 名（別名・両目まとめ）も使う
-                matched += AddNameMatches(root, PerfectSyncNaming.ArKit, targets, slots, bound, fallbackArKit: false);
+                matched += AddNameMatches(root, PerfectSyncNaming.ArKit, targets, slots, bound, false, skipEyeLook);
                 LockFilledTargets(targets, bound);
-                matched += AddNameMatches(root, PerfectSyncNaming.Unified, targets, slots, bound, fallbackArKit: false);
+                matched += AddNameMatches(root, PerfectSyncNaming.Unified, targets, slots, bound, false, skipEyeLook);
             }
             else
             {
-                matched += AddNameMatches(root, mode, targets, slots, bound, fallbackArKit: false);
+                matched += AddNameMatches(root, mode, targets, slots, bound, false, skipEyeLook);
 
                 // Unified で別名が無い枠だけ、お手製の ARKit 名（eyeBlinkLeft 等）へフォールバック
                 if (mode == PerfectSyncNaming.Unified)
                 {
                     LockFilledTargets(targets, bound);
-                    matched += AddNameMatches(root, PerfectSyncNaming.ArKit, targets, slots, bound, fallbackArKit: true);
+                    matched += AddNameMatches(root, PerfectSyncNaming.ArKit, targets, slots, bound, true, skipEyeLook);
                 }
             }
 
@@ -330,7 +332,7 @@ namespace VRCast.Tracking
         /// </summary>
         private static int AddNameMatches(
             Transform root, PerfectSyncNaming naming, List<Target>[] targets, SlotTable slots, bool[] bound,
-            bool fallbackArKit)
+            bool fallbackArKit, bool skipEyeLook)
         {
             int matched = 0;
             foreach (SkinnedMeshRenderer renderer in root.GetComponentsInChildren<SkinnedMeshRenderer>(true))
@@ -359,7 +361,7 @@ namespace VRCast.Tracking
                     for (int n = 0; n < indices.Length; n++)
                     {
                         int index = indices[n];
-                        if (bound[index])
+                        if (bound[index] || (skipEyeLook && IsEyeLook(index)))
                         {
                             continue;
                         }
@@ -420,8 +422,9 @@ namespace VRCast.Tracking
             return matched;
         }
 
-        private static int AddBindings(Transform root, IReadOnlyList<PerfectSyncBinding> bindings, List<Target>[] targets,
-            SlotTable slots)
+        private static int AddBindings(
+            Transform root, IReadOnlyList<PerfectSyncBinding> bindings, List<Target>[] targets, SlotTable slots,
+            bool skipEyeLook)
         {
             // 割り当てが無ければ何もしない
             int matched = 0;
@@ -434,7 +437,7 @@ namespace VRCast.Tracking
             {
                 // 知らない ARKit 名・見つからない BlendShape・強さ 0 は飛ばす
                 int index = binding != null ? Array.IndexOf(ArKitFace.BlendShapeNames, binding.name) : -1;
-                if (index < 0 || binding.weight <= 0f)
+                if (index < 0 || binding.weight <= 0f || (skipEyeLook && IsEyeLook(index)))
                 {
                     continue;
                 }
