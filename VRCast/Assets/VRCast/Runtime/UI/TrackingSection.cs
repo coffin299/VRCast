@@ -29,6 +29,9 @@ namespace VRCast.UI
         // 表情のしきい値の入力途中の文字列（表情ごとに保持）
         private readonly Dictionary<string, string> _thresholdInputs = new Dictionary<string, string>();
 
+        // パーフェクトシンクのしきい値一覧を開いているか（起動時は閉じたまま。設定には残さない）
+        private bool _perfectSyncThresholdsOpen;
+
         // トラッキング FPS の欄への直接入力用
         private string _trackingFpsInput = string.Empty;
 
@@ -924,6 +927,11 @@ namespace VRCast.UI
             }
 
             PerfectSyncBoostControls.Draw(_settings, driver);
+
+            // 見る方向の上限と、シェイプごとのしきい値（しきい値は閉じて格納）
+            PerfectSyncThresholdControls.DrawEyeLookLimit(_settings, _thresholdInputs);
+            _perfectSyncThresholdsOpen = PerfectSyncThresholdControls.DrawThresholds(
+                _settings, driver, _perfectSyncThresholdsOpen, _thresholdInputs);
 
             // アバター未表示なら状態を出さない
             if (driver == null)

@@ -415,6 +415,104 @@ namespace VRCast.Tests
             }
         }
 
+        [Test]
+        public void ApplyThreshold_IgnoresBelowAndStretchesToFull()
+        {
+            // 0 は補正しないこと
+            Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.4f, 0f), Is.EqualTo(0.4f).Within(0.0001f));
+
+            // しきい値以下は 0、超えた分は 0〜1 に広がり、1 は最大のまま、しきい値 1 は動かさないこと
+            Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.1f, 0.2f), Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.2f, 0.2f), Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.6f, 0.2f), Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyThreshold(1f, 0.2f), Is.EqualTo(1f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.8f, 1f), Is.EqualTo(0f).Within(0.0001f));
+        }
+
+        [Test]
+        public void ApplyEyeLookLimit_ClampsOnlyLookShapes()
+        {
+            int look = ArKitFace.IndexOf("eyeLookUpLeft");
+            int smile = ArKitFace.IndexOf("mouthSmileLeft");
+
+            // 上限 1 は切らず、見る方向だけ抑え、ほかのシェイプは上限の影響を受けないこと
+            Assert.That(PerfectSyncBlendShapes.ApplyEyeLookLimit(look, 0.8f, 1f), Is.EqualTo(0.8f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyEyeLookLimit(look, 0.8f, 0.4f), Is.EqualTo(0.4f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyEyeLookLimit(look, 0.2f, 0.4f), Is.EqualTo(0.2f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyEyeLookLimit(look, 0.8f, 0f), Is.EqualTo(0f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyEyeLookLimit(smile, 0.8f, 0.4f), Is.EqualTo(0.8f).Within(0.0001f));
+        }
+
+        [Test]
+        public void DisplayName_UsesUnifiedAliasOnlyForReplacedShapes()
+        {
+            int blink = ArKitFace.IndexOf("eyeBlinkLeft");
+            int jaw = ArKitFace.IndexOf("jawOpen");
+            int look = ArKitFace.IndexOf("eyeLookUpLeft");
+            int pucker = ArKitFace.IndexOf("mouthPucker");
+
+            // ARKit 系統は ARKit 名。Unified は置き換わる枠だけ別名で、見る方向と顎はそのまま
+            Assert.That(PerfectSyncBlendShapes.DisplayName(blink, PerfectSyncNaming.ArKit), Is.EqualTo("eyeBlinkLeft"));
+            Assert.That(PerfectSyncBlendShapes.DisplayName(blink, PerfectSyncNaming.Unified), Is.EqualTo("EyeClosedLeft"));
+            Assert.That(PerfectSyncBlendShapes.DisplayName(pucker, PerfectSyncNaming.Unified), Is.EqualTo("LipPucker"));
+            Assert.That(PerfectSyncBlendShapes.DisplayName(jaw, PerfectSyncNaming.Unified), Is.EqualTo("jawOpen"));
+            Assert.That(PerfectSyncBlendShapes.DisplayName(look, PerfectSyncNaming.Unified), Is.EqualTo("eyeLookUpLeft"));
+        }
+
+        [Test]
+        public void Apply_ThresholdThenEyeLookLimit()
+        {
+            string[] names = ArKitFace.BlendShapeNames;
+            GameObject root = MakeFace("Avatar", names);
+            var renderer = root.GetComponent<SkinnedMeshRenderer>();
+            try
+            {
+                PerfectSyncBlendShapes sync = PerfectSyncBlendShapes.Create(root.transform);
+                int smileLeft = Array.IndexOf(names, "mouthSmileLeft");
+                int smileRight = Array.IndexOf(names, "mouthSmileRight");
+                int lookUp = Array.IndexOf(names, "eyeLookUpLeft");
+                int lookDown = Array.IndexOf(names, "eyeLookDownLeft");
+                int lookIn = Array.IndexOf(names, "eyeLookInLeft");
+                int brow = Array.IndexOf(names, "browDownLeft");
+                int jaw = Array.IndexOf(names, "jawOpen");
+
+                var scores = new float[names.Length];
+                scores[smileLeft] = 0.1f;
+                scores[smileRight] = 1f;
+                scores[lookUp] = 1f;
+                scores[lookDown] = 0.2f;
+                scores[lookIn] = 1f;
+                scores[brow] = 0.6f;
+                scores[jaw] = 1f;
+
+                var thresholds = new float[names.Length];
+                thresholds[smileLeft] = 0.2f;
+                thresholds[lookIn] = 0.5f;
+                thresholds[brow] = 0.2f;
+                thresholds[jaw] = 1f;
+
+                // 鏡像 ON で左右はそのまま。しきい値のあとで見る方向だけ上限 0.4 に切ること
+                sync.Apply(scores, ArKitRange.MediaPipe, true, 10f, true, default, default, default, thresholds, 0.4f);
+                Assert.That(Weight(renderer, "mouthSmileLeft"), Is.EqualTo(0f).Within(0.01f));
+                Assert.That(Weight(renderer, "mouthSmileRight"), Is.EqualTo(100f).Within(0.01f));
+                Assert.That(Weight(renderer, "eyeLookUpLeft"), Is.EqualTo(40f).Within(0.01f));
+                Assert.That(Weight(renderer, "eyeLookDownLeft"), Is.EqualTo(20f).Within(0.01f));
+                Assert.That(Weight(renderer, "eyeLookInLeft"), Is.EqualTo(40f).Within(0.01f));
+                Assert.That(Weight(renderer, "browDownLeft"), Is.EqualTo(50f).Within(0.01f));
+                Assert.That(Weight(renderer, "jawOpen"), Is.EqualTo(0f).Within(0.01f));
+
+                // 書き込み値ではなく、しきい値の直前の受信値を出せること
+                Assert.That(sync.TryPreThreshold(smileLeft, out float before), Is.True);
+                Assert.That(before, Is.EqualTo(0.1f).Within(0.0001f));
+                Assert.That(sync.TryPreThreshold(lookIn, out float lookBefore), Is.True);
+                Assert.That(lookBefore, Is.EqualTo(1f).Within(0.0001f));
+            }
+            finally
+            {
+                DestroyFace(root);
+            }
+        }
+
         private static float Weight(SkinnedMeshRenderer renderer, string name)
         {
             // 名前で BlendShape の現在値を読む

@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 4.3.0 (2026-10-29)
+
+[日本語]
+- パーフェクトシンクの「見る」方向の動きに上限を追加（トラッキングタブ。1 で今まで通り、0 でその動きだけ止まります）
+- パーフェクトシンクの各 BlendShape に、それ以下を動かさないしきい値を追加（トラッキングタブ。閉じて格納してあります）
+
+[English]
+- Added a limit for perfect sync look directions (Tracking tab. 1 keeps the current movement, 0 stops only those shapes)
+- Added a per-shape threshold for perfect sync that ignores movement at or below the value (Tracking tab, collapsed until opened)
+
 ■ 4.2.0 (2026-10-29)
 
 [日本語]

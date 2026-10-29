@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using VRCast.Tracking;
 
 namespace VRCast.Core
 {
@@ -443,6 +444,12 @@ namespace VRCast.Core
         // 頬のふくらみの推定（MediaPipe のみ）: 頬の幅が真顔より何 % 広がったら出し始め、何 % で最大にするか
         public float trackingCheekPuffStart = 1.5f;
         public float trackingCheekPuffFull = 6f;
+
+        // パーフェクトシンクの「見る」方向（eyeLook*）の上限（1 = 今まで通り、0 = その 8 種だけ動かさない）
+        public float trackingPerfectSyncEyeLookLimit = 1f;
+
+        // パーフェクトシンクのシェイプごとのしきい値（ArKitFace.BlendShapeNames と同じ順。0 = 補正なし、1 = 動かさない）
+        public float[] trackingPerfectSyncThresholds = new float[ArKitFace.BlendShapeNames.Length];
 
         // 表情反映（MediaPipe・VMC・iFacialMocap のみ）。表情ごとの割り当ては表情プリセット名（空欄 = 自動、"<none>" = 割り当てなし）
         public bool trackingExpressions = true;
@@ -1176,6 +1183,32 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// パーフェクトシンクのしきい値を、BlendShape の種類数にそろえて 0〜1 に収める。
+        /// 足りない分は 0（補正なし）。壊れた値も 0 にする。
+        /// </summary>
+        public void EnsurePerfectSyncThresholds()
+        {
+            int count = ArKitFace.BlendShapeNames.Length;
+            if (trackingPerfectSyncThresholds == null || trackingPerfectSyncThresholds.Length != count)
+            {
+                var next = new float[count];
+                if (trackingPerfectSyncThresholds != null)
+                {
+                    Array.Copy(trackingPerfectSyncThresholds, next,
+                        Math.Min(trackingPerfectSyncThresholds.Length, count));
+                }
+
+                trackingPerfectSyncThresholds = next;
+            }
+
+            for (int i = 0; i < trackingPerfectSyncThresholds.Length; i++)
+            {
+                float value = trackingPerfectSyncThresholds[i];
+                trackingPerfectSyncThresholds[i] = float.IsNaN(value) ? 0f : Mathf.Clamp(value, 0f, 1f);
+            }
+        }
+
+        /// <summary>
         /// 読み込んだ値を安全な範囲に補正する。
         /// </summary>
         public void Sanitize()
@@ -1468,6 +1501,11 @@ namespace VRCast.Core
             // 口の開きの補正も同様
             trackingJawOpenDeadzone = Mathf.Clamp(trackingJawOpenDeadzone, 0f, MaxJawOpenDeadzone);
             trackingJawOpenGain = Mathf.Clamp(trackingJawOpenGain, MinJawOpenGain, MaxJawOpenGain);
+            // 見る方向の上限と、シェイプごとのしきい値も 0〜1（長さが違う・欠けている配列は 0 でそろえる）
+            trackingPerfectSyncEyeLookLimit = float.IsNaN(trackingPerfectSyncEyeLookLimit)
+                ? 1f
+                : Mathf.Clamp(trackingPerfectSyncEyeLookLimit, 0f, 1f);
+            EnsurePerfectSyncThresholds();
             // 頬のふくらみの推定は、出し始めより最大が必ず大きくなるよう間隔を空ける
             trackingCheekPuffStart = Mathf.Clamp(trackingCheekPuffStart, 0f, MaxCheekWidenPercent - MinCheekWidenSpan);
             trackingCheekPuffFull = Mathf.Clamp(trackingCheekPuffFull, trackingCheekPuffStart + MinCheekWidenSpan,

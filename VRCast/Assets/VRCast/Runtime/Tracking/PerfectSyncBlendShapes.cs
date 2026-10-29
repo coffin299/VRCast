@@ -59,6 +59,12 @@ namespace VRCast.Tracking
         // 平滑化済みの値（0〜1、アバター側の左右）
         private readonly float[] _current;
 
+        // しきい値をかける直前の値（0〜1、アバター側の左右。調整の目安を出すため）
+        private readonly float[] _preThreshold;
+
+        // Unified Expressions で別名に置き換わる枠の表示名（空は ARKit 名のまま）
+        private static readonly string[] UnifiedDisplayNames = BuildUnifiedDisplayNames();
+
         // 書き込み中なら true（解除時に一度だけ元の値へ戻すため）
         private bool _active;
 
@@ -109,6 +115,7 @@ namespace VRCast.Tracking
             _slotUsed = new bool[_slots.Length];
             _slotActive = new bool[_slots.Length];
             _current = new float[targets.Length];
+            _preThreshold = new float[targets.Length];
             MatchedCount = matched;
             Naming = naming;
         }
@@ -154,10 +161,9 @@ namespace VRCast.Tracking
         {
             get
             {
-                string[] names = ArKitFace.BlendShapeNames;
                 for (int i = 0; i < _targets.Length; i++)
                 {
-                    if (_targets[i] != null && names[i].StartsWith("eyeLook", StringComparison.Ordinal))
+                    if (_targets[i] != null && IsEyeLook(i))
                     {
                         return true;
                     }
@@ -402,14 +408,109 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
+        /// 設定画面に出す名前。Unified で別名に置き換わる枠だけ Unified 名、それ以外と ARKit 系統は ARKit 名。
+        /// </summary>
+        public static string DisplayName(int index, PerfectSyncNaming naming)
+        {
+            string[] names = ArKitFace.BlendShapeNames;
+            if (index < 0 || index >= names.Length)
+            {
+                return string.Empty;
+            }
+
+            if (naming == PerfectSyncNaming.Unified && !string.IsNullOrEmpty(UnifiedDisplayNames[index]))
+            {
+                return UnifiedDisplayNames[index];
+            }
+
+            return names[index];
+        }
+
+        /// <summary>
+        /// 「見る」方向（上下左右）の枠なら true。まばたき・見開き・細めは含まない。
+        /// </summary>
+        public static bool IsEyeLook(int index)
+        {
+            string[] names = ArKitFace.BlendShapeNames;
+            return index >= 0 && index < names.Length
+                && names[index].StartsWith("eyeLook", StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// しきい値以下を 0 にし、超えた分を 0〜1 に引き伸ばす。0 以下は補正なし、1 以上はそのシェイプを動かさない。
+        /// </summary>
+        public static float ApplyThreshold(float value, float threshold)
+        {
+            value = Mathf.Clamp01(value);
+            if (float.IsNaN(threshold) || threshold <= 0f)
+            {
+                return value;
+            }
+
+            if (threshold >= 1f)
+            {
+                return 0f;
+            }
+
+            return Mathf.InverseLerp(threshold, 1f, value);
+        }
+
+        /// <summary>
+        /// 「見る」方向だけ上限で切る。1 以上は切らず、0 以下は 0。ほかのシェイプはそのまま。
+        /// </summary>
+        public static float ApplyEyeLookLimit(int index, float value, float limit)
+        {
+            if (!IsEyeLook(index) || limit >= 1f)
+            {
+                return value;
+            }
+
+            if (limit <= 0f)
+            {
+                return 0f;
+            }
+
+            return Mathf.Min(value, limit);
+        }
+
+        /// <summary>
+        /// しきい値をかける直前の値（書き込み中のフレームだけ。アバターに無い枠も含む）。
+        /// </summary>
+        public bool TryPreThreshold(int index, out float value)
+        {
+            if (_active && index >= 0 && index < _preThreshold.Length)
+            {
+                value = _preThreshold[index];
+                return true;
+            }
+
+            value = 0f;
+            return false;
+        }
+
+        private static float ThresholdOf(float[] thresholds, int index)
+        {
+            // 配列が無い・短いときはその枠を補正しない
+            if (thresholds == null || index < 0 || index >= thresholds.Length)
+            {
+                return 0f;
+            }
+
+            return thresholds[index];
+        }
+
+        /// <summary>
         /// 受信値を書き込む（毎フレーム呼ぶ）。range は入力元のまばたきの値の範囲。
         /// drivesBlink が false なら eyeBlinkLeft / Right は元の値へ戻して書かない（自動まばたきに任せる）。
         /// eyes はまばたきの補正（目の開きの補正・左右をそろえる補正。既定値なら補正なし）。
         /// boost は口・頬の強調（既定値なら強調なし）。jaw は口の開きの補正（既定値なら補正なし）。
+        /// thresholds はシェイプごとのしきい値（無ければ補正なし。長さが足りない枠も補正なし）。
+        /// eyeLookLimit は「見る」方向の上限（1 = 切らない、0 = 動かさない）。しきい値のあとにかける。
         /// </summary>
         public void Apply(
             float[] scores, ArKitRange range, bool mirror, float deltaTime, bool drivesBlink, EyeAdjustment eyes = default,
-            PerfectSyncBoost boost = default, JawOpenAdjustment jaw = default)
+            PerfectSyncBoost boost = default, JawOpenAdjustment jaw = default, float[] thresholds = null,
+            float eyeLookLimit = 1f)
         {
             // 要素数が合わない値は使わない
             if (scores == null || scores.Length != _targets.Length)
@@ -423,10 +524,18 @@ namespace VRCast.Tracking
             float blinkLeft = range.BlinkToClosed(Mathf.Clamp01(scores[SourceIndex(EyeBlinkLeft, mirror)]));
             float blinkRight = range.BlinkToClosed(Mathf.Clamp01(scores[SourceIndex(EyeBlinkRight, mirror)]));
             eyes.Apply(ref blinkLeft, ref blinkRight);
+            eyeLookLimit = float.IsNaN(eyeLookLimit) ? 1f : Mathf.Clamp01(eyeLookLimit);
             Array.Clear(_slotUsed, 0, _slotUsed.Length);
             for (int i = 0; i < _targets.Length; i++)
             {
-                // アバターに無い名前は計算しない
+                // 左右を合わせた値（まばたきは補正済みの閉じ具合、口の開きは補正後、口・頬は強調後）
+                float target = i == EyeBlinkLeft ? blinkLeft
+                    : i == EyeBlinkRight ? blinkRight
+                    : i == JawOpen ? jaw.Apply(Mathf.Clamp01(scores[SourceIndex(i, mirror)]))
+                    : boost.Apply(i, Mathf.Clamp01(scores[SourceIndex(i, mirror)]));
+                _preThreshold[i] = target;
+
+                // アバターに無い名前は書かない（しきい値の目安には残す）
                 if (_targets[i] == null)
                 {
                     continue;
@@ -440,12 +549,10 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                // 左右を合わせた値（まばたきは補正済みの閉じ具合、口の開きは補正後、口・頬は強調後）を平滑化して 0〜100 にする
-                float target = i == EyeBlinkLeft ? blinkLeft
-                    : i == EyeBlinkRight ? blinkRight
-                    : i == JawOpen ? jaw.Apply(Mathf.Clamp01(scores[SourceIndex(i, mirror)]))
-                    : boost.Apply(i, Mathf.Clamp01(scores[SourceIndex(i, mirror)]));
-
+                // しきい値で小さい値を消し、見る方向だけ上限で切ってから平滑化して 0〜100 にする
+                // （上限を先にかけると、しきい値の引き伸ばしで上限が戻る）
+                target = ApplyThreshold(target, ThresholdOf(thresholds, i));
+                target = ApplyEyeLookLimit(i, target, eyeLookLimit);
                 float blend = MotionSmoothingLevels.FollowBlend(Smoothing, Mathf.Abs(target - _current[i]),
                     FastDifference, BaseSmoothing, FastSmoothing, deltaTime);
                 _current[i] = Mathf.Lerp(_current[i], target, blend);
@@ -541,6 +648,31 @@ namespace VRCast.Tracking
             }
 
             return new string(chars, 0, length);
+        }
+
+        private static string[] BuildUnifiedDisplayNames()
+        {
+            // 別名に置き換わる枠だけ表示名を持つ（置き換わらない枠は null のまま ARKit 名を出す）
+            var names = new string[ArKitFace.BlendShapeNames.Length];
+            AssignDisplayName(names, "eyeBlinkLeft", "EyeClosedLeft");
+            AssignDisplayName(names, "eyeBlinkRight", "EyeClosedRight");
+            AssignDisplayName(names, "mouthClose", "MouthClosed");
+            AssignDisplayName(names, "mouthRollUpper", "LipSuckUpper");
+            AssignDisplayName(names, "mouthRollLower", "LipSuckLower");
+            AssignDisplayName(names, "mouthFunnel", "LipFunnel");
+            AssignDisplayName(names, "mouthPucker", "LipPucker");
+            AssignDisplayName(names, "mouthShrugUpper", "MouthRaiserUpper");
+            AssignDisplayName(names, "mouthShrugLower", "MouthRaiserLower");
+            return names;
+        }
+
+        private static void AssignDisplayName(string[] names, string arKitName, string unifiedName)
+        {
+            int index = ArKitFace.IndexOf(arKitName);
+            if (index >= 0)
+            {
+                names[index] = unifiedName;
+            }
         }
 
         private static Dictionary<string, int[]> BuildArKitNameTable()

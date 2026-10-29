@@ -213,6 +213,21 @@ namespace VRCast.Tracking
         public float CheekWiden => _lastFrame.CheekWiden;
 
         /// <summary>
+        /// しきい値をかける直前のパーフェクトシンクの値（0〜1、アバター側の左右。表示用）。
+        /// パーフェクトシンクで書き込んでいるフレームでなければ false。
+        /// </summary>
+        public bool TryPerfectSyncPreThreshold(int index, out float value)
+        {
+            if (_perfectSync != null && _perfectSync.TryPreThreshold(index, out value))
+            {
+                return true;
+            }
+
+            value = 0f;
+            return false;
+        }
+
+        /// <summary>
         /// 直近に受け取ったパーフェクトシンクの口の開き（jawOpen、0〜1、補正前。値が無い入力元は 0。表示用）。
         /// </summary>
         public float JawOpenReceived => _lastFrame.BlendShapes != null && _lastFrame.BlendShapes.Length > ArKitFace.JawOpen
@@ -771,7 +786,8 @@ namespace VRCast.Tracking
                 _perfectSync.Smoothing = _settings.trackingSmoothing;
                 _perfectSync.Apply(_lastFrame.BlendShapes, _lastFrame.BlendShapeRange, _settings.FaceMirror,
                     Time.deltaTime, _settings.trackingBlink, CurrentEyeAdjustment(), CurrentBoost(),
-                    CurrentJawOpenAdjustment);
+                    CurrentJawOpenAdjustment, _settings.trackingPerfectSyncThresholds,
+                    _settings.trackingPerfectSyncEyeLookLimit);
             }
             else
             {
