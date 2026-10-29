@@ -929,9 +929,9 @@ namespace VRCast.UI
             PerfectSyncBoostControls.Draw(_settings, driver);
 
             // 見る方向の上限と、シェイプごとのしきい値（しきい値は閉じて格納）
-            PerfectSyncThresholdControls.DrawEyeLookLimit(_settings, _thresholdInputs);
+            PerfectSyncThresholdControls.DrawEyeLookLimit(_settings);
             _perfectSyncThresholdsOpen = PerfectSyncThresholdControls.DrawThresholds(
-                _settings, driver, _perfectSyncThresholdsOpen, _thresholdInputs);
+                _settings, driver, _perfectSyncThresholdsOpen);
 
             // アバター未表示なら状態を出さない
             if (driver == null)

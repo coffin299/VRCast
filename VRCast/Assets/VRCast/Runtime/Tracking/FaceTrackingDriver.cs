@@ -1129,10 +1129,10 @@ namespace VRCast.Tracking
                 : transform.position;
             Vector3 direction = Quaternion.Inverse(headFrame) * (point - eyes);
 
-            // 左右（Y 軸まわり）と上下の角度にし、白目をむかない範囲に制限する
+            // 左右（Y 軸まわり）と上下の角度にし、白目をむかない範囲と「目の動きの上限」で制限する
             float yaw = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg;
             float pitch = Mathf.Atan2(direction.y, new Vector2(direction.x, direction.z).magnitude) * Mathf.Rad2Deg;
-            return new Vector2(Mathf.Clamp(yaw, -MaxEyeYaw, MaxEyeYaw), Mathf.Clamp(pitch, -MaxEyePitch, MaxEyePitch));
+            return LimitEye(yaw, pitch);
         }
 
         private Vector2 CalculateGaze()
@@ -1152,11 +1152,23 @@ namespace VRCast.Tracking
                 yaw = -yaw;
             }
 
-            // 強さを掛けて目が白目をむかない範囲に制限
+            // 強さと「目の動きの上限」を掛けて、目が白目をむかない範囲に制限する
             float strength = _settings.trackingGaze;
+            return LimitEye(yaw * strength, pitch * strength);
+        }
+
+        /// <summary>
+        /// 目の角度（度）を、白目をむかない範囲と「目の動きの上限」（0 で正面、1 で今まで通り）に収める。
+        /// 目のボーンと視線用 BlendShape はここを通る。パーフェクトシンクの eyeLook は別途、同じ上限で切る。
+        /// </summary>
+        private Vector2 LimitEye(float yaw, float pitch)
+        {
+            float limit = _settings == null || float.IsNaN(_settings.trackingPerfectSyncEyeLookLimit)
+                ? 1f
+                : Mathf.Clamp01(_settings.trackingPerfectSyncEyeLookLimit);
             return new Vector2(
-                Mathf.Clamp(yaw * strength, -MaxEyeYaw, MaxEyeYaw),
-                Mathf.Clamp(pitch * strength, -MaxEyePitch, MaxEyePitch));
+                Mathf.Clamp(yaw * limit, -MaxEyeYaw * limit, MaxEyeYaw * limit),
+                Mathf.Clamp(pitch * limit, -MaxEyePitch * limit, MaxEyePitch * limit));
         }
 
         private void RotateInAvatarSpace(Transform bone, Quaternion rotation)

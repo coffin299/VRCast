@@ -7,11 +7,11 @@ Newest first. Each version is written in Japanese, then English.
 ■ 4.3.0 (2026-10-29)
 
 [日本語]
-- パーフェクトシンクの「見る」方向の動きに上限を追加（トラッキングタブ。1 で今まで通り、0 でその動きだけ止まります）
+- トラッキングの目の動きに上限を追加（トラッキングタブ。目のボーンと「見る」方向の両方。1 で今まで通り、0 で目は正面のまま）
 - パーフェクトシンクの各 BlendShape に、それ以下を動かさないしきい値を追加（トラッキングタブ。閉じて格納してあります）
 
 [English]
-- Added a limit for perfect sync look directions (Tracking tab. 1 keeps the current movement, 0 stops only those shapes)
+- Added an eye movement limit on the Tracking tab for both eye bones and perfect sync look shapes (1 keeps the current movement, 0 holds the eyes forward)
 - Added a per-shape threshold for perfect sync that ignores movement at or below the value (Tracking tab, collapsed until opened)
 
 ■ 4.2.0 (2026-10-29)

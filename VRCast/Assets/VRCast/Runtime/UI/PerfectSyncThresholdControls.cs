@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 using VRCast.Core;
 using VRCast.Tracking;
@@ -12,32 +11,27 @@ namespace VRCast.UI
     /// </summary>
     public static class PerfectSyncThresholdControls
     {
-        private const string EyeLimitInputKey = "ps-eye-limit";
-        private const string ThresholdInputPrefix = "ps-th-";
-
         /// <summary>
-        /// 「見る」方向の上限（常に表示。1 = 今まで通り）。
+        /// 目の動きの上限（常に表示。1 = 今まで通り）。目のボーンとパーフェクトシンクの「見る」方向の両方に効く。
         /// </summary>
-        public static void DrawEyeLookLimit(AppSettings settings, Dictionary<string, string> inputs)
+        public static void DrawEyeLookLimit(AppSettings settings)
         {
-            inputs.TryGetValue(EyeLimitInputKey, out string input);
-            settings.trackingPerfectSyncEyeLookLimit = GuiControls.SliderOrField(
+            // 隣の口・頬のスライダーと同じ操作にする（数値欄だとドラッグが欄の値に戻ることがある）
+            settings.trackingPerfectSyncEyeLookLimit = GuiControls.Slider(
                 Loc.T("Eye movement limit", "目の動きの上限", "눈 움직임 상한", "眼睛动作上限", "眼睛動作上限"),
-                settings.trackingPerfectSyncEyeLookLimit, 0f, 1f, ref input, EyeLimitInputKey, "F2");
-            inputs[EyeLimitInputKey] = input ?? string.Empty;
+                settings.trackingPerfectSyncEyeLookLimit, 0f, 1f, "F2");
             GuiControls.Hint(Loc.T(
-                "Caps perfect sync look shapes (up, down, left and right) at this value. 1 keeps the current movement, and 0 stops only those shapes. Eye bones still follow Eye gaze under Motion.",
-                "パーフェクトシンクの「見る」方向（上下左右）だけを、この値までに抑えます。1 は今まで通り、0 でその動きだけ止まります。目のボーンは「動き」の「視線の強さ」のままです。",
-                "퍼펙트 싱크의 보는 방향(상하좌우)만 이 값까지로 제한합니다. 1은 지금과 같고, 0이면 그 움직임만 멈춥니다. 눈 뼈대는 '움직임'의 '시선 강도'를 그대로 따릅니다.",
-                "只把完美同步的“看向”方向（上下左右）限制到这个值。1 保持现在的动作，0 只停住这些形状。眼球骨骼仍跟随“动作”里的“视线强度”。",
-                "只把完美同步的「看向」方向（上下左右）限制到這個值。1 維持現在的動作，0 只停住這些形狀。眼球骨骼仍跟隨「動作」裡的「視線強度」。"));
+                "Scales how far the eyes can look, including eye bones and perfect sync look shapes. 1 keeps the current movement, and 0 holds the eyes forward.",
+                "目のボーンと、パーフェクトシンクの「見る」方向（上下左右）の両方が、この割合まで小さくなります。1 は今まで通り、0 で目は正面のままです。",
+                "눈 뼈대와 퍼펙트 싱크의 보는 방향(상하좌우)이 모두 이 비율까지 작아집니다. 1은 지금과 같고, 0이면 눈은 정면을 유지합니다.",
+                "眼球骨骼和完美同步的“看向”方向（上下左右）都会缩小到这个比例。1 保持现在的动作，0 则眼睛保持看向前方。",
+                "眼球骨骼和完美同步的「看向」方向（上下左右）都會縮小到這個比例。1 維持現在的動作，0 則眼睛保持看向前方。"));
         }
 
         /// <summary>
         /// シェイプごとのしきい値。閉じた状態で返し、開いていれば一覧を描いてから開閉状態を返す。
         /// </summary>
-        public static bool DrawThresholds(AppSettings settings, FaceTrackingDriver driver, bool open,
-            Dictionary<string, string> inputs)
+        public static bool DrawThresholds(AppSettings settings, FaceTrackingDriver driver, bool open)
         {
             open = DrawDisclosure(Loc.T("Perfect sync thresholds", "パーフェクトシンクの閾値設定", "퍼펙트 싱크 임계값 설정",
                 "完美同步阈值设置", "完美同步閾值設定"), open);
@@ -57,8 +51,6 @@ namespace VRCast.UI
             if (GUILayout.Button(Loc.T("Reset all to 0", "すべて 0 に戻す", "모두 0으로 되돌리기", "全部恢复为 0", "全部恢復為 0")))
             {
                 Array.Clear(settings.trackingPerfectSyncThresholds, 0, settings.trackingPerfectSyncThresholds.Length);
-                ClearThresholdInputs(inputs);
-                GUIUtility.keyboardControl = 0;
             }
 
             // 名前の系統（アバターが無いときは設定の固定。自動は ARKit 名）
@@ -79,20 +71,16 @@ namespace VRCast.UI
                     GuiControls.SubHeading(group);
                 }
 
-                string label = PerfectSyncBlendShapes.DisplayName(i, naming);
+                // 名前は固定（毎フレーム変わるとスライダーのドラッグが戻る）。受信と反映は別の行
+                settings.trackingPerfectSyncThresholds[i] = GuiControls.Slider(
+                    PerfectSyncBlendShapes.DisplayName(i, naming),
+                    settings.trackingPerfectSyncThresholds[i], 0f, 1f, "F2");
                 if (tracking && driver.TryPerfectSyncPreThreshold(i, out float now))
                 {
-                    // 受信はそのまま、反映は今のしきい値と見る方向の上限をかけた値（スライダーを動かすと次の表示で変わる）
                     float applied = PerfectSyncBlendShapes.ApplyThreshold(now, settings.trackingPerfectSyncThresholds[i]);
                     applied = PerfectSyncBlendShapes.ApplyEyeLookLimit(i, applied, settings.trackingPerfectSyncEyeLookLimit);
-                    label = $"{now:0.00}→{applied:0.00} {label}";
+                    GuiControls.Status($"{now:0.00} → {applied:0.00}", applied > 0.001f);
                 }
-
-                string key = ThresholdInputPrefix + i;
-                inputs.TryGetValue(key, out string input);
-                settings.trackingPerfectSyncThresholds[i] = GuiControls.SliderOrField(
-                    label, settings.trackingPerfectSyncThresholds[i], 0f, 1f, ref input, key, "F2");
-                inputs[key] = input ?? string.Empty;
             }
 
             return true;
@@ -100,39 +88,14 @@ namespace VRCast.UI
 
         private static bool DrawDisclosure(string label, bool open)
         {
-            UiTheme theme = UiTheme.Current;
-            GUILayout.BeginHorizontal();
-            if (GUILayout.Button(open ? "▼" : "▶", theme != null ? theme.FoldButton : GUI.skin.button))
+            // 行全体がボタン（小さな三角だけだと見出しが見つけにくい）
+            string caption = (open ? "▼  " : "▶  ") + label;
+            if (GUILayout.Button(caption))
             {
                 open = !open;
             }
 
-            if (GUILayout.Button(label, theme != null ? theme.SubTitle : GUI.skin.label, GUILayout.ExpandWidth(false)))
-            {
-                open = !open;
-            }
-
-            GUILayout.FlexibleSpace();
-            GUILayout.EndHorizontal();
             return open;
-        }
-
-        private static void ClearThresholdInputs(Dictionary<string, string> inputs)
-        {
-            // 入力途中の文字列を残すと、欄を離したときに 0 へ戻した値を上書きする
-            var remove = new List<string>();
-            foreach (string key in inputs.Keys)
-            {
-                if (key.StartsWith(ThresholdInputPrefix, StringComparison.Ordinal))
-                {
-                    remove.Add(key);
-                }
-            }
-
-            foreach (string key in remove)
-            {
-                inputs.Remove(key);
-            }
         }
 
         private static string GroupLabel(string arKitName)
