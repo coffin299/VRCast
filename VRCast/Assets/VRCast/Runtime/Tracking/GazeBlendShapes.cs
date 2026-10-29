@@ -11,11 +11,12 @@ namespace VRCast.Tracking
     /// </summary>
     public sealed class GazeBlendShapes
     {
-        // 方向ごとの照合用の名前（PerfectSyncAutoMapper.Normalize 済み・完全一致）
-        private static readonly string[] UpNames = { "上を見る", "lookup", "look_up", "eyeslookup", "eyelookup" };
-        private static readonly string[] DownNames = { "下を見る", "lookdown", "look_down", "eyeslookdown", "eyelookdown" };
-        private static readonly string[] RightNames = { "右を見る", "lookright", "look_right", "eyeslookright", "eyelookright" };
-        private static readonly string[] LeftNames = { "左を見る", "lookleft", "look_left", "eyeslookleft", "eyelookleft" };
+        // 方向ごとの照合用の名前（PerfectSyncAutoMapper.Normalize 済み・完全一致）。
+        // EyeLookUp / eyelookup 等の Unified・ARKit 名はパーフェクトシンク側で動かすのでここに入れない
+        private static readonly string[] UpNames = { "上を見る", "lookup", "look_up", "eyeslookup" };
+        private static readonly string[] DownNames = { "下を見る", "lookdown", "look_down", "eyeslookdown" };
+        private static readonly string[] RightNames = { "右を見る", "lookright", "look_right", "eyeslookright" };
+        private static readonly string[] LeftNames = { "左を見る", "lookleft", "look_left", "eyeslookleft" };
 
         // 角度（度）がこの値のとき強さ 100（FaceTrackingDriver の目の回転上限に合わせる）
         private const float FullYaw = 20f;
@@ -202,12 +203,9 @@ namespace VRCast.Tracking
 
         private static bool IsArKitEyeLook(string normalized)
         {
-            // eyeLookUpLeft 等はパーフェクトシンクが動かすので、両目まとめの視線用としては扱わない
+            // eyeLook* / EyeLook*（左右分割・両目まとめ）はパーフェクトシンクが動かす。EyeLookPush は独自名なので対象外
             return normalized.StartsWith("eyelook", System.StringComparison.Ordinal)
-                && (normalized.EndsWith("left", System.StringComparison.Ordinal)
-                    || normalized.EndsWith("right", System.StringComparison.Ordinal)
-                    || normalized.EndsWith("l", System.StringComparison.Ordinal)
-                    || normalized.EndsWith("r", System.StringComparison.Ordinal));
+                && !normalized.StartsWith("eyelookpush", System.StringComparison.Ordinal);
         }
     }
 }

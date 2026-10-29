@@ -24,6 +24,9 @@ namespace VRCast.Tests
             Assert.That(GazeBlendShapes.Match("blendShape1.LookRight"), Is.EqualTo(2));
             Assert.That(GazeBlendShapes.Match("eyeLookUpLeft"), Is.EqualTo(-1));
             Assert.That(GazeBlendShapes.Match("eyeLookInRight"), Is.EqualTo(-1));
+            // Unified の両目まとめもパーフェクトシンク側（しきい値の対象）
+            Assert.That(GazeBlendShapes.Match("EyeLookUp"), Is.EqualTo(-1));
+            Assert.That(GazeBlendShapes.Match("EyeLookOut"), Is.EqualTo(-1));
             Assert.That(GazeBlendShapes.Match("blink"), Is.EqualTo(-1));
             Assert.That(GazeBlendShapes.Match(null), Is.EqualTo(-1));
         }

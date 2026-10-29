@@ -1092,15 +1092,26 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 目ボーンがあれば読込時の回転へ戻してから回す。回した分だけライト方向も回し、陰影が端の色に飛ばないようにする
+            // パーフェクトシンクが eyeLook* を動かしている間は、目ボーンも視線用 BlendShape も回さない
+            // （お手製でボーンと eyeLook の両方があるアバターで、しきい値が効かない二重駆動を防ぐ）
+            bool perfectSyncOwnsLook = IsPerfectSyncActive && _perfectSync != null && _perfectSync.DrivesEyeLook;
+
+            // 目ボーンがあれば読込時の回転へ戻す。パーフェクトシンクが見ていなければここから回す
             if (hasBones)
             {
                 RestoreRest(_leftEye, _leftEyeRest);
                 RestoreRest(_rightEye, _rightEyeRest);
-                Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
-                RotateInFrame(_leftEye, headFrame, look);
-                RotateInFrame(_rightEye, headFrame, look);
-                _eyeLight.Apply(headFrame, look);
+                if (!perfectSyncOwnsLook)
+                {
+                    Quaternion look = Quaternion.Euler(-_currentGaze.y, _currentGaze.x, 0f);
+                    RotateInFrame(_leftEye, headFrame, look);
+                    RotateInFrame(_rightEye, headFrame, look);
+                    _eyeLight.Apply(headFrame, look);
+                }
+                else
+                {
+                    _eyeLight.Restore();
+                }
             }
             else
             {
@@ -1108,7 +1119,7 @@ namespace VRCast.Tracking
             }
 
             // 視線用 BlendShape。パーフェクトシンクが eyeLook* を動かしている間は二重に動かさない
-            if (hasShapes && !(IsPerfectSyncActive && _perfectSync != null && _perfectSync.DrivesEyeLook))
+            if (hasShapes && !perfectSyncOwnsLook)
             {
                 _gazeBlendShapes.Apply(_currentGaze.x, _currentGaze.y);
             }

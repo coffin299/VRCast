@@ -905,12 +905,13 @@ namespace VRCast.UI
                 Loc.T("Enable when", "有効にする条件", "활성화 조건", "启用条件", "啟用條件"),
                 labels, anyShape ? 1 : 0) == 1;
 
-            // 名前系統（自動 / ARKit / Unified Expressions）
+            // 名前系統（自動 / ARKit / Unified Expressions / 手動生成）
             string[] namingLabels =
             {
                 Loc.T("Auto", "自動", "자동", "自动", "自動"),
                 "ARKit",
                 "Unified Expressions",
+                Loc.T("Handmade", "手動生成", "수동 생성", "手动生成", "手動生成"),
             };
             var namingMode = _settings.trackingPerfectSyncNaming;
             _settings.trackingPerfectSyncNaming = (PerfectSyncNamingMode)GuiControls.EnumSelector(
@@ -944,9 +945,7 @@ namespace VRCast.UI
             int total = ArKitFace.BlendShapeNames.Length;
             int required = _settings.trackingPerfectSyncAnyShape ? 1 : min;
             driver.GetPerfectSyncNameCounts(out int arKitCount, out int unifiedCount);
-            string naming = driver.ActivePerfectSyncNaming == PerfectSyncNaming.Unified
-                ? "Unified Expressions"
-                : "ARKit";
+            string naming = NamingLabel(driver.ActivePerfectSyncNaming);
             GuiControls.Hint(Loc.T(
                 $"Using: {naming} ({count}/{total})",
                 $"使用中: {naming}（{count}/{total}）",
@@ -967,15 +966,24 @@ namespace VRCast.UI
                     $"此虚拟形象不支持（需要 {required} 个以上）",
                     $"此虛擬形象不支援（需要 {required} 個以上）"));
 
-            // 自動のときの選び方を伝える
+            // 選び方のヒント
             if (_settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Auto)
             {
                 GuiControls.Hint(Loc.T(
-                    "Auto picks whichever name set matches more",
-                    "自動は一致数の多い名前系統を選びます",
-                    "자동은 일치 수가 많은 이름 체계를 고릅니다",
-                    "自动会选用匹配更多的名称体系",
-                    "自動會選用匹配較多的名稱體系"));
+                    "Auto picks the name set with more matches. Perfect sync converted avatars use Handmade.",
+                    "自動は一致数の多い名前系統を選びます。パーフェクトシンク化済みは手動生成です。",
+                    "자동은 일치 수가 많은 이름 체계를 고릅니다. 퍼펙트 싱크 변환 아바타는 수동 생성입니다.",
+                    "自动会选用匹配更多的名称体系。已做完美同步化的虚拟形象为手动生成。",
+                    "自動會選用匹配較多的名稱體系。已做完美同步化的虛擬形象為手動生成。"));
+            }
+            else if (_settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Handmade)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Handmade prefers ARKit names, and fills missing slots with Unified Expressions names.",
+                    "手動生成は ARKit 名を優先し、足りない枠だけ Unified Expressions 名も使います。",
+                    "수동 생성은 ARKit 이름을 우선하고, 비어 있는 칸만 Unified Expressions 이름도 씁니다.",
+                    "手动生成优先使用 ARKit 名称，并用 Unified Expressions 名称补足缺失项。",
+                    "手動生成優先使用 ARKit 名稱，並用 Unified Expressions 名稱補足缺失項。"));
             }
 
             // 規定数未満で動かしている間は、表情プリセットも併用されることを伝える
@@ -1502,6 +1510,19 @@ namespace VRCast.UI
             }
 
             GuiControls.EndCard();
+        }
+
+        private static string NamingLabel(PerfectSyncNaming naming)
+        {
+            switch (naming)
+            {
+                case PerfectSyncNaming.Unified:
+                    return "Unified Expressions";
+                case PerfectSyncNaming.Handmade:
+                    return Loc.T("Handmade", "手動生成", "수동 생성", "手动生成", "手動生成");
+                default:
+                    return "ARKit";
+            }
         }
     }
 }

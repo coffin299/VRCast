@@ -4,6 +4,20 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 4.3.1 (2026-10-29)
+
+[日本語]
+- パーフェクトシンクの BlendShape 名に「手動生成」を追加（自動 / ARKit / Unified Expressions / 手動生成から選べます。手動生成は ARKit 名優先で、足りない枠だけ Unified 名も使います）
+- Unified Expressions 選択時、別名が無い ARKit 名（eyeBlinkLeft など）にもフォールバックするよう修正
+- Unified Expressions の両目・両側まとめ名（EyeLookUp / MouthSmile / BrowDown など）をしきい値の対象になるよう対応
+- パーフェクトシンクが「見る」方向の BlendShape を動かしているとき、目のボーンと視線用 BlendShape を二重に動かさないよう修正（しきい値が効くように）
+
+[English]
+- Added Handmade to perfect sync blend shape names (choose Auto / ARKit / Unified Expressions / Handmade; Handmade prefers ARKit names and fills gaps with Unified names)
+- Fixed Unified Expressions mode to fall back to ARKit names (such as eyeBlinkLeft) when Unified aliases are absent
+- Added Unified Expressions combined shapes (EyeLookUp, MouthSmile, BrowDown, and similar) so thresholds apply to them
+- Fixed perfect sync look shapes so eye bones and gaze blend shapes are not driven at the same time (thresholds apply as expected)
+
 ■ 4.3.0 (2026-10-29)
 
 [日本語]

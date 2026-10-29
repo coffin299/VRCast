@@ -42,7 +42,7 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 ## 現在の状態
 
-**バージョン 4.3.0（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
+**バージョン 4.3.1（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
 
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
@@ -645,7 +645,7 @@ PC のアプリ（VirtualMotionCapture など）から VMC プロトコル（OSC
   - パーフェクトシンク中は止まる（顔の動きそのもので表情が出るため）。
 - **Perfect sync**（パーフェクトシンク、MediaPipe のみ、既定 ON）: ARKit 名（`eyeBlinkLeft` / `jawOpen` / `mouthSmileLeft` / `tongueOut` など 52 種）の BlendShape を
   持つアバターでは、トラッカーが送る値をそのまま書き込み、眉・頬・口の形まで顔の動きに追従させる。
-  - VRCFaceTracking の Unified Expressions 名（`EyeClosedLeft` / `LipPucker` / `MouthRaiserUpper` など）にも対応。**BlendShape の名前**で「自動 / ARKit / Unified Expressions」を選べる（既定は自動。自動は一致数の多い方・同数は ARKit）。今使っている系統と件数、アバター上の両系統の件数を表示する。トラッキングの値は ARKit 互換のまま写す。CheekSuck や舌の向きなど、入力に値が無い Shape は動かさない。
+  - VRCFaceTracking の Unified Expressions 名（`EyeClosedLeft` / `LipPucker` / `MouthRaiserUpper` など）にも対応。**BlendShape の名前**で「自動 / ARKit / Unified Expressions / 手動生成」を選べる（既定は自動。自動は一致数の多い方・同数は ARKit。パーフェクトシンク化済みは手動生成。手動生成は ARKit 名優先で足りない枠だけ Unified 名も使う）。今使っている系統と件数、アバター上の両系統の件数を表示する。トラッキングの値は ARKit 互換のまま写す。CheekSuck や舌の向きなど、入力に値が無い Shape は動かさない。
   - 名前は大文字小文字・区切り記号・FBX の接頭辞（`blendShape1.` 等）を無視し、`eyeBlink_L` のような L / R 表記も受け付ける。同名の BlendShape が顔・歯・舌などに分かれていれば全部動かす。
   - 有効にする条件はトグルの下で排他で選べる。既定は「20 種類以上」で、まばたき用の `eyeBlinkLeft` / `Right` だけを持つアバターは従来どおり。「1 種類でも」にすると、見つかった BlendShape だけを動かす（20 種類未満のときは表情の反映も併用する）。
   - 「口の開き（パーフェクトシンク）」: パーフェクトシンクで動かしている間の `jawOpen` を補正する。「無視する開き」（0〜0.5、既定 0）までの開きは閉じた口とみなして残りを 0〜1 に広げ、「強さ」（0.2〜3、既定 1）倍する。真顔でも口が少し開く（MediaPipe は真顔でも `jawOpen` が 0.2 前後出ることがある）なら「無視する開き」を、開きすぎ・開かなすぎなら「強さ」を調整する。トラッキング中は受信値と反映後の値が出る。「口・頬の動きを強調」の ON/OFF とは別に効く。

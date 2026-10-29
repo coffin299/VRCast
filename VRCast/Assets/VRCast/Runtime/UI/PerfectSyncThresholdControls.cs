@@ -53,12 +53,14 @@ namespace VRCast.UI
                 Array.Clear(settings.trackingPerfectSyncThresholds, 0, settings.trackingPerfectSyncThresholds.Length);
             }
 
-            // 名前の系統（アバターが無いときは設定の固定。自動は ARKit 名）
+            // 名前の系統（アバターが無いときは設定の固定。自動・手動生成は ARKit 表示名）
             PerfectSyncNaming naming = driver != null
                 ? driver.ActivePerfectSyncNaming
                 : settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Unified
                     ? PerfectSyncNaming.Unified
-                    : PerfectSyncNaming.ArKit;
+                    : settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Handmade
+                        ? PerfectSyncNaming.Handmade
+                        : PerfectSyncNaming.ArKit;
             string[] arKitNames = ArKitFace.BlendShapeNames;
             string group = null;
             bool tracking = driver != null && driver.IsTracking;
