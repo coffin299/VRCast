@@ -47,11 +47,11 @@ namespace VRCast.UI
             }
 
             GuiControls.Hint(Loc.T(
-                "0 leaves a shape unchanged. At or below the threshold it does not move, and anything above is stretched to full. 1 stops that shape.",
-                "0 は補正なしです。しきい値以下は動かさず、超えた分は最大まで引き伸ばします。1 にするとそのシェイプは動きません。",
-                "0은 보정 없음입니다. 임계값 이하는 움직이지 않고, 넘은 만큼은 최대까지 늘립니다. 1이면 그 셰이프는 움직이지 않습니다.",
-                "0 为不校正。阈值及以下不动，超出的部分会拉到最大。设为 1 则该形状不动。",
-                "0 為不校正。閾值及以下不動，超出的部分會拉到最大。設為 1 則該形狀不動。"));
+                "0 leaves a shape unchanged. At or below the threshold it stops, and anything above keeps its strength. 1 stops that shape. While tracking, each row shows received → applied.",
+                "0 は補正なしです。しきい値以下は止まり、超えた値はそのまま動きます。1 にするとそのシェイプは動きません。トラッキング中は各行に「受信 → 反映」を出します。",
+                "0은 보정 없음입니다. 임계값 이하는 멈추고, 넘은 값은 그대로 움직입니다. 1이면 그 셰이프는 움직이지 않습니다. 트래킹 중에는 각 행에 '수신 → 반영'을 표시합니다.",
+                "0 为不校正。阈值及以下会停住，超过的值保持原有强度。设为 1 则该形状不动。追踪时每行显示“接收 → 应用”。",
+                "0 為不校正。閾值及以下會停住，超過的值保持原有強度。設為 1 則該形狀不動。追蹤時每行顯示「接收 → 套用」。"));
 
             settings.EnsurePerfectSyncThresholds();
             if (GUILayout.Button(Loc.T("Reset all to 0", "すべて 0 に戻す", "모두 0으로 되돌리기", "全部恢复为 0", "全部恢復為 0")))
@@ -82,7 +82,10 @@ namespace VRCast.UI
                 string label = PerfectSyncBlendShapes.DisplayName(i, naming);
                 if (tracking && driver.TryPerfectSyncPreThreshold(i, out float now))
                 {
-                    label = $"{now:0.00}  {label}";
+                    // 受信はそのまま、反映は今のしきい値と見る方向の上限をかけた値（スライダーを動かすと次の表示で変わる）
+                    float applied = PerfectSyncBlendShapes.ApplyThreshold(now, settings.trackingPerfectSyncThresholds[i]);
+                    applied = PerfectSyncBlendShapes.ApplyEyeLookLimit(i, applied, settings.trackingPerfectSyncEyeLookLimit);
+                    label = $"{now:0.00}→{applied:0.00} {label}";
                 }
 
                 string key = ThresholdInputPrefix + i;

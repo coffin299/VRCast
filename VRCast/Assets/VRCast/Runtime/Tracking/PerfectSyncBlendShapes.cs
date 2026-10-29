@@ -437,7 +437,7 @@ namespace VRCast.Tracking
         }
 
         /// <summary>
-        /// しきい値以下を 0 にし、超えた分を 0〜1 に引き伸ばす。0 以下は補正なし、1 以上はそのシェイプを動かさない。
+        /// しきい値以下を 0 にする。超えた値はそのまま（引き伸ばさない）。0 以下は補正なし、1 以上はそのシェイプを動かさない。
         /// </summary>
         public static float ApplyThreshold(float value, float threshold)
         {
@@ -447,12 +447,8 @@ namespace VRCast.Tracking
                 return value;
             }
 
-            if (threshold >= 1f)
-            {
-                return 0f;
-            }
-
-            return Mathf.InverseLerp(threshold, 1f, value);
+            // 1 はそのシェイプを止める。それ未満は、しきい値以下だけを消して超えた値は弱めない
+            return threshold >= 1f || value <= threshold ? 0f : value;
         }
 
         /// <summary>
@@ -549,8 +545,8 @@ namespace VRCast.Tracking
                     continue;
                 }
 
-                // しきい値で小さい値を消し、見る方向だけ上限で切ってから平滑化して 0〜100 にする
-                // （上限を先にかけると、しきい値の引き伸ばしで上限が戻る）
+                // しきい値以下を消し、見る方向だけ上限で切ってから平滑化して 0〜100 にする
+                // （上限を先にかけると、しきい値より大きかった動きが上限で小さくなり、しきい値で消えてしまう）
                 target = ApplyThreshold(target, ThresholdOf(thresholds, i));
                 target = ApplyEyeLookLimit(i, target, eyeLookLimit);
                 float blend = MotionSmoothingLevels.FollowBlend(Smoothing, Mathf.Abs(target - _current[i]),

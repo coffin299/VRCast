@@ -421,10 +421,10 @@ namespace VRCast.Tests
             // 0 は補正しないこと
             Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.4f, 0f), Is.EqualTo(0.4f).Within(0.0001f));
 
-            // しきい値以下は 0、超えた分は 0〜1 に広がり、1 は最大のまま、しきい値 1 は動かさないこと
+            // しきい値以下は 0、超えた値はそのまま、しきい値 1 は動かさないこと
             Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.1f, 0.2f), Is.EqualTo(0f).Within(0.0001f));
             Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.2f, 0.2f), Is.EqualTo(0f).Within(0.0001f));
-            Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.6f, 0.2f), Is.EqualTo(0.5f).Within(0.0001f));
+            Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.6f, 0.2f), Is.EqualTo(0.6f).Within(0.0001f));
             Assert.That(PerfectSyncBlendShapes.ApplyThreshold(1f, 0.2f), Is.EqualTo(1f).Within(0.0001f));
             Assert.That(PerfectSyncBlendShapes.ApplyThreshold(0.8f, 1f), Is.EqualTo(0f).Within(0.0001f));
         }
@@ -498,7 +498,7 @@ namespace VRCast.Tests
                 Assert.That(Weight(renderer, "eyeLookUpLeft"), Is.EqualTo(40f).Within(0.01f));
                 Assert.That(Weight(renderer, "eyeLookDownLeft"), Is.EqualTo(20f).Within(0.01f));
                 Assert.That(Weight(renderer, "eyeLookInLeft"), Is.EqualTo(40f).Within(0.01f));
-                Assert.That(Weight(renderer, "browDownLeft"), Is.EqualTo(50f).Within(0.01f));
+                Assert.That(Weight(renderer, "browDownLeft"), Is.EqualTo(60f).Within(0.01f));
                 Assert.That(Weight(renderer, "jawOpen"), Is.EqualTo(0f).Within(0.01f));
 
                 // 書き込み値ではなく、しきい値の直前の受信値を出せること
