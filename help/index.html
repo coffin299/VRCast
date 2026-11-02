@@ -802,6 +802,11 @@
         <span class="ko">감은 눈·윙크가 머리 기울기나 팔과 반대쪽이 될 때는 <span class="ui">움직임</span> 항목의 <span class="ui">얼굴 좌우 바꾸기</span>(기본은 꺼짐)를 켭니다. 얼굴 (눈 깜빡임·퍼펙트 싱크·시선)만 바뀌고, 머리 방향과 팔은 <span class="ui">미러</span> 설정 그대로입니다.</span>
         <span class="zh-hans">如果闭上的眼睛或单眼眨眼与头部倾斜、手臂方向相反，请开启 <span class="ui">动作</span> 栏中的 <span class="ui">交换面部左右</span>（默认关闭）。只交换面部（眨眼、完美同步、视线），头部朝向和手臂仍按 <span class="ui">镜像</span> 设置。</span>
         <span class="zh-hant">如果閉上的眼睛或單眼眨眼與頭部傾斜、手臂方向相反，請開啟 <span class="ui">動作</span> 欄中的 <span class="ui">交換臉部左右</span>（預設關閉）。只交換臉部（眨眼、完美同步、視線），頭部朝向和手臂仍依 <span class="ui">鏡像</span> 設定。</span></li>
+    <li><span class="ja">顔は合っているのに腕や上半身だけ左右が逆のとき（iPhone の顔 + Web カメラの腕の併用など）は、<span class="ui">動き</span> 欄の <span class="ui">身体の左右を入れ替える</span>（既定は OFF）を ON にします。体（腕・手・肩のひねり・傾き）だけが入れ替わり、頭の向きと顔は <span class="ui">ミラー</span> のままです。</span>
+        <span class="en">If arms and the upper body are mirrored the wrong way while the face looks correct (e.g. iPhone face + webcam arms), turn on <span class="ui">Swap body left / right</span> under <span class="ui">Motion</span> (off by default). Only the body (arms, hands, shoulder twist/tilt) is swapped; head orientation and the face stay with <span class="ui">Mirror</span>.</span>
+        <span class="ko">얼굴은 맞는데 팔·상체만 좌우가 반대일 때 (iPhone 얼굴 + 웹캠 팔 병용 등)는 <span class="ui">움직임</span> 항목의 <span class="ui">몸 좌우 바꾸기</span>(기본은 꺼짐)를 켭니다. 몸 (팔·손·어깨 비틀림·기울기)만 바뀌고, 머리 방향과 얼굴은 <span class="ui">미러</span> 그대로입니다.</span>
+        <span class="zh-hans">当面部正确但手臂和上半身左右相反时（例如 iPhone 面部 + 摄像头手臂），请开启 <span class="ui">动作</span> 栏中的 <span class="ui">交换身体左右</span>（默认关闭）。只交换身体（手臂、手、肩部扭转/倾斜）；头部朝向和面部仍跟随 <span class="ui">镜像</span>。</span>
+        <span class="zh-hant">當臉部正確但手臂與上半身左右相反時（例如 iPhone 臉部 + 網路攝影機手臂），請開啟 <span class="ui">動作</span> 欄中的 <span class="ui">交換身體左右</span>（預設關閉）。只交換身體（手臂、手、肩部扭轉／傾斜）；頭部朝向與臉部仍跟隨 <span class="ui">鏡像</span>。</span></li>
     <li><span class="ja">MediaPipe・iPhone・外部アプリ（VMC）・iFacialMocap では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面を検出してアバターの表情に切り替えます（割り当て先の表情が無いものは検出しません）。
         表情ごとの <span class="ui">しきい値</span>（0.1〜3、既定 0.3。欄へ数値を直接入力できます）で反応のしやすさを決めます。<span class="ui">生データ表示</span> の強さは 0（その顔をしていない）〜 1（はっきりその顔）です。0.1 は少しの顔でも、0.3 ははっきりし始めたら、1 前後はその顔をしっかりしたときだけ切り替わり、1 より大きいと切り替わりません。表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
         <span class="en">With MediaPipe, iPhone / external apps (VMC) and iFacialMocap, <span class="ui">Facial expressions</span> (on by default) detects your smile, surprise, anger, sadness, wink, half-closed eyes and pout and switches the avatar's expression (expressions with nothing assigned are not detected).
@@ -883,15 +888,20 @@
         請將電腦和 iPhone 連接到同一 Wi-Fi，並在追蹤分頁的 <span class="ui">iPhone 的 IP 位址</span> 中輸入 iFacialMocap 畫面上方顯示的 IP 位址（使用 UDP 連接埠 49983）。
         首次會跳出 Windows 防火牆確認，請允許私人網路。也可使用完美同步和反映表情（手臂和手不會動）。</span></li>
     <li><span class="ja">入力元を <span class="ui">iPhone（VMC）の顔 + MediaPipe の手</span> または <span class="ui">iFacialMocap の顔 + MediaPipe の手</span> にすると、顔は iPhone（パーフェクトシンクも可）、腕・手・指は Web カメラ（MediaPipe）で動かします。
-        iPhone 側の設定は上と同じで、Web カメラも選んでください。iPhone からの受信が止まっている間は、顔も Web カメラで動かします（VMC の全身は使いません）。</span>
+        iPhone 側の設定は上と同じで、Web カメラも選んでください。iPhone からの受信が止まっている間は、顔も Web カメラで動かします（VMC の全身は使いません）。
+        iFacialMocap 併用中の上半身のひねりは顔の向きに追従します。腕・上半身だけ左右が逆なら <span class="ui">身体の左右を入れ替える</span> を使います（頭・顔は <span class="ui">ミラー</span> のまま）。</span>
         <span class="en">Set the source to <span class="ui">iPhone (VMC) face + MediaPipe hands</span> or <span class="ui">iFacialMocap face + MediaPipe hands</span> to drive the face from the iPhone (perfect sync works too) and the arms, hands and fingers from the webcam (MediaPipe).
-        Set up the iPhone as above, and choose a webcam as well. While nothing is received from the iPhone, the webcam drives the face too (VMC full body is not used).</span>
+        Set up the iPhone as above, and choose a webcam as well. While nothing is received from the iPhone, the webcam drives the face too (VMC full body is not used).
+        With iFacialMocap hybrid, upper-body twist follows your face direction. If only the arms / upper body are left-right reversed, use <span class="ui">Swap body left / right</span> (head and face stay with <span class="ui">Mirror</span>).</span>
         <span class="ko">입력 소스를 <span class="ui">iPhone (VMC) 얼굴 + MediaPipe 손</span> 또는 <span class="ui">iFacialMocap 얼굴 + MediaPipe 손</span>으로 하면 얼굴은 iPhone (퍼펙트 싱크도 가능), 팔·손·손가락은 웹캠 (MediaPipe)으로 움직입니다.
-        iPhone 쪽 설정은 위와 같으며 웹캠도 선택하세요. iPhone에서 수신이 멈춘 동안에는 얼굴도 웹캠으로 움직입니다 (VMC의 전신은 사용하지 않습니다).</span>
+        iPhone 쪽 설정은 위와 같으며 웹캠도 선택하세요. iPhone에서 수신이 멈춘 동안에는 얼굴도 웹캠으로 움직입니다 (VMC의 전신은 사용하지 않습니다).
+        iFacialMocap 병용 중 상체 비틀림은 얼굴 방향을 따릅니다. 팔·상체만 좌우가 반대면 <span class="ui">몸 좌우 바꾸기</span>를 사용하세요 (머리·얼굴은 <span class="ui">미러</span> 그대로).</span>
         <span class="zh-hans">将输入源设为 <span class="ui">iPhone（VMC）面部 + MediaPipe 手</span> 或 <span class="ui">iFacialMocap 面部 + MediaPipe 手</span> 后，面部由 iPhone 驱动（也支持完美同步），手臂、手和手指由网络摄像头（MediaPipe）驱动。
-        iPhone 端的设置与上面相同，也请选择网络摄像头。iPhone 停止发送期间，面部也由网络摄像头驱动（不使用 VMC 的全身）。</span>
+        iPhone 端的设置与上面相同，也请选择网络摄像头。iPhone 停止发送期间，面部也由网络摄像头驱动（不使用 VMC 的全身）。
+        iFacialMocap 并用时，上半身扭转跟随面部朝向。若仅手臂/上半身左右相反，请使用 <span class="ui">交换身体左右</span>（头部与面部仍跟随 <span class="ui">镜像</span>）。</span>
         <span class="zh-hant">將輸入來源設為 <span class="ui">iPhone（VMC）臉部 + MediaPipe 手</span> 或 <span class="ui">iFacialMocap 臉部 + MediaPipe 手</span> 後，臉部由 iPhone 驅動（也支援完美同步），手臂、手和手指由網路攝影機（MediaPipe）驅動。
-        iPhone 端的設定與上面相同，也請選擇網路攝影機。iPhone 停止傳送期間，臉部也由網路攝影機驅動（不使用 VMC 的全身）。</span></li>
+        iPhone 端的設定與上面相同，也請選擇網路攝影機。iPhone 停止傳送期間，臉部也由網路攝影機驅動（不使用 VMC 的全身）。
+        iFacialMocap 並用時，上半身扭轉跟隨臉部朝向。若僅手臂／上半身左右相反，請使用 <span class="ui">交換身體左右</span>（頭部與臉部仍跟隨 <span class="ui">鏡像</span>）。</span></li>
     <li><span class="ja">正面がずれたらカメラを見て、パネル下部の <span class="ui">リセット</span> の <span class="ui">顔の向き</span>（顔・上半身・視線）を押します。視線だけなら <span class="ui">視線</span>。</span>
         <span class="en">If the front direction is off, look at the camera and press <span class="ui">Reset</span> &gt; <span class="ui">Head</span> (head, body and gaze) at the bottom of the panel. Use <span class="ui">Gaze</span> for gaze only.</span>
         <span class="ko">정면이 어긋나면 카메라를 보고 패널 아래쪽 <span class="ui">초기화</span>의 <span class="ui">얼굴 방향</span> (얼굴·상체·시선)을 누릅니다. 시선만이라면 <span class="ui">시선</span>.</span>

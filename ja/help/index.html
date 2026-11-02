@@ -350,6 +350,8 @@
         </li>
     <li><span class="ja">閉じた目・ウインクが頭の傾きや腕と逆側になるときは、<span class="ui">動き</span> 欄の <span class="ui">顔の左右を入れ替える</span>（既定は OFF）を ON にします。顔（まばたき・パーフェクトシンク・視線）だけが入れ替わり、頭の向きと腕は <span class="ui">ミラー</span> の設定のままです。</span>
         </li>
+    <li><span class="ja">顔は合っているのに腕や上半身だけ左右が逆のとき（iPhone の顔 + Web カメラの腕の併用など）は、<span class="ui">動き</span> 欄の <span class="ui">身体の左右を入れ替える</span>（既定は OFF）を ON にします。体（腕・手・肩のひねり・傾き）だけが入れ替わり、頭の向きと顔は <span class="ui">ミラー</span> のままです。</span>
+        </li>
     <li><span class="ja">MediaPipe・iPhone・外部アプリ（VMC）・iFacialMocap では <span class="ui">表情を反映</span> を ON にすると（既定は ON）、笑顔・驚き・怒り・悲しみ・ウインク・ジト目・ふくれっ面を検出してアバターの表情に切り替えます（割り当て先の表情が無いものは検出しません）。
         表情ごとの <span class="ui">しきい値</span> で反応のしやすさ（低いほど反応しやすい。<span class="ui">生データ表示</span> 中に出る表情の値が目安）を、表情ごとの選択で使う表情を変えられます（<span class="ui">自動</span> は表情の名前から推定）。</span>
         </li>
@@ -371,6 +373,10 @@
     <li><span class="ja">入力元を <span class="ui">iFacialMocap（iPhone、顔のみ）</span> にすると、iPhone の iFacialMocap から顔の動きを受け取ります。
         PC と iPhone を同じ Wi-Fi につなぎ、iFacialMocap の画面上部に出る IP アドレスをトラッキングタブの <span class="ui">iPhone の IP アドレス</span> に入力してください（UDP ポート 49983 を使います）。
         初回は Windows ファイアウォールの確認が出るので、プライベートネットワークで許可してください。パーフェクトシンクと表情の反映も使えます（腕・手は動きません）。</span>
+        </li>
+    <li><span class="ja">入力元を <span class="ui">iPhone（VMC）の顔 + MediaPipe の手</span> または <span class="ui">iFacialMocap の顔 + MediaPipe の手</span> にすると、顔は iPhone（パーフェクトシンクも可）、腕・手・指は Web カメラ（MediaPipe）で動かします。
+        iPhone 側の設定は上と同じで、Web カメラも選んでください。iPhone からの受信が止まっている間は、顔も Web カメラで動かします（VMC の全身は使いません）。
+        iFacialMocap 併用中の上半身のひねりは顔の向きに追従します。腕・上半身だけ左右が逆なら <span class="ui">身体の左右を入れ替える</span> を使います（頭・顔は <span class="ui">ミラー</span> のまま）。</span>
         </li>
     <li><span class="ja">正面がずれたらカメラを見て、パネル下部の <span class="ui">リセット</span> の <span class="ui">顔の向き</span>（顔・上半身・視線）を押します。視線だけなら <span class="ui">視線</span>。</span>
         </li>
