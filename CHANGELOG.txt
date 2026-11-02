@@ -4,7 +4,7 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
-■ 未リリース / Unreleased
+■ 4.3.2 (2026-11-02)
 
 [日本語]
 - BlendShape の名前を目の動きの上限の直上へ移し、同じ設定で同期するよう変更（既定は ARKit）
