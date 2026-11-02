@@ -142,7 +142,7 @@ namespace VRCast.Tracking
         {
             angles = Vector2.zero;
             return _body != null && _body.TryGetBody(out BodyTrackingFrame body)
-                && TorsoPose.TryGetAngles(body, _settings.trackingMirror, _settings.TrackingTiltCorrection, out angles);
+                && TorsoPose.TryGetAngles(body, _settings.BodyMirror, _settings.TrackingTiltCorrection, out angles);
         }
 
         private void LateUpdate()
@@ -223,8 +223,8 @@ namespace VRCast.Tracking
                 _origin = hasAvatar ? _avatarRoot.position + _rotation * (DefaultHips * _scale) : DefaultHips;
             }
 
-            // 鏡像設定と、線をカメラへ向けるための視点
-            _mirror = _settings.trackingMirror;
+            // 身体の鏡像と、線をカメラへ向けるための視点
+            _mirror = _settings.BodyMirror;
             Transform view = renderingCamera.transform;
             _eye = view.position;
             _cameraRight = view.right;

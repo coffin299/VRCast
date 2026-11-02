@@ -617,6 +617,8 @@ PC のアプリ（VirtualMotionCapture など）から VMC プロトコル（OSC
 - 片目を閉じるとウインクする（ウインク用 BlendShape を書き出し時に推定できたアバターのみ。無い場合は両目同時のまばたき）。
 - **Swap face left / right**（顔の左右を入れ替える、Motion 欄、既定 OFF）: 閉じた目・ウインクが頭の傾きや腕と逆側になるときに ON にする。
   顔（まばたき・ウインク・パーフェクトシンク・視線、Raw view の目）だけを鏡像設定と逆にし、頭の向き・体・腕は **Mirror** のまま（[Issue #9](https://github.com/coffin299/VRCast/issues/9)）。
+- **Swap body left / right**（身体の左右を入れ替える、Motion 欄、既定 OFF）: 顔は合っているのに腕や上半身だけ左右が逆のとき（**iPhone の顔 + MediaPipe の腕**の併用など）に ON にする。
+  体（腕・手・肩のひねり・傾き）だけを鏡像設定と逆にし、頭の向きと顔は **Mirror** のまま。
 - **Track blinks**（まばたきをトラッキング、既定 ON）を OFF にすると目の開閉は使わず、Face & expressions タブの自動まばたきに任せる（パーフェクトシンクの eyeBlink も動かさない）。
 - **Eye open correction**（目の開きの補正、0〜0.6、既定 0）は、目を開けているのにアバターが半目になる人向け。値までの目の閉じ具合は開いた目とみなし、残りを広げ直すので、まばたきでは閉じ切る（パーフェクトシンクの eyeBlink と、表情反映のジト目・ウインクの判定にも効く）。Track blinks が ON のときだけ表示。
 - **Match both eyes**（左右の目をそろえる、Off / Always / When turned、既定 Off）は、まばたきや横を向いたときに意図せずウインクになる・左右の開きがばらつく人向け。
@@ -662,6 +664,7 @@ PC のアプリ（VirtualMotionCapture など）から VMC プロトコル（OSC
 - iPhone からの受信が止まっている間は、顔も Web カメラ（MediaPipe）で動かす。顔の入力元が切り替わるたびに正面を取り直す。
 - VMC の全身（**Full body**）は使わない（腕・手は MediaPipe で動かすため）。
 - 受信口は 2 つ（iPhone 用は LAN の全アドレス、MediaPipe 用は `127.0.0.1`）。パネル下部の **Tracking** の受信レートは、いま顔を動かしている側の値を出す。
+- **iFacialMocap** 併用中の上半身のひねりは、顔の向きに合わせて追従する（肩の線からは左右の傾きだけを使い、Web カメラの肩ひねりと二重にねじれない）。腕・上半身だけ左右が逆なら **Swap body left / right** を使う（頭・顔は **Mirror** のまま）。
 
 **Display** タブでカメラ（固定・画角・リセット）とウィンドウ解像度（1280x720 / 1920x1080 / 縦長 720x1280 / 1080x1920）を、
 **Graphics** タブで背景（透過 / 単色）・ライト・輪郭線を変更できる。

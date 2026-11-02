@@ -373,6 +373,9 @@ namespace VRCast.Core
         // 顔（まばたき・ウインク・パーフェクトシンク・視線）の左右だけを入れ替える（頭の傾き・体・腕と左右が合わないとき用）
         public bool trackingSwapFaceSides;
 
+        // 体・腕・手・肩のひねりだけの左右を入れ替える（頭の向き・顔はミラーのまま。iPhone 顔 + Web カメラ腕の併用向け）
+        public bool trackingSwapBodySides;
+
         // 外部アプリ（VMC プロトコル）の受信ポート（同梱トラッカーの trackingPort とは別。LAN から受信する）
         public int vmcPort = DefaultVmcPort;
 
@@ -541,6 +544,11 @@ namespace VRCast.Core
         /// 顔（まばたき・パーフェクトシンク・視線）に使う鏡像の向き。顔の左右の入れ替えが ON なら鏡像設定と逆。
         /// </summary>
         public bool FaceMirror => trackingMirror != trackingSwapFaceSides;
+
+        /// <summary>
+        /// 体・腕・手・肩のひねりに使う鏡像の向き。身体の左右の入れ替えが ON なら鏡像設定と逆。
+        /// </summary>
+        public bool BodyMirror => trackingMirror != trackingSwapBodySides;
 
         /// <summary>
         /// アバターへトラッキングを書かないなら true。

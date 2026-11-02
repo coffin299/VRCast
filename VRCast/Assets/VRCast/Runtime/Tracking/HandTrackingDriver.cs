@@ -303,8 +303,8 @@ namespace VRCast.Tracking
                 _lastSequence = frame.Sequence;
             }
 
-            // 鏡像モードでは本人の右腕がアバターの左腕
-            bool mirror = _settings.trackingMirror;
+            // 身体の鏡像（ミラー XOR 身体の左右入れ替え）。頭・顔は別設定のまま
+            bool mirror = _settings.BodyMirror;
             float now = Time.unscaledTime;
             UpdateTargets(_left, mirror ? frame.Right : frame.Left, frame, received, fresh, now);
             UpdateTargets(_right, mirror ? frame.Left : frame.Right, frame, received, fresh, now);
@@ -431,7 +431,7 @@ namespace VRCast.Tracking
         private Vector3 ToAvatar(Vector3 cameraVector)
         {
             // カメラ基準 → 傾き補正 → アバタールート基準（鏡像設定に従う。補正未使用なら従来どおり）
-            return TrackingMath.ToAvatar(cameraVector, _settings.trackingMirror, _settings.TrackingTiltCorrection);
+            return TrackingMath.ToAvatar(cameraVector, _settings.BodyMirror, _settings.TrackingTiltCorrection);
         }
 
         private void Apply(ArmRig rig)

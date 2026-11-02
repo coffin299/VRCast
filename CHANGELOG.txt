@@ -10,11 +10,15 @@ Newest first. Each version is written in Japanese, then English.
 - BlendShape の名前を目の動きの上限の直上へ移し、同じ設定で同期するよう変更（既定は ARKit）
 - 目のトラッキング（自動 / ボーン / キー）を追加（既定は自動。しきい値が効かないときはボーンかキーを選ぶ案内付き）
 - VRCFaceTracking の v2 付き名（v2/JawOpen・v2_EyeClosedLeft・v2JawOpen など）を Unified Expressions の公式キーとして照合するよう対応
+- iFacialMocap の顔 + MediaPipe の手の併用で、顔を向けた方向に上半身が追従するよう修正（肩のひねりと頭の向きが逆にねじれる問題）
+- 身体の左右を入れ替える設定を追加（腕・手・肩のひねり・傾きだけ。頭の向きと顔はミラーのまま）
 
 [English]
 - Moved Blend shape names above the eye movement limit and keep them in sync (default is now ARKit)
 - Added eye tracking source (Auto / Bones / Keys; default Auto, with a hint to choose Bones or Keys if thresholds do not apply)
 - Added matching for VRCFaceTracking v2-prefixed names (v2/JawOpen, v2_EyeClosedLeft, v2JawOpen, and similar) as Unified Expressions keys
+- Fixed iFacialMocap face + MediaPipe hands so the upper body follows the direction you turn your face (shoulder twist no longer fights head yaw)
+- Added Swap body left / right (arms, hands, and shoulder twist/tilt only; head orientation and the face stay with Mirror)
 
 ■ 4.3.1 (2026-10-29)
 

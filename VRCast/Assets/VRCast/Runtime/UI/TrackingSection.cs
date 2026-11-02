@@ -1248,6 +1248,17 @@ namespace VRCast.UI
                 "当闭上的眼睛或单眼眨眼与头部倾斜、手臂方向相反时开启。只交换面部（眨眼、完美同步、视线）。",
                 "當閉上的眼睛或單眼眨眼與頭部傾斜、手臂方向相反時開啟。只交換臉部（眨眼、完美同步、視線）。"));
 
+            // 体・腕・手・肩だけの左右を入れ替える（頭の向き・顔はミラーのまま。iPhone 顔 + Web カメラ腕の併用向け）
+            _settings.trackingSwapBodySides = GUILayout.Toggle(
+                _settings.trackingSwapBodySides,
+                Loc.T("Swap body left / right", "身体の左右を入れ替える", "몸 좌우 바꾸기", "交换身体左右", "交換身體左右"));
+            GuiControls.Hint(Loc.T(
+                "Turn on if arms and the upper body are mirrored the wrong way while the face looks correct (e.g. iPhone face + webcam arms). Only the body (arms, hands, shoulder twist/tilt) is swapped; head orientation and the face stay with Mirror.",
+                "顔は合っているのに腕や上半身だけ左右が逆のとき（iPhone の顔 + Web カメラの腕の併用など）に ON にします。体（腕・手・肩のひねり・傾き）だけが入れ替わり、頭の向きと顔はミラーのままです。",
+                "얼굴은 맞는데 팔·상체만 좌우가 반대일 때 (iPhone 얼굴 + 웹캠 팔 병용 등) 켭니다. 몸 (팔·손·어깨 비틀림·기울기)만 바뀌고, 머리 방향과 얼굴은 미러 그대로입니다.",
+                "当面部正确但手臂和上半身左右相反时开启（例如 iPhone 面部 + 摄像头手臂）。只交换身体（手臂、手、肩部扭转/倾斜）；头部朝向和面部仍跟随镜像设置。",
+                "當臉部正確但手臂與上半身左右相反時開啟（例如 iPhone 臉部 + 網路攝影機手臂）。只交換身體（手臂、手、肩部扭轉／傾斜）；頭部朝向與臉部仍跟隨鏡像設定。"));
+
             // 頭の位置に合わせた体の動かし方（傾き / 体全体の移動 / 両方）と強さ
             string[] labels =
             {

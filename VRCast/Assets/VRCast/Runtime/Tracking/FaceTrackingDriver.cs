@@ -983,8 +983,13 @@ namespace VRCast.Tracking
             }
 
             // 両肩が映っている間は、横の傾きを肩の線に置き換え（頭の位置と二重に傾けない）、ひねりを加える。
-            // 前後の傾きは肩の奥行きが不安定なため頭の位置（または iFacialMocap の頭の向き）のまま
-            Quaternion torso = TorsoPose.ToRotation(_torsoAngles);
+            // 前後の傾きは肩の奥行きが不安定なため頭の位置（または iFacialMocap の頭の向き）のまま。
+            // iFacialMocap（併用含む）は顔と肩が別カメラなので、肩のひねりを足すと逆方向にねじれやすい。
+            // ひねりは頭の向きに合わせ、肩からは左右の傾きだけ使う。
+            Vector2 torsoAngles = faceSource == TrackingSource.IFacialMocap
+                ? new Vector2(0f, _torsoAngles.y)
+                : _torsoAngles;
+            Quaternion torso = TorsoPose.ToRotation(torsoAngles);
             Quaternion head = Quaternion.Euler(pitch, yaw, roll);
             Quaternion withoutRoll = Quaternion.Euler(pitch, yaw, 0f);
             return Quaternion.Slerp(head, withoutRoll * torso, _torsoWeight);
@@ -995,14 +1000,15 @@ namespace VRCast.Tracking
             // 設定 ON・腕を受信できる入力元で腕・手 ON・頭が使えるときだけ、両肩が映っていれば向きを求める
             bool enabled = usable && _settings.trackingTorso && _settings.trackingHands
                 && TrackingSourceInfo.HasArms(_settings.trackingSource);
+            bool bodyMirror = _settings.BodyMirror;
             Vector2 angles = Vector2.zero;
             bool has = enabled && _body != null && _body.TryGetBody(out BodyTrackingFrame body)
-                && TorsoPose.TryGetAngles(body, _settings.trackingMirror, _settings.TrackingTiltCorrection, out angles);
+                && TorsoPose.TryGetAngles(body, bodyMirror, _settings.TrackingTiltCorrection, out angles);
 
-            // 鏡像設定が変わったら左右の基準が変わるため正面を取り直す
-            if (_torsoMirror != _settings.trackingMirror)
+            // 身体の左右（鏡像 XOR 入れ替え）が変わったら基準が変わるため正面を取り直す
+            if (_torsoMirror != bodyMirror)
             {
-                _torsoMirror = _settings.trackingMirror;
+                _torsoMirror = bodyMirror;
                 _torsoCalibrated = false;
             }
 
