@@ -248,11 +248,11 @@ namespace VRCast.Tracking
         /// naming を省略すると DetectNaming で自動選択する（bindings があれば ARKit）。
         /// bindings（パーフェクトシンク化で既存の BlendShape を ARKit 名に割り当てたもの）があれば、その ARKit 名は割り当てを使い、
         /// 残りの名前を照合で探す。
-        /// skipEyeLook は目ボーンがあるとき true（見る方向はボーンに任せ、eyeLook* は書かない）。
+        /// skipEyeLook は目をボーン駆動にするとき true（eyeLook* は書かない）。
         /// </summary>
         public static PerfectSyncBlendShapes Create(
             Transform root, IReadOnlyList<PerfectSyncBinding> bindings = null, bool anyShape = false,
-            PerfectSyncNaming? naming = null, PerfectSyncNamingMode namingMode = PerfectSyncNamingMode.Auto,
+            PerfectSyncNaming? naming = null, PerfectSyncNamingMode namingMode = PerfectSyncNamingMode.ArKit,
             bool skipEyeLook = false)
         {
             PerfectSyncNaming mode = naming ?? DetectNaming(root, anyShape, bindings, namingMode);
@@ -286,6 +286,39 @@ namespace VRCast.Tracking
             }
 
             return new PerfectSyncBlendShapes(targets, slots.Overlays, matched, mode);
+        }
+
+        /// <summary>
+        /// 目の駆動設定から、ボーンを使うか（キー側の eyeLook を外すか）を決める。
+        /// </summary>
+        public static bool UseEyeBones(EyeLookDriveMode mode, bool hasBones)
+        {
+            if (!hasBones)
+            {
+                return false;
+            }
+
+            return mode == EyeLookDriveMode.Bones || mode == EyeLookDriveMode.Auto;
+        }
+
+        /// <summary>
+        /// 目の駆動設定から、BlendShape キー（eyeLook / 視線用）を使うかを決める。
+        /// </summary>
+        public static bool UseEyeKeys(EyeLookDriveMode mode, bool hasBones)
+        {
+            if (mode == EyeLookDriveMode.Keys)
+            {
+                return true;
+            }
+
+            if (mode == EyeLookDriveMode.Bones)
+            {
+                // ボーン指定でもボーンが無ければキーへフォールバック
+                return !hasBones;
+            }
+
+            // 自動: ボーンが無ければキー
+            return !hasBones;
         }
 
         private static void LockFilledTargets(List<Target>[] targets, bool[] bound)
@@ -722,13 +755,60 @@ namespace VRCast.Tracking
                 return false;
             }
 
-            // FBX の取り込みで付く "blendShape1." のような接頭辞を外してから正規化
-            int dot = blendShapeName.LastIndexOf('.');
-            string name = Normalize(dot >= 0 ? blendShapeName.Substring(dot + 1) : blendShapeName);
+            // 接頭辞（blendShape1. / FT/v2/ 等）を外してから正規化
+            string name = Normalize(ShapeLeaf(blendShapeName));
             Dictionary<string, int[]> table = naming == PerfectSyncNaming.Unified
                 ? UnifiedNameToIndices
                 : ArKitNameToIndices;
-            return table.TryGetValue(name, out indices);
+            if (table.TryGetValue(name, out indices))
+            {
+                return true;
+            }
+
+            // Unified: v2JawOpen / v2_EyeClosedLeft のように区切り無し・アンダースコアで残った v2 接頭辞も公式キーへ
+            if (naming == PerfectSyncNaming.Unified)
+            {
+                string withoutV2 = StripV2Prefix(name);
+                if (!string.IsNullOrEmpty(withoutV2) && withoutV2 != name
+                    && table.TryGetValue(withoutV2, out indices))
+                {
+                    return true;
+                }
+            }
+
+            indices = null;
+            return false;
+        }
+
+        /// <summary>
+        /// BlendShape / パラメータ名の末尾（公式キー）を取り出す。
+        /// "blendShape1.JawOpen" や "FT/v2/JawOpen" / "v2/JawOpen" → "JawOpen"。
+        /// </summary>
+        public static string ShapeLeaf(string blendShapeName)
+        {
+            if (string.IsNullOrEmpty(blendShapeName))
+            {
+                return string.Empty;
+            }
+
+            int slash = blendShapeName.LastIndexOf('/');
+            int dot = blendShapeName.LastIndexOf('.');
+            int sep = Math.Max(slash, dot);
+            return sep >= 0 ? blendShapeName.Substring(sep + 1) : blendShapeName;
+        }
+
+        /// <summary>
+        /// 正規化名の先頭の v2 を外す（v2jawopen → jawopen）。無ければ空。
+        /// </summary>
+        public static string StripV2Prefix(string normalized)
+        {
+            if (string.IsNullOrEmpty(normalized) || normalized.Length <= 2
+                || !normalized.StartsWith("v2", StringComparison.Ordinal))
+            {
+                return string.Empty;
+            }
+
+            return normalized.Substring(2);
         }
 
         private static string Normalize(string name)
@@ -799,14 +879,8 @@ namespace VRCast.Tracking
 
         private static bool IsUnifiedReplacedArKitName(string blendShapeName)
         {
-            if (string.IsNullOrEmpty(blendShapeName))
-            {
-                return false;
-            }
-
-            int dot = blendShapeName.LastIndexOf('.');
-            string name = Normalize(dot >= 0 ? blendShapeName.Substring(dot + 1) : blendShapeName);
-            return UnifiedReplacedArKitNames.Contains(name);
+            return !string.IsNullOrEmpty(blendShapeName)
+                && UnifiedReplacedArKitNames.Contains(Normalize(ShapeLeaf(blendShapeName)));
         }
 
         private static Dictionary<string, int[]> BuildUnifiedNameTable()

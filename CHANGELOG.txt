@@ -4,6 +4,18 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 未リリース / Unreleased
+
+[日本語]
+- BlendShape の名前を目の動きの上限の直上へ移し、同じ設定で同期するよう変更（既定は ARKit）
+- 目のトラッキング（自動 / ボーン / キー）を追加（既定は自動。しきい値が効かないときはボーンかキーを選ぶ案内付き）
+- VRCFaceTracking の v2 付き名（v2/JawOpen・v2_EyeClosedLeft・v2JawOpen など）を Unified Expressions の公式キーとして照合するよう対応
+
+[English]
+- Moved Blend shape names above the eye movement limit and keep them in sync (default is now ARKit)
+- Added eye tracking source (Auto / Bones / Keys; default Auto, with a hint to choose Bones or Keys if thresholds do not apply)
+- Added matching for VRCFaceTracking v2-prefixed names (v2/JawOpen, v2_EyeClosedLeft, v2JawOpen, and similar) as Unified Expressions keys
+
 ■ 4.3.1 (2026-10-29)
 
 [日本語]

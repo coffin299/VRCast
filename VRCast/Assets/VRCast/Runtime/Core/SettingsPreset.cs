@@ -217,6 +217,7 @@ namespace VRCast.Core
                 nameof(AppSettings.trackingBoostCheekPuff),
                 nameof(AppSettings.trackingBoostLips), nameof(AppSettings.trackingCheekPuffStart),
                 nameof(AppSettings.trackingCheekPuffFull),
+                nameof(AppSettings.trackingEyeLookDrive),
                 nameof(AppSettings.trackingPerfectSyncEyeLookLimit),
                 nameof(AppSettings.trackingPerfectSyncThresholds),
                 nameof(AppSettings.trackingExpressions),

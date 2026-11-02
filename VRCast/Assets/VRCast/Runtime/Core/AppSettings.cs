@@ -427,8 +427,8 @@ namespace VRCast.Core
         // パーフェクトシンクを有効にする条件（false = ARKit 名が MinMatchedShapes 種類以上、true = 1 種類でもあれば）
         public bool trackingPerfectSyncAnyShape;
 
-        // パーフェクトシンクの名前系統（Auto = 一致数で自動、ArKit / Unified / Handmade で固定）
-        public PerfectSyncNamingMode trackingPerfectSyncNaming = PerfectSyncNamingMode.Auto;
+        // パーフェクトシンクの名前系統（既定は ARKit。Auto = 一致数で自動、Unified / Handmade で固定）
+        public PerfectSyncNamingMode trackingPerfectSyncNaming = PerfectSyncNamingMode.ArKit;
 
         // パーフェクトシンクの口の開き（jawOpen）: この開きまでは閉じた口とみなし、残りを倍率で抑える・強める
         public float trackingJawOpenDeadzone;
@@ -444,6 +444,9 @@ namespace VRCast.Core
         // 頬のふくらみの推定（MediaPipe のみ）: 頬の幅が真顔より何 % 広がったら出し始め、何 % で最大にするか
         public float trackingCheekPuffStart = 1.5f;
         public float trackingCheekPuffFull = 6f;
+
+        // 目の視線の駆動（自動 / ボーン / キー。既定は自動）
+        public EyeLookDriveMode trackingEyeLookDrive = EyeLookDriveMode.Auto;
 
         // パーフェクトシンクの「見る」方向（eyeLook*）の上限（1 = 今まで通り、0 = その 8 種だけ動かさない）
         public float trackingPerfectSyncEyeLookLimit = 1f;
@@ -1307,10 +1310,16 @@ namespace VRCast.Core
                 trackingSmoothing = MotionSmoothing.Lowest;
             }
 
-            // 未知のパーフェクトシンクの名前系統は自動へ
+            // 未知のパーフェクトシンクの名前系統は ARKit へ
             if (!Enum.IsDefined(typeof(PerfectSyncNamingMode), trackingPerfectSyncNaming))
             {
-                trackingPerfectSyncNaming = PerfectSyncNamingMode.Auto;
+                trackingPerfectSyncNaming = PerfectSyncNamingMode.ArKit;
+            }
+
+            // 未知の目の駆動は自動へ
+            if (!Enum.IsDefined(typeof(EyeLookDriveMode), trackingEyeLookDrive))
+            {
+                trackingEyeLookDrive = EyeLookDriveMode.Auto;
             }
 
             // 未知の垂直同期は OFF へ

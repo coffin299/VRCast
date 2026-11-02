@@ -344,35 +344,41 @@ namespace VRCast.Tests
         }
 
         [Test]
-        public void Create_SkipEyeLookLeavesLookShapesUndriven()
+        public void UseEyeBonesAndKeys_RespectDriveMode()
         {
-            // 目ボーンがあるときは eyeLook を書かず、まばたきなど他は動かす
-            var root = MakeFace("BonesAndLook", new[]
-            {
-                "eyeBlinkLeft", "eyeBlinkRight", "eyeLookUpLeft", "eyeLookUpRight", "jawOpen",
-            });
-            var renderer = root.GetComponentInChildren<SkinnedMeshRenderer>();
-            try
-            {
-                PerfectSyncBlendShapes sync = PerfectSyncBlendShapes.Create(
-                    root.transform, naming: PerfectSyncNaming.ArKit, skipEyeLook: true);
-                Assert.That(sync.DrivesEyeLook, Is.False);
-                Assert.That(sync.DrivesBlink, Is.True);
+            Assert.That(PerfectSyncBlendShapes.UseEyeBones(EyeLookDriveMode.Auto, true), Is.True);
+            Assert.That(PerfectSyncBlendShapes.UseEyeKeys(EyeLookDriveMode.Auto, true), Is.False);
+            Assert.That(PerfectSyncBlendShapes.UseEyeBones(EyeLookDriveMode.Auto, false), Is.False);
+            Assert.That(PerfectSyncBlendShapes.UseEyeKeys(EyeLookDriveMode.Auto, false), Is.True);
 
-                var scores = new float[ArKitFace.BlendShapeNames.Length];
-                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft")] = 1f;
-                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeLookUpLeft")] = 1f;
-                scores[Array.IndexOf(ArKitFace.BlendShapeNames, "eyeLookUpRight")] = 1f;
-                sync.Apply(scores, ArKitRange.MediaPipe, false, 10f, true);
+            Assert.That(PerfectSyncBlendShapes.UseEyeBones(EyeLookDriveMode.Bones, true), Is.True);
+            Assert.That(PerfectSyncBlendShapes.UseEyeKeys(EyeLookDriveMode.Bones, true), Is.False);
+            Assert.That(PerfectSyncBlendShapes.UseEyeKeys(EyeLookDriveMode.Bones, false), Is.True);
 
-                Assert.That(Weight(renderer, "eyeBlinkRight"), Is.EqualTo(100f).Within(0.01f));
-                Assert.That(Weight(renderer, "eyeLookUpLeft"), Is.EqualTo(0f).Within(0.01f));
-                Assert.That(Weight(renderer, "eyeLookUpRight"), Is.EqualTo(0f).Within(0.01f));
-            }
-            finally
-            {
-                DestroyFace(root);
-            }
+            Assert.That(PerfectSyncBlendShapes.UseEyeBones(EyeLookDriveMode.Keys, true), Is.False);
+            Assert.That(PerfectSyncBlendShapes.UseEyeKeys(EyeLookDriveMode.Keys, true), Is.True);
+        }
+
+        [Test]
+        public void Match_StripsV2AndPathPrefixes()
+        {
+            // VRCFT パラメータ名は v2/ を外すと Unified Expressions の公式キーになる
+            int jaw = Array.IndexOf(ArKitFace.BlendShapeNames, "jawOpen");
+            int blink = Array.IndexOf(ArKitFace.BlendShapeNames, "eyeBlinkLeft");
+            int smile = Array.IndexOf(ArKitFace.BlendShapeNames, "mouthSmileLeft");
+            Assert.That(PerfectSyncBlendShapes.ShapeLeaf("v2/JawOpen"), Is.EqualTo("JawOpen"));
+            Assert.That(PerfectSyncBlendShapes.ShapeLeaf("FT/v2/JawOpen"), Is.EqualTo("JawOpen"));
+            Assert.That(PerfectSyncBlendShapes.ShapeLeaf("blendShape1.eyeBlinkLeft"), Is.EqualTo("eyeBlinkLeft"));
+            Assert.That(PerfectSyncBlendShapes.Match("v2/JawOpen", PerfectSyncNaming.Unified), Is.EqualTo(jaw));
+            Assert.That(PerfectSyncBlendShapes.Match("Example/Nest/v2/EyeClosedLeft", PerfectSyncNaming.Unified),
+                Is.EqualTo(blink));
+            Assert.That(PerfectSyncBlendShapes.Match("v2/JawOpen", PerfectSyncNaming.ArKit), Is.EqualTo(jaw));
+
+            // 区切り無し・アンダースコア付きの v2 接頭辞（UE のみ）
+            Assert.That(PerfectSyncBlendShapes.Match("v2JawOpen", PerfectSyncNaming.Unified), Is.EqualTo(jaw));
+            Assert.That(PerfectSyncBlendShapes.Match("v2_EyeClosedLeft", PerfectSyncNaming.Unified), Is.EqualTo(blink));
+            Assert.That(PerfectSyncBlendShapes.Match("v2MouthSmileLeft", PerfectSyncNaming.Unified), Is.EqualTo(smile));
+            Assert.That(PerfectSyncBlendShapes.Match("v2JawOpen", PerfectSyncNaming.ArKit), Is.EqualTo(-1));
         }
 
         [Test]

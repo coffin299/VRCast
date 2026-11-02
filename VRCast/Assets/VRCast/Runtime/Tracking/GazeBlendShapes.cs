@@ -109,9 +109,14 @@ namespace VRCast.Tracking
                 return -1;
             }
 
-            // FBX の接頭辞を外してから正規化（AutoMapper と同じ規則）
-            int dot = blendShapeName.LastIndexOf('.');
-            string name = PerfectSyncAutoMapper.Normalize(dot >= 0 ? blendShapeName.Substring(dot + 1) : blendShapeName);
+            // FBX / v2/ などの接頭辞を外してから正規化（パーフェクトシンクと同じ葉名）
+            string name = PerfectSyncAutoMapper.Normalize(PerfectSyncBlendShapes.ShapeLeaf(blendShapeName));
+            string withoutV2 = PerfectSyncBlendShapes.StripV2Prefix(name);
+            if (!string.IsNullOrEmpty(withoutV2))
+            {
+                name = withoutV2;
+            }
+
             if (name.Length == 0 || IsArKitEyeLook(name))
             {
                 return -1;

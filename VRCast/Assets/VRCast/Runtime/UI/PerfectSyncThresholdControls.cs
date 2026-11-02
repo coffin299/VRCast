@@ -12,20 +12,88 @@ namespace VRCast.UI
     public static class PerfectSyncThresholdControls
     {
         /// <summary>
-        /// 目の動きの上限（常に表示。1 = 今まで通り）。目のボーンとパーフェクトシンクの「見る」方向の両方に効く。
+        /// BlendShape 名の系統ラベル（自動 / ARKit / Unified / 手動生成）。目の上限と本体で共有する。
         /// </summary>
-        public static void DrawEyeLookLimit(AppSettings settings)
+        public static string[] NamingLabels()
         {
+            return new[]
+            {
+                Loc.T("Auto", "自動", "자동", "自动", "自動"),
+                "ARKit",
+                "Unified Expressions",
+                Loc.T("Handmade", "手動生成", "수동 생성", "手动生成", "手動生成"),
+            };
+        }
+
+        /// <summary>
+        /// BlendShape 名系統・目のトラッキング元・目の動きの上限。
+        /// 名前系統か目の駆動が変わったら true（呼び出し側でパーフェクトシンクを作り直す）。
+        /// </summary>
+        public static bool DrawEyeLookLimit(AppSettings settings)
+        {
+            PerfectSyncNamingMode namingBefore = settings.trackingPerfectSyncNaming;
+            settings.trackingPerfectSyncNaming = (PerfectSyncNamingMode)GuiControls.EnumSelector(
+                Loc.T("Blend shape names", "BlendShape の名前", "BlendShape 이름", "BlendShape 名称", "BlendShape 名稱"),
+                NamingLabels(), (int)settings.trackingPerfectSyncNaming);
+
+            EyeLookDriveMode eyeBefore = settings.trackingEyeLookDrive;
+            string[] eyeLabels =
+            {
+                Loc.T("Auto", "自動", "자동", "自动", "自動"),
+                Loc.T("Bones", "ボーン", "본", "骨骼", "骨骼"),
+                Loc.T("Keys", "キー", "키", "键", "鍵"),
+            };
+            settings.trackingEyeLookDrive = (EyeLookDriveMode)GuiControls.EnumSelector(
+                Loc.T("Eye tracking", "目のトラッキング", "눈 트래킹", "眼睛追踪", "眼睛追蹤"),
+                eyeLabels, (int)settings.trackingEyeLookDrive);
+            GuiControls.Hint(Loc.T(
+                "Default is Auto (bones if present, otherwise keys). If thresholds do not affect the eyes, choose Bones or Keys.",
+                "既定は自動（目ボーンがあればボーン、無ければキー）です。しきい値が目に効かないときは、ボーンかキーを選んでください。",
+                "기본값은 자동(눈 본이 있으면 본, 없으면 키)입니다. 임계값이 눈에 먹지 않으면 본 또는 키를 선택하세요.",
+                "默认是自动（有眼球骨骼则用骨骼，否则用键）。若阈值对眼睛无效，请选择骨骼或键。",
+                "預設是自動（有眼球骨骼則用骨骼，否則用鍵）。若閾值對眼睛無效，請選擇骨骼或鍵。"));
+
             // 隣の口・頬のスライダーと同じ操作にする（数値欄だとドラッグが欄の値に戻ることがある）
             settings.trackingPerfectSyncEyeLookLimit = GuiControls.Slider(
                 Loc.T("Eye movement limit", "目の動きの上限", "눈 움직임 상한", "眼睛动作上限", "眼睛動作上限"),
                 settings.trackingPerfectSyncEyeLookLimit, 0f, 1f, "F2");
             GuiControls.Hint(Loc.T(
-                "Scales how far the eyes can look, including eye bones and perfect sync look shapes. 1 keeps the current movement, and 0 holds the eyes forward.",
-                "目のボーンと、パーフェクトシンクの「見る」方向（上下左右）の両方が、この割合まで小さくなります。1 は今まで通り、0 で目は正面のままです。",
-                "눈 뼈대와 퍼펙트 싱크의 보는 방향(상하좌우)이 모두 이 비율까지 작아집니다. 1은 지금과 같고, 0이면 눈은 정면을 유지합니다.",
-                "眼球骨骼和完美同步的“看向”方向（上下左右）都会缩小到这个比例。1 保持现在的动作，0 则眼睛保持看向前方。",
-                "眼球骨骼和完美同步的「看向」方向（上下左右）都會縮小到這個比例。1 維持現在的動作，0 則眼睛保持看向前方。"));
+                "Scales how far the eyes can look. 1 keeps the current movement, and 0 holds the eyes forward.",
+                "目の動きが、この割合まで小さくなります。1 は今まで通り、0 で目は正面のままです。",
+                "눈 움직임이 이 비율까지 작아집니다. 1은 지금과 같고, 0이면 눈은 정면을 유지합니다.",
+                "眼睛动作会缩小到这个比例。1 保持现在的动作，0 则眼睛保持看向前方。",
+                "眼睛動作會縮小到這個比例。1 維持現在的動作，0 則眼睛保持看向前方。"));
+
+            if (settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Auto)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Auto picks the name set with more matches. Perfect sync converted avatars use Handmade.",
+                    "自動は一致数の多い名前系統を選びます。パーフェクトシンク化済みは手動生成です。",
+                    "자동은 일치 수가 많은 이름 체계를 고릅니다. 퍼펙트 싱크 변환 아바타는 수동 생성입니다.",
+                    "自动会选用匹配更多的名称体系。已做完美同步化的虚拟形象为手动生成。",
+                    "自動會選用匹配較多的名稱體系。已做完美同步化的虛擬形象為手動生成。"));
+            }
+            else if (settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Handmade)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Handmade prefers ARKit names, and fills missing slots with Unified Expressions names.",
+                    "手動生成は ARKit 名を優先し、足りない枠だけ Unified Expressions 名も使います。",
+                    "수동 생성은 ARKit 이름을 우선하고, 비어 있는 칸만 Unified Expressions 이름도 씁니다.",
+                    "手动生成优先使用 ARKit 名称，并用 Unified Expressions 名称补足缺失项。",
+                    "手動生成優先使用 ARKit 名稱，並用 Unified Expressions 名稱補足缺失項。"));
+            }
+            else if (settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Unified)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Unified Expressions names (v2/JawOpen → JawOpen). Missing slots fall back to ARKit names.",
+                    "Unified Expressions 名（v2/JawOpen → JawOpen）。無い枠は ARKit 名へフォールバックします。",
+                    "Unified Expressions 이름(v2/JawOpen → JawOpen). 없는 칸은 ARKit 이름으로 대체합니다.",
+                    "Unified Expressions 名称（v2/JawOpen → JawOpen）。缺失项回退到 ARKit 名称。",
+                    "Unified Expressions 名稱（v2/JawOpen → JawOpen）。缺失項回退到 ARKit 名稱。"));
+            }
+
+            return namingBefore != settings.trackingPerfectSyncNaming
+                || eyeBefore != settings.trackingEyeLookDrive;
         }
 
         /// <summary>
@@ -53,7 +121,7 @@ namespace VRCast.UI
                 Array.Clear(settings.trackingPerfectSyncThresholds, 0, settings.trackingPerfectSyncThresholds.Length);
             }
 
-            // 名前の系統（アバターが無いときは設定の固定。自動・手動生成は ARKit 表示名）
+            // 名前の系統（アバターが無いときは設定の固定。自動・手動生成・ARKit は ARKit 表示名）
             PerfectSyncNaming naming = driver != null
                 ? driver.ActivePerfectSyncNaming
                 : settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Unified

@@ -905,32 +905,18 @@ namespace VRCast.UI
                 Loc.T("Enable when", "有効にする条件", "활성화 조건", "启用条件", "啟用條件"),
                 labels, anyShape ? 1 : 0) == 1;
 
-            // 名前系統（自動 / ARKit / Unified Expressions / 手動生成）
-            string[] namingLabels =
-            {
-                Loc.T("Auto", "自動", "자동", "自动", "自動"),
-                "ARKit",
-                "Unified Expressions",
-                Loc.T("Handmade", "手動生成", "수동 생성", "手动生成", "手動生成"),
-            };
-            var namingMode = _settings.trackingPerfectSyncNaming;
-            _settings.trackingPerfectSyncNaming = (PerfectSyncNamingMode)GuiControls.EnumSelector(
-                Loc.T("Blend shape names", "BlendShape の名前", "BlendShape 이름", "BlendShape 名称", "BlendShape 名稱"),
-                namingLabels, (int)namingMode);
-
             // 口の開きの補正と口・頬の強調（アバター未表示でも設定はできる）
             var driver = _avatar.Get<FaceTrackingDriver>();
+            PerfectSyncBoostControls.Draw(_settings, driver);
+
+            // BlendShape 名系統（目の上限と同期）＋見る方向の上限、しきい値は閉じて格納
+            bool namingChanged = PerfectSyncThresholdControls.DrawEyeLookLimit(_settings);
             if (driver != null
-                && (anyShape != _settings.trackingPerfectSyncAnyShape
-                    || namingMode != _settings.trackingPerfectSyncNaming))
+                && (anyShape != _settings.trackingPerfectSyncAnyShape || namingChanged))
             {
                 driver.RefreshPerfectSyncNaming();
             }
 
-            PerfectSyncBoostControls.Draw(_settings, driver);
-
-            // 見る方向の上限と、シェイプごとのしきい値（しきい値は閉じて格納）
-            PerfectSyncThresholdControls.DrawEyeLookLimit(_settings);
             _perfectSyncThresholdsOpen = PerfectSyncThresholdControls.DrawThresholds(
                 _settings, driver, _perfectSyncThresholdsOpen);
 
@@ -965,26 +951,6 @@ namespace VRCast.UI
                     $"이 아바타는 지원하지 않습니다 ({required}개 이상 필요)",
                     $"此虚拟形象不支持（需要 {required} 个以上）",
                     $"此虛擬形象不支援（需要 {required} 個以上）"));
-
-            // 選び方のヒント
-            if (_settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Auto)
-            {
-                GuiControls.Hint(Loc.T(
-                    "Auto picks the name set with more matches. Perfect sync converted avatars use Handmade.",
-                    "自動は一致数の多い名前系統を選びます。パーフェクトシンク化済みは手動生成です。",
-                    "자동은 일치 수가 많은 이름 체계를 고릅니다. 퍼펙트 싱크 변환 아바타는 수동 생성입니다.",
-                    "自动会选用匹配更多的名称体系。已做完美同步化的虚拟形象为手动生成。",
-                    "自動會選用匹配較多的名稱體系。已做完美同步化的虛擬形象為手動生成。"));
-            }
-            else if (_settings.trackingPerfectSyncNaming == PerfectSyncNamingMode.Handmade)
-            {
-                GuiControls.Hint(Loc.T(
-                    "Handmade prefers ARKit names, and fills missing slots with Unified Expressions names.",
-                    "手動生成は ARKit 名を優先し、足りない枠だけ Unified Expressions 名も使います。",
-                    "수동 생성은 ARKit 이름을 우선하고, 비어 있는 칸만 Unified Expressions 이름도 씁니다.",
-                    "手动生成优先使用 ARKit 名称，并用 Unified Expressions 名称补足缺失项。",
-                    "手動生成優先使用 ARKit 名稱，並用 Unified Expressions 名稱補足缺失項。"));
-            }
 
             // 規定数未満で動かしている間は、表情プリセットも併用されることを伝える
             if (driver.SupportsPerfectSync && count < min)
