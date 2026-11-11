@@ -20,7 +20,8 @@ namespace VRCast.Avatars
         /// コルーチンとして実行する。成功時は onLoaded、失敗時は onError を呼ぶ。
         /// </summary>
         public static IEnumerator Load(
-            AvatarPackage package, Transform parent, Action<LoadedAvatar> onLoaded, Action<string> onError)
+            AvatarPackage package, Transform parent, Action<LoadedAvatar> onLoaded, Action<string> onError,
+            bool alignOrigin)
         {
             // bundle を非同期で読み込む
             AssetBundleCreateRequest bundleRequest = AssetBundle.LoadFromFileAsync(package.BundlePath);
@@ -72,7 +73,17 @@ namespace VRCast.Avatars
                 animator.applyRootMotion = false;
             }
 
-            var loaded = new LoadedAvatar(instance, bundle, package);
+            // 体が原点から大きくずれているアバターは、足元がルートに来るよう子を動かす（以前の配置を選んだときは動かさない）
+            bool aligned = alignOrigin && AvatarOrigin.TryAlign(animator, out Vector3 originShift);
+            if (aligned)
+            {
+                VRCastLog.Info(LogCategory, $"Aligned origin of '{package.Manifest.name}' by {originShift} m.");
+            }
+
+            var loaded = new LoadedAvatar(instance, bundle, package)
+            {
+                OriginAligned = aligned,
+            };
 
             // パーフェクトシンク版なら、生成した形状をメッシュの複製へ足す（表情・まばたき等の初期化より前に）
             if (package.PerfectSyncShapes.Shapes.Count > 0)

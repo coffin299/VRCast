@@ -26,6 +26,11 @@ namespace VRCast.Avatars
         /// </summary>
         public event Action<LoadedAvatar> AvatarLoaded;
 
+        /// <summary>
+        /// このパスのアバターを、ファイルに入っていた配置のまま読むなら true（未設定なら足元を原点へ合わせる）。
+        /// </summary>
+        public Func<string, bool> UseLegacyOrigin { get; set; }
+
         private string CacheRoot => Path.Combine(Application.temporaryCachePath, CacheFolderName);
 
         public void Load(string packagePath)
@@ -70,10 +75,13 @@ namespace VRCast.Avatars
             // 同一 bundle の二重読込は Unity がエラーにするため先に解放
             Unload();
 
+            // 以前の配置に戻したアバターは、足元を原点へ動かさない
+            bool alignOrigin = UseLegacyOrigin == null || !UseLegacyOrigin(packagePath);
+
             // VRM は展開せず直接読み込む
             if (AvatarFiles.IsVrm(packagePath))
             {
-                yield return VrmLoader.Load(packagePath, transform, OnLoaded, OnError);
+                yield return VrmLoader.Load(packagePath, transform, OnLoaded, OnError, alignOrigin);
                 FinishLoading(packagePath);
                 yield break;
             }
@@ -92,7 +100,7 @@ namespace VRCast.Avatars
             // 展開できた場合のみ bundle を読み込む
             if (package != null)
             {
-                yield return AvatarLoader.Load(package, transform, OnLoaded, OnError);
+                yield return AvatarLoader.Load(package, transform, OnLoaded, OnError, alignOrigin);
             }
 
             FinishLoading(packagePath);

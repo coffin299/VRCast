@@ -81,6 +81,9 @@ namespace VRCast.App
             // 背景・解像度・ライト（Bootstrap 未実行時は既定値で動かす）
             _settings = AppBootstrap.Settings ?? new AppSettings();
 
+            // 原点をアバターへ戻した記録があるときは、読み込みで足元を動かさない
+            _session.UseLegacyOrigin = _settings.UsesLegacyOrigin;
+
             // 最初のアバターの視点（画角による拡大を含む）を戻す前に、体に入り込まない設定を反映する
             _orbit.ZoomInsteadOfEntering = _settings.cameraZoomInsteadOfEntering;
             _rendering = gameObject.AddComponent<RenderingController>();

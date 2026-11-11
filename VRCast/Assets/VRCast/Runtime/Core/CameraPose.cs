@@ -67,5 +67,8 @@ namespace VRCast.Core
 
         // 自動まばたきに使う .anim のパス（空なら使わない）
         public string blinkAnimation = string.Empty;
+
+        // true なら読み込み時に足元を原点へ動かさず、ファイルに入っていた配置のままにする
+        public bool legacyOrigin;
     }
 }

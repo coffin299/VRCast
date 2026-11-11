@@ -59,6 +59,9 @@ namespace VRCast.Avatars
 
         public bool IsHumanoid => Animator != null && Animator.isHuman;
 
+        // 読み込み時に足元をルートへ動かしたなら true（原点をアバターへ戻すボタン用）
+        public bool OriginAligned { get; set; }
+
         public LoadedAvatar(GameObject instance, AssetBundle bundle, AvatarPackage package)
             : this(instance, package.Manifest.name, package.SourcePath, package.Expressions, package.Descriptor,
                 package.PhysBones, package.Constraints)

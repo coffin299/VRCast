@@ -39,7 +39,8 @@ namespace VRCast.Avatars
         /// <summary>
         /// コルーチンとして実行する。成功時は onLoaded、失敗時は onError を呼ぶ。
         /// </summary>
-        public static IEnumerator Load(string path, Transform parent, Action<LoadedAvatar> onLoaded, Action<string> onError)
+        public static IEnumerator Load(
+            string path, Transform parent, Action<LoadedAvatar> onLoaded, Action<string> onError, bool alignOrigin)
         {
             // ファイルの存在とサイズを先に確認
             var file = new FileInfo(path);
@@ -106,10 +107,20 @@ namespace VRCast.Avatars
                 animator.applyRootMotion = false;
             }
 
+            // 体が原点から大きくずれているアバターは、足元がルートに来るよう子を動かす（以前の配置を選んだときは動かさない）
+            bool aligned = alignOrigin && AvatarOrigin.TryAlign(animator, out Vector3 originShift);
+            if (aligned)
+            {
+                VRCastLog.Info(LogCategory, $"Aligned origin of '{data.Info.name}' by {originShift} m.");
+            }
+
             // 配置が終わってから表示する
             gltf.ShowMeshes();
 
-            var loaded = new LoadedAvatar(instance, path, data);
+            var loaded = new LoadedAvatar(instance, path, data)
+            {
+                OriginAligned = aligned,
+            };
             VRCastLog.Info(LogCategory, $"Loaded VRM {data.Info.specVersion} '{data.Info.name}' "
                 + $"(renderers: {loaded.RendererCount}, expressions: {data.Expressions.presets.Length}, "
                 + $"springs: {data.PhysBones.bones.Length}).");

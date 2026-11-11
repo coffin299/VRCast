@@ -792,6 +792,29 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// このアバターを、ファイルに入っていた配置のまま読むなら true（未記録なら false）。
+        /// </summary>
+        public bool UsesLegacyOrigin(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            return index >= 0 && avatarCameras[index].legacyOrigin;
+        }
+
+        /// <summary>
+        /// このアバターを、ファイルに入っていた配置のまま読むかを記録する。記録の無いパスは無視する。
+        /// </summary>
+        public void SetLegacyOrigin(string avatarPath, bool legacy)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0)
+            {
+                return;
+            }
+
+            avatarCameras[index].legacyOrigin = legacy;
+        }
+
+        /// <summary>
         /// アバターの目の動きに使う BlendShape の指定を返す（未記録なら自動。複製なので書き換えても記録は変わらない）。
         /// </summary>
         public GazeShapeOverride GetGazeShapes(string avatarPath)
