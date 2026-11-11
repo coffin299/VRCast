@@ -190,19 +190,7 @@ namespace VRCast.UI
             // 無効時は詳細設定を出さない
             if (_settings.lipSyncEnabled)
             {
-                DrawDeviceSelector();
-                _settings.micGain = GuiControls.Slider(
-                    Loc.T("Mic gain", "マイク感度", "마이크 감도", "麦克风灵敏度", "麥克風靈敏度"), _settings.micGain,
-                    AppSettings.MinMicGain, AppSettings.MaxMicGain);
-                _settings.micThreshold = GuiControls.Slider(
-                    Loc.T("Mic gate", "ノイズゲート", "노이즈 게이트", "噪声门", "噪音閘"), _settings.micThreshold,
-                    0f, AppSettings.MaxMicThreshold);
-
-                // 音量メーター（操作不可のスライダーで表示）
-                GUI.enabled = false;
-                GuiControls.Slider(Loc.T("Level", "音量", "음량", "音量", "音量"), _microphone.Level, 0f, 1f);
-                GUI.enabled = true;
-                GuiControls.Hint(_microphone.Status);
+                DrawMicrophoneControls();
                 DrawVowels(lipSync);
             }
 
@@ -246,6 +234,26 @@ namespace VRCast.UI
                 GuiControls.Hint(Loc.T("Vowel", "母音", "모음", "元音", "母音") + $": {vowel}"
                     + $"    F1 {formants.x:F0} Hz / F2 {formants.y:F0} Hz");
             }
+        }
+
+        /// <summary>
+        /// マイクの選択・感度・ノイズゲート・音量。クイック設定からも同じ操作を出す。
+        /// </summary>
+        public void DrawMicrophoneControls()
+        {
+            DrawDeviceSelector();
+            _settings.micGain = GuiControls.Slider(
+                Loc.T("Mic gain", "マイク感度", "마이크 감도", "麦克风灵敏度", "麥克風靈敏度"), _settings.micGain,
+                AppSettings.MinMicGain, AppSettings.MaxMicGain);
+            _settings.micThreshold = GuiControls.Slider(
+                Loc.T("Mic gate", "ノイズゲート", "노이즈 게이트", "噪声门", "噪音閘"), _settings.micThreshold,
+                0f, AppSettings.MaxMicThreshold);
+
+            // 音量メーター（操作不可のスライダーで表示）
+            GUI.enabled = false;
+            GuiControls.Slider(Loc.T("Level", "音量", "음량", "音量", "音量"), _microphone.Level, 0f, 1f);
+            GUI.enabled = true;
+            GuiControls.Hint(_microphone.Status);
         }
 
         private void DrawDeviceSelector()

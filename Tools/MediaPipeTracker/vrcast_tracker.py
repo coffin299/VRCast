@@ -1,7 +1,7 @@
 """VRCast 用 MediaPipe トラッカー。
 
 Web カメラの映像から顔（頭の向き・表情）・腕・手を推定し、JSON を UDP で VRCast へ送る。
-担当: 顔 = Face Landmarker、体（肩・肘・手首）= Pose Landmarker、手・指 = Hand Landmarker（MediaPipe Hands）。
+担当: 顔 = Face Landmarker、体（肩・肘・手首・腰・膝・足首・足先）= Pose Landmarker、手・指 = Hand Landmarker（MediaPipe Hands）。
 引数は OpenSeeFace の facetracker と同じ形（-l / -c / -i / -p）にしてあり、
 VRCast から同じ手順で起動・カメラ一覧取得ができる。
 
@@ -19,6 +19,8 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     visibility  arms の各点の可視度
     head        鼻・左目・右目の world 座標（m。arms と同じ座標系。手の位置を顔に合わせるのに使う）
     headVisibility head の各点の可視度
+    legs        左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先の world 座標（m）
+    legVisibility legs の各点の可視度
     leftHand    左手 21 点の world 座標（映っていなければ空）
     rightHand   右手 21 点の world 座標（映っていなければ空）
 
@@ -28,7 +30,7 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
 手が顔にかぶっている間（最長 FACE_COVER_MAX_HOLD 秒）は、頭の行列を隠れる前の値で止めて送る
 （Face Landmarker の推定が崩れて頭が暴れるのを防ぐ。顔を見失った場合は表情も隠れる前の値）。
 
-頭の行列・腕・手・可視度は One Euro フィルターで平滑化してから送る
+頭の行列・腕・脚・手・可視度は One Euro フィルターで平滑化してから送る
 （止まっているときの細かい揺れを消し、速い動きでは遅れを抑える。CPU 負荷はほぼ無い）。
 --smoothing 1〜4 で揺れを抑える強さを上げられる（高いほど動きは遅れる。既定 0 は遅れを最小にする）。
 
@@ -111,6 +113,8 @@ BLENDSHAPE_NAMES = (
 POSE_ARM_POINTS = (11, 12, 13, 14, 15, 16)
 # Pose Landmarker の点番号（鼻・左目・右目。腕と同じ world 座標で顔の位置を送る）
 POSE_HEAD_POINTS = (0, 2, 5)
+# Pose Landmarker の点番号（左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先）
+POSE_LEG_POINTS = (23, 24, 25, 26, 27, 28, 31, 32)
 POSE_LEFT_WRIST = 15
 POSE_RIGHT_WRIST = 16
 
@@ -521,9 +525,11 @@ class Smoother:
         self._head_position = OneEuroFilter(head_position)
         self._arms = OneEuroFilter(arm)
         self._visibility = OneEuroFilter(VISIBILITY_FILTER)
-        # 体の推定の顔の点（鼻・両目）は腕と同じ強さで平滑化する
+        # 体の推定の顔の点（鼻・両目）と脚は腕と同じ強さで平滑化する
         self._head_points = OneEuroFilter(arm)
         self._head_visibility = OneEuroFilter(VISIBILITY_FILTER)
+        self._legs = OneEuroFilter(arm)
+        self._leg_visibility = OneEuroFilter(VISIBILITY_FILTER)
         self._hands = {
             "leftHand": OneEuroFilter(hand),
             "rightHand": OneEuroFilter(hand),
@@ -580,11 +586,13 @@ class Smoother:
             self._visibility.reset()
             self._head_points.reset()
             self._head_visibility.reset()
+            self._legs.reset()
+            self._leg_visibility.reset()
             self._last_arms = None
             return
         if fresh or self._last_arms is None:
-            # 顔の点も腕と同じく平滑化する
-            self._last_arms = {
+            # 顔の点と脚も腕と同じく平滑化する（脚が無ければ空のまま）
+            last = {
                 "arms": rounded(self._arms.apply(packet["arms"], now)),
                 "visibility": rounded(
                     self._visibility.apply(packet["visibility"], now)),
@@ -592,6 +600,16 @@ class Smoother:
                 "headVisibility": rounded(self._head_visibility.apply(
                     packet["headVisibility"], now)),
             }
+            if packet.get("legs"):
+                last["legs"] = rounded(self._legs.apply(packet["legs"], now))
+                last["legVisibility"] = rounded(self._leg_visibility.apply(
+                    packet["legVisibility"], now))
+            else:
+                self._legs.reset()
+                self._leg_visibility.reset()
+                last["legs"] = []
+                last["legVisibility"] = []
+            self._last_arms = last
         packet.update(self._last_arms)
 
 
@@ -1115,12 +1133,14 @@ def pose_fields(result):
     # world 座標と可視度の両方がそろったときだけ体あり
     if not result.pose_world_landmarks or not result.pose_landmarks:
         return {"pose": False, "arms": [], "visibility": [],
-                "head": [], "headVisibility": []}
+                "head": [], "headVisibility": [], "legs": [], "legVisibility": []}
     world = result.pose_world_landmarks[0]
     image = result.pose_landmarks[0]
     points = [world[index] for index in POSE_ARM_POINTS]
     # 顔の点（鼻・両目）も腕と同じ world 座標で送る（手を顔の前に合わせる基準）
     head = [world[index] for index in POSE_HEAD_POINTS]
+    # 脚（腰・膝・足首・足先）。古い受信側は未知フィールドを無視する
+    legs = [world[index] for index in POSE_LEG_POINTS]
     return {
         "pose": True,
         "arms": flatten_points(points),
@@ -1129,6 +1149,9 @@ def pose_fields(result):
         "head": flatten_points(head),
         "headVisibility": rounded(image[index].visibility
                                   for index in POSE_HEAD_POINTS),
+        "legs": flatten_points(legs),
+        "legVisibility": rounded(image[index].visibility
+                                 for index in POSE_LEG_POINTS),
     }
 
 

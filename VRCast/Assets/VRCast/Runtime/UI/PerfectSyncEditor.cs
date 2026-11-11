@@ -494,6 +494,13 @@ namespace VRCast.UI
                 hands.Suspended = suspended;
             }
 
+            // MediaPipe の脚（待機ポーズへ戻す）
+            var legs = root.GetComponent<LegTrackingDriver>();
+            if (legs != null)
+            {
+                legs.Suspended = suspended;
+            }
+
             // 外部アプリからの全身のトラッキング（待機ポーズへ戻す）
             var fullBody = root.GetComponent<FullBodyTrackingDriver>();
             if (fullBody != null)

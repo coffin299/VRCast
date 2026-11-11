@@ -431,6 +431,7 @@ namespace VRCast.UI
             if (TrackingSourceInfo.HasArms(_settings.trackingSource))
             {
                 DrawHands();
+                DrawMediaPipeBody();
             }
 
             // 全身は受信できる入力元（VMC）のみ
@@ -558,6 +559,47 @@ namespace VRCast.UI
             {
                 DrawArmMatch();
                 DrawTorso();
+            }
+        }
+
+        private void DrawMediaPipeBody()
+        {
+            _settings.trackingLegs = GUILayout.Toggle(
+                _settings.trackingLegs,
+                Loc.T("Full body tracking (MediaPipe)", "全身トラッキング（MediaPipe）", "전신 트래킹 (MediaPipe)",
+                    "全身追踪（MediaPipe）", "全身追蹤（MediaPipe）"));
+            GuiControls.Hint(Loc.T(
+                "Bends the hips and legs to match your pose when your whole body is in frame. It does not walk the avatar around the room. A face close-up or a desk leaves the legs in the idle pose. Off by default.",
+                "全身がカメラに映っているとき、腰の向きと脚の曲げを合わせます。部屋の中を歩き回る動きにはなりません。顔のアップや机に座って足が映らないときは待機ポーズのままです。既定は OFF。",
+                "전신이 카메라에 보일 때 허리 방향과 다리 굽힘을 맞춥니다. 방 안을 걸어 다니지는 않습니다. 얼굴 클로즈업이나 책상에 앉아 발이 안 보이면 대기 포즈 그대로입니다. 기본은 꺼짐.",
+                "全身进入画面时，让腰的朝向和腿的弯曲跟上姿势。不会让虚拟形象在房间里走动。脸部特写或坐在桌前看不到脚时，腿保持待机姿势。默认关闭。",
+                "全身進入畫面時，讓腰的朝向和腿的彎曲跟上姿勢。不會讓虛擬形象在房間裡走動。臉部特寫或坐在桌前看不到腳時，腿保持待機姿勢。預設關閉。"));
+
+            if (!_settings.trackingLegs)
+            {
+                return;
+            }
+
+            var driver = _avatar.Get<LegTrackingDriver>();
+            if (driver == null)
+            {
+                return;
+            }
+
+            if (!driver.IsAvailable)
+            {
+                GuiControls.Hint(Loc.T("Full body: not available for this avatar", "全身: このアバターでは使えません",
+                    "전신: 이 아바타에서는 사용할 수 없음", "全身：此虚拟形象不可用", "全身：此虛擬形象無法使用"));
+            }
+            else if (driver.IsTracking)
+            {
+                GuiControls.Hint(Loc.T("Full body: tracking", "全身: トラッキング中", "전신: 트래킹 중",
+                    "全身：追踪中", "全身：追蹤中"));
+            }
+            else
+            {
+                GuiControls.Hint(Loc.T("Full body: not visible (idle pose)", "全身: 映っていません（待機ポーズ）",
+                    "전신: 보이지 않음 (대기 포즈)", "全身：未拍到（待机姿势）", "全身：未拍到（待機姿勢）"));
             }
         }
 
@@ -1253,11 +1295,11 @@ namespace VRCast.UI
                 _settings.trackingSwapBodySides,
                 Loc.T("Swap body left / right", "身体の左右を入れ替える", "몸 좌우 바꾸기", "交换身体左右", "交換身體左右"));
             GuiControls.Hint(Loc.T(
-                "Turn on if arms and the upper body are mirrored the wrong way while the face looks correct (e.g. iPhone face + webcam arms). Only the body (arms, hands, shoulder twist/tilt) is swapped; head orientation and the face stay with Mirror.",
-                "顔は合っているのに腕や上半身だけ左右が逆のとき（iPhone の顔 + Web カメラの腕の併用など）に ON にします。体（腕・手・肩のひねり・傾き）だけが入れ替わり、頭の向きと顔はミラーのままです。",
-                "얼굴은 맞는데 팔·상체만 좌우가 반대일 때 (iPhone 얼굴 + 웹캠 팔 병용 등) 켭니다. 몸 (팔·손·어깨 비틀림·기울기)만 바뀌고, 머리 방향과 얼굴은 미러 그대로입니다.",
-                "当面部正确但手臂和上半身左右相反时开启（例如 iPhone 面部 + 摄像头手臂）。只交换身体（手臂、手、肩部扭转/倾斜）；头部朝向和面部仍跟随镜像设置。",
-                "當臉部正確但手臂與上半身左右相反時開啟（例如 iPhone 臉部 + 網路攝影機手臂）。只交換身體（手臂、手、肩部扭轉／傾斜）；頭部朝向與臉部仍跟隨鏡像設定。"));
+                "Turn on if arms and the upper body are mirrored the wrong way while the face looks correct (e.g. iPhone face + webcam arms). Only the body (arms, hands, legs, shoulder twist/tilt) is swapped; head orientation and the face stay with Mirror.",
+                "顔は合っているのに腕や上半身だけ左右が逆のとき（iPhone の顔 + Web カメラの腕の併用など）に ON にします。体（腕・手・脚・肩のひねり・傾き）だけが入れ替わり、頭の向きと顔はミラーのままです。",
+                "얼굴은 맞는데 팔·상체만 좌우가 반대일 때 (iPhone 얼굴 + 웹캠 팔 병용 등) 켭니다. 몸 (팔·손·다리·어깨 비틀림·기울기)만 바뀌고, 머리 방향과 얼굴은 미러 그대로입니다.",
+                "当面部正确但手臂和上半身左右相反时开启（例如 iPhone 面部 + 摄像头手臂）。只交换身体（手臂、手、腿、肩部扭转/倾斜）；头部朝向和面部仍跟随镜像设置。",
+                "當臉部正確但手臂與上半身左右相反時開啟（例如 iPhone 臉部 + 網路攝影機手臂）。只交換身體（手臂、手、腿、肩部扭轉／傾斜）；頭部朝向與臉部仍跟隨鏡像設定。"));
 
             // 頭の位置に合わせた体の動かし方（傾き / 体全体の移動 / 両方）と強さ
             string[] labels =

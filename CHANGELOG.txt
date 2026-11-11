@@ -4,6 +4,16 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 4.4.2 (2026-11-11)
+
+[日本語]
+- クイック設定で、口パクが ON のときマイク・感度・ノイズゲート・音量を変えられるようにした
+- MediaPipe の全身トラッキングを追加（トラッキングタブ。既定は OFF。全身が映っているとき腰の向きと脚の曲げを合わせる）
+
+[English]
+- Quick settings can change the microphone, gain, noise gate, and level while lip sync is on
+- Added MediaPipe full-body tracking (Tracking tab, off by default; matches hip yaw and leg bend when your whole body is in frame)
+
 ■ 4.3.2 (2026-11-02)
 
 [日本語]

@@ -37,5 +37,27 @@ namespace VRCast.Tracking
 
         // 受信するたびに増える番号（新しい値が届いたかの判定用）
         public int Sequence;
+
+        // 脚（MediaPipe の全身。古いトラッカーや映っていない側は HasLeg = false）
+        public LegTrackingData LeftLeg;
+        public LegTrackingData RightLeg;
+    }
+
+    /// <summary>
+    /// 片脚分のトラッキング値。座標は腕と同じカメラ基準の Unity 座標系。
+    /// 位置の原点は腰の中心なので、Driver は点同士の差（方向）だけを使う。
+    /// </summary>
+    public struct LegTrackingData
+    {
+        // 腰・膝・足首が映っていて脚の曲げを使えるなら true
+        public bool HasLeg;
+
+        // 足先が映っていて足の向きを使えるなら true
+        public bool HasFoot;
+
+        public Vector3 Hip;
+        public Vector3 Knee;
+        public Vector3 Ankle;
+        public Vector3 Foot;
     }
 }

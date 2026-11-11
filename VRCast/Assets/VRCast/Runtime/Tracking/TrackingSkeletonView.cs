@@ -4,7 +4,7 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// 受信したトラッキング値を平滑化・補正せずに線で描く確認用の表示（腕・手の点、背骨と上半身の向き、頭の向き、視線、目と口の開き）。
+    /// 受信したトラッキング値を平滑化・補正せずに線で描く確認用の表示（腕・手・脚の点、背骨と上半身の向き、頭の向き、視線、目と口の開き）。
     /// 表示中はカメラの描画対象からアバターを外し、アバターの腰の位置にアバターと同じ向き・鏡像設定で、
     /// アバターの大きさ（腰から頭までの長さ）に合わせて拡大・縮小して描く（表示を切り替えてもカメラを動かさずに済むように）。
     /// </summary>
@@ -241,6 +241,8 @@ namespace VRCast.Tracking
             {
                 DrawArm(body.Left, hasLeft, LeftColor);
                 DrawArm(body.Right, hasRight, RightColor);
+                DrawLeg(body.LeftLeg, LeftColor);
+                DrawLeg(body.RightLeg, RightColor);
             }
 
             // 首: 両肩が映っていれば肩の中点（肩の線・背骨・上半身の向きも描く）、無ければ既定位置
@@ -293,6 +295,31 @@ namespace VRCast.Tracking
             // 胸の正面の向き
             Vector3 front = center + chest * new Vector3(0f, 0f, ChestHalfSize.z * _scale);
             Line(front, front + chest * Vector3.forward * Scaled(NoseLength), Scaled(ArmWidth), color);
+        }
+
+        private void DrawLeg(LegTrackingData data, Color color)
+        {
+            // 腰・膝・足首が無ければ描かない。可視度不足（アバターには使わない値）は灰色
+            if ((data.Hip - data.Ankle).sqrMagnitude < 1e-8f)
+            {
+                return;
+            }
+
+            Color legColor = data.HasLeg ? color : LowVisibilityColor;
+            Vector3 hip = ToWorld(data.Hip);
+            Vector3 knee = ToWorld(data.Knee);
+            Vector3 ankle = ToWorld(data.Ankle);
+            Line(hip, knee, Scaled(ArmWidth), legColor);
+            Line(knee, ankle, Scaled(ArmWidth), legColor);
+            Joint(hip, legColor);
+            Joint(knee, legColor);
+            Joint(ankle, legColor);
+            if (data.HasFoot)
+            {
+                Vector3 foot = ToWorld(data.Foot);
+                Line(ankle, foot, Scaled(ArmWidth), legColor);
+                Joint(foot, legColor);
+            }
         }
 
         private static bool HasPose(ArmTrackingData data)

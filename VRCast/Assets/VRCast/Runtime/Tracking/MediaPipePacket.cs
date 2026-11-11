@@ -9,7 +9,7 @@ namespace VRCast.Tracking
     /// 座標変換:
     /// - 頭の変換行列は MediaPipe の右手系（x = 映像の右、y = 上、z = カメラ側、単位 cm）。
     ///   回転は z 反転（カメラ基準の Unity 座標）とアバター正面への 180° 回転をまとめて (x, -y, -z, w)、位置は (x, y, -z)。
-    /// - 腕・手の点は MediaPipe の world 座標（x = 映像の右、y = 下、z = 奥）→ カメラ基準の Unity 座標 (x, -y, z)。
+    /// - 腕・手・脚の点は MediaPipe の world 座標（x = 映像の右、y = 下、z = 奥）→ カメラ基準の Unity 座標 (x, -y, z)。
     /// </summary>
     public static class MediaPipePacket
     {
@@ -33,6 +33,17 @@ namespace VRCast.Tracking
 
         // 手の点の数
         public const int HandPointCount = 21;
+
+        // 脚の点の数と並び（左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先。古いトラッカーは送らない）
+        public const int LegPointCount = 8;
+        public const int LeftHip = 0;
+        public const int RightHip = 1;
+        public const int LeftKnee = 2;
+        public const int RightKnee = 3;
+        public const int LeftAnkle = 4;
+        public const int RightAnkle = 5;
+        public const int LeftFootIndex = 6;
+        public const int RightFootIndex = 7;
 
         // 変換行列の要素数（4×4、行優先）
         private const int MatrixSize = 16;
@@ -73,6 +84,10 @@ namespace VRCast.Tracking
             // 体の推定の顔の点: HeadPointCount 点の world 座標と可視度（古いトラッカーは送らず null）
             public float[] head;
             public float[] headVisibility;
+
+            // 脚: LegPointCount 点の world 座標と可視度（古いトラッカーは送らず null）
+            public float[] legs;
+            public float[] legVisibility;
 
             // 手: 本人の左手・右手の 21 点の world 座標（映っていなければ空）
             public float[] leftHand;
@@ -136,6 +151,7 @@ namespace VRCast.Tracking
             {
                 ReadArms(message.arms, message.visibility, ref body);
                 ReadHead(message.head, message.headVisibility, ref body);
+                ReadLegs(message.legs, message.legVisibility, ref body);
             }
 
             // 手の左右は体のラベル（本人基準）に合わせて送られてくるため、そのまま使う
@@ -241,6 +257,38 @@ namespace VRCast.Tracking
                 body.HasFace = true;
                 body.Face = ToUnity(points, Nose);
             }
+        }
+
+        private static void ReadLegs(float[] points, float[] visibility, ref BodyTrackingFrame body)
+        {
+            // 要素数の不一致・非有限値（古いトラッカーは null）は脚なし
+            bool sized = points != null && points.Length == LegPointCount * 3
+                && visibility != null && visibility.Length == LegPointCount;
+            if (!sized || !TrackingMath.AllFinite(points) || !TrackingMath.AllFinite(visibility))
+            {
+                return;
+            }
+
+            // 体の左右ラベルは本人基準なので、そのまま本人の左脚・右脚にする
+            body.LeftLeg = ReadLeg(points, visibility, LeftHip, LeftKnee, LeftAnkle, LeftFootIndex);
+            body.RightLeg = ReadLeg(points, visibility, RightHip, RightKnee, RightAnkle, RightFootIndex);
+        }
+
+        private static LegTrackingData ReadLeg(float[] points, float[] visibility, int hip, int knee, int ankle, int foot)
+        {
+            // 腰・膝・足首がすべて映っているときだけ脚の曲げを使う
+            bool hasLeg = visibility[hip] >= MinVisibility && visibility[knee] >= MinVisibility
+                && visibility[ankle] >= MinVisibility;
+            bool hasFoot = hasLeg && visibility[foot] >= MinVisibility;
+            return new LegTrackingData
+            {
+                HasLeg = hasLeg,
+                HasFoot = hasFoot,
+                Hip = ToUnity(points, hip),
+                Knee = ToUnity(points, knee),
+                Ankle = ToUnity(points, ankle),
+                Foot = ToUnity(points, foot),
+            };
         }
 
         private static Vector3[] ReadHand(float[] values)

@@ -231,6 +231,41 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void TryParse_Legs_KeepsSidesFlipsYAndChecksVisibility()
+        {
+            // 左脚は腰・膝・足首・足先が見え、右脚は足首が見えていない
+            MediaPipePacket.Message message = CreateMessage();
+            message.pose = true;
+            message.legs = new float[MediaPipePacket.LegPointCount * 3];
+            message.legVisibility = new[] { 1f, 1f, 1f, 1f, 1f, 0.1f, 1f, 1f };
+            WritePoint(message.legs, MediaPipePacket.LeftKnee, new Vector3(0.2f, 0.4f, 0.1f));
+
+            Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
+            Assert.That(body.LeftLeg.HasLeg, Is.True);
+            Assert.That(body.LeftLeg.HasFoot, Is.True);
+            Assert.That(body.RightLeg.HasLeg, Is.False);
+            Assert.That(Vector3.Distance(body.LeftLeg.Knee, new Vector3(0.2f, -0.4f, 0.1f)), Is.LessThan(1e-5f));
+        }
+
+        [Test]
+        public void TryParse_MissingLegs_HasNoLegs()
+        {
+            // 脚フィールドの無い古いトラッカーでも腕のパケットは読め、脚は無しになること
+            MediaPipePacket.Message message = CreateMessage();
+            message.pose = true;
+            message.arms = new float[MediaPipePacket.ArmPointCount * 3];
+            message.visibility = new float[MediaPipePacket.ArmPointCount];
+            string json = JsonUtility.ToJson(message);
+            json = json.Replace(",\"legs\":null", string.Empty).Replace(",\"legVisibility\":null", string.Empty);
+            json = json.Replace("\"legs\":null,", string.Empty).Replace("\"legVisibility\":null,", string.Empty);
+
+            Assert.That(MediaPipePacket.TryParse(json, out _, out _, out BodyTrackingFrame body), Is.True);
+            Assert.That(body.LeftLeg.HasLeg, Is.False);
+            Assert.That(body.RightLeg.HasLeg, Is.False);
+            Assert.That(body.LeftLeg.HasFoot, Is.False);
+        }
+
+        [Test]
         public void TryParse_Head_UsesEyesMidpointOrNose()
         {
             // 体が映り、両目が見えている（鼻・左目・右目の順）

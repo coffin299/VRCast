@@ -5,6 +5,7 @@ namespace VRCast.Tracking
 {
     /// <summary>
     /// 全身モード（AppSettings.trackingPlantFeet）で、足を読込時（待機ポーズ適用後）の位置・向きに固定する。
+    /// MediaPipe の脚トラッキング（LegTrackingDriver.Drives）が ON のあいだは固定しない。
     /// FaceTrackingDriver が腰を傾け・動かした後に、太もも・すね・足の 3 本で 2 関節の IK を解き、膝の曲げで吸収する。
     /// 足の位置はアバタールート基準で覚えるため、体の向き（Body yaw）を変えると一緒に回る。
     /// </summary>
@@ -83,8 +84,8 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // OFF の間は触らない（ON から切り替えた直後だけ読込時の姿勢へ戻す）
-            if (!_settings.trackingPlantFeet)
+            // OFF の間、または MediaPipe の脚トラッキング中は触らない（ON から切り替えた直後だけ読込時の姿勢へ戻す）
+            if (!_settings.trackingPlantFeet || LegTrackingDriver.Drives(_settings))
             {
                 if (_applied)
                 {

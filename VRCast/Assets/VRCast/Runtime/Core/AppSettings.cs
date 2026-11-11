@@ -406,6 +406,9 @@ namespace VRCast.Core
         // 腕・手（指）のトラッキング（MediaPipe のみ）
         public bool trackingHands = true;
 
+        // 脚のトラッキング（MediaPipe。全身が映っているとき腰の向きと脚の曲げ。既定 OFF。VMC の全身とは別）
+        public bool trackingLegs;
+
         // 腕の位置をアバターの体格に合わせる（手首の位置を写して IK で届かせ、顔の近くの手は顔を基準にする。OFF なら腕の向きだけ合わせる）
         public bool trackingArmMatchAvatar = true;
 
@@ -546,7 +549,7 @@ namespace VRCast.Core
         public bool FaceMirror => trackingMirror != trackingSwapFaceSides;
 
         /// <summary>
-        /// 体・腕・手・肩のひねりに使う鏡像の向き。身体の左右の入れ替えが ON なら鏡像設定と逆。
+        /// 体・腕・手・脚・肩のひねりに使う鏡像の向き。身体の左右の入れ替えが ON なら鏡像設定と逆。
         /// </summary>
         public bool BodyMirror => trackingMirror != trackingSwapBodySides;
 

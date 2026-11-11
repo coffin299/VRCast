@@ -170,8 +170,8 @@ namespace VRCast.UI
             _perfectSyncSection = new PerfectSyncSection(session, _perfectSyncEditor);
             _trackingSection = new TrackingSection(session, tracker, trackerProcess, skeleton, settings);
             _quickSettingsSection = new QuickSettingsSection(
-                session, _avatarSection, _trackingSection, trackerProcess, rendering, virtualCamera, spout,
-                settings, OpenLink);
+                session, _avatarSection, _faceSection, _trackingSection, trackerProcess, rendering, virtualCamera,
+                spout, settings, OpenLink);
             _displaySection = new DisplaySection(orbit, rendering, settings);
             _graphicsSection = new GraphicsSection(rendering, settings, ReapplySettings);
 
@@ -406,15 +406,16 @@ namespace VRCast.UI
             {
                 FaceTrackingDriver face = instance.GetComponent<FaceTrackingDriver>();
                 HandTrackingDriver hands = instance.GetComponent<HandTrackingDriver>();
+                LegTrackingDriver legs = instance.GetComponent<LegTrackingDriver>();
                 FullBodyTrackingDriver body = instance.GetComponent<FullBodyTrackingDriver>();
                 if (writeSuspend)
                 {
-                    SetSuspended(face, hands, body, suspend);
+                    SetSuspended(face, hands, legs, body, suspend);
                 }
 
                 if (writeHold)
                 {
-                    SetHoldInput(face, hands, body, hold);
+                    SetHoldInput(face, hands, legs, body, hold);
                 }
             }
 
@@ -430,7 +431,8 @@ namespace VRCast.UI
         }
 
         private static void SetSuspended(
-            FaceTrackingDriver face, HandTrackingDriver hands, FullBodyTrackingDriver body, bool suspend)
+            FaceTrackingDriver face, HandTrackingDriver hands, LegTrackingDriver legs, FullBodyTrackingDriver body,
+            bool suspend)
         {
             if (face != null)
             {
@@ -442,6 +444,11 @@ namespace VRCast.UI
                 hands.Suspended = suspend;
             }
 
+            if (legs != null)
+            {
+                legs.Suspended = suspend;
+            }
+
             if (body != null)
             {
                 body.Suspended = suspend;
@@ -449,7 +456,8 @@ namespace VRCast.UI
         }
 
         private static void SetHoldInput(
-            FaceTrackingDriver face, HandTrackingDriver hands, FullBodyTrackingDriver body, bool hold)
+            FaceTrackingDriver face, HandTrackingDriver hands, LegTrackingDriver legs, FullBodyTrackingDriver body,
+            bool hold)
         {
             if (face != null)
             {
@@ -459,6 +467,11 @@ namespace VRCast.UI
             if (hands != null)
             {
                 hands.HoldInput = hold;
+            }
+
+            if (legs != null)
+            {
+                legs.HoldInput = hold;
             }
 
             if (body != null)

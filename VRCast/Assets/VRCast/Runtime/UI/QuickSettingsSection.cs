@@ -23,6 +23,7 @@ namespace VRCast.UI
 
         private readonly AvatarComponentCache _avatar;
         private readonly AvatarSection _avatarSection;
+        private readonly FaceSection _faceSection;
         private readonly TrackingSection _trackingSection;
         private readonly TrackerProcess _process;
         private readonly RenderingController _rendering;
@@ -36,12 +37,13 @@ namespace VRCast.UI
         private bool? _nvidiaVSyncAvailable;
 
         public QuickSettingsSection(
-            AvatarSession session, AvatarSection avatarSection, TrackingSection trackingSection,
-            TrackerProcess process, RenderingController rendering, VirtualCameraOutput virtualCamera,
-            SpoutOutput spout, AppSettings settings, Action<StartLink> open)
+            AvatarSession session, AvatarSection avatarSection, FaceSection faceSection,
+            TrackingSection trackingSection, TrackerProcess process, RenderingController rendering,
+            VirtualCameraOutput virtualCamera, SpoutOutput spout, AppSettings settings, Action<StartLink> open)
         {
             _avatar = new AvatarComponentCache(session);
             _avatarSection = avatarSection;
+            _faceSection = faceSection;
             _trackingSection = trackingSection;
             _process = process;
             _rendering = rendering;
@@ -125,6 +127,7 @@ namespace VRCast.UI
             {
                 _settings.trackingHands = GUILayout.Toggle(
                     _settings.trackingHands, Loc.T("Arms / hands", "腕・手", "팔·손", "手臂 / 手", "手臂 / 手"));
+                DrawLegTracking();
             }
 
             bool mediaPipe = TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe;
@@ -243,6 +246,20 @@ namespace VRCast.UI
             }
         }
 
+        private void DrawLegTracking()
+        {
+            _settings.trackingLegs = GUILayout.Toggle(
+                _settings.trackingLegs,
+                Loc.T("Full body tracking (MediaPipe)", "全身トラッキング（MediaPipe）", "전신 트래킹 (MediaPipe)",
+                    "全身追踪（MediaPipe）", "全身追蹤（MediaPipe）"));
+            GuiControls.Hint(Loc.T(
+                "Bends the hips and legs when your whole body is in frame. Does not walk around the room. Off by default.",
+                "全身がカメラに映っているとき、腰の向きと脚を曲げます。部屋の中を歩く動きにはなりません。既定は OFF。",
+                "전신이 카메라에 보일 때 허리 방향과 다리를 굽힙니다. 방 안을 걸어 다니지는 않습니다. 기본은 꺼짐.",
+                "全身进入画面时弯曲腰和腿。不会在房间里走动。默认关闭。",
+                "全身進入畫面時彎曲腰和腿。不會在房間裡走動。預設關閉。"));
+        }
+
         private void DrawFace()
         {
             GuiControls.BeginCard(Loc.T("Face & expressions", "顔・表情", "얼굴·표정", "面部·表情", "臉部·表情"));
@@ -255,6 +272,10 @@ namespace VRCast.UI
             _settings.lipSyncEnabled = GUILayout.Toggle(
                 _settings.lipSyncEnabled, Loc.T("Lip sync (microphone)", "マイクで口パク", "마이크로 립싱크",
                     "用麦克风对口型", "用麥克風對嘴型"));
+            if (_settings.lipSyncEnabled)
+            {
+                _faceSection.DrawMicrophoneControls();
+            }
 
             MoreTabButton(StartLink.Face, Loc.T("Face & expressions tab", "顔・表情タブへ", "얼굴·표정 탭으로",
                 "前往面部·表情标签页", "前往臉部·表情分頁"));

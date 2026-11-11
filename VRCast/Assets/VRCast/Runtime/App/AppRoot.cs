@@ -230,6 +230,9 @@ namespace VRCast.App
             // 腕・指の向きの基準を記録するため待機ポーズ適用後に初期化
             avatar.Instance.AddComponent<HandTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);
 
+            // MediaPipe の脚（腰の向きと膝の曲げ）。待機ポーズ適用後の回転を基準にする
+            avatar.Instance.AddComponent<LegTrackingDriver>().Initialize(avatar.Animator, _tracker, _settings);
+
             // 外部アプリ（VMC）からの全身。T ポーズは Avatar の骨格情報から求め、腰の位置は待機ポーズ適用後の位置を基準にする
             var fullBody = avatar.Instance.AddComponent<FullBodyTrackingDriver>();
             fullBody.Initialize(avatar.Animator, _tracker, _settings);
