@@ -9,11 +9,13 @@ Newest first. Each version is written in Japanese, then English.
 [日本語]
 - クイック設定で、口パクが ON のときマイク・感度・ノイズゲート・音量を変えられるようにした
 - MediaPipe の全身トラッキングを追加（トラッキングタブ。既定は OFF。全身が映っているとき腰の向きと脚の曲げを合わせる）
+- 全身トラッキング中に、部屋を歩き回るモードを追加（トラッキングタブ。既定は OFF でその場に固定。ON でカメラに映った位置に合わせて動く）
 - 目の動きの上限が効かないアバター向けに、使う BlendShape を上・下・左・右で指定できるようにした（このアバターだけ。トラッキングタブ）
 
 [English]
 - Quick settings can change the microphone, gain, noise gate, and level while lip sync is on
 - Added MediaPipe full-body tracking (Tracking tab, off by default; matches hip yaw and leg bend when your whole body is in frame)
+- Added a walk-around mode while full-body tracking is on (Tracking tab, off by default so you stay in place; on follows where you stand in the camera view)
 - Added per-avatar blend shape picks for look up, down, left, and right when the eye movement limit does not apply (Tracking tab)
 
 ■ 4.3.2 (2026-11-02)

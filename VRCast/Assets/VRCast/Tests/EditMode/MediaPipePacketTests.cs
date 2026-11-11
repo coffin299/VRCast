@@ -248,6 +248,32 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void TryParse_Root_ReadsHipImagePosition()
+        {
+            MediaPipePacket.Message message = CreateMessage();
+            message.pose = true;
+            message.root = new[] { 0.4f, 0.6f, 0.2f, 0.35f };
+
+            Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
+            Assert.That(body.HasRoot, Is.True);
+            Assert.That(body.RootImageX, Is.EqualTo(0.4f).Within(0.0001f));
+            Assert.That(body.RootImageWidth, Is.EqualTo(0.2f).Within(0.0001f));
+            Assert.That(body.RootWorldWidth, Is.EqualTo(0.35f).Within(0.0001f));
+        }
+
+        [Test]
+        public void TryParse_MissingRoot_HasNoRoot()
+        {
+            MediaPipePacket.Message message = CreateMessage();
+            message.pose = true;
+            string json = JsonUtility.ToJson(message);
+            json = json.Replace(",\"root\":null", string.Empty).Replace("\"root\":null,", string.Empty);
+
+            Assert.That(MediaPipePacket.TryParse(json, out _, out _, out BodyTrackingFrame body), Is.True);
+            Assert.That(body.HasRoot, Is.False);
+        }
+
+        [Test]
         public void TryParse_MissingLegs_HasNoLegs()
         {
             // 脚フィールドの無い古いトラッカーでも腕のパケットは読め、脚は無しになること

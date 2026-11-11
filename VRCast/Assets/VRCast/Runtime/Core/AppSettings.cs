@@ -409,6 +409,9 @@ namespace VRCast.Core
         // 脚のトラッキング（MediaPipe。全身が映っているとき腰の向きと脚の曲げ。既定 OFF。VMC の全身とは別）
         public bool trackingLegs;
 
+        // 全身トラッキング中に、カメラ映像上の位置で部屋を歩く（既定 OFF。OFF のあいだはその場に固定）
+        public bool trackingLegsWalk;
+
         // 腕の位置をアバターの体格に合わせる（手首の位置を写して IK で届かせ、顔の近くの手は顔を基準にする。OFF なら腕の向きだけ合わせる）
         public bool trackingArmMatchAvatar = true;
 

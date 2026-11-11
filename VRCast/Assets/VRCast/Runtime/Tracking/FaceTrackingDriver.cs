@@ -452,8 +452,14 @@ namespace VRCast.Tracking
             _neutral = CorrectedHeadRotation(_lastFrame.HeadRotation);
             _neutralPosition = CorrectedPosition(_lastFrame.HeadPosition);
 
-            // 肩の線は次に両肩が映ったときに取り直す
+            // 肩の線は次に両肩が映ったときに取り直す。腰の向きも同じ正面で取り直す
             _torsoCalibrated = false;
+            var legs = GetComponent<LegTrackingDriver>();
+            if (legs != null)
+            {
+                legs.Calibrate();
+            }
+
             CalibrateGaze();
         }
 
@@ -894,17 +900,16 @@ namespace VRCast.Tracking
             _head.localRotation = _headRest;
 
             // 体全体の移動（腰を動かす。全身モードでは足を固定したまま膝で吸収し、それ以外は足も一緒に動く）。
-            // MediaPipe の全身トラッキング中は腰と脚をそちらに任せ、頭の位置では動かさない
+            // MediaPipe の全身トラッキング中は腰の移動と足の固定だけ止め、上半身（肩のひねり・傾き）は続ける
             bool trackedLegs = LegTrackingDriver.BlocksOtherMotion(_settings);
             BodyMotion motion = _settings.trackingBodyMotion;
             bool plantFeet = !trackedLegs && _settings.trackingPlantFeet && _hips != null;
             MoveHips(!trackedLegs && motion != BodyMotion.Lean, plantFeet);
 
             // 上半身の傾き（移動のみのモードでは頭の位置では傾けない）と肩の線による向きを、
-            // 全身モードでは腰にも分け（下半身がついていく）、残りを背骨・胸で分担
-            Quaternion lean = trackedLegs
-                ? Quaternion.identity
-                : CalculateLean(_currentOffset, motion != BodyMotion.Move);
+            // 全身モードでは腰にも分け（下半身がついていく）、残りを背骨・胸で分担。
+            // 全身トラッキング中は頭の位置では傾けず、肩の線だけを背骨・胸へ入れる（腰には分けない）
+            Quaternion lean = CalculateLean(_currentOffset, !trackedLegs && motion != BodyMotion.Move);
             float hipsShare = plantFeet ? HipsLeanShare : 0f;
             RotateHips(Quaternion.Slerp(Quaternion.identity, lean, hipsShare), plantFeet);
             float torsoShare = (_spine != null && _chest != null ? 0.5f : 1f) * (1f - hipsShare);

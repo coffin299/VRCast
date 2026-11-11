@@ -21,6 +21,7 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     headVisibility head の各点の可視度
     legs        左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先の world 座標（m）
     legVisibility legs の各点の可視度
+    root        腰の画像上の位置と肩幅（x, y, 画像上の肩幅, 実寸の肩幅 m。古い受信側は無視する。無ければ空）
     leftHand    左手 21 点の world 座標（映っていなければ空）
     rightHand   右手 21 点の world 座標（映っていなければ空）
 
@@ -115,6 +116,10 @@ POSE_ARM_POINTS = (11, 12, 13, 14, 15, 16)
 POSE_HEAD_POINTS = (0, 2, 5)
 # Pose Landmarker の点番号（左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先）
 POSE_LEG_POINTS = (23, 24, 25, 26, 27, 28, 31, 32)
+POSE_LEFT_SHOULDER = 11
+POSE_RIGHT_SHOULDER = 12
+POSE_LEFT_HIP = 23
+POSE_RIGHT_HIP = 24
 POSE_LEFT_WRIST = 15
 POSE_RIGHT_WRIST = 16
 
@@ -1133,7 +1138,8 @@ def pose_fields(result):
     # world 座標と可視度の両方がそろったときだけ体あり
     if not result.pose_world_landmarks or not result.pose_landmarks:
         return {"pose": False, "arms": [], "visibility": [],
-                "head": [], "headVisibility": [], "legs": [], "legVisibility": []}
+                "head": [], "headVisibility": [], "legs": [], "legVisibility": [],
+                "root": []}
     world = result.pose_world_landmarks[0]
     image = result.pose_landmarks[0]
     points = [world[index] for index in POSE_ARM_POINTS]
@@ -1152,7 +1158,28 @@ def pose_fields(result):
         "legs": flatten_points(legs),
         "legVisibility": rounded(image[index].visibility
                                  for index in POSE_LEG_POINTS),
+        "root": root_values(image, world),
     }
+
+
+def root_values(image, world):
+    """腰の画像上の位置と、肩幅（画像上の割合と実寸）を返す。肩か腰が隠れていれば空。"""
+    left_hip = image[POSE_LEFT_HIP]
+    right_hip = image[POSE_RIGHT_HIP]
+    left_shoulder = image[POSE_LEFT_SHOULDER]
+    right_shoulder = image[POSE_RIGHT_SHOULDER]
+    if min(left_hip.visibility, right_hip.visibility,
+           left_shoulder.visibility, right_shoulder.visibility) < 0.5:
+        return []
+    hip_x = (left_hip.x + right_hip.x) * 0.5
+    hip_y = (left_hip.y + right_hip.y) * 0.5
+    image_width = abs(right_shoulder.x - left_shoulder.x)
+    left_world = world[POSE_LEFT_SHOULDER]
+    right_world = world[POSE_RIGHT_SHOULDER]
+    world_width = ((right_world.x - left_world.x) ** 2
+                   + (right_world.y - left_world.y) ** 2
+                   + (right_world.z - left_world.z) ** 2) ** 0.5
+    return rounded((hip_x, hip_y, image_width, world_width))
 
 
 def distance(a, b):

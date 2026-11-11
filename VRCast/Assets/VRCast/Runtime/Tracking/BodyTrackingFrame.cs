@@ -38,9 +38,11 @@ namespace VRCast.Tracking
         // 受信するたびに増える番号（新しい値が届いたかの判定用）
         public int Sequence;
 
-        // 脚（MediaPipe の全身。古いトラッカーや映っていない側は HasLeg = false）
-        public LegTrackingData LeftLeg;
-        public LegTrackingData RightLeg;
+        // 映像上の腰の位置（歩き回るモード。古いトラッカーは false）
+        public bool HasRoot;
+        public float RootImageX;
+        public float RootImageWidth;
+        public float RootWorldWidth;
     }
 
     /// <summary>

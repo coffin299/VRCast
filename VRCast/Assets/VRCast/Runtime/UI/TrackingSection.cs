@@ -589,16 +589,28 @@ namespace VRCast.UI
                 Loc.T("Full body tracking (MediaPipe)", "全身トラッキング（MediaPipe）", "전신 트래킹 (MediaPipe)",
                     "全身追踪（MediaPipe）", "全身追蹤（MediaPipe）"));
             GuiControls.Hint(Loc.T(
-                "Bends the hips and legs to match your pose when your whole body is in frame. It does not walk the avatar around the room. A face close-up or a desk leaves the legs in the idle pose. Off by default.",
-                "全身がカメラに映っているとき、腰の向きと脚の曲げを合わせます。部屋の中を歩き回る動きにはなりません。顔のアップや机に座って足が映らないときは待機ポーズのままです。既定は OFF。",
-                "전신이 카메라에 보일 때 허리 방향과 다리 굽힘을 맞춥니다. 방 안을 걸어 다니지는 않습니다. 얼굴 클로즈업이나 책상에 앉아 발이 안 보이면 대기 포즈 그대로입니다. 기본은 꺼짐.",
-                "全身进入画面时，让腰的朝向和腿的弯曲跟上姿势。不会让虚拟形象在房间里走动。脸部特写或坐在桌前看不到脚时，腿保持待机姿势。默认关闭。",
-                "全身進入畫面時，讓腰的朝向和腿的彎曲跟上姿勢。不會讓虛擬形象在房間裡走動。臉部特寫或坐在桌前看不到腳時，腿保持待機姿勢。預設關閉。"));
+                "Bends the hips and legs to match your pose when your whole body is in frame. A face close-up or a desk leaves the legs in the idle pose. Off by default.",
+                "全身がカメラに映っているとき、腰の向きと脚の曲げを合わせます。顔のアップや机に座って足が映らないときは待機ポーズのままです。既定は OFF。",
+                "전신이 카메라에 보일 때 허리 방향과 다리 굽힘을 맞춥니다. 얼굴 클로즈업이나 책상에 앉아 발이 안 보이면 대기 포즈 그대로입니다. 기본은 꺼짐.",
+                "全身进入画面时，让腰的朝向和腿的弯曲跟上姿势。脸部特写或坐在桌前看不到脚时，腿保持待机姿势。默认关闭。",
+                "全身進入畫面時，讓腰的朝向和腿的彎曲跟上姿勢。臉部特寫或坐在桌前看不到腳時，腿保持待機姿勢。預設關閉。"));
 
             if (!_settings.trackingLegs)
             {
                 return;
             }
+
+            // 映像上の位置で腰を動かす。既定はその場に固定
+            _settings.trackingLegsWalk = GUILayout.Toggle(
+                _settings.trackingLegsWalk,
+                Loc.T("Walk around the room (not fixed)", "部屋を歩き回る（固定しない）", "방 안을 걸어 다니기 (고정 안 함)",
+                    "在房间里走动（不固定）", "在房間裡走動（不固定）"));
+            GuiControls.Hint(Loc.T(
+                "Moves the avatar with where you stand in the camera view. The first position is the start. Reset Head sets the start again. Until the bundled tracker is rebuilt, position is not sent and the avatar stays put. Off by default.",
+                "カメラに映った位置に合わせてアバターも動きます。最初に映った場所が開始位置です。顔の向きのリセットで開始位置も取り直します。同梱トラッカーを作り直すまで位置は届かず、その場に固定されたままです。既定は OFF。",
+                "카메라에 보이는 위치에 맞춰 아바타도 움직입니다. 처음 보인 곳이 시작 위치입니다. 얼굴 방향 초기화로 시작 위치도 다시 잡습니다. 동봉 트래커를 다시 만들기 전에는 위치가 오지 않아 그 자리에 고정됩니다. 기본은 꺼짐.",
+                "虚拟形象会跟着你在画面中的位置移动。第一次出现的位置是起点。重置头部朝向时也会重设起点。在重新制作附带追踪器之前不会收到位置，虚拟形象保持原地。默认关闭。",
+                "虛擬形象會跟著你在畫面中的位置移動。第一次出現的位置是起點。重設頭部朝向時也會重設起點。在重新製作附帶追蹤器之前不會收到位置，虛擬形象保持原地。預設關閉。"));
 
             var driver = _avatar.Get<LegTrackingDriver>();
             if (driver == null)

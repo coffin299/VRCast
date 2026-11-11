@@ -38,6 +38,9 @@ namespace VRCast.Tracking
         public const int LegPointCount = 8;
         public const int LeftHip = 0;
         public const int RightHip = 1;
+
+        // 歩き回る位置（画像上の腰 x・y、画像上の肩幅、実寸の肩幅 m）
+        public const int RootValueCount = 4;
         public const int LeftKnee = 2;
         public const int RightKnee = 3;
         public const int LeftAnkle = 4;
@@ -88,6 +91,9 @@ namespace VRCast.Tracking
             // 脚: LegPointCount 点の world 座標と可視度（古いトラッカーは送らず null）
             public float[] legs;
             public float[] legVisibility;
+
+            // 歩き回る位置（画像上の腰 x・y、画像上の肩幅、実寸の肩幅 m。古いトラッカーは送らず null）
+            public float[] root;
 
             // 手: 本人の左手・右手の 21 点の world 座標（映っていなければ空）
             public float[] leftHand;
@@ -152,6 +158,7 @@ namespace VRCast.Tracking
                 ReadArms(message.arms, message.visibility, ref body);
                 ReadHead(message.head, message.headVisibility, ref body);
                 ReadLegs(message.legs, message.legVisibility, ref body);
+                ReadRoot(message.root, ref body);
             }
 
             // 手の左右は体のラベル（本人基準）に合わせて送られてくるため、そのまま使う
@@ -272,6 +279,20 @@ namespace VRCast.Tracking
             // 体の左右ラベルは本人基準なので、そのまま本人の左脚・右脚にする
             body.LeftLeg = ReadLeg(points, visibility, LeftHip, LeftKnee, LeftAnkle, LeftFootIndex);
             body.RightLeg = ReadLeg(points, visibility, RightHip, RightKnee, RightAnkle, RightFootIndex);
+        }
+
+        private static void ReadRoot(float[] root, ref BodyTrackingFrame body)
+        {
+            // 要素数の不一致・非有限値・肩幅が潰れているときは位置なし（古いトラッカーは null）
+            if (root == null || root.Length != RootValueCount || !TrackingMath.AllFinite(root) || root[2] < 0.02f)
+            {
+                return;
+            }
+
+            body.HasRoot = true;
+            body.RootImageX = root[0];
+            body.RootImageWidth = root[2];
+            body.RootWorldWidth = root[3];
         }
 
         private static LegTrackingData ReadLeg(float[] points, float[] visibility, int hip, int knee, int ankle, int foot)
