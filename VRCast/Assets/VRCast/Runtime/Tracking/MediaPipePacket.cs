@@ -35,7 +35,9 @@ namespace VRCast.Tracking
         public const int HandPointCount = 21;
 
         // 脚の点の数と並び（左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先。古いトラッカーは送らない）
+        // かかと付きは末尾に左かかと・右かかとを足した 10 点。先頭 8 点の並びは変えない
         public const int LegPointCount = 8;
+        public const int LegPointCountWithHeels = 10;
         public const int LeftHip = 0;
         public const int RightHip = 1;
         public const int RootValueCount = 4;
@@ -45,6 +47,8 @@ namespace VRCast.Tracking
         public const int RightAnkle = 5;
         public const int LeftFootIndex = 6;
         public const int RightFootIndex = 7;
+        public const int LeftHeel = 8;
+        public const int RightHeel = 9;
 
         // 変換行列の要素数（4×4、行優先）
         private const int MatrixSize = 16;
@@ -86,7 +90,7 @@ namespace VRCast.Tracking
             public float[] head;
             public float[] headVisibility;
 
-            // 脚: LegPointCount 点の world 座標と可視度（古いトラッカーは送らず null）
+            // 脚: 8 点、または末尾にかかとを足した 10 点の world 座標と可視度（古いトラッカーは送らず null）
             public float[] legs;
             public float[] legVisibility;
 
@@ -266,17 +270,21 @@ namespace VRCast.Tracking
 
         private static void ReadLegs(float[] points, float[] visibility, ref BodyTrackingFrame body)
         {
-            // 要素数の不一致・非有限値（古いトラッカーは null）は脚なし
-            bool sized = points != null && points.Length == LegPointCount * 3
+            // 8 点（かかとなし）と 10 点（末尾がかかと）だけ読む。それ以外・非有限値は脚なし
+            bool withHeels = points != null && points.Length == LegPointCountWithHeels * 3
+                && visibility != null && visibility.Length == LegPointCountWithHeels;
+            bool legacy = points != null && points.Length == LegPointCount * 3
                 && visibility != null && visibility.Length == LegPointCount;
-            if (!sized || !TrackingMath.AllFinite(points) || !TrackingMath.AllFinite(visibility))
+            if ((!withHeels && !legacy) || !TrackingMath.AllFinite(points) || !TrackingMath.AllFinite(visibility))
             {
                 return;
             }
 
             // 体の左右ラベルは本人基準なので、そのまま本人の左脚・右脚にする
-            body.LeftLeg = ReadLeg(points, visibility, LeftHip, LeftKnee, LeftAnkle, LeftFootIndex);
-            body.RightLeg = ReadLeg(points, visibility, RightHip, RightKnee, RightAnkle, RightFootIndex);
+            int leftHeel = withHeels ? LeftHeel : -1;
+            int rightHeel = withHeels ? RightHeel : -1;
+            body.LeftLeg = ReadLeg(points, visibility, LeftHip, LeftKnee, LeftAnkle, LeftFootIndex, leftHeel);
+            body.RightLeg = ReadLeg(points, visibility, RightHip, RightKnee, RightAnkle, RightFootIndex, rightHeel);
         }
 
         private static void ReadRoot(float[] root, ref BodyTrackingFrame body)
@@ -293,20 +301,24 @@ namespace VRCast.Tracking
             body.RootWorldWidth = root[3];
         }
 
-        private static LegTrackingData ReadLeg(float[] points, float[] visibility, int hip, int knee, int ankle, int foot)
+        private static LegTrackingData ReadLeg(
+            float[] points, float[] visibility, int hip, int knee, int ankle, int foot, int heel)
         {
             // 腰・膝・足首がすべて映っているときだけ脚の曲げを使う
             bool hasLeg = visibility[hip] >= MinVisibility && visibility[knee] >= MinVisibility
                 && visibility[ankle] >= MinVisibility;
             bool hasFoot = hasLeg && visibility[foot] >= MinVisibility;
+            bool hasHeel = heel >= 0 && hasLeg && visibility[heel] >= MinVisibility;
             return new LegTrackingData
             {
                 HasLeg = hasLeg,
                 HasFoot = hasFoot,
+                HasHeel = hasHeel,
                 Hip = ToUnity(points, hip),
                 Knee = ToUnity(points, knee),
                 Ankle = ToUnity(points, ankle),
                 Foot = ToUnity(points, foot),
+                Heel = hasHeel ? ToUnity(points, heel) : default,
             };
         }
 

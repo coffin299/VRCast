@@ -1,7 +1,7 @@
 """VRCast 用 MediaPipe トラッカー。
 
 Web カメラの映像から顔（頭の向き・表情）・腕・手を推定し、JSON を UDP で VRCast へ送る。
-担当: 顔 = Face Landmarker、体（肩・肘・手首・腰・膝・足首・足先）= Pose Landmarker、手・指 = Hand Landmarker（MediaPipe Hands）。
+担当: 顔 = Face Landmarker、体（肩・肘・手首・腰・膝・足首・足先・かかと）= Pose Landmarker、手・指 = Hand Landmarker（MediaPipe Hands）。
 引数は OpenSeeFace の facetracker と同じ形（-l / -c / -i / -p）にしてあり、
 VRCast から同じ手順で起動・カメラ一覧取得ができる。
 
@@ -19,7 +19,7 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     visibility  arms の各点の可視度
     head        鼻・左目・右目の world 座標（m。arms と同じ座標系。手の位置を顔に合わせるのに使う）
     headVisibility head の各点の可視度
-    legs        左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先の world 座標（m）
+    legs        左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先・左かかと・右かかとの world 座標（m）
     legVisibility legs の各点の可視度
     root        腰の画像上の位置と肩幅（x, y, 画像上の肩幅, 実寸の肩幅 m。無ければ空）
     leftHand    左手 21 点の world 座標（映っていなければ空）
@@ -114,8 +114,9 @@ BLENDSHAPE_NAMES = (
 POSE_ARM_POINTS = (11, 12, 13, 14, 15, 16)
 # Pose Landmarker の点番号（鼻・左目・右目。腕と同じ world 座標で顔の位置を送る）
 POSE_HEAD_POINTS = (0, 2, 5)
-# Pose Landmarker の点番号（左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先）
-POSE_LEG_POINTS = (23, 24, 25, 26, 27, 28, 31, 32)
+# Pose Landmarker の点番号（左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先・左かかと・右かかと）
+# 先頭 8 点の並びはかかとを足す前と同じ
+POSE_LEG_POINTS = (23, 24, 25, 26, 27, 28, 31, 32, 29, 30)
 POSE_LEFT_SHOULDER = 11
 POSE_RIGHT_SHOULDER = 12
 POSE_LEFT_HIP = 23
@@ -1145,7 +1146,7 @@ def pose_fields(result):
     points = [world[index] for index in POSE_ARM_POINTS]
     # 顔の点（鼻・両目）も腕と同じ world 座標で送る（手を顔の前に合わせる基準）
     head = [world[index] for index in POSE_HEAD_POINTS]
-    # 脚（腰・膝・足首・足先）。古い受信側は未知フィールドを無視する
+    # 脚（腰・膝・足首・足先・かかと）。先頭 8 点の並びはかかとを足す前と同じ
     legs = [world[index] for index in POSE_LEG_POINTS]
     return {
         "pose": True,

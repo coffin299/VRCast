@@ -243,6 +243,7 @@ namespace VRCast.Tests
             Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
             Assert.That(body.LeftLeg.HasLeg, Is.True);
             Assert.That(body.LeftLeg.HasFoot, Is.True);
+            Assert.That(body.LeftLeg.HasHeel, Is.False);
             Assert.That(body.RightLeg.HasLeg, Is.False);
             Assert.That(Vector3.Distance(body.LeftLeg.Knee, new Vector3(0.2f, -0.4f, 0.1f)), Is.LessThan(1e-5f));
         }
@@ -289,6 +290,27 @@ namespace VRCast.Tests
             Assert.That(body.LeftLeg.HasLeg, Is.False);
             Assert.That(body.RightLeg.HasLeg, Is.False);
             Assert.That(body.LeftLeg.HasFoot, Is.False);
+            Assert.That(body.LeftLeg.HasHeel, Is.False);
+        }
+
+        [Test]
+        public void TryParse_LegsWithHeels_ReadsHeelAndKeepsEightPointLayout()
+        {
+            // 10 点（末尾が左かかと・右かかと）。右かかとは可視度不足
+            MediaPipePacket.Message message = CreateMessage();
+            message.pose = true;
+            message.legs = new float[MediaPipePacket.LegPointCountWithHeels * 3];
+            message.legVisibility = new[] { 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 1f, 0.1f };
+            WritePoint(message.legs, MediaPipePacket.LeftHeel, new Vector3(0.1f, 0.2f, 0.3f));
+            WritePoint(message.legs, MediaPipePacket.LeftFootIndex, new Vector3(0.4f, 0.5f, 0.6f));
+
+            Assert.That(Parse(message, out _, out _, out BodyTrackingFrame body), Is.True);
+            Assert.That(body.LeftLeg.HasLeg, Is.True);
+            Assert.That(body.LeftLeg.HasFoot, Is.True);
+            Assert.That(body.LeftLeg.HasHeel, Is.True);
+            Assert.That(body.RightLeg.HasHeel, Is.False);
+            Assert.That(Vector3.Distance(body.LeftLeg.Heel, new Vector3(0.1f, -0.2f, 0.3f)), Is.LessThan(1e-5f));
+            Assert.That(Vector3.Distance(body.LeftLeg.Foot, new Vector3(0.4f, -0.5f, 0.6f)), Is.LessThan(1e-5f));
         }
 
         [Test]

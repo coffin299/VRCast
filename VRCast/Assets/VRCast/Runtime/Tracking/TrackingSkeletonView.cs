@@ -320,6 +320,17 @@ namespace VRCast.Tracking
                 Line(ankle, foot, Scaled(ArmWidth), legColor);
                 Joint(foot, legColor);
             }
+
+            if (data.HasHeel)
+            {
+                Vector3 heel = ToWorld(data.Heel);
+                Line(ankle, heel, Scaled(ArmWidth), legColor);
+                Joint(heel, legColor);
+                if (data.HasFoot)
+                {
+                    Line(heel, ToWorld(data.Foot), Scaled(ArmWidth), legColor);
+                }
+            }
         }
 
         private static bool HasPose(ArmTrackingData data)

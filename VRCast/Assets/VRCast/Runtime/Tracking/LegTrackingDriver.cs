@@ -4,11 +4,11 @@ using VRCast.Core;
 namespace VRCast.Tracking
 {
     /// <summary>
-    /// MediaPipe の腰・膝・足首・足先をアバターの脚へ適用する。
+    /// MediaPipe の腰・膝・足首・足先・かかとをアバターの脚へ適用する。
     /// world 座標の原点は腰の中心なので、脚の曲げは点同士の方向だけを使う。
     /// 「部屋を歩き回る」が ON のときだけ、映像上の腰の位置で腰を水平に動かす。
     /// 両腰の線で腰の左右の向きを足し、腰 → 膝 → 足首の 2 関節 IK で太もも・すねを曲げる。
-    /// 足の向きは待機ポーズのままにする（足先の点は向きが安定しないため回さない）。
+    /// かかとと足先が両方映っているときは、その 3 点の向きを足に載せる。無いときは待機ポーズの向きのまま。
     /// 映っていない脚は待機ポーズのまま。
     /// 上半身の傾き（FaceTrackingDriver）と足の固定（FootPlanter）の後、腕（HandTrackingDriver）の前に実行する。
     /// VMC の全身（FullBodyTrackingDriver）が動く入力元では適用しない。
@@ -28,10 +28,15 @@ namespace VRCast.Tracking
         private const float LengthSmoothSeconds = 1f;
         private const float MinTrackedLegLength = 0.4f;
 
-        // 平滑化する点（腰からの膝・腰からの足首）
+        // 平滑化する点（腰からの膝・腰からの足首・足首からの足先・足首からのかかと）
         private const int KneeSample = 0;
         private const int AnkleSample = 1;
-        private const int SampleCount = 2;
+        private const int FootSample = 2;
+        private const int HeelSample = 3;
+        private const int SampleCount = 4;
+
+        // かかと→足先がこれより短いときは足の向きに使わない（m）
+        private const float MinFootLength = 0.02f;
 
         private IBodyTrackingProvider _provider;
         private AppSettings _settings;
@@ -134,15 +139,24 @@ namespace VRCast.Tracking
             public Transform Upper;
             public Transform Lower;
             public Transform Foot;
+            public Transform Toes;
             public Quaternion UpperRest;
             public Quaternion LowerRest;
             public Quaternion FootRest;
+
+            // 待機ポーズの足の、つま先方向と甲の方向（足ボーンのローカル）
+            public Vector3 ToeLocal;
+            public Vector3 UpLocal;
+            public bool HasFootAxes;
             public readonly PointSmoother Path = new PointSmoother(SampleCount, MinSmoothTime, MaxSmoothTime, IntervalShare);
             public readonly Vector3[] Sample = new Vector3[SampleCount];
             public float TrackedLength;
             public float Weight;
+            public float FootWeight;
             public Vector3 KneeFromHip;
             public Vector3 AnkleFromHip;
+            public Vector3 FootFromAnkle;
+            public Vector3 HeelFromAnkle;
         }
 
         public void Initialize(Animator animator, IBodyTrackingProvider provider, AppSettings settings)
@@ -155,17 +169,21 @@ namespace VRCast.Tracking
             }
 
             _hips = animator.GetBoneTransform(HumanBodyBones.Hips);
-            _left = Create(animator, HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg, HumanBodyBones.LeftFoot);
-            _right = Create(animator, HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg, HumanBodyBones.RightFoot);
+            _left = Create(animator, HumanBodyBones.LeftUpperLeg, HumanBodyBones.LeftLowerLeg,
+                HumanBodyBones.LeftFoot, HumanBodyBones.LeftToes);
+            _right = Create(animator, HumanBodyBones.RightUpperLeg, HumanBodyBones.RightLowerLeg,
+                HumanBodyBones.RightFoot, HumanBodyBones.RightToes);
         }
 
-        private static Leg Create(Animator animator, HumanBodyBones upper, HumanBodyBones lower, HumanBodyBones foot)
+        private static Leg Create(
+            Animator animator, HumanBodyBones upper, HumanBodyBones lower, HumanBodyBones foot, HumanBodyBones toes)
         {
             var leg = new Leg
             {
                 Upper = animator.GetBoneTransform(upper),
                 Lower = animator.GetBoneTransform(lower),
                 Foot = animator.GetBoneTransform(foot),
+                Toes = animator.GetBoneTransform(toes),
             };
             if (leg.Upper == null || leg.Lower == null || leg.Foot == null)
             {
@@ -259,18 +277,34 @@ namespace VRCast.Tracking
 
             leg.Path.SmoothTimeFloor = MotionSmoothingLevels.ArmSmoothTimeFloor(_settings.trackingSmoothing);
             bool hasLeg = received && data.HasLeg;
+            bool hasRawFoot = hasLeg && data.HasFoot && data.HasHeel;
             if (hasLeg)
             {
                 if (fresh || !leg.Path.HasValue)
                 {
                     leg.Sample[KneeSample] = ToAvatar(data.Knee - data.Hip);
                     leg.Sample[AnkleSample] = ToAvatar(data.Ankle - data.Hip);
+
+                    // かかとや足先が隠れたフレームは、最後の足の方向を維持する（ゼロへ寄せて回さない）
+                    if (hasRawFoot)
+                    {
+                        leg.Sample[FootSample] = ToAvatar(data.Foot - data.Ankle);
+                        leg.Sample[HeelSample] = ToAvatar(data.Heel - data.Ankle);
+                    }
+                    else if (leg.Path.HasValue)
+                    {
+                        leg.Sample[FootSample] = leg.Path.Current[FootSample];
+                        leg.Sample[HeelSample] = leg.Path.Current[HeelSample];
+                    }
+
                     leg.Path.Push(leg.Sample, now);
                 }
 
                 leg.Path.Update(now);
                 leg.KneeFromHip = leg.Path.Current[KneeSample];
                 leg.AnkleFromHip = leg.Path.Current[AnkleSample];
+                leg.FootFromAnkle = leg.Path.Current[FootSample];
+                leg.HeelFromAnkle = leg.Path.Current[HeelSample];
                 Vector3 knee = leg.KneeFromHip;
                 Vector3 ankle = leg.AnkleFromHip;
                 float length = knee.magnitude + (ankle - knee).magnitude;
@@ -284,7 +318,9 @@ namespace VRCast.Tracking
                 leg.Path.Reset();
             }
 
-            leg.Weight = Mathf.MoveTowards(leg.Weight, hasLeg ? 1f : 0f, Time.deltaTime / FadeSeconds);
+            float fade = Time.deltaTime / FadeSeconds;
+            leg.Weight = Mathf.MoveTowards(leg.Weight, hasLeg ? 1f : 0f, fade);
+            leg.FootWeight = Mathf.MoveTowards(leg.FootWeight, hasRawFoot ? 1f : 0f, fade);
         }
 
         private void UpdateHips(LegTrackingData left, LegTrackingData right, bool received, bool fresh, float now)
@@ -316,7 +352,7 @@ namespace VRCast.Tracking
             return TrackingMath.ToAvatar(cameraVector, _settings.BodyMirror, _settings.TrackingTiltCorrection);
         }
 
-        private static void Take(Leg leg)
+        private void Take(Leg leg)
         {
             if (leg == null)
             {
@@ -326,6 +362,52 @@ namespace VRCast.Tracking
             leg.UpperRest = leg.Upper.localRotation;
             leg.LowerRest = leg.Lower.localRotation;
             leg.FootRest = leg.Foot.localRotation;
+            CaptureFootAxes(leg);
+        }
+
+        private void CaptureFootAxes(Leg leg)
+        {
+            // つま先ボーン、無ければ足の子のうち一番遠い点、それも無ければアバターの前方
+            Vector3 toeWorld = leg.Toes != null ? leg.Toes.position - leg.Foot.position : Vector3.zero;
+            if (toeWorld.sqrMagnitude < 1e-8f)
+            {
+                toeWorld = FurthestChildOffset(leg.Foot);
+            }
+
+            if (toeWorld.sqrMagnitude < 1e-8f)
+            {
+                toeWorld = transform.forward;
+            }
+
+            // 待機ポーズで足の甲が向いている方向（アバターの上を、つま先方向に垂直な成分だけ残す）
+            Vector3 upWorld = Vector3.ProjectOnPlane(transform.up, toeWorld);
+            if (upWorld.sqrMagnitude < 1e-8f)
+            {
+                leg.HasFootAxes = false;
+                return;
+            }
+
+            leg.ToeLocal = leg.Foot.InverseTransformDirection(toeWorld.normalized);
+            leg.UpLocal = leg.Foot.InverseTransformDirection(upWorld.normalized);
+            leg.HasFootAxes = true;
+        }
+
+        private static Vector3 FurthestChildOffset(Transform bone)
+        {
+            Vector3 best = Vector3.zero;
+            float bestDistance = 0f;
+            for (int i = 0; i < bone.childCount; i++)
+            {
+                Vector3 offset = bone.GetChild(i).position - bone.position;
+                float distance = offset.sqrMagnitude;
+                if (distance > bestDistance)
+                {
+                    bestDistance = distance;
+                    best = offset;
+                }
+            }
+
+            return best;
         }
 
         private static void Restore(Leg leg)
@@ -366,15 +448,54 @@ namespace VRCast.Tracking
             Quaternion lowerRest = leg.Lower.localRotation;
             Quaternion footRest = leg.Foot.localRotation;
 
-            // 足先の点は向きが安定しない。膝を曲げる前の足の向き（待機ポーズ）を残す
+            // かかとが無いときは、膝を曲げる前の足の向き（待機ポーズ）を残す
             Quaternion planted = leg.Foot.rotation;
             FootPlanter.Solve(leg.Upper, leg.Lower, leg.Foot, target, bend);
-            leg.Foot.rotation = planted;
+            Quaternion result = planted;
+            if (leg.FootWeight > 0f && leg.HasFootAxes && TryAimFoot(leg, root, planted, out Quaternion aimed))
+            {
+                result = Quaternion.Slerp(planted, aimed, leg.FootWeight);
+            }
+
+            leg.Foot.rotation = result;
 
             // 映り始め・消え際は待機ポーズとの間を混ぜる
             leg.Upper.localRotation = Quaternion.Slerp(upperRest, leg.Upper.localRotation, leg.Weight);
             leg.Lower.localRotation = Quaternion.Slerp(lowerRest, leg.Lower.localRotation, leg.Weight);
             leg.Foot.localRotation = Quaternion.Slerp(footRest, leg.Foot.localRotation, leg.Weight);
+        }
+
+        private static bool TryAimFoot(Leg leg, Quaternion root, Quaternion planted, out Quaternion aimed)
+        {
+            // 足首を原点にした生データの足先・かかと。かかと→足先が前後、足首側が甲
+            Vector3 heel = root * leg.HeelFromAnkle;
+            Vector3 toe = root * leg.FootFromAnkle;
+            Vector3 along = toe - heel;
+            Vector3 soleUp = Vector3.ProjectOnPlane(-heel, along);
+            Vector3 restToe = planted * leg.ToeLocal;
+            Vector3 restUp = planted * leg.UpLocal;
+            aimed = planted;
+            if (!TryFootFrame(along, soleUp, out Quaternion target) || !TryFootFrame(restToe, restUp, out Quaternion rest))
+            {
+                return false;
+            }
+
+            aimed = target * Quaternion.Inverse(rest) * planted;
+            return true;
+        }
+
+        private static bool TryFootFrame(Vector3 forward, Vector3 up, out Quaternion frame)
+        {
+            // 前後が潰れている・甲の方向が前後と重なるときは足の向きを決めない
+            Vector3 flatUp = Vector3.ProjectOnPlane(up, forward);
+            if (forward.sqrMagnitude < MinFootLength * MinFootLength || flatUp.sqrMagnitude < 1e-8f)
+            {
+                frame = Quaternion.identity;
+                return false;
+            }
+
+            frame = Quaternion.LookRotation(forward, flatUp);
+            return true;
         }
 
         private void ApplyHipYaw()

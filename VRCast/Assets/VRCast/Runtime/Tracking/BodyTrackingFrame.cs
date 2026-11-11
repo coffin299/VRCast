@@ -31,7 +31,7 @@ namespace VRCast.Tracking
         public ArmTrackingData Left;
         public ArmTrackingData Right;
 
-        // 脚（腰・膝・足首・足先。古いトラッカーは HasLeg が false）
+        // 脚（腰・膝・足首・足先・かかと。古いトラッカーは HasLeg が false。かかとの無い送信は HasHeel が false）
         public LegTrackingData LeftLeg;
         public LegTrackingData RightLeg;
 
@@ -58,12 +58,16 @@ namespace VRCast.Tracking
         // 腰・膝・足首が映っていて脚の曲げを使えるなら true
         public bool HasLeg;
 
-        // 足先が映っていて足の向きを使えるなら true
+        // 足先が映っているなら true
         public bool HasFoot;
+
+        // かかとが映っているなら true（古いトラッカーは false）
+        public bool HasHeel;
 
         public Vector3 Hip;
         public Vector3 Knee;
         public Vector3 Ankle;
         public Vector3 Foot;
+        public Vector3 Heel;
     }
 }

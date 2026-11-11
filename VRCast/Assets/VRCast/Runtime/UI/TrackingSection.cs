@@ -592,24 +592,24 @@ namespace VRCast.UI
                 GUILayout.ExpandWidth(false));
             UiTheme theme = UiTheme.Current;
             GUILayout.Label(
-                Loc.T("Experimental", "試験的", "실험적", "试验性", "試驗性"),
+                Loc.T("Experimental, not recommended", "試験的・非推奨", "실험적 · 비권장", "试验性 · 不推荐", "試驗性 · 不推薦"),
                 theme != null ? theme.ErrorText : GUI.skin.label,
                 GUILayout.ExpandWidth(false));
             GUILayout.FlexibleSpace();
             GUILayout.EndHorizontal();
             GuiControls.Hint(Loc.T(
-                "Bends the hips and legs to match your pose when your whole body is in frame. A face close-up or a desk leaves the legs in the idle pose. Off by default.",
-                "全身がカメラに映っているとき、腰の向きと脚の曲げを合わせます。顔のアップや机に座って足が映らないときは待機ポーズのままです。既定は OFF。",
-                "전신이 카메라에 보일 때 허리 방향과 다리 굽힘을 맞춥니다. 얼굴 클로즈업이나 책상에 앉아 발이 안 보이면 대기 포즈 그대로입니다. 기본은 꺼짐.",
-                "全身进入画面时，让腰的朝向和腿的弯曲跟上姿势。脸部特写或坐在桌前看不到脚时，腿保持待机姿势。默认关闭。",
-                "全身進入畫面時，讓腰的朝向和腿的彎曲跟上姿勢。臉部特寫或坐在桌前看不到腳時，腿保持待機姿勢。預設關閉。"));
+                "Bends the hips and legs to match your pose when your whole body is in frame. The foot follows the heel and toes when both are visible. A face close-up or a desk leaves the legs in the idle pose. Off by default.",
+                "全身がカメラに映っているとき、腰の向きと脚の曲げを合わせます。かかとと足先が映っていれば足の向きも合わせます。顔のアップや机に座って足が映らないときは待機ポーズのままです。既定は OFF。",
+                "전신이 카메라에 보일 때 허리 방향과 다리 굽힘을 맞춥니다. 발뒤꿈치와 발끝이 보이면 발의 방향도 맞춥니다. 얼굴 클로즈업이나 책상에 앉아 발이 안 보이면 대기 포즈 그대로입니다. 기본은 꺼짐.",
+                "全身进入画面时，让腰的朝向和腿的弯曲跟上姿势。脚跟和脚尖都可见时，脚的朝向也会跟上。脸部特写或坐在桌前看不到脚时，腿保持待机姿势。默认关闭。",
+                "全身進入畫面時，讓腰的朝向和腿的彎曲跟上姿勢。腳跟和腳尖都可見時，腳的朝向也會跟上。臉部特寫或坐在桌前看不到腳時，腿保持待機姿勢。預設關閉。"));
 
             if (!_settings.trackingLegs)
             {
                 return;
             }
 
-            // 映像上の位置で腰を動かす。既定はその場に固定。足の向きは待機ポーズのまま
+            // 映像上の位置で腰を動かす。既定はその場に固定
             _settings.trackingLegsWalk = GUILayout.Toggle(
                 _settings.trackingLegsWalk,
                 Loc.T("Walk around the room (not fixed)", "部屋を歩き回る（固定しない）", "방 안을 걸어 다니기 (고정 안 함)",
