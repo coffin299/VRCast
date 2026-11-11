@@ -16,6 +16,7 @@ namespace VRCast.UI
     public class TrackingSection
     {
         private readonly AvatarComponentCache _avatar;
+        private readonly GazeShapeEditor _gazeShapes;
         private readonly IFaceTrackingProvider _tracker;
         private readonly IBodyTrackingProvider _body;
         private readonly TrackerProcess _process;
@@ -102,6 +103,7 @@ namespace VRCast.UI
             TrackingSkeletonView skeleton, AppSettings settings)
         {
             _avatar = new AvatarComponentCache(session);
+            _gazeShapes = new GazeShapeEditor(session, _avatar, settings);
             _tracker = tracker;
             // 傾きキャリブは両肩が取れるとき体を優先する（顔プロバイダが体も実装している）
             _body = tracker as IBodyTrackingProvider;
@@ -199,17 +201,30 @@ namespace VRCast.UI
 
         private void DrawHold()
         {
-            // 顔が映っていない間は手・体も含めて止める（既定 OFF。カメラは起動したまま）
-            _settings.trackingStopWithoutFace = GUILayout.Toggle(
-                _settings.trackingStopWithoutFace,
+            // 全身トラッキング中は顔が無くても止めない。表示は OFF にして、保存値は残す
+            bool fullBody = LegTrackingDriver.BlocksOtherMotion(_settings);
+            _settings.trackingStopWithoutFace = GuiControls.ToggleUnlessLocked(
+                _settings.trackingStopWithoutFace, fullBody,
                 Loc.T("Don't track unless a face is found", "顔が見つからないときはトラッキングしない",
                     "얼굴을 찾지 못하면 트래킹하지 않기", "找不到脸时不进行追踪", "找不到臉時不進行追蹤"));
-            GuiControls.Hint(Loc.T(
-                "While this is on, the head, tracked gaze, expressions, hands and body all return to rest when your face is not in frame. Look at camera keeps working. The camera stays on, and tracking resumes when your face returns. Off by default.",
-                "ON の間は、顔が映っていないとき、頭・トラッキングの視線・表情・手・体をすべて止めて待機の姿勢に戻します。カメラ目線は続きます。カメラは起動したままなので、顔が戻ると再開します。既定は OFF です。",
-                "켜져 있는 동안 얼굴이 화면에 없으면 머리·트래킹 시선·표정·손·몸을 모두 멈추고 대기 자세로 되돌립니다. 카메라 시선은 계속됩니다. 카메라는 켜 둔 채로 얼굴이 돌아오면 다시 시작합니다. 기본값은 꺼짐입니다.",
-                "开启后，画面中没有脸时，头部、追踪的视线、表情、手和身体都会停止并回到待机姿势。看向镜头会继续。摄像头保持开启，脸回来后会继续追踪。默认关闭。",
-                "開啟後，畫面中沒有臉時，頭部、追蹤的視線、表情、手和身體都會停止並回到待機姿勢。看向鏡頭會繼續。攝影機保持開啟，臉回來後會繼續追蹤。預設關閉。"));
+            if (fullBody)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Turned off while full body tracking (MediaPipe) is on. Your previous setting returns when you turn it off.",
+                    "全身トラッキング（MediaPipe）が ON のあいだは使えません。OFF にすると、それまでの設定に戻ります。",
+                    "전신 트래킹(MediaPipe)이 켜져 있는 동안에는 사용할 수 없습니다. 끄면 이전 설정으로 돌아갑니다.",
+                    "全身追踪（MediaPipe）开启期间无法使用。关闭后会恢复原来的设置。",
+                    "全身追蹤（MediaPipe）開啟期間無法使用。關閉後會恢復原來的設定。"));
+            }
+            else
+            {
+                GuiControls.Hint(Loc.T(
+                    "While this is on, the head, tracked gaze, expressions, hands and body all return to rest when your face is not in frame. Look at camera keeps working. The camera stays on, and tracking resumes when your face returns. Off by default.",
+                    "ON の間は、顔が映っていないとき、頭・トラッキングの視線・表情・手・体をすべて止めて待機の姿勢に戻します。カメラ目線は続きます。カメラは起動したままなので、顔が戻ると再開します。既定は OFF です。",
+                    "켜져 있는 동안 얼굴이 화면에 없으면 머리·트래킹 시선·표정·손·몸을 모두 멈추고 대기 자세로 되돌립니다. 카메라 시선은 계속됩니다. 카메라는 켜 둔 채로 얼굴이 돌아오면 다시 시작합니다. 기본값은 꺼짐입니다.",
+                    "开启后，画面中没有脸时，头部、追踪的视线、表情、手和身体都会停止并回到待机姿势。看向镜头会继续。摄像头保持开启，脸回来后会继续追踪。默认关闭。",
+                    "開啟後，畫面中沒有臉時，頭部、追蹤的視線、表情、手和身體都會停止並回到待機姿勢。看向鏡頭會繼續。攝影機保持開啟，臉回來後會繼續追蹤。預設關閉。"));
+            }
 
             // 離席はパネル下部のボタンでも切り替える。止まっている理由を知らせる
             if (_settings.trackingAway)
@@ -221,7 +236,7 @@ namespace VRCast.UI
                     "正在离开。再按一次面板底部的「离开」或其快捷键即可恢复。",
                     "正在離席。再按一次面板底部的「離席」或其快捷鍵即可恢復。"));
             }
-            else if (_settings.trackingStopWithoutFace && (_tracker == null || !_tracker.TryGetFrame(out _)))
+            else if (!fullBody && _settings.trackingStopWithoutFace && (_tracker == null || !_tracker.TryGetFrame(out _)))
             {
                 GuiControls.Hint(Loc.T(
                     "No face is in frame, so tracking is paused.",
@@ -958,6 +973,7 @@ namespace VRCast.UI
 
             // BlendShape 名系統（目の上限と同期）＋見る方向の上限、しきい値は閉じて格納
             bool namingChanged = PerfectSyncThresholdControls.DrawEyeLookLimit(_settings);
+            _gazeShapes.Draw(driver);
             if (driver != null
                 && (anyShape != _settings.trackingPerfectSyncAnyShape || namingChanged))
             {
@@ -1306,30 +1322,50 @@ namespace VRCast.UI
                 "当面部正确但手臂和上半身左右相反时开启（例如 iPhone 面部 + 摄像头手臂）。只交换身体（手臂、手、腿、肩部扭转/倾斜）；头部朝向和面部仍跟随镜像设置。",
                 "當臉部正確但手臂與上半身左右相反時開啟（例如 iPhone 臉部 + 網路攝影機手臂）。只交換身體（手臂、手、腿、肩部扭轉／傾斜）；頭部朝向與臉部仍跟隨鏡像設定。"));
 
-            // 頭の位置に合わせた体の動かし方（傾き / 体全体の移動 / 両方）と強さ
+            // 頭の位置に合わせた体の動かし方。全身トラッキング中は腰と脚が別系統なので使わず、操作も止める
+            bool fullBody = LegTrackingDriver.BlocksOtherMotion(_settings);
             string[] labels =
             {
                 Loc.T("Lean (feet fixed)", "傾ける（足は固定）", "기울이기 (발 고정)", "倾斜（脚部固定）", "傾斜（腳部固定）"),
                 Loc.T("Move (whole body)", "体ごと動かす", "몸 전체 움직이기", "整体移动", "整體移動"),
                 Loc.T("Lean + move", "傾ける + 体ごと", "기울이기 + 몸 전체", "倾斜 + 整体移动", "傾斜 + 整體移動"),
             };
-            _settings.trackingBodyMotion = (BodyMotion)GuiControls.EnumSelector(
+            bool gui = GUI.enabled;
+            if (fullBody)
+            {
+                GUI.enabled = false;
+            }
+
+            int motion = GuiControls.EnumSelector(
                 Loc.T("Body", "体の動き", "몸의 움직임", "身体动作", "身體動作"), labels, (int)_settings.trackingBodyMotion);
-            _settings.trackingBodyLean = GuiControls.Slider(
+            float lean = GuiControls.Slider(
                 Loc.T("Body strength", "体の動きの強さ", "몸 움직임 강도", "身体动作强度", "身體動作強度"),
                 _settings.trackingBodyLean, 0f, AppSettings.MaxTrackingBodyLean);
-
-            // 全身を映すアバター向けに、足を固定して腰も上半身についていかせる
-            _settings.trackingPlantFeet = GUILayout.Toggle(
-                _settings.trackingPlantFeet,
+            bool plantFeet = GUILayout.Toggle(
+                fullBody ? false : _settings.trackingPlantFeet,
                 Loc.T("Full body (keep feet planted)", "全身モード（足を固定）", "전신 모드 (발 고정)", "全身模式（固定脚部）",
                     "全身模式（固定腳部）"));
-            GuiControls.Hint(Loc.T(
-                "For showing the whole body. The hips follow the upper body's lean and movement while the feet stay on the floor and the knees bend.",
-                "全身を映すとき向けです。足を床に付けたまま、腰も上半身の傾き・移動についていき、膝の曲げで吸収します。",
-                "전신을 비출 때 사용합니다. 발을 바닥에 둔 채 허리도 상체의 기울기·이동을 따라가고 무릎을 굽혀 흡수합니다.",
-                "适合显示全身时使用。脚保持贴地，腰部也跟随上半身的倾斜和移动，由膝盖弯曲吸收。",
-                "適合顯示全身時使用。腳保持貼地，腰部也跟隨上半身的傾斜和移動，由膝蓋彎曲吸收。"));
+            GUI.enabled = gui;
+            if (!fullBody)
+            {
+                _settings.trackingBodyMotion = (BodyMotion)motion;
+                _settings.trackingBodyLean = lean;
+                _settings.trackingPlantFeet = plantFeet;
+            }
+
+            GuiControls.Hint(fullBody
+                ? Loc.T(
+                    "Turned off while full body tracking (MediaPipe) is on. Your previous settings return when you turn it off.",
+                    "全身トラッキング（MediaPipe）が ON のあいだは使えません。OFF にすると、それまでの設定に戻ります。",
+                    "전신 트래킹(MediaPipe)이 켜져 있는 동안에는 사용할 수 없습니다. 끄면 이전 설정으로 돌아갑니다.",
+                    "全身追踪（MediaPipe）开启期间无法使用。关闭后会恢复原来的设置。",
+                    "全身追蹤（MediaPipe）開啟期間無法使用。關閉後會恢復原來的設定。")
+                : Loc.T(
+                    "For showing the whole body. The hips follow the upper body's lean and movement while the feet stay on the floor and the knees bend.",
+                    "全身を映すとき向けです。足を床に付けたまま、腰も上半身の傾き・移動についていき、膝の曲げで吸収します。",
+                    "전신을 비출 때 사용합니다. 발을 바닥에 둔 채 허리도 상체의 기울기·이동을 따라가고 무릎을 굽혀 흡수합니다.",
+                    "适合显示全身时使用。脚保持贴地，腰部也跟随上半身的倾斜和移动，由膝盖弯曲吸收。",
+                    "適合顯示全身時使用。腳保持貼地，腰部也跟隨上半身的傾斜和移動，由膝蓋彎曲吸收。"));
 
             _settings.trackingGaze = GuiControls.Slider(
                 Loc.T("Eye gaze", "視線の強さ", "시선 강도", "视线强度", "視線強度"),

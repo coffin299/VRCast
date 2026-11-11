@@ -3,6 +3,7 @@ using VRCast.Animations;
 using VRCast.Avatars;
 using VRCast.Core;
 using VRCast.Dynamics;
+using VRCast.Tracking;
 
 namespace VRCast.UI
 {
@@ -181,9 +182,23 @@ namespace VRCast.UI
                 return;
             }
 
-            _settings.idleMotionEnabled = GUILayout.Toggle(
-                _settings.idleMotionEnabled, Loc.T("Breathing and sway", "呼吸・体の揺れ", "호흡 · 몸 흔들림",
+            // 全身トラッキング中は背骨を揺らさない。表示は OFF にして、保存値は残す
+            bool fullBody = LegTrackingDriver.BlocksOtherMotion(_settings);
+            _settings.idleMotionEnabled = GuiControls.ToggleUnlessLocked(
+                _settings.idleMotionEnabled, fullBody,
+                Loc.T("Breathing and sway", "呼吸・体の揺れ", "호흡 · 몸 흔들림",
                     "呼吸 · 身体摇摆", "呼吸 · 身體搖擺"));
+            if (fullBody)
+            {
+                GuiControls.Hint(Loc.T(
+                    "Turned off while full body tracking (MediaPipe) is on. Your previous setting returns when you turn it off.",
+                    "全身トラッキング（MediaPipe）が ON のあいだは使えません。OFF にすると、それまでの設定に戻ります。",
+                    "전신 트래킹(MediaPipe)이 켜져 있는 동안에는 사용할 수 없습니다. 끄면 이전 설정으로 돌아갑니다.",
+                    "全身追踪（MediaPipe）开启期间无法使用。关闭后会恢复原来的设置。",
+                    "全身追蹤（MediaPipe）開啟期間無法使用。關閉後會恢復原來的設定。"));
+                GuiControls.EndCard();
+                return;
+            }
 
             // OFF の間は強さの調整を出さない
             if (!_settings.idleMotionEnabled)

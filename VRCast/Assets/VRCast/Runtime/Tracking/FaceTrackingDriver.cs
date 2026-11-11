@@ -174,9 +174,10 @@ namespace VRCast.Tracking
         private float _eyesClosed;
         private FaceTrackingFrame _lastFrame;
 
-        // パーフェクトシンクの書き込み先と、視線用 BlendShape（両目まとめの名前）、割り当て直し用の控え
+        // パーフェクトシンクの書き込み先と、視線用 BlendShape（両目まとめの名前とアバターごとの指定）、割り当て直し用の控え
         private PerfectSyncBlendShapes _perfectSync;
         private GazeBlendShapes _gazeBlendShapes;
+        private GazeShapeOverride _gazeShapes;
         private IReadOnlyList<PerfectSyncBinding> _perfectSyncBindings;
 
         /// <summary>
@@ -280,6 +281,11 @@ namespace VRCast.Tracking
         public bool HasEyes => HasEyeBones || (_gazeBlendShapes != null && _gazeBlendShapes.IsAvailable);
 
         /// <summary>
+        /// アバターごとに指定した目の動きの BlendShape が 1 つでも見つかっていれば true。
+        /// </summary>
+        public bool HasCustomGazeShapes => _gazeBlendShapes != null && _gazeBlendShapes.HasCustom;
+
+        /// <summary>
         /// トラッキング値を受信して適用中なら true。
         /// </summary>
         public bool IsTracking { get; private set; }
@@ -319,7 +325,7 @@ namespace VRCast.Tracking
         public void Initialize(
             Animator animator, IFaceTrackingProvider provider, IBodyTrackingProvider body, BlinkController blink,
             LipSyncController lipSync, ExpressionController expressions, AppSettings settings,
-            IReadOnlyList<PerfectSyncBinding> perfectSyncBindings = null)
+            IReadOnlyList<PerfectSyncBinding> perfectSyncBindings = null, GazeShapeOverride gazeShapes = null)
         {
             _provider = provider;
             _body = body;
@@ -329,7 +335,8 @@ namespace VRCast.Tracking
             _settings = settings;
 
             _perfectSyncBindings = perfectSyncBindings;
-            _gazeBlendShapes = GazeBlendShapes.Create(transform);
+            _gazeShapes = gazeShapes;
+            _gazeBlendShapes = GazeBlendShapes.Create(transform, _gazeShapes);
 
             // Humanoid のみ頭・目ボーンを動かす（非 Humanoid はまばたき・口・視線の BlendShape だけ）
             if (animator == null || !animator.isHuman)
@@ -395,10 +402,24 @@ namespace VRCast.Tracking
             // 今の書き込みを元の値へ戻してから作り直す（次のフレームから新しい書き込み先で動く）
             _perfectSyncBindings = bindings;
             _perfectSync?.Release();
-            _gazeBlendShapes?.Release();
+            RebuildGazeShapes();
             _perfectSync = CreatePerfectSync(HasEyeBones);
-            _gazeBlendShapes = GazeBlendShapes.Create(transform);
             _eyeLight.Bind(transform, _leftEye, _rightEye);
+        }
+
+        /// <summary>
+        /// 目の動きに使う BlendShape の指定が変わったときに探し直す（書いていた分は元の値へ戻してから）。
+        /// </summary>
+        public void SetGazeShapes(GazeShapeOverride gazeShapes)
+        {
+            _gazeShapes = gazeShapes;
+            RebuildGazeShapes();
+        }
+
+        private void RebuildGazeShapes()
+        {
+            _gazeBlendShapes?.Release();
+            _gazeBlendShapes = GazeBlendShapes.Create(transform, _gazeShapes);
         }
 
         /// <summary>
@@ -872,14 +893,18 @@ namespace VRCast.Tracking
             RestoreRest(_neck, _neckRest);
             _head.localRotation = _headRest;
 
-            // 体全体の移動（腰を動かす。全身モードでは足を固定したまま膝で吸収し、それ以外は足も一緒に動く）
+            // 体全体の移動（腰を動かす。全身モードでは足を固定したまま膝で吸収し、それ以外は足も一緒に動く）。
+            // MediaPipe の全身トラッキング中は腰と脚をそちらに任せ、頭の位置では動かさない
+            bool trackedLegs = LegTrackingDriver.BlocksOtherMotion(_settings);
             BodyMotion motion = _settings.trackingBodyMotion;
-            bool plantFeet = _settings.trackingPlantFeet && _hips != null;
-            MoveHips(motion != BodyMotion.Lean, plantFeet);
+            bool plantFeet = !trackedLegs && _settings.trackingPlantFeet && _hips != null;
+            MoveHips(!trackedLegs && motion != BodyMotion.Lean, plantFeet);
 
             // 上半身の傾き（移動のみのモードでは頭の位置では傾けない）と肩の線による向きを、
             // 全身モードでは腰にも分け（下半身がついていく）、残りを背骨・胸で分担
-            Quaternion lean = CalculateLean(_currentOffset, motion != BodyMotion.Move);
+            Quaternion lean = trackedLegs
+                ? Quaternion.identity
+                : CalculateLean(_currentOffset, motion != BodyMotion.Move);
             float hipsShare = plantFeet ? HipsLeanShare : 0f;
             RotateHips(Quaternion.Slerp(Quaternion.identity, lean, hipsShare), plantFeet);
             float torsoShare = (_spine != null && _chest != null ? 0.5f : 1f) * (1f - hipsShare);
@@ -1132,10 +1157,15 @@ namespace VRCast.Tracking
                 _eyeLight.Restore();
             }
 
-            // 視線用 BlendShape。キー駆動かつパーフェクトシンクが eyeLook* を動かしていないときだけ
-            if (driveKeys && hasShapes && !(IsPerfectSyncActive && _perfectSync != null && _perfectSync.DrivesEyeLook))
+            // 視線用 BlendShape。指定したキーは、ボーン指定でない限り目の動きの上限で動かす。
+            // 名前から見つけたキーは、キー駆動かつパーフェクトシンクが eyeLook* を動かしていないときだけ
+            bool custom = _gazeBlendShapes != null && _gazeBlendShapes.HasCustom;
+            bool skipAuto = IsPerfectSyncActive && _perfectSync != null && _perfectSync.DrivesEyeLook;
+            bool driveAuto = driveKeys && !skipAuto;
+            bool driveCustom = custom && eyeMode != EyeLookDriveMode.Bones;
+            if (hasShapes && (driveAuto || driveCustom))
             {
-                _gazeBlendShapes.Apply(_currentGaze.x, _currentGaze.y);
+                _gazeBlendShapes.Apply(_currentGaze.x, _currentGaze.y, driveAuto);
             }
             else
             {

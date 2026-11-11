@@ -71,13 +71,23 @@ namespace VRCast.Tracking
         public bool HoldInput { get; set; }
 
         /// <summary>
+        /// 今の入力元で全身トラッキング（MediaPipe）のスイッチが ON なら true。
+        /// このあいだは、顔が無いときの停止・待機モーション・頭の位置による体の動き・足の固定を使わない。
+        /// トラッキング自体が OFF でも true（体タブの待機モーションも触れなくするため）。
+        /// </summary>
+        public static bool BlocksOtherMotion(AppSettings settings)
+        {
+            return settings != null && settings.trackingLegs
+                && TrackingSourceInfo.HasArms(settings.trackingSource)
+                && !TrackingSourceInfo.HasFullBody(settings.trackingSource);
+        }
+
+        /// <summary>
         /// この入力元で脚トラッキングがアバターを動かすなら true（足の固定はここが true のあいだ止める）。
         /// </summary>
         public static bool Drives(AppSettings settings)
         {
-            return settings != null && settings.trackingEnabled && settings.trackingLegs
-                && TrackingSourceInfo.HasArms(settings.trackingSource)
-                && !TrackingSourceInfo.HasFullBody(settings.trackingSource);
+            return settings != null && settings.trackingEnabled && BlocksOtherMotion(settings);
         }
 
         /// <summary>

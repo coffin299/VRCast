@@ -145,6 +145,27 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void GazeShapes_RoundTripPerAvatar()
+        {
+            const string avatar = "C:/avatars/a.vrcaster";
+            var saved = new AppSettings();
+            saved.SetAvatarCamera(avatar, new CameraPose());
+            var gaze = new GazeShapeOverride { enabled = true };
+            gaze.up.Set("Body", "eye_up");
+            gaze.left.Set("Body", "eye_left");
+            saved.SetGazeShapes(avatar, gaze);
+            _store.Save(saved);
+
+            AppSettings loaded = _store.Load();
+            GazeShapeOverride restored = loaded.GetGazeShapes(avatar);
+            Assert.That(restored.enabled, Is.True);
+            Assert.That(restored.up.blendShape, Is.EqualTo("eye_up"));
+            Assert.That(restored.left.blendShape, Is.EqualTo("eye_left"));
+            Assert.That(restored.down.IsSet, Is.False);
+            Assert.That(loaded.GetGazeShapes("C:/avatars/other.vrcaster").enabled, Is.False);
+        }
+
+        [Test]
         public void SetBlinkShapes_UnknownAvatar_IsIgnored()
         {
             // 視点を記録していないアバターには記録しない（記録を勝手に増やさない）

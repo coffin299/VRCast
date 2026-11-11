@@ -47,11 +47,11 @@ namespace VRCast.UI
                 Loc.T("Eye tracking", "目のトラッキング", "눈 트래킹", "眼睛追踪", "眼睛追蹤"),
                 eyeLabels, (int)settings.trackingEyeLookDrive);
             GuiControls.Hint(Loc.T(
-                "Default is Auto (bones if present, otherwise keys). If thresholds do not affect the eyes, choose Bones or Keys.",
-                "既定は自動（目ボーンがあればボーン、無ければキー）です。しきい値が目に効かないときは、ボーンかキーを選んでください。",
-                "기본값은 자동(눈 본이 있으면 본, 없으면 키)입니다. 임계값이 눈에 먹지 않으면 본 또는 키를 선택하세요.",
-                "默认是自动（有眼球骨骼则用骨骼，否则用键）。若阈值对眼睛无效，请选择骨骼或键。",
-                "預設是自動（有眼球骨骼則用骨骼，否則用鍵）。若閾值對眼睛無效，請選擇骨骼或鍵。"));
+                "Default is Auto (bones if present, otherwise keys). If the limit does not affect the eyes, choose the blend shapes below, or switch to Bones or Keys.",
+                "既定は自動（目ボーンがあればボーン、無ければキー）です。上限が目に効かないときは、下で BlendShape を指定するか、ボーンかキーを選んでください。",
+                "기본값은 자동(눈 본이 있으면 본, 없으면 키)입니다. 상한이 눈에 먹지 않으면 아래에서 BlendShape를 지정하거나 본 또는 키를 선택하세요.",
+                "默认是自动（有眼球骨骼则用骨骼，否则用键）。若上限对眼睛无效，请在下方指定 BlendShape，或改选骨骼或键。",
+                "預設是自動（有眼球骨骼則用骨骼，否則用鍵）。若上限對眼睛無效，請在下方指定 BlendShape，或改選骨骼或鍵。"));
 
             // 隣の口・頬のスライダーと同じ操作にする（数値欄だとドラッグが欄の値に戻ることがある）
             settings.trackingPerfectSyncEyeLookLimit = GuiControls.Slider(

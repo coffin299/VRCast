@@ -312,8 +312,10 @@ namespace VRCast.UI
                 }
             }
 
-            _settings.idleMotionEnabled = GUILayout.Toggle(
-                _settings.idleMotionEnabled, Loc.T("Breathing and sway", "呼吸・体の揺れ", "호흡 · 몸 흔들림",
+            // 全身トラッキング中は表示を OFF にして触れない。保存値は残す
+            _settings.idleMotionEnabled = GuiControls.ToggleUnlessLocked(
+                _settings.idleMotionEnabled, LegTrackingDriver.BlocksOtherMotion(_settings),
+                Loc.T("Breathing and sway", "呼吸・体の揺れ", "호흡 · 몸 흔들림",
                     "呼吸和身体摇摆", "呼吸與身體搖擺"));
             _settings.physicsEnabled = GUILayout.Toggle(
                 _settings.physicsEnabled, Loc.T("PhysBone (approx.)", "揺れもの（PhysBone 近似）", "흔들림 (PhysBone 근사)",

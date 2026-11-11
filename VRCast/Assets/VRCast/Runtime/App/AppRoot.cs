@@ -222,7 +222,7 @@ namespace VRCast.App
             // 首・頭の基準回転を記録するため待機ポーズ適用後に初期化
             var face = avatar.Instance.AddComponent<FaceTrackingDriver>();
             face.Initialize(avatar.Animator, _tracker, _tracker, blink, lipSync, expressions, _settings,
-                avatar.PerfectSync.bindings);
+                avatar.PerfectSync.bindings, _settings.GetGazeShapes(avatar.SourcePath));
 
             // 全身モードで固定する足の位置を記録するため待機ポーズ適用後に初期化（腰を動かした後に脚を合わせる）
             avatar.Instance.AddComponent<FootPlanter>().Initialize(avatar.Animator, _settings);
@@ -238,10 +238,10 @@ namespace VRCast.App
             fullBody.Initialize(avatar.Animator, _tracker, _settings);
 
             // 待機モーション（呼吸・体の揺れ・頭のゆらぎ）。顔のトラッキング中は頭のゆらぎを止めて本人の動きに任せ、
-            // 全身の追従中は全体を止める
+            // VMC の全身追従中と、MediaPipe の全身トラッキングが ON のあいだは全体を止める
             avatar.Instance.AddComponent<IdleMotionController>().Initialize(
                 avatar.Animator, _settings, () => face != null && face.IsTracking,
-                () => fullBody != null && fullBody.IsTracking);
+                () => (fullBody != null && fullBody.IsTracking) || LegTrackingDriver.BlocksOtherMotion(_settings));
 
             // 小物のアニメーション（小物の Animator と FX の初期状態の動き）。Constraint・揺れものは動いた後の姿勢に重ねる
             avatar.Instance.AddComponent<PropAnimationPlayer>().Initialize(root, _settings);

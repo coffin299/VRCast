@@ -386,7 +386,9 @@ namespace VRCast.UI
             }
 
             bool suspend = !broadcasting || _settings.trackingAway;
-            bool hold = _settings.ShouldSuspendTracking(broadcasting, HasFreshFace()) && !suspend;
+            // 全身トラッキング中は顔が無くても止めない（離席と配信外の停止はそのまま）
+            bool hold = _settings.ShouldSuspendTracking(broadcasting, HasFreshFace()) && !suspend
+                && !LegTrackingDriver.BlocksOtherMotion(_settings);
             bool writeSuspend = suspend || _suspendHeld;
             bool writeHold = hold || _holdInputHeld;
             if (!writeSuspend && !writeHold)

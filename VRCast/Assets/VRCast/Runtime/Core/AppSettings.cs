@@ -789,6 +789,36 @@ namespace VRCast.Core
         }
 
         /// <summary>
+        /// アバターの目の動きに使う BlendShape の指定を返す（未記録なら自動。複製なので書き換えても記録は変わらない）。
+        /// </summary>
+        public GazeShapeOverride GetGazeShapes(string avatarPath)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0 || avatarCameras[index].gazeShapes == null)
+            {
+                return new GazeShapeOverride();
+            }
+
+            avatarCameras[index].gazeShapes.Sanitize();
+            return avatarCameras[index].gazeShapes.Clone();
+        }
+
+        /// <summary>
+        /// アバターの目の動きに使う BlendShape の指定を記録する。カメラの視点を記録済みのアバターだけが対象（読込時に記録される）。
+        /// </summary>
+        public void SetGazeShapes(string avatarPath, GazeShapeOverride gazeShapes)
+        {
+            int index = FindAvatarCamera(avatarPath);
+            if (index < 0 || gazeShapes == null)
+            {
+                return;
+            }
+
+            gazeShapes.Sanitize();
+            avatarCameras[index].gazeShapes = gazeShapes.Clone();
+        }
+
+        /// <summary>
         /// アバターのパーティクルの ON/OFF を返す（未記録なら空。一覧は複製）。
         /// </summary>
         public List<ParticleToggle> GetParticleToggles(string avatarPath)
@@ -1274,6 +1304,8 @@ namespace VRCast.Core
                 // まばたきの BlendShape の指定は欠けを未指定で補う（旧版の設定には無いので自動のままになる）
                 entry.blinkShapes ??= new BlinkShapeOverride();
                 entry.blinkShapes.Sanitize();
+                entry.gazeShapes ??= new GazeShapeOverride();
+                entry.gazeShapes.Sanitize();
                 entry.blinkAnimation ??= string.Empty;
             }
 

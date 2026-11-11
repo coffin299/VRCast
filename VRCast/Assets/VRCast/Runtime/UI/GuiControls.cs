@@ -467,6 +467,22 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// ロック中は OFF と表示して操作できない。戻り値は保存されている値のまま。
+        /// </summary>
+        public static bool ToggleUnlessLocked(bool value, bool locked, string label)
+        {
+            bool enabled = GUI.enabled;
+            if (locked)
+            {
+                GUI.enabled = false;
+            }
+
+            bool shown = GUILayout.Toggle(locked ? false : value, label);
+            GUI.enabled = enabled;
+            return locked ? value : shown;
+        }
+
+        /// <summary>
         /// 列挙値を巡回選択する（labels は列挙値の並び順）。
         /// </summary>
         public static int EnumSelector(string label, string[] labels, int current)
