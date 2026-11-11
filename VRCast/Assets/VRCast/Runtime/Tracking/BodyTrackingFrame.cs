@@ -24,12 +24,16 @@ namespace VRCast.Tracking
     }
 
     /// <summary>
-    /// Provider 共通の腕・手のトラッキング 1 フレーム分の値。左右は本人から見た左右。
+    /// Provider 共通の腕・手・脚のトラッキング 1 フレーム分の値。左右は本人から見た左右。
     /// </summary>
     public struct BodyTrackingFrame
     {
         public ArmTrackingData Left;
         public ArmTrackingData Right;
+
+        // 脚（腰・膝・足首・足先。古いトラッカーは HasLeg が false）
+        public LegTrackingData LeftLeg;
+        public LegTrackingData RightLeg;
 
         // 体の推定での顔の位置（両目の中点、映っていなければ鼻。腕と同じ座標系）。古いトラッカー・顔が映っていなければ false
         public bool HasFace;
