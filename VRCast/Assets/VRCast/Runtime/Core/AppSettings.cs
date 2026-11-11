@@ -801,17 +801,20 @@ namespace VRCast.Core
         }
 
         /// <summary>
-        /// このアバターを、ファイルに入っていた配置のまま読むかを記録する。記録の無いパスは無視する。
+        /// このアバターを、ファイルに入っていた配置のまま読むかを記録する。記録が無ければ作る。
         /// </summary>
         public void SetLegacyOrigin(string avatarPath, bool legacy)
         {
-            int index = FindAvatarCamera(avatarPath);
-            if (index < 0)
+            if (string.IsNullOrEmpty(avatarPath))
             {
                 return;
             }
 
-            avatarCameras[index].legacyOrigin = legacy;
+            AvatarEntry entry = TakeAvatarEntry(avatarPath)
+                ?? new AvatarEntry { avatarPath = avatarPath, addedAt = DateTimeOffset.UtcNow.ToUnixTimeSeconds() };
+            entry.legacyOrigin = legacy;
+            avatarCameras.Add(entry);
+            TrimAvatarCameras();
         }
 
         /// <summary>

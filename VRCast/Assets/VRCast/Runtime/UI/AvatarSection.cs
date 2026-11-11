@@ -228,27 +228,25 @@ namespace VRCast.UI
 
         private void DrawOriginButton()
         {
-            // 足元を動かしたときだけ、ファイルの配置へ戻す。戻したあとは、もう一度合わせ直せる
+            // 読み込み欄に常に出す（クイック設定も同じ画面）。アバターがいるときだけ押せる
             LoadedAvatar current = _session.Current;
-            if (current == null || _session.IsLoading)
-            {
-                return;
-            }
-
-            bool legacy = _settings.UsesLegacyOrigin(current.SourcePath);
-            if (!current.OriginAligned && !legacy)
-            {
-                return;
-            }
-
+            bool legacy = current != null && _settings.UsesLegacyOrigin(current.SourcePath);
             string label = legacy
                 ? Loc.T("Place the feet on the origin", "足元を原点に合わせる", "발을 원점에 맞추기", "把脚放到原点", "把腳放到原點")
                 : Loc.T("Restore origin to the avatar", "原点をアバターに戻す", "원점을 아바타로 되돌리기", "把原点还原到虚拟形象", "把原點還原到虛擬形象");
+
+            GUI.enabled = current != null && !_session.IsLoading;
             if (GUILayout.Button(label))
             {
                 _settings.SetLegacyOrigin(current.SourcePath, !legacy);
                 AppBootstrap.Save();
                 _session.Reload();
+            }
+
+            GUI.enabled = true;
+            if (current == null)
+            {
+                return;
             }
 
             GuiControls.Hint(legacy
@@ -259,11 +257,11 @@ namespace VRCast.UI
                     "这个虚拟形象保持文件里的位置。用按钮可以再把脚放到原点。",
                     "這個虛擬形象保持檔案裡的位置。用按鈕可以再把腳放到原點。")
                 : Loc.T(
-                    "Loading stood the avatar on the origin, facing forward. This puts it back where the file placed it, and keeps it that way next time.",
-                    "読み込み時に、足元を原点へ置き、立って正面を向くよう直しています。押すとファイルに入っていた配置（以前の方式）に戻り、このアバターは次回もそのままです。",
-                    "불러올 때 발을 원점에 두고 서서 정면을 향하도록 맞췄습니다. 누르면 파일에 들어 있던 배치(이전 방식)로 돌아가고, 이 아바타는 다음에도 그대로입니다.",
-                    "加载时已把脚放到原点，并让它站好朝前。按下后会回到文件里的位置（以前的方式），这个虚拟形象下次也保持这样。",
-                    "載入時已把腳放到原點，並讓它站好朝前。按下後會回到檔案裡的位置（以前的方式），這個虛擬形象下次也保持這樣。"));
+                    "Loads this avatar where the file placed it, and keeps it that way next time.",
+                    "押すと、ファイルに入っていた配置のまま読み込みます。このアバターは次回もそのままです。",
+                    "누르면 파일에 들어 있던 배치 그대로 불러옵니다. 이 아바타는 다음에도 그대로입니다.",
+                    "按下后按文件里的位置加载。这个虚拟形象下次也保持这样。",
+                    "按下後按檔案裡的位置載入。這個虛擬形象下次也保持這樣。"));
         }
 
         private void DrawRecent()
