@@ -342,20 +342,16 @@ namespace VRCast.Tracking
                 return;
             }
 
-            // 両腰の線を水平に倒した向きを、アバターの右方向へ合わせる（正面を向いていれば回転なし）
+            // 両腰の線の水平成分。上半身（TorsoPose）と同じく、正面で線が +x なら回転なし。
+            // 上向きと右向きの外積は Unity では -z になり、LookRotation すると正面で 180° 逆を向く
             Vector3 flat = Vector3.ProjectOnPlane(_hipDirection, Vector3.up);
             if (flat.sqrMagnitude < 1e-6f)
             {
                 return;
             }
 
-            Vector3 forward = Vector3.Cross(Vector3.up, flat.normalized);
-            if (forward.sqrMagnitude < 1e-6f)
-            {
-                return;
-            }
-
-            Quaternion yaw = Quaternion.Slerp(Quaternion.identity, Quaternion.LookRotation(forward, Vector3.up), _hipWeight);
+            float yawDegrees = Mathf.Atan2(-flat.z, flat.x) * Mathf.Rad2Deg;
+            Quaternion yaw = Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(0f, yawDegrees, 0f), _hipWeight);
             Quaternion root = transform.rotation;
             _hips.rotation = root * yaw * Quaternion.Inverse(root) * _hips.rotation;
         }
