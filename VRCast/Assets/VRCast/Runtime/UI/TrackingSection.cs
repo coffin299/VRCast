@@ -309,6 +309,12 @@ namespace VRCast.UI
                 "PC 부하는 이 PC의 CPU 부하 기준입니다 (MediaPipe는 절약, OpenSeeFace는 저부하 모드에서 낮아집니다)",
                 "电脑负载为本机 CPU 负载的参考（MediaPipe 在节能模式、OpenSeeFace 在低负载模式下会降低）",
                 "電腦負載為本機 CPU 負載的參考（MediaPipe 在節能模式、OpenSeeFace 在低負載模式下會降低）"));
+
+            // 全身トラッキングは入力元のすぐ下（MediaPipe の体を使うときだけ。一覧から離れないように）
+            if (TrackingSourceInfo.HasArms(_settings.trackingSource))
+            {
+                DrawMediaPipeBody();
+            }
         }
 
         private bool SourceNotesFit(string[] labels)
@@ -431,7 +437,6 @@ namespace VRCast.UI
             if (TrackingSourceInfo.HasArms(_settings.trackingSource))
             {
                 DrawHands();
-                DrawMediaPipeBody();
             }
 
             // 全身は受信できる入力元（VMC）のみ

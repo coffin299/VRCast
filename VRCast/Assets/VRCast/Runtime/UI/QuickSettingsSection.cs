@@ -127,7 +127,6 @@ namespace VRCast.UI
             {
                 _settings.trackingHands = GUILayout.Toggle(
                     _settings.trackingHands, Loc.T("Arms / hands", "腕・手", "팔·손", "手臂 / 手", "手臂 / 手"));
-                DrawLegTracking();
             }
 
             bool mediaPipe = TrackingSourceInfo.BundledTrackerOf(_settings.trackingSource) == TrackingSource.MediaPipe;
@@ -244,20 +243,6 @@ namespace VRCast.UI
                     "摄像头设置是 Windows 摄像头本身的设置，也会影响其他应用。",
                     "攝影機設定是 Windows 攝影機本身的設定，也會影響其他應用程式。"));
             }
-        }
-
-        private void DrawLegTracking()
-        {
-            _settings.trackingLegs = GUILayout.Toggle(
-                _settings.trackingLegs,
-                Loc.T("Full body tracking (MediaPipe)", "全身トラッキング（MediaPipe）", "전신 트래킹 (MediaPipe)",
-                    "全身追踪（MediaPipe）", "全身追蹤（MediaPipe）"));
-            GuiControls.Hint(Loc.T(
-                "Bends the hips and legs when your whole body is in frame. Does not walk around the room. Off by default.",
-                "全身がカメラに映っているとき、腰の向きと脚を曲げます。部屋の中を歩く動きにはなりません。既定は OFF。",
-                "전신이 카메라에 보일 때 허리 방향과 다리를 굽힙니다. 방 안을 걸어 다니지는 않습니다. 기본은 꺼짐.",
-                "全身进入画面时弯曲腰和腿。不会在房间里走动。默认关闭。",
-                "全身進入畫面時彎曲腰和腿。不會在房間裡走動。預設關閉。"));
         }
 
         private void DrawFace()
