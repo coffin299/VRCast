@@ -12,7 +12,7 @@ Newest first. Each version is written in Japanese, then English.
 - 全身トラッキング中に、部屋を歩き回るモードを追加（トラッキングタブ。既定は OFF でその場に固定。ON でカメラに映った位置に合わせて動く）
 - 全身トラッキングで、かかとと足先が映っているとき足の向きを合わせるようにした
 - 原点の位置や向きが大きくずれているアバターを、読み込み時に足元を中心に、立って正面を向くよう直すようにした
-- 原点をアバターに戻すボタンを追加（アバタータブとクイック設定の読み込み欄。押したアバターはファイルの配置のまま読み込む）
+- 原点を補正するボタンと、原点をアバターに戻すボタンを追加（アバタータブとクイック設定の読み込み欄。補正は大きくずれていれば足元を原点へ合わせ、戻すとそのアバターはファイルの配置のまま読み込む）
 - 目の動きの上限が効かないアバター向けに、使う BlendShape を上・下・左・右で指定できるようにした（このアバターだけ。トラッキングタブ）
 
 [English]
@@ -21,7 +21,7 @@ Newest first. Each version is written in Japanese, then English.
 - Added a walk-around mode while full-body tracking is on (Tracking tab, off by default so you stay in place; on follows where you stand in the camera view)
 - Feet follow the heel and toes during full-body tracking when both are visible
 - Avatars whose origin position or angle is far off are stood up to face forward, with their feet on the origin, when loaded
-- Added a button to put the origin back on the avatar (the load section of the Avatar tab and Quick settings; that avatar then loads in the file's placement)
+- Added Correct the origin and Restore origin to the avatar (the load section of the Avatar tab and Quick settings; correct stands a far-off avatar on the origin, restore keeps that avatar in the file's placement)
 - Added per-avatar blend shape picks for look up, down, left, and right when the eye movement limit does not apply (Tracking tab)
 
 ■ 4.3.2 (2026-11-02)

@@ -11,7 +11,7 @@ namespace VRCast.UI
 {
     /// <summary>
     /// Avatar タブ（.vrcaster / .vrm のドロップ・ファイル選択・パス入力による読み込み、再読み込み・解除、
-    /// 原点をアバターへ戻す、最近使ったアバターへの切り替え（画像付きのタイル）と、表示中アバターの情報）。
+    /// 原点の補正とアバターへの戻し、最近使ったアバターへの切り替え（画像付きのタイル）と、表示中アバターの情報）。
     /// 読み込む前のファイル確認の失敗は表示言語に合わせて表示する。
     /// </summary>
     public class AvatarSection
@@ -231,18 +231,27 @@ namespace VRCast.UI
             // 読み込み欄に常に出す（クイック設定も同じ画面）。アバターがいるときだけ押せる
             LoadedAvatar current = _session.Current;
             bool legacy = current != null && _settings.UsesLegacyOrigin(current.SourcePath);
-            string label = legacy
-                ? Loc.T("Place the feet on the origin", "足元を原点に合わせる", "발을 원점에 맞추기", "把脚放到原点", "把腳放到原點")
-                : Loc.T("Restore origin to the avatar", "原点をアバターに戻す", "원점을 아바타로 되돌리기", "把原点还原到虚拟形象", "把原點還原到虛擬形象");
-
             GUI.enabled = current != null && !_session.IsLoading;
-            if (GUILayout.Button(label))
+            GUILayout.BeginHorizontal();
+            if (GUILayout.Button(Loc.T(
+                "Correct the origin", "原点を補正する", "원점 보정", "校正原点", "校正原點"), GuiControls.Shrinkable))
             {
-                _settings.SetLegacyOrigin(current.SourcePath, !legacy);
+                // 大きくずれていれば足元を原点へ。このアバターは次回の読み込みでも合わせる
+                _settings.SetLegacyOrigin(current.SourcePath, false);
                 AppBootstrap.Save();
                 _session.Reload();
             }
 
+            if (GUILayout.Button(Loc.T(
+                "Restore origin to the avatar", "原点をアバターに戻す", "원점을 아바타로 되돌리기", "把原点还原到虚拟形象", "把原點還原到虛擬形象"), GuiControls.Shrinkable))
+            {
+                // ファイルに入っていた配置のまま読み、次回も動かさない
+                _settings.SetLegacyOrigin(current.SourcePath, true);
+                AppBootstrap.Save();
+                _session.Reload();
+            }
+
+            GUILayout.EndHorizontal();
             GUI.enabled = true;
             if (current == null)
             {
@@ -251,17 +260,17 @@ namespace VRCast.UI
 
             GuiControls.Hint(legacy
                 ? Loc.T(
-                    "This avatar keeps the placement stored in the file. The button places the feet on the origin again.",
-                    "このアバターはファイルに入っていた配置のままです。ボタンで、足元を原点へ合わせ直せます。",
-                    "이 아바타는 파일에 들어 있던 배치 그대로입니다. 버튼으로 발을 원점에 다시 맞출 수 있습니다.",
-                    "这个虚拟形象保持文件里的位置。用按钮可以再把脚放到原点。",
-                    "這個虛擬形象保持檔案裡的位置。用按鈕可以再把腳放到原點。")
+                    "This avatar keeps the placement stored in the file. Correct the origin stands it on the origin, facing forward, when the offset is large.",
+                    "このアバターはファイルに入っていた配置のままです。原点を補正すると、大きくずれていれば足元を原点へ置き、立って正面を向きます。",
+                    "이 아바타는 파일에 들어 있던 배치 그대로입니다. 원점 보정은 어긋남이 크면 발을 원점에 두고 서서 정면을 향하게 합니다.",
+                    "这个虚拟形象保持文件里的位置。校正原点会在偏移很大时把脚放到原点，并让它站好朝前。",
+                    "這個虛擬形象保持檔案裡的位置。校正原點會在偏移很大時把腳放到原點，並讓它站好朝前。")
                 : Loc.T(
-                    "Loads this avatar where the file placed it, and keeps it that way next time.",
-                    "押すと、ファイルに入っていた配置のまま読み込みます。このアバターは次回もそのままです。",
-                    "누르면 파일에 들어 있던 배치 그대로 불러옵니다. 이 아바타는 다음에도 그대로입니다.",
-                    "按下后按文件里的位置加载。这个虚拟形象下次也保持这样。",
-                    "按下後按檔案裡的位置載入。這個虛擬形象下次也保持這樣。"));
+                    "A large offset is corrected on load. Restore origin to the avatar keeps the file's placement next time.",
+                    "大きくずれていれば、読み込み時に足元を原点へ合わせています。原点をアバターに戻すと、ファイルの配置のままになり、次回もそのままです。",
+                    "어긋남이 크면 불러올 때 발을 원점에 맞춥니다. 원점을 아바타로 되돌리기는 파일 배치 그대로 두고, 다음에도 그대로입니다.",
+                    "偏移很大时，加载会把脚放到原点。把原点还原到虚拟形象会保持文件里的位置，下次也一样。",
+                    "偏移很大時，載入會把腳放到原點。把原點還原到虛擬形象會保持檔案裡的位置，下次也一樣。"));
         }
 
         private void DrawRecent()
