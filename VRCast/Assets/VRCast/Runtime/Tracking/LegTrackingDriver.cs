@@ -49,6 +49,7 @@ namespace VRCast.Tracking
         // 正面（キャリブレーション）の腰の向きと、使い始めの腰の回転。毎フレームここから足す（積み増しにしない）
         private bool _hipCalibrated;
         private float _hipNeutralYaw;
+        private float _hipYawDegrees;
         private Quaternion _hipRest = Quaternion.identity;
         private bool _hipRestTaken;
         private bool _hipMirror;
@@ -61,6 +62,16 @@ namespace VRCast.Tracking
         // 水平画角 60° のとき、肩幅が画像の何割かからカメラまでの距離を概算する係数（2 * tan(30°)）
         private const float DepthFactor = 1.1547f;
         private const float WalkSmoothSeconds = 0.08f;
+
+        // 体を横に向けると画像上の肩幅が縮む。それを「カメラから遠ざかった」とみなさないための下限
+        private const float MinForeshorten = 0.4f;
+
+        // 1 秒で進める距離の上限（推定が跳んでも足先が部屋の向こうへ飛ばないように）
+        private const float MaxWalkSpeed = 2f;
+
+        // 足首の可動域（度）。ひねりを許すと足先が横へ飛び、曲げ過ぎると床や空へ向く
+        private const float MaxAnkleBend = 85f;
+        private const float MaxAnkleTwist = 25f;
 
         private bool _walkCalibrated;
         private bool _walkMoved;
@@ -381,22 +392,70 @@ namespace VRCast.Tracking
             Quaternion footRest = leg.Foot.localRotation;
             FootPlanter.Solve(leg.Upper, leg.Lower, leg.Foot, target, bend);
 
-            // 足先が映っていれば、足のボーンの前方向を足首→足先へ向ける
-            Vector3 footDirection = leg.FootFromAnkle;
-            if (leg.HasFoot && footDirection.sqrMagnitude > 1e-8f)
-            {
-                Vector3 desired = root * footDirection.normalized;
-                Vector3 current = leg.Foot.TransformDirection(leg.ToeAxis);
-                if (current.sqrMagnitude > 1e-8f && desired.sqrMagnitude > 1e-8f)
-                {
-                    leg.Foot.rotation = Quaternion.FromToRotation(current, desired) * leg.Foot.rotation;
-                }
-            }
+            // 足先が映っていれば、足の裏を下に向けたまま足首から足先へ向ける。
+            // ひねりを自由にすると、歩いて脚の向きが変わったときに足先が横や上へ飛ぶ
+            AimFoot(leg, root);
 
             // 映り始め・消え際は待機ポーズとの間を混ぜる
             leg.Upper.localRotation = Quaternion.Slerp(upperRest, leg.Upper.localRotation, leg.Weight);
             leg.Lower.localRotation = Quaternion.Slerp(lowerRest, leg.Lower.localRotation, leg.Weight);
             leg.Foot.localRotation = Quaternion.Slerp(footRest, leg.Foot.localRotation, leg.Weight);
+        }
+
+        private void AimFoot(Leg leg, Quaternion root)
+        {
+            // 短すぎる足先は向きが暴れるので、脚の IK が付けた向きのままにする
+            Vector3 footDirection = leg.FootFromAnkle;
+            if (!leg.HasFoot || footDirection.sqrMagnitude < 0.04f * 0.04f || leg.ToeAxis.sqrMagnitude < 1e-8f)
+            {
+                return;
+            }
+
+            // ほぼ水平に倒す。上下は少しだけ残し、足先を床の下や頭の方へ向けない
+            Vector3 desired = root * footDirection;
+            Vector3 flat = Vector3.ProjectOnPlane(desired, root * Vector3.up);
+            if (flat.sqrMagnitude < 1e-8f)
+            {
+                return;
+            }
+
+            Vector3 aim = flat.normalized * 0.85f + desired.normalized * 0.15f;
+            if (aim.sqrMagnitude < 1e-8f)
+            {
+                return;
+            }
+
+            aim.Normalize();
+            Vector3 current = leg.Foot.TransformDirection(leg.ToeAxis);
+            if (current.sqrMagnitude < 1e-8f)
+            {
+                return;
+            }
+
+            // すねまわりのひねりと、足首の曲げを可動域に収める（足先が横へ飛ばないように）
+            Vector3 shin = leg.Foot.position - leg.Lower.position;
+            leg.Foot.rotation = LimitAnkle(Quaternion.FromToRotation(current, aim), shin) * leg.Foot.rotation;
+        }
+
+        private static Quaternion LimitAnkle(Quaternion delta, Vector3 shin)
+        {
+            // すねの向きが無ければ、角度だけ制限する
+            if (shin.sqrMagnitude < 1e-8f)
+            {
+                return Quaternion.RotateTowards(Quaternion.identity, delta, MaxAnkleBend);
+            }
+
+            // すねまわりのひねりと、それ以外の曲げに分ける
+            shin.Normalize();
+            Vector3 vector = new Vector3(delta.x, delta.y, delta.z);
+            Vector3 projected = Vector3.Project(vector, shin);
+            var twist = new Quaternion(projected.x, projected.y, projected.z, delta.w);
+            float length = Mathf.Sqrt(twist.x * twist.x + twist.y * twist.y + twist.z * twist.z + twist.w * twist.w);
+            twist = length > 1e-6f ? Quaternion.Normalize(twist) : Quaternion.identity;
+            Quaternion bend = delta * Quaternion.Inverse(twist);
+            twist = Quaternion.RotateTowards(Quaternion.identity, twist, MaxAnkleTwist);
+            bend = Quaternion.RotateTowards(Quaternion.identity, bend, MaxAnkleBend);
+            return bend * twist;
         }
 
         private void ApplyHipYaw()
@@ -416,6 +475,7 @@ namespace VRCast.Tracking
             _hips.localRotation = _hipRest;
             if (_hipWeight <= 0f || !_hasHipDirection)
             {
+                _hipYawDegrees = 0f;
                 return;
             }
 
@@ -423,6 +483,7 @@ namespace VRCast.Tracking
             Vector3 flat = Vector3.ProjectOnPlane(_hipDirection, Vector3.up);
             if (flat.sqrMagnitude < 1e-6f)
             {
+                _hipYawDegrees = 0f;
                 return;
             }
 
@@ -434,6 +495,7 @@ namespace VRCast.Tracking
             }
 
             float yawDegrees = Mathf.DeltaAngle(_hipNeutralYaw, rawYaw);
+            _hipYawDegrees = yawDegrees * _hipWeight;
             Quaternion yaw = Quaternion.Slerp(Quaternion.identity, Quaternion.Euler(0f, yawDegrees, 0f), _hipWeight);
             Quaternion root = transform.rotation;
             _hips.rotation = root * yaw * Quaternion.Inverse(root) * _hips.rotation;
@@ -476,7 +538,9 @@ namespace VRCast.Tracking
                 _walkCalibrated = true;
             }
 
-            float width = Mathf.Max(frame.RootImageWidth, MinImageWidth);
+            // 体を横に向けると肩幅が縮んで見える。その分は奥へ下がったことにしない
+            float foreshorten = Mathf.Max(Mathf.Abs(Mathf.Cos(_hipYawDegrees * Mathf.Deg2Rad)), MinForeshorten);
+            float width = Mathf.Max(frame.RootImageWidth / foreshorten, MinImageWidth);
             float world = Mathf.Max(frame.RootWorldWidth, MinShoulderWidth);
             float metersPerX = world / width;
             float distance = world / (width * DepthFactor);
@@ -485,10 +549,18 @@ namespace VRCast.Tracking
             // 映像の右がカメラの +x、カメラから遠ざかる向きが +z。上下は床に置いたまま
             Vector3 camera = new Vector3(
                 (frame.RootImageX - _walkNeutralX) * metersPerX, 0f, distance - neutralDistance);
-            Vector3 target = Vector3.ClampMagnitude(
-                TrackingMath.ToAvatar(camera, _settings.BodyMirror, _settings.TrackingTiltCorrection), MaxWalkDistance);
+            Vector3 target = TrackingMath.ToAvatar(camera, _settings.BodyMirror, _settings.TrackingTiltCorrection);
+            target.y = 0f;
+            target = Vector3.ClampMagnitude(target, MaxWalkDistance);
             float blend = 1f - Mathf.Exp(-Time.deltaTime / WalkSmoothSeconds);
-            _walkOffset = Vector3.Lerp(_walkOffset, target, blend);
+            Vector3 step = Vector3.Lerp(_walkOffset, target, blend) - _walkOffset;
+            float maxStep = MaxWalkSpeed * Time.deltaTime;
+            if (step.magnitude > maxStep)
+            {
+                step = step.normalized * maxStep;
+            }
+
+            _walkOffset += step;
             _hips.localPosition = _hipRestPosition;
             _hips.position += transform.rotation * _walkOffset;
             _walkMoved = true;
