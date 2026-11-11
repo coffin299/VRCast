@@ -8,7 +8,8 @@ namespace VRCast.Tracking
     /// world 座標の原点は腰の中心なので、脚の曲げは点同士の方向だけを使う。
     /// 「部屋を歩き回る」が ON のときだけ、映像上の腰の位置で腰を水平に動かす。
     /// 両腰の線で腰の左右の向きを足し、腰 → 膝 → 足首の 2 関節 IK で太もも・すねを曲げる。
-    /// 足先が映っていれば足首から足先の向きで足を回す。映っていない脚は待機ポーズのまま。
+    /// 足の向きは待機ポーズのままにする（足先の点は向きが安定しないため回さない）。
+    /// 映っていない脚は待機ポーズのまま。
     /// 上半身の傾き（FaceTrackingDriver）と足の固定（FootPlanter）の後、腕（HandTrackingDriver）の前に実行する。
     /// VMC の全身（FullBodyTrackingDriver）が動く入力元では適用しない。
     /// </summary>
@@ -27,11 +28,10 @@ namespace VRCast.Tracking
         private const float LengthSmoothSeconds = 1f;
         private const float MinTrackedLegLength = 0.4f;
 
-        // 平滑化する点（腰からの膝・腰からの足首・足首からの足先）
+        // 平滑化する点（腰からの膝・腰からの足首）
         private const int KneeSample = 0;
         private const int AnkleSample = 1;
-        private const int FootSample = 2;
-        private const int SampleCount = 3;
+        private const int SampleCount = 2;
 
         private IBodyTrackingProvider _provider;
         private AppSettings _settings;
@@ -54,24 +54,14 @@ namespace VRCast.Tracking
         private bool _hipRestTaken;
         private bool _hipMirror;
 
-        // 歩き回るモードの開始位置と、待機ポーズの腰の位置。毎フレームここから足す
+        // 歩き回るモード。最初に映った場所が開始位置。上下は動かさない
         private const float MaxWalkDistance = 3f;
         private const float MinImageWidth = 0.02f;
         private const float MinShoulderWidth = 0.2f;
-
-        // 水平画角 60° のとき、肩幅が画像の何割かからカメラまでの距離を概算する係数（2 * tan(30°)）
         private const float DepthFactor = 1.1547f;
         private const float WalkSmoothSeconds = 0.08f;
-
-        // 体を横に向けると画像上の肩幅が縮む。それを「カメラから遠ざかった」とみなさないための下限
         private const float MinForeshorten = 0.4f;
-
-        // 1 秒で進める距離の上限（推定が跳んでも足先が部屋の向こうへ飛ばないように）
         private const float MaxWalkSpeed = 2f;
-
-        // 足首の可動域（度）。ひねりを許すと足先が横へ飛び、曲げ過ぎると床や空へ向く
-        private const float MaxAnkleBend = 85f;
-        private const float MaxAnkleTwist = 25f;
 
         private bool _walkCalibrated;
         private bool _walkMoved;
@@ -151,11 +141,8 @@ namespace VRCast.Tracking
             public readonly Vector3[] Sample = new Vector3[SampleCount];
             public float TrackedLength;
             public float Weight;
-            public bool HasFoot;
             public Vector3 KneeFromHip;
             public Vector3 AnkleFromHip;
-            public Vector3 FootFromAnkle;
-            public Vector3 ToeAxis = Vector3.forward;
         }
 
         public void Initialize(Animator animator, IBodyTrackingProvider provider, AppSettings settings)
@@ -183,15 +170,6 @@ namespace VRCast.Tracking
             if (leg.Upper == null || leg.Lower == null || leg.Foot == null)
             {
                 return null;
-            }
-
-            if (leg.Foot.childCount > 0)
-            {
-                Vector3 along = leg.Foot.GetChild(0).position - leg.Foot.position;
-                if (along.sqrMagnitude > 1e-8f)
-                {
-                    leg.ToeAxis = leg.Foot.InverseTransformDirection(along.normalized);
-                }
             }
 
             return leg;
@@ -287,15 +265,12 @@ namespace VRCast.Tracking
                 {
                     leg.Sample[KneeSample] = ToAvatar(data.Knee - data.Hip);
                     leg.Sample[AnkleSample] = ToAvatar(data.Ankle - data.Hip);
-                    leg.Sample[FootSample] = data.HasFoot ? ToAvatar(data.Foot - data.Ankle) : Vector3.zero;
-                    leg.HasFoot = data.HasFoot;
                     leg.Path.Push(leg.Sample, now);
                 }
 
                 leg.Path.Update(now);
                 leg.KneeFromHip = leg.Path.Current[KneeSample];
                 leg.AnkleFromHip = leg.Path.Current[AnkleSample];
-                leg.FootFromAnkle = leg.Path.Current[FootSample];
                 Vector3 knee = leg.KneeFromHip;
                 Vector3 ankle = leg.AnkleFromHip;
                 float length = knee.magnitude + (ankle - knee).magnitude;
@@ -390,72 +365,16 @@ namespace VRCast.Tracking
             Quaternion upperRest = leg.Upper.localRotation;
             Quaternion lowerRest = leg.Lower.localRotation;
             Quaternion footRest = leg.Foot.localRotation;
-            FootPlanter.Solve(leg.Upper, leg.Lower, leg.Foot, target, bend);
 
-            // 足先が映っていれば、足の裏を下に向けたまま足首から足先へ向ける。
-            // ひねりを自由にすると、歩いて脚の向きが変わったときに足先が横や上へ飛ぶ
-            AimFoot(leg, root);
+            // 足先の点は向きが安定しない。膝を曲げる前の足の向き（待機ポーズ）を残す
+            Quaternion planted = leg.Foot.rotation;
+            FootPlanter.Solve(leg.Upper, leg.Lower, leg.Foot, target, bend);
+            leg.Foot.rotation = planted;
 
             // 映り始め・消え際は待機ポーズとの間を混ぜる
             leg.Upper.localRotation = Quaternion.Slerp(upperRest, leg.Upper.localRotation, leg.Weight);
             leg.Lower.localRotation = Quaternion.Slerp(lowerRest, leg.Lower.localRotation, leg.Weight);
             leg.Foot.localRotation = Quaternion.Slerp(footRest, leg.Foot.localRotation, leg.Weight);
-        }
-
-        private void AimFoot(Leg leg, Quaternion root)
-        {
-            // 短すぎる足先は向きが暴れるので、脚の IK が付けた向きのままにする
-            Vector3 footDirection = leg.FootFromAnkle;
-            if (!leg.HasFoot || footDirection.sqrMagnitude < 0.04f * 0.04f || leg.ToeAxis.sqrMagnitude < 1e-8f)
-            {
-                return;
-            }
-
-            // ほぼ水平に倒す。上下は少しだけ残し、足先を床の下や頭の方へ向けない
-            Vector3 desired = root * footDirection;
-            Vector3 flat = Vector3.ProjectOnPlane(desired, root * Vector3.up);
-            if (flat.sqrMagnitude < 1e-8f)
-            {
-                return;
-            }
-
-            Vector3 aim = flat.normalized * 0.85f + desired.normalized * 0.15f;
-            if (aim.sqrMagnitude < 1e-8f)
-            {
-                return;
-            }
-
-            aim.Normalize();
-            Vector3 current = leg.Foot.TransformDirection(leg.ToeAxis);
-            if (current.sqrMagnitude < 1e-8f)
-            {
-                return;
-            }
-
-            // すねまわりのひねりと、足首の曲げを可動域に収める（足先が横へ飛ばないように）
-            Vector3 shin = leg.Foot.position - leg.Lower.position;
-            leg.Foot.rotation = LimitAnkle(Quaternion.FromToRotation(current, aim), shin) * leg.Foot.rotation;
-        }
-
-        private static Quaternion LimitAnkle(Quaternion delta, Vector3 shin)
-        {
-            // すねの向きが無ければ、角度だけ制限する
-            if (shin.sqrMagnitude < 1e-8f)
-            {
-                return Quaternion.RotateTowards(Quaternion.identity, delta, MaxAnkleBend);
-            }
-
-            // すねまわりのひねりと、それ以外の曲げに分ける
-            shin.Normalize();
-            Vector3 vector = new Vector3(delta.x, delta.y, delta.z);
-            Vector3 projected = Vector3.Project(vector, shin);
-            var twist = new Quaternion(projected.x, projected.y, projected.z, delta.w);
-            float length = Mathf.Sqrt(twist.x * twist.x + twist.y * twist.y + twist.z * twist.z + twist.w * twist.w);
-            twist = length > 1e-6f ? Quaternion.Normalize(twist) : Quaternion.identity;
-            Quaternion bend = delta * Quaternion.Inverse(twist);
-            twist = Quaternion.RotateTowards(Quaternion.identity, twist, MaxAnkleTwist);
-            bend = Quaternion.RotateTowards(Quaternion.identity, bend, MaxAnkleBend);
-            return bend * twist;
         }
 
         private void ApplyHipYaw()

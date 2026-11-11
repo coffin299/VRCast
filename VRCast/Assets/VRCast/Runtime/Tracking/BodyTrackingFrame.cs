@@ -42,7 +42,7 @@ namespace VRCast.Tracking
         // 受信するたびに増える番号（新しい値が届いたかの判定用）
         public int Sequence;
 
-        // 映像上の腰の位置（歩き回るモード。古いトラッカーは false）
+        // 映像上の腰の位置（部屋を歩き回る。古いトラッカーは false）
         public bool HasRoot;
         public float RootImageX;
         public float RootImageWidth;

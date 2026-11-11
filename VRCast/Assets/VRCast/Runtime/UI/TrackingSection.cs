@@ -584,10 +584,19 @@ namespace VRCast.UI
 
         private void DrawMediaPipeBody()
         {
+            GUILayout.BeginHorizontal();
             _settings.trackingLegs = GUILayout.Toggle(
                 _settings.trackingLegs,
                 Loc.T("Full body tracking (MediaPipe)", "全身トラッキング（MediaPipe）", "전신 트래킹 (MediaPipe)",
-                    "全身追踪（MediaPipe）", "全身追蹤（MediaPipe）"));
+                    "全身追踪（MediaPipe）", "全身追蹤（MediaPipe）"),
+                GUILayout.ExpandWidth(false));
+            UiTheme theme = UiTheme.Current;
+            GUILayout.Label(
+                Loc.T("Experimental", "試験的", "실험적", "试验性", "試驗性"),
+                theme != null ? theme.ErrorText : GUI.skin.label,
+                GUILayout.ExpandWidth(false));
+            GUILayout.FlexibleSpace();
+            GUILayout.EndHorizontal();
             GuiControls.Hint(Loc.T(
                 "Bends the hips and legs to match your pose when your whole body is in frame. A face close-up or a desk leaves the legs in the idle pose. Off by default.",
                 "全身がカメラに映っているとき、腰の向きと脚の曲げを合わせます。顔のアップや机に座って足が映らないときは待機ポーズのままです。既定は OFF。",
@@ -600,7 +609,7 @@ namespace VRCast.UI
                 return;
             }
 
-            // 映像上の位置で腰を動かす。既定はその場に固定
+            // 映像上の位置で腰を動かす。既定はその場に固定。足の向きは待機ポーズのまま
             _settings.trackingLegsWalk = GUILayout.Toggle(
                 _settings.trackingLegsWalk,
                 Loc.T("Walk around the room (not fixed)", "部屋を歩き回る（固定しない）", "방 안을 걸어 다니기 (고정 안 함)",

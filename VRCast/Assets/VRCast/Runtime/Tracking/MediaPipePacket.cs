@@ -38,8 +38,6 @@ namespace VRCast.Tracking
         public const int LegPointCount = 8;
         public const int LeftHip = 0;
         public const int RightHip = 1;
-
-        // 歩き回る位置（画像上の腰 x・y、画像上の肩幅、実寸の肩幅 m）
         public const int RootValueCount = 4;
         public const int LeftKnee = 2;
         public const int RightKnee = 3;

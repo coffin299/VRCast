@@ -21,7 +21,7 @@ VRCast から同じ手順で起動・カメラ一覧取得ができる。
     headVisibility head の各点の可視度
     legs        左腰・右腰・左膝・右膝・左足首・右足首・左足先・右足先の world 座標（m）
     legVisibility legs の各点の可視度
-    root        腰の画像上の位置と肩幅（x, y, 画像上の肩幅, 実寸の肩幅 m。古い受信側は無視する。無ければ空）
+    root        腰の画像上の位置と肩幅（x, y, 画像上の肩幅, 実寸の肩幅 m。無ければ空）
     leftHand    左手 21 点の world 座標（映っていなければ空）
     rightHand   右手 21 点の world 座標（映っていなければ空）
 
