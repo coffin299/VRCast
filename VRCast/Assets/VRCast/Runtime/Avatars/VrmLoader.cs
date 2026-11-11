@@ -108,7 +108,8 @@ namespace VRCast.Avatars
             }
 
             // 体が原点から大きくずれているアバターは、足元がルートに来るよう子を動かす（以前の配置を選んだときは動かさない）
-            bool aligned = alignOrigin && AvatarOrigin.TryAlign(animator, out Vector3 originShift);
+            Vector3 originShift = Vector3.zero;
+            bool aligned = alignOrigin && AvatarOrigin.TryAlign(animator, out originShift);
             if (aligned)
             {
                 VRCastLog.Info(LogCategory, $"Aligned origin of '{data.Info.name}' by {originShift} m.");
