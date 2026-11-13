@@ -164,6 +164,9 @@
         <span class="zh-hans">将 <code>.vrcaster</code> 或 <code>.vrm</code> 文件拖放到 VRCast 窗口即可加载。</span>
         </li>
     <li>
+        <span class="zh-hans">如果身体的位置或角度离原点很远，加载时会把脚放到原点，并让它站好朝前（偏移很小的不会动）。<span class="ui">校正原点</span> 可以再做一次同样的校正。<span class="ui">把原点还原到虚拟形象</span> 可以回到文件里的位置（这个虚拟形象下次也保持这样。快速设置的加载栏也一样）。</span>
+        </li>
+    <li>
         <span class="zh-hans">也可以使用 <span class="ui">开始</span> 标签页的 <span class="ui">选择文件...</span>，
         或 <span class="ui">虚拟形象</span> 标签页的 <span class="ui">浏览...</span> 选择。</span>
         </li>
@@ -393,6 +396,9 @@
         <span class="zh-hans">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 开启时，<span class="ui">上半身扭转 / 倾斜（肩部）</span>（默认开启）会根据双肩的朝向扭转或左右倾斜上半身。未拍到肩部时按头部位置倾斜。不想扭转时，开启 <span class="ui">固定上半身扭转</span> 即可只保留左右倾斜。在 <span class="ui">原始数据显示</span> 中可通过绿色方框和角度确认上半身朝向（骨架按虚拟形象的大小绘制，无需移动相机）。</span>
         </li>
     <li>
+        <span class="zh-hans">开启 MediaPipe 的 <span class="ui">全身追踪（MediaPipe）</span>（试验性 · 不推荐，默认关闭）后，全身进入画面时会让腰的左右朝向和腿的弯曲跟上。脚跟和脚尖都在画面里时，脚的朝向也会跟上。下方的 <span class="ui">在房间里走动（不固定）</span>（默认关闭）开启后，会跟着你在画面中的位置移动（第一次出现的位置是起点，不上下移动）。脸部特写或坐在桌前看不到脚时，腿保持待机姿势。<span class="ui">原始数据显示</span> 中也可以确认腿的线。开启期间，<span class="ui">找不到脸时不进行追踪</span>、<span class="ui">呼吸 · 身体摇摆</span>、<span class="ui">身体动作</span>、<span class="ui">全身模式（固定脚部）</span> 会显示为关闭且无法操作，也不会生效。关闭全身追踪后会恢复原来的设置。</span>
+        </li>
+    <li>
         <span class="zh-hans"><span class="ui">输入源</span> 通过打开纵向排列的开关之一来选择。每行右侧（宽度不足时在开关下方）会显示推荐（MediaPipe）以及电脑负载参考（低 / 中 / 高）。MediaPipe 关闭 <span class="ui">手臂 / 手</span> 后会更轻，从 iPhone 等接收的输入源由手机进行追踪，因此电脑负载较低。</span>
         </li>
     <li>
@@ -445,6 +451,9 @@
         <span class="zh-hans">开始追踪时（更改输入源或相机后也一样），头部静止约 0.5 秒时的朝向会自动成为正面。即使用手遮住脸等导致丢失，也不会重新设定正面。</span>
         </li>
     <li>
+        <span class="zh-hans"><span class="ui">眼睛动作上限</span> 无效时，在 <span class="ui">完美同步</span> 开启期间打开 <span class="ui">指定眼睛动作的 BlendShape（仅此虚拟形象）</span>，从列表中选择 <span class="ui">向上看</span>、<span class="ui">向下看</span>、<span class="ui">向左看</span>、<span class="ui">向右看</span>（可搜索。留空的方向保持自动。<span class="ui">眼睛追踪</span> 为 <span class="ui">骨骼</span> 时，指定的键不会动）。所选键会按上限移动，并按虚拟形象分别保存。</span>
+        </li>
+        <li>
         <span class="zh-hans">在 <span class="ui">身体动作</span> 中可以选择随头部动作倾斜上半身，或整体移动身体。</span>
         </li>
     <li>

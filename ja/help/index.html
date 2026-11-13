@@ -127,7 +127,7 @@
       <span class="ja">配布 zip（Jinxxy のセットアップ版は展開先）の <code>VRCast-Converter</code> フォルダ（本体の <code>VRCast</code> フォルダとは別）にある <code>VRCast-Converter-バージョン.unitypackage</code> をダブルクリック（または Unity にドラッグ＆ドロップ）して
         <span class="ui">Import</span> を押します（<code>Assets/VRCast/Converter</code> に入ります）。</span>
     </li>
-    <li><span class="ja">メニュー <span class="ui">VRCast &gt; Avatar Exporter</span> を開きます。</span>
+    <li><span class="ja">メニュー <span class="ui">VRCast &gt; Avatar Exporter</span> を開きます。見出しの横とタブに、書き出しツールの版が出ます（アプリの版とは別です）。</span>
         </li>
     <li><span class="ja">シーン上のアバター（一番上の親オブジェクト）を指定して <span class="ui">書き出す...</span> を押し、保存先を選びます。
           画面は Unity の OS の言語で表示されます（上部の <span class="ui">言語</span> で切り替え可能）。</span>
@@ -138,7 +138,7 @@
   <p class="note ja">ブレンドシェイプは Unity のシーンで設定した値のまま書き出されます（<span class="ui">シーンのブレンドシェイプの値を優先する</span>、既定 ON）。
     衣装の切り替えに合わせて縮小用ブレンドシェイプを FX で動かしている場合などは、OFF にすると VRChat に入ったときの初期状態の値で書き出します。</p>
   <p class="note ja">FX レイヤーにある表情クリップは自動で書き出されます。FX に入っていない表情（昔のアバターに付属していた表情アニメーションなど）は、
-    書き出し画面の <span class="ui">追加の表情</span> にアニメーションクリップかフォルダをドラッグすると表情として書き出せます（ブレンドシェイプだけを動かすクリップが対象。指定はアバターごとに保存）。</p>
+    書き出し画面の <span class="ui">追加の表情</span> にアニメーションクリップかフォルダをドラッグすると表情として書き出せます（ブレンドシェイプを動かすクリップが対象。人体以外のボーン（しっぽ・耳・服など）が時間で動くクリップも、選んでいるあいだ再生されます。人体のボーンは入りません。指定はアバターごとに保存）。</p>
   <p class="note ja">シーンに <a href="https://github.com/suzuryg/face-emo">FaceEmo</a> の設定があれば、そのアバターの表情を FaceEmo のモード名で自動的に書き出します（FaceEmo の「アバターに適用」をしていなくても可。小物の表示などは除き、ブレンドシェイプの部分だけを使います）。</p>
   <p class="note ja">【ベータ版】VRCFury や Modular Avatar などで改変したアバターは、そのまま指定すれば改変後の姿（衣装の統合・追加した表情やトグル）で書き出されます。
     MA の Merge Armature / Bone Proxy で付けた衣装・小物は、統合されなかった場合でもアバターのボーンに付け替えて体に追従させます。
@@ -153,6 +153,8 @@
   <h2><span class="ja">2. VRCast で読み込む</span></h2>
   <ul>
     <li><span class="ja"><code>.vrcaster</code> または <code>.vrm</code> ファイルを VRCast のウィンドウにドラッグ＆ドロップすると読み込まれます。</span>
+        </li>
+    <li><span class="ja">体の位置や向きが原点から大きくずれているアバターは、読み込み時に足元を原点へ置き、立って正面を向くよう直します（少しのずれはそのままです）。<span class="ui">原点を補正する</span> でも同じ補正をかけ直せます。<span class="ui">原点をアバターに戻す</span> でファイルに入っていた配置に戻せます（このアバターは次回もそのまま。クイック設定の読み込み欄も同じです）。</span>
         </li>
     <li><span class="ja">または <span class="ui">はじめに</span> タブの <span class="ui">ファイルを選ぶ...</span>、
         <span class="ui">アバター</span> タブの <span class="ui">参照...</span> で選べます。</span>
@@ -268,6 +270,7 @@
     <span class="ui">VRCast が背面にあるときも使う</span>（既定 ON）なら、OBS などを操作中でも切り替えられます。ほかのアプリで文字を入力している間も反応するため、Ctrl や Alt との組み合わせがおすすめです。
     ボタン・キーで選んだ表情は固定され、トラッキングの自動検出では変わりません。同じ表情をもう一度選ぶか <span class="ui">自動検出に戻す</span> で元に戻ります。
     小物の切り替えなども含むクリップから BlendShape だけを取り出した表情は、既定では一覧に出ません。<span class="ui">ほかのクリップも表示</span> を ON にすると出ます（該当するクリップがあるアバターだけ表示）。
+    追加の表情で体以外のボーン（しっぽ・耳・服など）も動くクリップは、その表情を選んでいるあいだ再生されます。ブレンドシェイプが無いものは同じタブの <span class="ui">ボーンの動き</span> で 1 つだけ選べます（体のトラッキングはそのまま）。
     <span class="ui">操作・連携</span> タブで <span class="ui">外部から操作（OSC / HTTP）</span> を ON にすると、表示中のアバターの表情ごとのコマンドが一覧に並び（<span class="ui">コピー</span> でコピー）、ポートの下に OSC の送信先と HTTP の URL が表示されます（<span class="ui">ブラウザで状態を開く</span> で動作確認。Stream Deck では「Web サイト」の「バックグラウンドで GET」に URL 全体を設定）。Stream Deck や OSC アプリから表情を切り替えられます（この PC からのみ。例: <code>http://127.0.0.1:39571/expression?name=Smile&amp;toggle=1</code>、OSC <code>/vrcast/expression "Smile"</code>。番号は 0 = ニュートラル、1 以降 = 表情の並び順）。</p>
   <p class="ja"><span class="ui">体・ポーズ</span> タブの <span class="ui">待機モーション</span>（既定 ON、Humanoid のみ）は、Web カメラを使っていないときにアバターが完全に止まって見えないよう、呼吸・体の揺れ・頭のゆらぎを少し足します。
     <span class="ui">呼吸・体の揺れ</span> を OFF にすると止まります。ON のときは <span class="ui">呼吸</span>・<span class="ui">体の揺れ</span>・<span class="ui">頭のゆらぎ</span> の強さ（0〜2、1 が標準）と <span class="ui">速さ</span>（0.5〜2 倍）を調整できます。
@@ -340,6 +343,8 @@
         </li>
     <li><span class="ja">MediaPipe で <span class="ui">腕・手</span> が ON のときは、<span class="ui">上半身のひねり・傾き（肩）</span>（既定は ON）で両肩の向きに合わせて上半身をひねったり左右に傾けたりします。肩が映っていない間は頭の位置で傾けます。ひねらせたくないときは <span class="ui">上半身のひねりを固定</span> を ON にすると、左右の傾きだけが動きます。<span class="ui">生データ表示</span> では上半身の向きが緑の箱と角度で確認できます（骨格はアバターの大きさに合わせて描くので、カメラを動かす必要はありません）。</span>
         </li>
+    <li><span class="ja">MediaPipe の <span class="ui">全身トラッキング（MediaPipe）</span>（試験的・非推奨。既定は OFF）を ON にすると、全身がカメラに映っているとき腰の左右の向きと脚の曲げを合わせます。かかとと足先が映っていれば、その向きに足を合わせます。その下の <span class="ui">部屋を歩き回る（固定しない）</span>（既定は OFF）を ON にすると、カメラに映った位置に合わせて動きます（最初に映った場所が開始位置。上下は動きません）。顔のアップや机に座って足が映らないときは待機ポーズのままです。<span class="ui">生データ表示</span> では脚の線も確認できます。ON のあいだは <span class="ui">顔が見つからないときはトラッキングしない</span>・<span class="ui">呼吸・体の揺れ</span>・<span class="ui">体の動き</span>・<span class="ui">全身モード（足を固定）</span> を OFF の表示にして操作できなくし、動作もしません。全身トラッキングを OFF にすると、それまでの設定に戻ります。</span>
+        </li>
     <li><span class="ja"><span class="ui">入力元</span> は、縦に並んだスイッチのどれか 1 つを ON にして選びます。各行の右（幅が足りないときはスイッチの下）に推奨（MediaPipe）と PC 負荷の目安（低・中・高）が出ます。MediaPipe は <span class="ui">腕・手</span> を OFF にすると軽くなり、iPhone などから受け取る入力元は推定をスマートフォン側で行うため PC の負荷は低めです。</span>
         </li>
     <li><span class="ja"><span class="ui">まばたきをトラッキング</span>（既定は ON）を OFF にすると、目の開閉は追わず、顔・表情タブの自動まばたきでまばたきします（パーフェクトシンクでもまばたきだけは動かしません）。</span>
@@ -381,6 +386,8 @@
     <li><span class="ja">正面がずれたらカメラを見て、パネル下部の <span class="ui">リセット</span> の <span class="ui">顔の向き</span>（顔・上半身・視線）を押します。視線だけなら <span class="ui">視線</span>。</span>
         </li>
     <li><span class="ja">正面は、トラッキング開始時（入力元・カメラの変更後も）に頭が 0.5 秒ほど止まったときの向きで自動で決まります。顔を手で隠すなどして見失っても、正面は取り直しません。</span>
+        </li>
+    <li><span class="ja"><span class="ui">目の動きの上限</span> が効かないときは、<span class="ui">パーフェクトシンク</span> が ON のあいだ <span class="ui">目の動きの BlendShape を指定する（このアバターだけ）</span> を ON にし、<span class="ui">上を見る</span>・<span class="ui">下を見る</span>・<span class="ui">左を見る</span>・<span class="ui">右を見る</span> を一覧から選べます（検索可。空の方向は自動のまま。<span class="ui">目のトラッキング</span> が <span class="ui">ボーン</span> のときは指定したキーは動きません）。選んだキーは上限で動き、アバターごとに保存されます。</span>
         </li>
     <li><span class="ja"><span class="ui">体の動き</span> で、頭の動きに合わせて上半身を傾けるか体ごと動かすかを選べます。</span>
         </li>

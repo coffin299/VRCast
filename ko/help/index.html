@@ -164,6 +164,9 @@
         <span class="ko"><code>.vrcaster</code> 또는 <code>.vrm</code> 파일을 VRCast 창에 드래그 앤 드롭하면 불러옵니다.</span>
         </li>
     <li>
+        <span class="ko">몸의 위치나 각도가 원점에서 많이 벗어나 있으면, 불러올 때 발을 원점에 두고 서서 정면을 향하도록 맞춥니다 (어긋남이 작으면 그대로 둡니다). <span class="ui">원점 보정</span>으로 같은 보정을 다시 적용할 수 있습니다. <span class="ui">원점을 아바타로 되돌리기</span>로 파일에 들어 있던 배치로 되돌릴 수 있습니다 (이 아바타는 다음에도 그대로. 빠른 설정의 불러오기란도 같습니다).</span>
+        </li>
+    <li>
         <span class="ko">또는 <span class="ui">시작하기</span> 탭의 <span class="ui">파일 선택...</span>,
         <span class="ui">아바타</span> 탭의 <span class="ui">찾아보기...</span>로 선택할 수 있습니다.</span>
         </li>
@@ -393,6 +396,9 @@
         <span class="ko">MediaPipe에서 <span class="ui">팔·손</span>이 켜져 있으면 <span class="ui">상체 비틀기·기울기 (어깨)</span>(기본은 켜짐)로 양 어깨 방향에 맞춰 상체를 비틀거나 좌우로 기울입니다. 어깨가 보이지 않는 동안은 머리 위치로 기울입니다. 비틀지 않게 하려면 <span class="ui">상체 비틀기 고정</span>을 켜면 좌우 기울기만 움직입니다. <span class="ui">원시 데이터 표시</span>에서는 상체 방향을 초록 상자와 각도로 확인할 수 있습니다 (골격은 아바타 크기에 맞춰 그리므로 카메라를 움직일 필요가 없습니다).</span>
         </li>
     <li>
+        <span class="ko">MediaPipe의 <span class="ui">전신 트래킹 (MediaPipe)</span>(실험적 · 비권장. 기본은 꺼짐)를 켜면, 전신이 카메라에 보일 때 허리의 좌우 방향과 다리 굽힘을 맞춥니다. 발뒤꿈치와 발끝이 보이면 그 방향으로 발을 맞춥니다. 그 아래의 <span class="ui">방 안을 걸어 다니기 (고정 안 함)</span>(기본은 꺼짐)를 켜면 카메라에 보이는 위치에 맞춰 움직입니다 (처음 보인 곳이 시작 위치. 위아래는 움직이지 않습니다). 얼굴 클로즈업이나 책상에 앉아 발이 안 보이면 대기 포즈 그대로입니다. <span class="ui">원시 데이터 표시</span>에서는 다리 선도 확인할 수 있습니다. 켜져 있는 동안 <span class="ui">얼굴을 찾지 못하면 트래킹하지 않기</span>·<span class="ui">호흡 · 몸 흔들림</span>·<span class="ui">몸의 움직임</span>·<span class="ui">전신 모드 (발 고정)</span>는 꺼진 것처럼 표시되고 조작할 수 없으며 동작하지도 않습니다. 전신 트래킹을 끄면 이전 설정으로 돌아갑니다.</span>
+        </li>
+    <li>
         <span class="ko"><span class="ui">입력 소스</span>는 세로로 나열된 스위치 중 하나를 켜서 고릅니다. 각 줄 오른쪽 (폭이 부족하면 스위치 아래)에 권장 (MediaPipe)과 PC 부하 기준 (낮음·보통·높음)이 표시됩니다. MediaPipe는 <span class="ui">팔·손</span>을 끄면 가벼워지고, iPhone 등에서 받는 입력 소스는 스마트폰에서 추정하므로 PC 부하가 낮습니다.</span>
         </li>
     <li>
@@ -445,6 +451,9 @@
         <span class="ko">정면은 트래킹 시작 시 (입력 소스·카메라 변경 후에도) 머리가 0.5초 정도 멈췄을 때의 방향으로 자동으로 정해집니다. 손으로 얼굴을 가리는 등으로 놓쳐도 정면은 다시 잡지 않습니다.</span>
         </li>
     <li>
+        <span class="ko"><span class="ui">눈 움직임 상한</span>이 먹지 않으면 <span class="ui">퍼펙트 싱크</span>가 켜진 동안 <span class="ui">눈 움직임 BlendShape 지정 (이 아바타만)</span>을 켜고 <span class="ui">위를 보기</span>·<span class="ui">아래를 보기</span>·<span class="ui">왼쪽 보기</span>·<span class="ui">오른쪽 보기</span>를 목록에서 고릅니다 (검색 가능. 비운 방향은 자동. <span class="ui">눈 트래킹</span>이 <span class="ui">본</span>이면 지정한 키는 움직이지 않습니다). 고른 키는 상한으로 움직이고 아바타별로 저장됩니다.</span>
+        </li>
+        <li>
         <span class="ko"><span class="ui">몸의 움직임</span>에서 머리 움직임에 맞춰 상체를 기울일지 몸 전체를 움직일지 선택할 수 있습니다.</span>
         </li>
     <li>

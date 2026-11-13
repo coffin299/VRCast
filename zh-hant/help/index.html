@@ -155,6 +155,8 @@
     <li>
         <span class="zh-hant">將 <code>.vrcaster</code> 或 <code>.vrm</code> 檔案拖放到 VRCast 視窗即可載入。</span></li>
     <li>
+        <span class="zh-hant">如果身體的位置或角度離原點很遠，載入時會把腳放到原點，並讓它站好朝前（偏移很小的不會動）。<span class="ui">校正原點</span> 可以再做一次同樣的校正。<span class="ui">把原點還原到虛擬形象</span> 可以回到檔案裡的位置（這個虛擬形象下次也保持這樣。快速設定的載入欄也一樣）。</span></li>
+    <li>
         <span class="zh-hant">也可以使用 <span class="ui">開始</span> 分頁的 <span class="ui">選擇檔案...</span>，
         或 <span class="ui">虛擬形象</span> 分頁的 <span class="ui">瀏覽...</span> 選擇。</span></li>
     <li>
@@ -341,6 +343,8 @@
     <li>
         <span class="zh-hant">使用 MediaPipe 且 <span class="ui">手臂 / 手</span> 開啟時，<span class="ui">上半身扭轉 / 傾斜（肩部）</span>（預設開啟）會依雙肩的朝向扭轉或左右傾斜上半身。未拍到肩部時依頭部位置傾斜。不想扭轉時，開啟 <span class="ui">固定上半身扭轉</span> 即可只保留左右傾斜。在 <span class="ui">原始資料顯示</span> 中可透過綠色方框和角度確認上半身朝向（骨架依虛擬形象的大小繪製，不需移動相機）。</span></li>
     <li>
+        <span class="zh-hant">開啟 MediaPipe 的 <span class="ui">全身追蹤（MediaPipe）</span>（試驗性 · 不推薦，預設關閉）後，全身進入畫面時會讓腰的左右朝向和腿的彎曲跟上。腳跟和腳尖都在畫面裡時，腳的朝向也會跟上。下方的 <span class="ui">在房間裡走動（不固定）</span>（預設關閉）開啟後，會跟著你在畫面中的位置移動（第一次出現的位置是起點，不上下移動）。臉部特寫或坐在桌前看不到腳時，腿保持待機姿勢。<span class="ui">原始資料顯示</span> 中也可以確認腿的線。開啟期間，<span class="ui">找不到臉時不進行追蹤</span>、<span class="ui">呼吸 · 身體搖擺</span>、<span class="ui">身體動作</span>、<span class="ui">全身模式（固定腳部）</span> 會顯示為關閉且無法操作，也不會生效。關閉全身追蹤後會恢復原來的設定。</span></li>
+    <li>
         <span class="zh-hant"><span class="ui">輸入來源</span> 透過開啟縱向排列的開關之一來選擇。每列右側（寬度不足時在開關下方）會顯示推薦（MediaPipe）以及電腦負載參考（低 / 中 / 高）。MediaPipe 關閉 <span class="ui">手臂 / 手</span> 後會更輕，從 iPhone 等接收的輸入來源由手機進行追蹤，因此電腦負載較低。</span></li>
     <li>
         <span class="zh-hant">關閉 <span class="ui">追蹤眨眼</span>（預設開啟）後，不再跟隨眼睛開合，改用臉部·表情分頁的自動眨眼（完美同步也不驅動眨眼）。</span></li>
@@ -379,7 +383,8 @@
     <li>
         <span class="zh-hant">開始追蹤時（變更輸入來源或相機後也一樣），頭部靜止約 0.5 秒時的朝向會自動成為正面。即使用手遮住臉等導致遺失，也不會重新設定正面。</span></li>
     <li>
-        <span class="zh-hant">在 <span class="ui">身體動作</span> 中可以選擇隨頭部動作傾斜上半身，或整體移動身體。</span></li>
+        <span class="zh-hant"><span class="ui">眼睛動作上限</span> 無效時，在 <span class="ui">完美同步</span> 開啟期間打開 <span class="ui">指定眼睛動作的 BlendShape（僅此虛擬形象）</span>，從列表中選擇 <span class="ui">向上看</span>、<span class="ui">向下看</span>、<span class="ui">向左看</span>、<span class="ui">向右看</span>（可搜尋。留空的方向保持自動。<span class="ui">眼睛追蹤</span> 為 <span class="ui">骨骼</span> 時，指定的鍵不會動）。所選鍵會按上限移動，並依虛擬形象分別儲存。</span></li>
+    <li><span class="zh-hant">在 <span class="ui">身體動作</span> 中可以選擇隨頭部動作傾斜上半身，或整體移動身體。</span></li>
     <li>
         <span class="zh-hant">顯示全身時開啟 <span class="ui">全身模式（固定腳部）</span>，腳保持貼地，腰部也跟隨上半身的傾斜和移動，由膝蓋彎曲吸收。</span></li>
   </ul>
