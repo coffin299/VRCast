@@ -932,8 +932,8 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 ### バージョンと更新履歴
 
 - アプリのバージョンは `VRCastBuild` の `AppVersion` と、この README の「現在の状態」の版数をそろえる。
-  書き出しツール（`Packages/com.vrcast.converter/package.json` の `version`）はアプリと別版で、converter に変更があるときだけ上げる（手順は `.cursor/rules/changelog.mdc`）。
-  上げるときは `AvatarExporterWindow` の `Version` も同じにする（画面と unitypackage のファイル名に使う。ずれると `unitypackage.ps1` が中止する）。
+  書き出しツール（`Packages/com.vrcast.converter/package.json` の `version`）は、変更があるときだけ動かし、そのときはアプリの版番号に合わせる（手順は `.cursor/rules/changelog.mdc`）。
+  `AvatarExporterWindow` の `Version` も同じにする（画面と unitypackage のファイル名に使う。ずれると `unitypackage.ps1` が中止する）。変更が無いリリースでは触らない。
 - 利用者に見える変更（バグ修正・機能追加など）は `CHANGELOG.txt` の先頭「未リリース / Unreleased」に日本語・英語で追記し、
   リリース時にバージョンと日付へ書き換える（手順は `.cursor/rules/changelog.mdc`）。
   書き出しツールだけの変更は `CHANGELOG-VRCastConverter.txt` に追記する。

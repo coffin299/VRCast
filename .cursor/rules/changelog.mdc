@@ -32,12 +32,13 @@ alwaysApply: true
 2. **アプリ**の版をそろえる: `VRCast/Assets/VRCast/Editor/Build/VRCastBuild.cs` の `AppVersion`、
    `README.md` の「現在の状態」にある「**バージョン x.y.z（製品版）**」。
    修正だけなら z、機能追加なら y、互換性が壊れる変更なら x を上げる。
-3. **書き出しツール（Unity package）はアプリと別版**。
-   `Packages/com.vrcast.converter/package.json` の `version` は、
-   `Packages/com.vrcast.converter/` 配下に利用者向けの変更があるときだけ上げる。
-   アプリだけのリリースでは **触らない**（例: アプリ 3.0.1 でも converter は 3.0.0 のまま）。
-   上げるときもアプリと同じく、修正なら z・機能なら y・互換破壊なら x。
-   同じ値を `AvatarExporterWindow` の `Version` にも書く（画面とタブに出す。unitypackage には package.json が入らない。ずれると `Tools/Package/unitypackage.ps1` が中止する）。
+3. **書き出しツール（Unity package）を更新したら、版番号はアプリに合わせる**。
+   `Packages/com.vrcast.converter/` 配下に利用者向けの変更があるときだけ版を動かす。
+   動かすときは独自の番号にせず、そのリリースのアプリ版（`AppVersion`）と同じにする
+   （例: アプリ 4.5.2 で書き出しツールも変えたなら、書き出しツールも 4.5.2）。
+   `Packages/com.vrcast.converter/package.json` の `version` と `AvatarExporterWindow` の `Version` の両方をその番号にする
+   （画面とタブ、unitypackage のファイル名に使う。unitypackage には package.json が入らない。ずれると `Tools/Package/unitypackage.ps1` が中止する）。
+   アプリだけのリリースで書き出しツールに変更が無いときは触らない（ファイル名は前回合わせた版のまま）。
    converter に利用者向けの変更をしたら、同じ作業の中で `CHANGELOG-VRCastConverter.txt` にも追記する
    （形式は本体の `CHANGELOG.txt` と同じ。節の見出しはその変更が載るときのアプリ版でよい）。
    本体の `CHANGELOG.txt` にも短い案内を書いてよいが、書き出しツールの詳細は `CHANGELOG-VRCastConverter.txt` 側に書く。

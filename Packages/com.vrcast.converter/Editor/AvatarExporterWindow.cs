@@ -32,7 +32,7 @@ namespace VRCast.Converter.Editor
 
         // 書き出しツールの版。package.json の version とそろえる（アプリの版とは別）。
         // 配布用 unitypackage には package.json が入らないため、画面に出す版はここが正になる
-        internal const string Version = "3.1.0";
+        internal const string Version = "4.5.2";
 
         // タブに出す名前（製品名と版）
         private static string WindowTitle => Title + " " + Version;

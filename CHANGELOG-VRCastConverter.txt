@@ -4,10 +4,12 @@ VRCast Converter（書き出しツール / unitypackage）更新履歴 / Changel
 `Packages/com.vrcast.converter`（アバターの Unity プロジェクトに入れる書き出しツール）の変更点です。
 本体アプリの履歴は `CHANGELOG.txt` を見てください。配布 zip の `VRCast\` と `VRCast-Converter\` の両方に同梱されます。
 
-新しいものが上です。各節は、その変更が載ったときのアプリ版です（converter の `package.json` の版は、
-このファイルに追記するときだけ上げます。アプリだけのリリースでは触りません）。
-Newest first. Section headers are the app version that shipped the change (raise
-`Packages/com.vrcast.converter/package.json` only when this file gets new entries).
+新しいものが上です。各節は、その変更が載ったときのアプリ版です。
+`package.json` の版は、このファイルに追記するときだけ動かし、そのときはアプリの版番号に合わせます。
+アプリだけのリリースでは触りません。
+Newest first. Section headers are the app version that shipped the change.
+Raise `Packages/com.vrcast.converter/package.json` only when this file gets new entries,
+and set it to that same app version. App-only releases leave it unchanged.
 
 ■ 4.5.2 (2026-11-13)
 
