@@ -30,6 +30,13 @@ namespace VRCast.Converter.Editor
         // ダイアログ・進捗バーのタイトル（製品名なので訳さない）
         private const string Title = "VRCast Exporter";
 
+        // 書き出しツールの版。package.json の version とそろえる（アプリの版とは別）。
+        // 配布用 unitypackage には package.json が入らないため、画面に出す版はここが正になる
+        internal const string Version = "3.1.0";
+
+        // タブに出す名前（製品名と版）
+        private static string WindowTitle => Title + " " + Version;
+
         // アプリアイコン（VRCastIcon.png）の GUID。UPM（Packages/）と unitypackage（Assets/）で置き場所が違うため GUID で探す
         private const string IconGuid = "f0bfda6d028343bab19380553d3cfe26";
 
@@ -71,6 +78,7 @@ namespace VRCast.Converter.Editor
 
         private Texture2D _icon;
         private GUIStyle _titleStyle;
+        private GUIStyle _versionStyle;
         private Vector2 _scroll;
         private Vector2 _resultScroll;
         private float _columnsHeight = MinPreviewHeight / PreviewHeightRatio;
@@ -108,7 +116,7 @@ namespace VRCast.Converter.Editor
         {
             // 既存ウィンドウがあれば再利用（大きさはそのまま）。新しく開くときは 2 列で収まる大きさにする
             bool opened = HasOpenInstances<AvatarExporterWindow>();
-            var window = GetWindow<AvatarExporterWindow>(Title);
+            var window = GetWindow<AvatarExporterWindow>(WindowTitle);
             if (!opened && !window.docked && window.position.width < MinWindowSize.x)
             {
                 Rect rect = window.position;
@@ -121,7 +129,7 @@ namespace VRCast.Converter.Editor
             // アイコンが見つからなくても書き出しは使えるよう、無ければ表示しないだけにする
             string iconPath = AssetDatabase.GUIDToAssetPath(IconGuid);
             _icon = string.IsNullOrEmpty(iconPath) ? null : AssetDatabase.LoadAssetAtPath<Texture2D>(iconPath);
-            titleContent = new GUIContent(Title, _icon);
+            titleContent = new GUIContent(WindowTitle, _icon);
 
             // 右にプレビューを並べるため、2 列で収まる幅より狭くさせない
             minSize = MinWindowSize;
@@ -898,7 +906,23 @@ namespace VRCast.Converter.Editor
                         _titleStyle = new GUIStyle(EditorStyles.boldLabel) { fontSize = TitleFontSize };
                     }
 
-                    EditorGUILayout.LabelField(Title, _titleStyle, GUILayout.Height(TitleFontSize + 6));
+                    using (new EditorGUILayout.HorizontalScope(GUILayout.Height(TitleFontSize + 6)))
+                    {
+                        GUILayout.Label(Title, _titleStyle, GUILayout.ExpandWidth(false),
+                            GUILayout.Height(TitleFontSize + 6));
+                        if (_versionStyle == null)
+                        {
+                            // 製品名の右下に、書き出しツールの版を添える
+                            _versionStyle = new GUIStyle(EditorStyles.miniLabel)
+                            {
+                                alignment = TextAnchor.LowerLeft,
+                                padding = new RectOffset(6, 0, 0, 2),
+                            };
+                        }
+
+                        GUILayout.Label(Version, _versionStyle, GUILayout.ExpandWidth(false),
+                            GUILayout.Height(TitleFontSize + 6));
+                    }
                     EditorGUILayout.LabelField(
                         T("Export avatar to .vrcaster", "アバターを .vrcaster に書き出す", "아바타를 .vrcaster로 내보내기",
                             "将虚拟形象导出为 .vrcaster", "將虛擬形象匯出為 .vrcaster"),

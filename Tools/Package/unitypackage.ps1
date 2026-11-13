@@ -26,6 +26,13 @@ if (-not $Version) {
 if (-not $OutputPath) {
     $OutputPath = Join-Path $repository "dist\$Version\VRCast-Converter-$Version.unitypackage"
 }
+# 画面に出す版が package.json とずれていたら、配布物のファイル名と中身が食い違う
+$window = Join-Path $source "Editor\AvatarExporterWindow.cs"
+$shown = Select-String -Path $window -Pattern 'const string Version = "([^"]+)"' | Select-Object -First 1
+if (-not $shown -or $shown.Matches[0].Groups[1].Value -ne $Version) {
+    throw "AvatarExporterWindow.Version must match package.json ($Version)."
+}
+
 Write-Host "Packing VRCast-Converter-$Version from $source"
 
 # 作業フォルダはリポジトリの外（完了後に削除）

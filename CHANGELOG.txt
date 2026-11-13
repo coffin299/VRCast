@@ -7,9 +7,11 @@ Newest first. Each version is written in Japanese, then English.
 ■ 4.5.2 (2026-11-13)
 
 [日本語]
+- 書き出し画面の見出しとタブに、書き出しツールの版を表示するようにした
 - 追加の表情に入れたアニメーションの、体以外のボーン（しっぽ・耳・服など）を、選んでいるあいだ再生できるようにした（体のトラッキングはそのまま。書き出し直しが必要）
 
 [English]
+- The exporter window title and header now show the converter version
 - Additional expression clips can now play bone motion other than the body, such as a tail, ears, or clothes, while selected (body tracking continues; re-export the avatar)
 
 ■ 4.4.2 (2026-11-11)

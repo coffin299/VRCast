@@ -12,9 +12,11 @@ Newest first. Section headers are the app version that shipped the change (raise
 ■ 4.5.2 (2026-11-13)
 
 [日本語]
+- 書き出し画面の見出しとタブに、書き出しツールの版を表示するようにした
 - 追加の表情に入れたクリップの、人体以外のボーンの動きを書き出すようにした（しっぽ・耳・服など。体のボーンは入れない。既に書き出したアバターは書き出し直しが必要）
 
 [English]
+- The exporter window title and header now show the converter version
 - Additional expression clips now export bone motion other than the body, such as tails, ears, and clothes (body bones are left out; re-export existing avatars)
 
 ■ 4.0.0 (2026-10-24)

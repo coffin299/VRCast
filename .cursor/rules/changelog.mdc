@@ -37,6 +37,7 @@ alwaysApply: true
    `Packages/com.vrcast.converter/` 配下に利用者向けの変更があるときだけ上げる。
    アプリだけのリリースでは **触らない**（例: アプリ 3.0.1 でも converter は 3.0.0 のまま）。
    上げるときもアプリと同じく、修正なら z・機能なら y・互換破壊なら x。
+   同じ値を `AvatarExporterWindow` の `Version` にも書く（画面とタブに出す。unitypackage には package.json が入らない。ずれると `Tools/Package/unitypackage.ps1` が中止する）。
    converter に利用者向けの変更をしたら、同じ作業の中で `CHANGELOG-VRCastConverter.txt` にも追記する
    （形式は本体の `CHANGELOG.txt` と同じ。節の見出しはその変更が載るときのアプリ版でよい）。
    本体の `CHANGELOG.txt` にも短い案内を書いてよいが、書き出しツールの詳細は `CHANGELOG-VRCastConverter.txt` 側に書く。

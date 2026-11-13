@@ -119,6 +119,7 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 
 - ウィンドウ・ダイアログは英語 / 日本語 / 韓国語 / 中国語（簡体字・繁体字）に対応。既定は OS の言語で、ウィンドウ上部の **Language** で切り替えられる（EditorPrefs に保存）。Console のログは英語のまま。
 - ウィンドウのヘッダーとタブにアプリアイコン（`Editor/VRCastIcon.png`、128px に縮小したもの）を表示。UPM と unitypackage で置き場所が違うため GUID で読み込む。
+  見出しの横とタブに、書き出しツールの版（`package.json` の version。アプリの版とは別）を出す。
 
 - 書き出されるのは Unity 標準コンポーネント（Transform / Animator / Renderer / MeshFilter / Particle System）とそのメッシュ・マテリアル・シェーダー・テクスチャのみ。
 - VRChat コンポーネント・スクリプト・Animator Controller は書き出し用の複製から除去される（元のアバターは変更されない）。
@@ -932,6 +933,7 @@ powershell -ExecutionPolicy Bypass -File .\Tools\Package\package.ps1 -Version 1.
 
 - アプリのバージョンは `VRCastBuild` の `AppVersion` と、この README の「現在の状態」の版数をそろえる。
   書き出しツール（`Packages/com.vrcast.converter/package.json` の `version`）はアプリと別版で、converter に変更があるときだけ上げる（手順は `.cursor/rules/changelog.mdc`）。
+  上げるときは `AvatarExporterWindow` の `Version` も同じにする（画面と unitypackage のファイル名に使う。ずれると `unitypackage.ps1` が中止する）。
 - 利用者に見える変更（バグ修正・機能追加など）は `CHANGELOG.txt` の先頭「未リリース / Unreleased」に日本語・英語で追記し、
   リリース時にバージョンと日付へ書き換える（手順は `.cursor/rules/changelog.mdc`）。
   書き出しツールだけの変更は `CHANGELOG-VRCastConverter.txt` に追記する。
