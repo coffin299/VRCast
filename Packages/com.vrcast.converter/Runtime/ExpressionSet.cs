@@ -13,6 +13,9 @@ namespace VRCast.AvatarFormat
         public const int MaxValuesPerPreset = 512;
         public const int MaxStringLength = 512;
 
+        // 1 つのプリセットが覚えておく、停止時に姿勢を戻すボーンのパスの上限
+        public const int MaxBonePaths = 256;
+
         public ExpressionPreset[] presets = Array.Empty<ExpressionPreset>();
 
         /// <summary>
@@ -48,6 +51,29 @@ namespace VRCast.AvatarFormat
                         return $"Preset '{preset.name}' has an invalid blend shape value.";
                     }
                 }
+
+                // ボーンクリップ名は空を許可（無いパッケージ・表情だけのプリセット）。パスは任意
+                if (!IsValidString(preset.boneClip ?? string.Empty, true))
+                {
+                    return $"Preset '{preset.name}' has an invalid bone clip name.";
+                }
+
+                if (preset.bonePaths != null)
+                {
+                    if (preset.bonePaths.Length > MaxBonePaths)
+                    {
+                        return $"Preset '{preset.name}' has too many bone paths.";
+                    }
+
+                    foreach (string path in preset.bonePaths)
+                    {
+                        // ルート自身は動かさないので、空のパスは認めない
+                        if (!IsValidString(path, false))
+                        {
+                            return $"Preset '{preset.name}' has an invalid bone path.";
+                        }
+                    }
+                }
             }
 
             return null;
@@ -75,6 +101,13 @@ namespace VRCast.AvatarFormat
         // 表情以外も動かすクリップ等から BlendShape だけを取り出したもの。アプリでは設定で表示したときだけ一覧に出す
         // （この項目を知らない旧版のアプリは常に表示する）
         public bool hidden;
+
+        // 追加指定のクリップから作った、人体以外のボーンの legacy クリップ名（空 = ボーンは動かさない）
+        // 値の無いプリセットはこのクリップだけの切り替えになる
+        public string boneClip = string.Empty;
+
+        // boneClip が動かすボーンの、アバタールートからの相対パス。停止時に読み込み時の姿勢へ戻す
+        public string[] bonePaths = Array.Empty<string>();
     }
 
     /// <summary>

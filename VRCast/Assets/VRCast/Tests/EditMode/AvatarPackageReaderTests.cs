@@ -145,6 +145,35 @@ namespace VRCast.Tests
         }
 
         [Test]
+        public void Extract_WithBoneClip_ParsesPreset()
+        {
+            // ボーンだけのプリセットも読めること
+            const string json =
+                "{\"presets\":[{\"name\":\"Tail\",\"values\":[],\"boneClip\":\"VRCastBone_000_Tail\",\"bonePaths\":[\"Tail\"]}]}";
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ExpressionsEntry, json);
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Expressions.presets[0].boneClip, Is.EqualTo("VRCastBone_000_Tail"));
+            Assert.That(package.Expressions.presets[0].bonePaths, Is.EqualTo(new[] { "Tail" }));
+        }
+
+        [Test]
+        public void Extract_InvalidBonePath_IgnoredAsEmpty()
+        {
+            // 空のボーンパスは検証で弾かれること
+            const string json =
+                "{\"presets\":[{\"name\":\"Tail\",\"values\":[],\"boneClip\":\"VRCastBone_000_Tail\",\"bonePaths\":[\"\"]}]}";
+            string path = WritePackage(CreateManifest(DummyBundle), DummyBundle,
+                AvatarPackageLayout.ExpressionsEntry, json);
+
+            AvatarPackage package = AvatarPackageReader.Extract(path, _cacheRoot);
+
+            Assert.That(package.Expressions.presets, Is.Empty);
+        }
+
+        [Test]
         public void Extract_InvalidExpressionsJson_IgnoredAsEmpty()
         {
             // 壊れた表情データでもアバター自体は読めること

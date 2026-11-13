@@ -208,6 +208,9 @@ namespace VRCast.App
                 root, _settings.GetBlendShapeLimits(avatar.SourcePath));
             var expressions = avatar.Instance.AddComponent<ExpressionController>();
             expressions.Initialize(root, avatar.Expressions);
+            var extraBones = avatar.Instance.AddComponent<ExtraBonePlayer>();
+            extraBones.Initialize(root, avatar.Expressions, expressions);
+            expressions.BindBones(extraBones);
             expressions.LoadHotkeys(_settings.GetExpressionHotkeys(avatar.SourcePath), _settings);
             var blink = avatar.Instance.AddComponent<BlinkController>();
             blink.Initialize(root, avatar.Descriptor.eyelids, _settings.GetBlinkShapes(avatar.SourcePath), _settings,

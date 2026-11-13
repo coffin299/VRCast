@@ -610,17 +610,22 @@ namespace VRCast.Converter.Editor
                 T(
                     "Expression clips in the FX layer are exported automatically. Add animation clips that are not " +
                     "in the FX layer (or folders containing them) here to use them as expressions in VRCast. " +
-                    "Only clips that move blend shapes alone are used. Saved per avatar.",
+                    "Clips that move blend shapes are used. Clips that move bones other than the body (a tail, ears, " +
+                    "clothes) also play while selected. Body bones are not included. Saved per avatar.",
                     "FX レイヤーにある表情クリップは自動で書き出されます。FX に入っていないアニメーションクリップ" +
                     "（またはそれが入ったフォルダ）をここに追加すると、VRCast で表情として使えます。" +
-                    "ブレンドシェイプだけを動かすクリップが対象です。指定はアバターごとに保存されます。",
+                    "ブレンドシェイプを動かすクリップに加え、人体以外のボーン（しっぽ・耳・服など）が時間で動くクリップも、" +
+                    "選んでいるあいだ再生されます。人体のボーンは入りません。指定はアバターごとに保存されます。",
                     "FX 레이어에 있는 표정 클립은 자동으로 내보냅니다. FX에 없는 애니메이션 클립" +
                     "(또는 그것이 든 폴더)을 여기에 추가하면 VRCast에서 표정으로 사용할 수 있습니다. " +
-                    "블렌드셰이프만 움직이는 클립이 대상입니다. 아바타별로 저장됩니다.",
+                    "블렌드셰이프를 움직이는 클립에 더해, 몸이 아닌 본(꼬리·귀·옷 등)이 시간에 따라 움직이는 클립도 " +
+                    "선택 중인 동안 재생됩니다. 몸의 본은 들어가지 않습니다. 아바타별로 저장됩니다.",
                     "FX 层中的表情剪辑会自动导出。在此添加不在 FX 中的动画剪辑（或包含它们的文件夹），" +
-                    "即可在 VRCast 中作为表情使用。仅限只驱动 BlendShape 的剪辑。按虚拟形象分别保存。",
+                    "即可在 VRCast 中作为表情使用。除了驱动 BlendShape 的剪辑，随时间驱动身体以外的骨骼" +
+                    "（尾巴、耳朵、衣服等）的剪辑也会在选中期间播放。身体骨骼不会加入。按虚拟形象分别保存。",
                     "FX 層中的表情剪輯會自動匯出。在此新增不在 FX 中的動畫剪輯（或包含它們的資料夾），" +
-                    "即可在 VRCast 中作為表情使用。僅限只驅動 BlendShape 的剪輯。按虛擬形象分別儲存。"),
+                    "即可在 VRCast 中作為表情使用。除了驅動 BlendShape 的剪輯，隨時間驅動身體以外的骨骼" +
+                    "（尾巴、耳朵、衣服等）的剪輯也會在選取期間播放。身體骨骼不會加入。按虛擬形象分別儲存。"),
                 MessageType.None);
 
             // アバター未選択でも追加できる（保存はアバターを選んだときに行う）
@@ -668,7 +673,7 @@ namespace VRCast.Converter.Editor
                 _extraChecks = new List<KeyValuePair<AnimationClip, ClipCheck>>();
                 foreach (AnimationClip clip in ExtraExpressionClips.Collect(_extraEntries))
                 {
-                    _extraChecks.Add(new KeyValuePair<AnimationClip, ClipCheck>(clip, ExpressionExtractor.Check(clip)));
+                    _extraChecks.Add(new KeyValuePair<AnimationClip, ClipCheck>(clip, ExpressionExtractor.Check(clip, _avatar)));
                 }
             }
 
@@ -730,6 +735,17 @@ namespace VRCast.Converter.Editor
                     return T("all values are 0 (added as a reset expression)", "値がすべて 0 です（戻す用の表情として入ります）",
                         "값이 모두 0입니다 (되돌리기용 표정으로 들어갑니다)", "所有值均为 0（作为复位用表情加入）",
                         "所有值均為 0（作為復位用表情加入）");
+                case ClipCheck.ExtraBones:
+                    return T("added as bone motion other than the body", "人体以外のボーンの動きとして入ります",
+                        "몸이 아닌 본의 움직임으로 들어갑니다", "作为身体以外的骨骼动作加入", "作為身體以外的骨骼動作加入");
+                case ClipCheck.ExpressionAndBones:
+                    return T("blend shapes and bones other than the body are added",
+                        "ブレンドシェイプと、人体以外のボーンの動きが入ります",
+                        "블렌드셰이프와 몸이 아닌 본의 움직임이 들어갑니다",
+                        "会加入 BlendShape 和身体以外的骨骼动作", "會加入 BlendShape 和身體以外的骨骼動作");
+                case ClipCheck.HumanBonesOnly:
+                    return T("only moves body bones (not added)", "動かしているのは人体のボーンだけです",
+                        "움직이는 것은 몸의 본뿐입니다", "只驱动了身体骨骼", "只驅動了身體骨骼");
                 default:
                     return string.Empty;
             }
@@ -1094,6 +1110,7 @@ namespace VRCast.Converter.Editor
                 "小物件的 Animator");
             string fxMotions = L("prop motions from FX", "FX の小物の動き", "FX의 소품 움직임", "FX 中的小物件动作",
                 "FX 中的小物件動作");
+            string extraBones = L("extra bone clips", "追加のボーン", "추가 본", "追加骨骼", "追加骨骼");
             // コントローラーを書き出せず再生されない小物の Animator（あるときだけ。パスは Console に出す）
             string droppedAnimators = report.DroppedPropAnimators > 0
                 ? " " + L("not playable", "再生できない", "재생 불가", "无法播放", "無法播放") +
@@ -1120,7 +1137,8 @@ namespace VRCast.Converter.Editor
                 $"Constraints: {report.ConstraintCount}\n" +
                 $"Blendshape Sync (MA): {report.BlendShapeSyncCount}\n" +
                 $"{particles}: {report.ParticleSystemCount}\n" +
-                $"{propAnimators}: {report.PropAnimators}{droppedAnimators}, {fxMotions}: {report.FxMotionClips}\n" +
+                $"{propAnimators}: {report.PropAnimators}{droppedAnimators}, {fxMotions}: {report.FxMotionClips}, " +
+                $"{extraBones}: {report.ExtraBoneClips}\n" +
                 $"{L("Standing clips", "立ちポーズ", "서 있는 포즈", "站立姿势", "站立姿勢")}: {report.StandClips}\n" +
                 $"{inactive}: {inactiveCount}, {fxToggles}: {report.FxToggleCount}\n" +
                 $"{removed}: {report.Strip.RemovedComponents}, " +

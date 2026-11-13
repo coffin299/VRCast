@@ -46,6 +46,11 @@ namespace VRCast.Animations
         // 既定では一覧に出さない表情か（プリセットと同じ並び）
         private readonly List<bool> _hidden = new List<bool>();
 
+        // その表情を選んでいるあいだ再生する、人体以外のボーンクリップ（空 = 無し。プリセットと同じ並び）
+        private readonly List<string> _boneClips = new List<string>();
+
+        private ExtraBonePlayer _bones;
+
         // プリセットが触る BlendShape の一覧と、実体から一覧の位置を引く表
         private readonly List<Slot> _slots = new List<Slot>();
         private readonly Dictionary<(SkinnedMeshRenderer, int), int> _slotIndex =
@@ -117,6 +122,7 @@ namespace VRCast.Animations
                     _names.Add(preset.name);
                     _presets.Add(targets.ToArray());
                     _hidden.Add(preset.hidden);
+                    _boneClips.Add(preset.boneClip ?? string.Empty);
                     HiddenCount += preset.hidden ? 1 : 0;
                 }
             }
@@ -186,6 +192,18 @@ namespace VRCast.Animations
 
             Current = valid ? presetIndex : -1;
             _fading = true;
+
+            // この表情に結び付いた人体以外のボーンがあれば再生し、無ければ止める（切り替え側があればそちらへ戻る）
+            string boneClip = valid && presetIndex < _boneClips.Count ? _boneClips[presetIndex] : string.Empty;
+            _bones?.SetExpressionClip(boneClip);
+        }
+
+        /// <summary>
+        /// 表情の切り替えに合わせてボーンを再生する相手。初期化のあとで結ぶ。
+        /// </summary>
+        public void BindBones(ExtraBonePlayer bones)
+        {
+            _bones = bones;
         }
 
         /// <summary>

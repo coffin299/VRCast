@@ -59,5 +59,9 @@ namespace VRCast.AvatarFormat
         // FX の初期状態で再生され続ける小物の動きを legacy クリップにしたものの名前の接頭辞
         // （アバタールートの Animation に入れる。Runtime はこの名前のクリップだけを同時に再生する）
         public const string FxMotionClipPrefix = "VRCastFx_";
+
+        // 追加の表情に指定したクリップのうち、人体以外のボーンの動きを legacy クリップにしたものの名前の接頭辞
+        // （同じ Animation に入れる。小物の自動再生には含めず、選んでいるあいだだけ再生する）
+        public const string ExtraBoneClipPrefix = "VRCastBone_";
     }
 }

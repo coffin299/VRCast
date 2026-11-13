@@ -30,6 +30,7 @@ namespace VRCast.UI
         // 表情ボタンの表示名（アバター切替時に作る）
         private string[] _labels = new string[0];
         private ExpressionController _expressions;
+        private ExtraBonePlayer _bones;
 
         // 表情のショートカットキーの割り当て（対象 = プリセット、-1 = ニュートラル）
         private readonly KeyCaptureSession _capture = new KeyCaptureSession();
@@ -47,14 +48,18 @@ namespace VRCast.UI
             if (_avatar.Refresh())
             {
                 _expressions = _avatar.Get<ExpressionController>();
+                _bones = _avatar.Get<ExtraBonePlayer>();
                 BuildLabels();
                 _capture.Cancel();
             }
 
             GuiControls.BeginCard(Loc.T("Expressions", "表情", "표정", "表情", "表情"));
 
-            // アバター未表示・表情データが無いアバター
-            if (!_avatar.HasAvatar || _expressions == null || _expressions.Names.Count == 0)
+            bool hasExpressions = _avatar.HasAvatar && _expressions != null && _expressions.Names.Count > 0;
+            bool hasBones = _avatar.HasAvatar && _bones != null && _bones.Count > 0;
+
+            // アバター未表示、または表情もボーンの動きも無い
+            if (!hasExpressions && !hasBones)
             {
                 GuiControls.Hint(_avatar.HasAvatar
                     ? Loc.T("No expressions in this package.", "このアバターには表情データがありません。",
@@ -63,6 +68,13 @@ namespace VRCast.UI
                         "请先加载虚拟形象。", "請先載入虛擬形象。"));
                 GuiControls.EndCard();
                 _capture.Cancel();
+                return;
+            }
+
+            if (!hasExpressions)
+            {
+                DrawBoneOnly();
+                GuiControls.EndCard();
                 return;
             }
 
@@ -151,7 +163,40 @@ namespace VRCast.UI
                 DrawExpressionRow(i, _labels[i]);
             }
 
+            DrawBoneOnly();
             GuiControls.EndCard();
+        }
+
+        private void DrawBoneOnly()
+        {
+            // ブレンドシェイプの無い追加クリップがあるときだけ、ボーンの切り替えを出す
+            if (_bones == null || _bones.Count == 0)
+            {
+                return;
+            }
+
+            GUILayout.Space(6f);
+            GUILayout.Label(Loc.T("Bone motion", "ボーンの動き", "본 움직임", "骨骼动作", "骨骼動作"));
+            GuiControls.Hint(Loc.T(
+                "Loops bones other than the body, such as a tail, ears, or clothes. Body tracking stays on. If the selected expression also moves bones, that one plays instead.",
+                "しっぽ・耳・服など、体以外のボーンを繰り返します。体のトラッキングはそのままです。選んでいる表情にもボーンの動きがあるときは、そちらを再生します。",
+                "꼬리·귀·옷처럼 몸이 아닌 본을 반복합니다. 몸 트래킹은 그대로입니다. 선택한 표정에도 본 움직임이 있으면 그쪽을 재생합니다.",
+                "循环播放尾巴、耳朵、衣服等身体以外的骨骼。身体追踪保持不变。若当前表情也带有骨骼动作，则播放那个。",
+                "循環播放尾巴、耳朵、衣服等身體以外的骨骼。身體追蹤保持不變。若目前表情也帶有骨骼動作，則播放那個。"));
+            for (int i = 0; i < _bones.Count; i++)
+            {
+                string name = _bones.NameAt(i);
+                if (name.Length > MaxButtonLabelLength)
+                {
+                    name = name.Substring(0, MaxButtonLabelLength - 1) + "…";
+                }
+
+                bool selected = _bones.ManualIndex == i;
+                if (GUILayout.Toggle(selected, name, GUI.skin.button, GuiControls.Shrinkable) != selected)
+                {
+                    _bones.ToggleManual(i);
+                }
+            }
         }
 
         private void DrawExpressionRow(int preset, string label)

@@ -75,8 +75,9 @@ namespace VRCast.Tests
         [Test]
         public void OtherRootClips_AreNotPlayed()
         {
-            // 接頭辞の無いクリップは FX の動きとして扱わないこと
+            // 接頭辞の無いクリップと、追加のボーンは FX の動きとして扱わないこと
             AddClip("UserClip", 0f, 1f);
+            AddClip(AvatarPackageLayout.ExtraBoneClipPrefix + "000_Tail", 0f, 1f);
             PropAnimationPlayer player = CreatePlayer(true);
             Assert.That(player.FxMotionCount, Is.EqualTo(0));
             Assert.That(player.IsAvailable, Is.False);

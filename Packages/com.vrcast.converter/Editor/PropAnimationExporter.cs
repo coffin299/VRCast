@@ -55,6 +55,30 @@ namespace VRCast.Converter.Editor
         }
 
         /// <summary>
+        /// 追加のボーンクリップを何本作ったかと、ボーンだけのプリセットを何件足したか。
+        /// </summary>
+        public struct ExtraBoneResult
+        {
+            public int Clips;
+            public int PresetsAdded;
+        }
+
+        /// <summary>
+        /// クリップの Transform のうち、人体以外が時間で動くか。
+        /// </summary>
+        internal enum BoneMotion
+        {
+            // 時間で動く Transform が無い
+            None,
+
+            // 人体以外のボーンが時間で動く
+            Extra,
+
+            // 動くのは人体のボーンかルートだけ
+            HumanOnly,
+        }
+
+        /// <summary>
         /// 小物の Animator のコントローラーを書き出せる形にする（アバタールートの Animator は対象外）。
         /// folder は書き出しの一時フォルダ（複製したコントローラーを置く）。
         /// </summary>
@@ -110,19 +134,7 @@ namespace VRCast.Converter.Editor
             }
 
             // 人体のボーン（トラッキング・待機ポーズが動かす）とルート（アバター全体が動く）は取り込まない
-            var excluded = new HashSet<Transform> { root.transform };
-            var animator = root.GetComponent<Animator>();
-            if (animator != null && animator.isHuman)
-            {
-                for (int i = 0; i < (int)HumanBodyBones.LastBone; i++)
-                {
-                    Transform bone = animator.GetBoneTransform((HumanBodyBones)i);
-                    if (bone != null)
-                    {
-                        excluded.Add(bone);
-                    }
-                }
-            }
+            HashSet<Transform> excluded = ExcludedTransforms(root.transform);
 
             var clips = new List<AnimationClip>();
             foreach (FxDefaultStateBaker.DefaultMotion motion in FxDefaultStateBaker.CollectDefaultMotions(
@@ -152,6 +164,233 @@ namespace VRCast.Converter.Editor
             }
 
             // アバタールートの Animation に足す（自動再生はしない。アプリが全部を同時に再生する）
+            AppendClips(root, clips);
+            result.FxMotions = clips.Count;
+        }
+
+        /// <summary>
+        /// 追加指定のクリップから、人体以外のボーンの動きを legacy クリップにしてルートの Animation に入れる。
+        /// できたクリップ名と動かすボーンのパスを、対応する表情プリセットへ書く。
+        /// ブレンドシェイプの無いクリップは、ボーンだけのプリセットを足す。
+        /// </summary>
+        public static ExtraBoneResult AddExtraBones(
+            GameObject root,
+            IReadOnlyList<ExpressionExtractor.BoneSource> sources,
+            ExpressionSet expressions,
+            IReadOnlyDictionary<string, Transform> movedObjects,
+            string folder)
+        {
+            if (root == null || sources == null || sources.Count == 0 || expressions == null)
+            {
+                return default;
+            }
+
+            HashSet<Transform> excluded = ExcludedTransforms(root.transform);
+            var clips = new List<AnimationClip>();
+            var added = new List<ExpressionPreset>();
+            var usedNames = new HashSet<string>();
+            if (expressions.presets != null)
+            {
+                foreach (ExpressionPreset preset in expressions.presets)
+                {
+                    if (preset != null && !string.IsNullOrEmpty(preset.name))
+                    {
+                        usedNames.Add(preset.name);
+                    }
+                }
+            }
+
+            foreach (ExpressionExtractor.BoneSource source in sources)
+            {
+                if (source.Clip == null)
+                {
+                    continue;
+                }
+
+                // 人体以外が時間で動くカーブだけを抜き、動かしたボーンのパスを控える
+                var paths = new List<string>();
+                AnimationClip legacy = BuildLegacyClip(root.transform, source.Clip, 1f, excluded, movedObjects, paths);
+                if (legacy == null)
+                {
+                    continue;
+                }
+
+                bool linked = source.Presets != null && source.Presets.Exists(preset => preset != null);
+                int presetCount = (expressions.presets != null ? expressions.presets.Length : 0) + added.Count;
+                if (!linked && presetCount >= ExpressionSet.MaxPresets)
+                {
+                    // 表情の上限を超えるボーンだけのクリップは残さない
+                    Object.DestroyImmediate(legacy);
+                    continue;
+                }
+
+                string clipName = ExtraBoneClipName(clips.Count, source.Clip.name);
+                legacy.name = clipName;
+                AssetDatabase.CreateAsset(legacy, $"{folder}/extra_bone_{clips.Count}.anim");
+                clips.Add(legacy);
+
+                if (paths.Count > ExpressionSet.MaxBonePaths)
+                {
+                    ExportLog.Warn(
+                        $"Bone clip '{source.Clip.name}' moves {paths.Count} bones; only the first {ExpressionSet.MaxBonePaths} are restored when it stops.",
+                        $"ボーンのクリップ「{source.Clip.name}」は {paths.Count} 本を動かします。停止時に姿勢を戻すのは先頭の {ExpressionSet.MaxBonePaths} 本だけです。",
+                        source.Clip.name);
+                    paths.RemoveRange(ExpressionSet.MaxBonePaths, paths.Count - ExpressionSet.MaxBonePaths);
+                }
+
+                string[] pathArray = paths.ToArray();
+                if (linked)
+                {
+                    foreach (ExpressionPreset preset in source.Presets)
+                    {
+                        if (preset == null)
+                        {
+                            continue;
+                        }
+
+                        // 同じクリップからできた表情（FaceEmo のモードなど）は、同じボーンの動きを共有する
+                        preset.boneClip = clipName;
+                        preset.bonePaths = pathArray;
+                    }
+                }
+                else
+                {
+                    // ブレンドシェイプが無く、既存の表情にも結び付かないときは切り替え用のプリセットを足す
+                    added.Add(new ExpressionPreset
+                    {
+                        name = UniquePresetName(string.IsNullOrEmpty(source.Clip.name) ? "Bones" : source.Clip.name, usedNames),
+                        values = Array.Empty<BlendShapeValue>(),
+                        boneClip = clipName,
+                        bonePaths = pathArray,
+                    });
+                }
+            }
+
+            if (clips.Count == 0)
+            {
+                return default;
+            }
+
+            AppendClips(root, clips);
+            if (added.Count > 0)
+            {
+                var all = new List<ExpressionPreset>(expressions.presets ?? Array.Empty<ExpressionPreset>());
+                all.AddRange(added);
+                all.Sort(ComparePresets);
+                expressions.presets = all.ToArray();
+            }
+
+            return new ExtraBoneResult { Clips = clips.Count, PresetsAdded = added.Count };
+        }
+
+        /// <summary>
+        /// 人体のボーンとアバタールート。追加のボーンも小物の動きも、ここは動かさない。
+        /// </summary>
+        internal static HashSet<Transform> ExcludedTransforms(Transform root)
+        {
+            var excluded = new HashSet<Transform>();
+            if (root == null)
+            {
+                return excluded;
+            }
+
+            excluded.Add(root);
+            Animator animator = root.GetComponent<Animator>();
+            if (animator != null && animator.isHuman)
+            {
+                for (int i = 0; i < (int)HumanBodyBones.LastBone; i++)
+                {
+                    Transform bone = animator.GetBoneTransform((HumanBodyBones)i);
+                    if (bone != null)
+                    {
+                        excluded.Add(bone);
+                    }
+                }
+            }
+
+            return excluded;
+        }
+
+        /// <summary>
+        /// 人体以外のボーンが時間で動くか。アバターが無いときは Transform の動きがあれば Extra とみなす。
+        /// </summary>
+        internal static BoneMotion ClassifyBoneMotion(
+            Transform root, AnimationClip source, IReadOnlyDictionary<string, Transform> movedObjects)
+        {
+            if (source == null)
+            {
+                return BoneMotion.None;
+            }
+
+            if (root == null)
+            {
+                return HasMovingTransformCurve(source) ? BoneMotion.Extra : BoneMotion.None;
+            }
+
+            HashSet<Transform> excluded = ExcludedTransforms(root);
+            bool human = false;
+            foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(source))
+            {
+                if (binding.type != typeof(Transform) || !TrySplitProperty(binding.propertyName, out _, out _))
+                {
+                    continue;
+                }
+
+                AnimationCurve curve = AnimationUtility.GetEditorCurve(source, binding);
+                if (curve == null || !IsMoving(curve))
+                {
+                    continue;
+                }
+
+                // 解決できないパスは、人体とも追加ボーンとも数えない
+                var target = FxDefaultStateBaker.ResolveAnimatedObject(root.gameObject, binding, movedObjects) as Transform;
+                if (target == null)
+                {
+                    continue;
+                }
+
+                if (excluded.Contains(target))
+                {
+                    human = true;
+                    continue;
+                }
+
+                return BoneMotion.Extra;
+            }
+
+            return human ? BoneMotion.HumanOnly : BoneMotion.None;
+        }
+
+        /// <summary>
+        /// 位置・回転・大きさのどれかが時間で変わる Transform カーブがあるなら true。
+        /// </summary>
+        internal static bool HasMovingTransformCurve(AnimationClip source)
+        {
+            if (source == null)
+            {
+                return false;
+            }
+
+            foreach (EditorCurveBinding binding in AnimationUtility.GetCurveBindings(source))
+            {
+                if (binding.type != typeof(Transform) || !TrySplitProperty(binding.propertyName, out _, out _))
+                {
+                    continue;
+                }
+
+                AnimationCurve curve = AnimationUtility.GetEditorCurve(source, binding);
+                if (curve != null && IsMoving(curve))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private static void AppendClips(GameObject root, List<AnimationClip> clips)
+        {
+            // 既にある小物のクリップは残し、自動再生はしない（アプリが選んで再生する）
             Animation animation = root.GetComponent<Animation>();
             if (animation == null)
             {
@@ -163,7 +402,41 @@ namespace VRCast.Converter.Editor
             var all = new List<AnimationClip>(AnimationUtility.GetAnimationClips(root));
             all.AddRange(clips);
             AnimationUtility.SetAnimationClips(animation, all.ToArray());
-            result.FxMotions = clips.Count;
+        }
+
+        private static string ExtraBoneClipName(int index, string sourceName)
+        {
+            // ファイル名ではなく Animation 上の名前。区切り文字はステート名で困らない形にする
+            string safe = string.IsNullOrEmpty(sourceName) ? "clip" : sourceName.Replace('/', '_').Replace('\\', '_');
+            string name = $"{AvatarPackageLayout.ExtraBoneClipPrefix}{index:D3}_{safe}";
+            return name.Length <= ExpressionSet.MaxStringLength
+                ? name
+                : name.Substring(0, ExpressionSet.MaxStringLength);
+        }
+
+        private static string UniquePresetName(string name, HashSet<string> usedNames)
+        {
+            // 「 (2)」を足しても検証の長さに収まるようにする
+            int room = ExpressionSet.MaxStringLength - 6;
+            if (name.Length > room)
+            {
+                name = name.Substring(0, room);
+            }
+
+            string candidate = name;
+            for (int i = 2; !usedNames.Add(candidate); i++)
+            {
+                candidate = $"{name} ({i})";
+            }
+
+            return candidate;
+        }
+
+        private static int ComparePresets(ExpressionPreset a, ExpressionPreset b)
+        {
+            // 表示する表情を先に、非表示を後ろに。同じ区分は名前順（抽出時と同じ）
+            int hidden = a.hidden.CompareTo(b.hidden);
+            return hidden != 0 ? hidden : string.Compare(a.name, b.name, System.StringComparison.OrdinalIgnoreCase);
         }
 
         private static RuntimeAnimatorController Sanitize(RuntimeAnimatorController controller, string folder, int number)
@@ -340,7 +613,8 @@ namespace VRCast.Converter.Editor
             AnimationClip source,
             float speed,
             HashSet<Transform> excluded,
-            IReadOnlyDictionary<string, Transform> movedObjects)
+            IReadOnlyDictionary<string, Transform> movedObjects,
+            ICollection<string> bonePaths = null)
         {
             // (対象, まとまり) ごとのカーブ（プロパティ名の末尾の軸 → カーブ）と、動くかどうか
             var groups = new Dictionary<(Transform target, string group), Dictionary<string, AnimationCurve>>();
@@ -387,9 +661,16 @@ namespace VRCast.Converter.Editor
                 wrapMode = loop ? WrapMode.Loop : WrapMode.ClampForever,
             };
 
+            var recordedPaths = bonePaths != null ? new HashSet<string>() : null;
             foreach ((Transform target, string group) in moving)
             {
                 string path = ReflectionUtility.PathOf(target, root);
+                if (recordedPaths != null && path.Length > 0 && path.Length <= ExpressionSet.MaxStringLength
+                    && recordedPaths.Add(path))
+                {
+                    bonePaths.Add(path);
+                }
+
                 Dictionary<string, AnimationCurve> curves = groups[(target, group)];
                 switch (group)
                 {

@@ -56,6 +56,7 @@ namespace VRCast.Converter.Editor
             public int PropAnimators;
             public int DroppedPropAnimators;
             public int FxMotionClips;
+            public int ExtraBoneClips;
             public int StandClips;
             public AvatarPreprocessor.Mode Preprocess;
             public int OptimizerBlendShapeSettingsDisabled;
@@ -409,9 +410,14 @@ namespace VRCast.Converter.Editor
                 PropAnimationExporter.PrepareAnimators(clone, tempFolder, ref props);
                 PropAnimationExporter.AddFxMotions(clone, fx, parameterDefaults, maFallback.MovedObjects, tempFolder,
                     ref props);
+                PropAnimationExporter.ExtraBoneResult extraBones = PropAnimationExporter.AddExtraBones(
+                    clone, extracted.ExtraBones, expressions, maFallback.MovedObjects, tempFolder);
                 report.PropAnimators = props.Animators;
                 report.DroppedPropAnimators = props.DroppedAnimators;
                 report.FxMotionClips = props.FxMotions;
+                report.ExtraBoneClips = extraBones.Clips;
+                report.ExpressionCount = expressions.presets.Length;
+                report.ExtraExpressionCount = extracted.ExtraAdded + extraBones.PresetsAdded;
 
                 // アプリのパーフェクトシンク化で頂点を読めるよう、BlendShape を持つメッシュを読み書きできる複製にする
                 report.ReadableMeshes = ReadableMeshCopier.Apply(clone, tempFolder);

@@ -55,6 +55,7 @@ MyAvatar.vrcaster
 ## metadata/expressions.json
 
 FX コントローラー内の「BlendShape カーブのみ」のクリップを、0 秒時点の値で表情プリセットにしたもの。
+追加の表情に指定したクリップは、人体以外のボーンが時間で動くとき `boneClip` と `bonePaths` も持つ（値だけのプリセットはボーンの切り替え用）。
 
 ```json
 {
@@ -63,7 +64,9 @@ FX コントローラー内の「BlendShape カーブのみ」のクリップを
             "name": "Smile",
             "values": [
                 { "path": "Body", "blendShape": "eye_smile", "weight": 100.0 }
-            ]
+            ],
+            "boneClip": "VRCastBone_000_Smile",
+            "bonePaths": [ "Tail" ]
         }
     ]
 }
@@ -75,6 +78,8 @@ FX コントローラー内の「BlendShape カーブのみ」のクリップを
 | `presets[].values[].path` | アバタールートからの相対パス（空 = ルート）。SkinnedMeshRenderer を持つこと |
 | `presets[].values[].blendShape` | BlendShape 名 |
 | `presets[].values[].weight` | 重み 0〜100。1 プリセット最大 512 件 |
+| `presets[].boneClip` | 任意。人体以外のボーンの legacy クリップ名（`VRCastBone_`。空 = ボーンは動かさない） |
+| `presets[].bonePaths` | 任意。そのクリップが動かすボーンの相対パス（最大 256。停止時に読み込み時の姿勢へ戻す） |
 
 任意データのため、Runtime は不正・読込不能でも警告のみでアバター表示を続ける（表情は空扱い）。
 

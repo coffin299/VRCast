@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 4.5.2 (2026-11-13)
+
+[日本語]
+- 追加の表情に入れたアニメーションの、体以外のボーン（しっぽ・耳・服など）を、選んでいるあいだ再生できるようにした（体のトラッキングはそのまま。書き出し直しが必要）
+
+[English]
+- Additional expression clips can now play bone motion other than the body, such as a tail, ears, or clothes, while selected (body tracking continues; re-export the avatar)
+
 ■ 4.4.2 (2026-11-11)
 
 [日本語]

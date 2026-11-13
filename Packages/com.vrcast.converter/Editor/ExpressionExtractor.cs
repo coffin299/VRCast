@@ -33,6 +33,18 @@ namespace VRCast.Converter.Editor
 
             // 表情ツールの表情のうち取り込まなかったもの（「メニュー上の場所: 理由」。原因を調べるためにログへ出す）
             public List<string> NamedSkipped;
+
+            // 追加指定のクリップと、そこから既に作った表情（ボーンの動きを後で結び付ける）
+            public List<BoneSource> ExtraBones;
+        }
+
+        /// <summary>
+        /// 追加指定の 1 クリップと、そのクリップから作られた表情プリセット（無ければ空）。
+        /// </summary>
+        public struct BoneSource
+        {
+            public AnimationClip Clip;
+            public List<ExpressionPreset> Presets;
         }
 
         /// <summary>
@@ -65,6 +77,8 @@ namespace VRCast.Converter.Editor
             var namedSkipped = new List<string>();
             // 表情ツールで取り込んだ「クリップと名前」の組（同じクリップでも名前が違うモードは別の表情として出す）
             var usedNamedClips = new HashSet<(AnimationClip, string)>();
+            // クリップから作った表情（追加指定のボーンを、後から同じ実体へ結び付ける）
+            var presetsByClip = new Dictionary<AnimationClip, List<ExpressionPreset>>();
             // 改変後の FX のクリップ（名前ごとに最初の 1 つ）
             var fxByName = new Dictionary<string, AnimationClip>();
             foreach (AnimationClip clip in controller != null ? controller.animationClips : Array.Empty<AnimationClip>())
@@ -106,7 +120,8 @@ namespace VRCast.Converter.Editor
                     // 最適化ツール等が FX 用に複製・書き換えた同名クリップがあれば、改変後のパスで読めるそちらを優先する
                     // 表情ツールのモードは BlendShape が 1 つでもあれば取り込む（値がすべて 0・多すぎる場合も見送らない）
                     ExpressionPreset preset = null;
-                    if (fxByName.TryGetValue(named.Clip.name, out AnimationClip processed) && processed != named.Clip)
+                    fxByName.TryGetValue(named.Clip.name, out AnimationClip processed);
+                    if (processed != null && processed != named.Clip)
                     {
                         preset = CreateFromBlendShapes(processed, false);
                         usedClips.Add(processed);
@@ -119,6 +134,11 @@ namespace VRCast.Converter.Editor
                         preset.name = UniqueName(name, usedNames);
                         presets.Add(preset);
                         namedAdded++;
+                        Remember(presetsByClip, named.Clip, preset);
+                        if (processed != null && processed != named.Clip)
+                        {
+                            Remember(presetsByClip, processed, preset);
+                        }
                     }
                     else
                     {
@@ -146,6 +166,7 @@ namespace VRCast.Converter.Editor
                     if (preset != null)
                     {
                         presets.Add(preset);
+                        Remember(presetsByClip, clip, preset);
                     }
                     else
                     {
@@ -181,6 +202,7 @@ namespace VRCast.Converter.Editor
                         preset.name = UniqueName(clip.name, usedNames);
                         presets.Add(preset);
                         extraAdded++;
+                        Remember(presetsByClip, clip, preset);
                     }
                 }
             }
@@ -201,6 +223,7 @@ namespace VRCast.Converter.Editor
                     preset.name = clip.name;
                     presets.Add(preset);
                     hiddenAdded++;
+                    Remember(presetsByClip, clip, preset);
                 }
             }
 
@@ -216,7 +239,58 @@ namespace VRCast.Converter.Editor
                 NamedAdded = namedAdded,
                 NamedSkipped = namedSkipped,
                 HiddenAdded = hiddenAdded,
+                ExtraBones = CollectExtraBones(extraClips, presetsByClip),
             };
+        }
+
+        private static void Remember(
+            Dictionary<AnimationClip, List<ExpressionPreset>> presetsByClip, AnimationClip clip, ExpressionPreset preset)
+        {
+            // 同じクリップから複数の表情（FaceEmo のモード）ができるので、全部を控える
+            if (clip == null || preset == null)
+            {
+                return;
+            }
+
+            if (!presetsByClip.TryGetValue(clip, out List<ExpressionPreset> presets))
+            {
+                presets = new List<ExpressionPreset>();
+                presetsByClip[clip] = presets;
+            }
+
+            if (!presets.Contains(preset))
+            {
+                presets.Add(preset);
+            }
+        }
+
+        private static List<BoneSource> CollectExtraBones(
+            IReadOnlyList<AnimationClip> extraClips, Dictionary<AnimationClip, List<ExpressionPreset>> presetsByClip)
+        {
+            // 追加指定だけを対象にする（FX の自動取り込みにはボーンを足さない）
+            var sources = new List<BoneSource>();
+            if (extraClips == null)
+            {
+                return sources;
+            }
+
+            var seen = new HashSet<AnimationClip>();
+            foreach (AnimationClip clip in extraClips)
+            {
+                if (clip == null || !seen.Add(clip))
+                {
+                    continue;
+                }
+
+                presetsByClip.TryGetValue(clip, out List<ExpressionPreset> presets);
+                sources.Add(new BoneSource
+                {
+                    Clip = clip,
+                    Presets = presets ?? new List<ExpressionPreset>(),
+                });
+            }
+
+            return sources;
         }
 
         private static ExpressionPreset CreateFromBlendShapes(AnimationClip clip, bool hidden)
@@ -275,11 +349,46 @@ namespace VRCast.Converter.Editor
         }
 
         /// <summary>
+        /// 追加指定のクリップの判定。avatar があると、人体以外のボーンが時間で動くかも見る。
+        /// アバター未選択のときは Transform の動きを人体以外として扱う（書き出し時に人体は除く）。
+        /// </summary>
+        public static ClipCheck Check(AnimationClip clip, GameObject avatar)
+        {
+            if (clip == null)
+            {
+                return ClipCheck.NoCurves;
+            }
+
+            PropAnimationExporter.BoneMotion motion = PropAnimationExporter.ClassifyBoneMotion(
+                avatar != null ? avatar.transform : null, clip, null);
+            bool hasBlendShapes = CreateFromBlendShapes(clip, false) != null;
+            if (!hasBlendShapes)
+            {
+                if (motion == PropAnimationExporter.BoneMotion.Extra)
+                {
+                    return ClipCheck.ExtraBones;
+                }
+
+                return motion == PropAnimationExporter.BoneMotion.HumanOnly
+                    ? ClipCheck.HumanBonesOnly
+                    : ClipCheck.NoCurves;
+            }
+
+            // ブレンドシェイプと人体以外のボーンが両方あるときは、両方入る
+            if (motion == PropAnimationExporter.BoneMotion.Extra)
+            {
+                return ClipCheck.ExpressionAndBones;
+            }
+
+            return Read(clip, null, false);
+        }
+
+        /// <summary>
         /// 追加指定のクリップとして取り込める判定結果なら true。
         /// </summary>
         public static bool CanImport(ClipCheck check)
         {
-            return check != ClipCheck.NoCurves;
+            return check != ClipCheck.NoCurves && check != ClipCheck.HumanBonesOnly;
         }
 
         private static ExpressionPreset TryCreatePreset(AnimationClip clip, string name, bool blendShapesOnly)
@@ -373,5 +482,14 @@ namespace VRCast.Converter.Editor
 
         // すべて 0（表情を戻す用）
         AllZero,
+
+        // 人体以外のボーンが時間で動く（ブレンドシェイプは無い）
+        ExtraBones,
+
+        // ブレンドシェイプと、人体以外のボーンの動きの両方がある
+        ExpressionAndBones,
+
+        // 動くのは人体のボーンだけで、ブレンドシェイプは無い
+        HumanBonesOnly,
     }
 }
