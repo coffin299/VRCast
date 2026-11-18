@@ -43,6 +43,10 @@ namespace VRCast.UI
         private const float StrengthValueWidth = 44f;
         private const int MaxSearchResults = 30;
 
+        // 形状の強さと、試している形状の値の入力途中
+        private string[] _strengthInputs = Array.Empty<string>();
+        private string _previewInput = string.Empty;
+
         // 線と目印の色（選択中は黄色、自動で決めた右側は水色）
         private static readonly Color WireColor = new Color(0.3f, 0.8f, 1f, 0.35f);
         private static readonly Color PlacedColor = new Color(0.3f, 1f, 0.4f, 1f);
@@ -734,7 +738,8 @@ namespace VRCast.UI
             // 試す値（形状を選んでいるときだけ）
             if (_previewIndex >= 0)
             {
-                _previewWeight = GuiControls.Slider(ArKitFace.BlendShapeNames[_previewIndex], _previewWeight, 0f, 100f, "F0");
+                _previewWeight = GuiControls.SliderOrField(ArKitFace.BlendShapeNames[_previewIndex], _previewWeight,
+                    0f, 100f, ref _previewInput, "ps-preview", "0", ShapeNameWidth, true, 0f);
             }
 
             // 形状の一覧
@@ -791,12 +796,16 @@ namespace VRCast.UI
                 return;
             }
 
-            // 強さ
-            GUILayout.BeginHorizontal();
-            GUILayout.Label(Loc.T("Strength", "強さ", "강도", "强度", "強度"), hint, GUILayout.Width(ShapeNameWidth));
-            float strength = GUILayout.HorizontalSlider(shape.Strength, 0f, PerfectSyncSet.MaxStrength);
-            GUILayout.Label(strength.ToString("F2"), hint, GUILayout.Width(StrengthValueWidth));
-            GUILayout.EndHorizontal();
+            // 強さ（欄へ直接入力できる。🔄 で 1 に戻す）
+            if (_strengthInputs.Length != _shapes.Length)
+            {
+                _strengthInputs = new string[_shapes.Length];
+            }
+
+            float strength = GuiControls.SliderOrField(
+                Loc.T("Strength", "強さ", "강도", "强度", "強度"),
+                shape.Strength, 0f, PerfectSyncSet.MaxStrength, ref _strengthInputs[index],
+                "ps-shape-" + index, "0.##", ShapeNameWidth, true, 1f);
             if (!Mathf.Approximately(strength, shape.Strength))
             {
                 shape.Strength = strength;

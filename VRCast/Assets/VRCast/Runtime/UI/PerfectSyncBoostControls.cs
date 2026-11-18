@@ -10,6 +10,16 @@ namespace VRCast.UI
     /// </summary>
     public static class PerfectSyncBoostControls
     {
+        // 数値欄の入力途中（この画面は一度に一つだけ開く）
+        private static string _jawDeadzoneInput = string.Empty;
+        private static string _jawGainInput = string.Empty;
+        private static string _puckerInput = string.Empty;
+        private static string _mouthInput = string.Empty;
+        private static string _cheekPuffInput = string.Empty;
+        private static string _lipsInput = string.Empty;
+        private static string _cheekStartInput = string.Empty;
+        private static string _cheekFullInput = string.Empty;
+
         /// <summary>
         /// 口・頬の強調の設定値の控え（試しに変えた値を保存せずに戻すため）。
         /// </summary>
@@ -104,12 +114,14 @@ namespace VRCast.UI
             // 口の開き（パーフェクトシンクで動かしている間だけ効く。強調の ON/OFF とは別）
             GUILayout.Label(Loc.T("Mouth opening (perfect sync)", "口の開き（パーフェクトシンク）", "입 벌림 (퍼펙트 싱크)",
                 "张嘴（完美同步）", "張嘴（完美同步）"));
-            settings.trackingJawOpenDeadzone = GuiControls.Slider(
+            settings.trackingJawOpenDeadzone = GuiControls.SliderOrField(
                 "  " + Loc.T("Ignore below", "無視する開き", "무시할 벌림", "忽略的张开度", "忽略的張開度"),
-                settings.trackingJawOpenDeadzone, 0f, AppSettings.MaxJawOpenDeadzone, "F2");
-            settings.trackingJawOpenGain = GuiControls.Slider(
+                settings.trackingJawOpenDeadzone, 0f, AppSettings.MaxJawOpenDeadzone, ref _jawDeadzoneInput,
+                "ps-jaw-deadzone", "0.##");
+            settings.trackingJawOpenGain = GuiControls.SliderOrField(
                 "  " + Loc.T("Strength", "強さ", "강도", "强度", "強度"),
-                settings.trackingJawOpenGain, AppSettings.MinJawOpenGain, AppSettings.MaxJawOpenGain, "F1");
+                settings.trackingJawOpenGain, AppSettings.MinJawOpenGain, AppSettings.MaxJawOpenGain, ref _jawGainInput,
+                "ps-jaw-gain", "0.#");
 
             // 受け取った値と補正後の値（トラッキング中だけ。真顔のときの値を見て「無視する開き」を決める）
             if (driver != null && driver.IsTracking)
@@ -134,12 +146,12 @@ namespace VRCast.UI
         {
             // 組ごとの倍率（1 = そのまま）
             float max = AppSettings.MaxPerfectSyncBoost;
-            settings.trackingBoostPucker = GuiControls.Slider(
+            settings.trackingBoostPucker = GuiControls.SliderOrField(
                 Loc.T("Pout", "ふくれっ面", "입 내밀기", "嘟嘴", "嘟嘴"),
-                settings.trackingBoostPucker, 1f, max, "F1");
-            settings.trackingBoostMouth = GuiControls.Slider(
+                settings.trackingBoostPucker, 1f, max, ref _puckerInput, "ps-pucker", "0.#");
+            settings.trackingBoostMouth = GuiControls.SliderOrField(
                 Loc.T("Mouth left / right", "口の左右", "입 좌우", "嘴左右", "嘴左右"),
-                settings.trackingBoostMouth, 1f, max, "F1");
+                settings.trackingBoostMouth, 1f, max, ref _mouthInput, "ps-mouth", "0.#");
             if (driver != null && driver.IsTracking)
             {
                 driver.MouthSideEstimates(out float left, out float right);
@@ -149,12 +161,12 @@ namespace VRCast.UI
                     left > 0f || right > 0f);
             }
 
-            settings.trackingBoostCheekPuff = GuiControls.Slider(
+            settings.trackingBoostCheekPuff = GuiControls.SliderOrField(
                 Loc.T("Puffed cheeks", "頬をふくらませる", "볼 부풀리기", "鼓腮", "鼓腮"),
-                settings.trackingBoostCheekPuff, 1f, max, "F1");
-            settings.trackingBoostLips = GuiControls.Slider(
+                settings.trackingBoostCheekPuff, 1f, max, ref _cheekPuffInput, "ps-cheek", "0.#");
+            settings.trackingBoostLips = GuiControls.SliderOrField(
                 Loc.T("Lips", "唇", "입술", "嘴唇", "嘴唇"),
-                settings.trackingBoostLips, 1f, max, "F1");
+                settings.trackingBoostLips, 1f, max, ref _lipsInput, "ps-lips", "0.#");
             GuiControls.Hint(Loc.T(
                 "Raise a value if the shape barely moves, lower it if it moves too easily. Mouth left / right is estimated from the shape of your face (the camera often misses it).",
                 "動きが小さければ値を上げ、すぐ動きすぎるなら下げてください。口の左右は顔の形から推定します（カメラではほとんど出ません）。",
@@ -170,12 +182,13 @@ namespace VRCast.UI
                 "頬のふくらみの検出（カメラ・MediaPipe のみ）", "볼 부풀리기 감지 (카메라·MediaPipe만)",
                 "鼓腮检测（仅限摄像头・MediaPipe）", "鼓腮偵測（僅限攝影機・MediaPipe）"));
             float max = AppSettings.MaxCheekWidenPercent;
-            settings.trackingCheekPuffStart = GuiControls.Slider(
+            settings.trackingCheekPuffStart = GuiControls.SliderOrField(
                 "  " + Loc.T("Starts at (%)", "出し始め（%）", "시작 (%)", "开始 (%)", "開始 (%)"),
-                settings.trackingCheekPuffStart, 0f, max - AppSettings.MinCheekWidenSpan, "F1");
-            settings.trackingCheekPuffFull = GuiControls.Slider(
+                settings.trackingCheekPuffStart, 0f, max - AppSettings.MinCheekWidenSpan, ref _cheekStartInput,
+                "ps-cheek-start", "0.#");
+            settings.trackingCheekPuffFull = GuiControls.SliderOrField(
                 "  " + Loc.T("Full at (%)", "最大（%）", "최대 (%)", "最大 (%)", "最大 (%)"),
-                settings.trackingCheekPuffFull, 0f, max, "F1");
+                settings.trackingCheekPuffFull, 0f, max, ref _cheekFullInput, "ps-cheek-full", "0.#");
 
             // 最大は出し始めより必ず大きくする（逆転すると推定が反転するため）
             settings.trackingCheekPuffFull = Mathf.Max(settings.trackingCheekPuffFull,

@@ -360,13 +360,17 @@ namespace VRCast.UI
             return result;
         }
 
+        // 絵文字ボタン用（Yu Gothic には絵文字が無い）
+        private static Font _emojiFont;
+
         /// <summary>
         /// ラベル + スライダー + 数値欄。ドラッグでも、欄へ数値を入れても変えられる（Enter か欄を離すと確定）。
         /// input は入力途中の文字列（呼び出し側で保持）。controlName はフォーカス判定に使う。
         /// format は欄に出すときの書式（未指定は小数を必要な桁だけ）。
+        /// labelWidth が 0 以下なら通常のラベル幅。resetButton なら 🔄 で resetTo に戻す。
         /// </summary>
         public static float SliderOrField(string label, float value, float min, float max, ref string input,
-            string controlName, string format = "0.#")
+            string controlName, string format = "0.#", float labelWidth = 0f, bool resetButton = false, float resetTo = 0f)
         {
             bool focused = GUI.GetNameOfFocusedControl() == controlName;
             bool wasFocused = FieldFocus.TryGetValue(controlName, out bool previous) && previous;
@@ -382,11 +386,20 @@ namespace VRCast.UI
             }
 
             GUILayout.BeginHorizontal();
-            GUILayout.Label(label, GUILayout.Width(LabelWidth), GUILayout.MinWidth(0f));
+            GUILayout.Label(label, GUILayout.Width(labelWidth > 0f ? labelWidth : LabelWidth), GUILayout.MinWidth(0f));
             float slid = GUILayout.HorizontalSlider(value, min, max, Shrinkable);
             GUI.SetNextControlName(controlName);
             input = GUILayout.TextField(input ?? string.Empty, 12, GUILayout.Width(64f));
+            bool reset = resetButton && GUILayout.Button("\U0001F504", EmojiButton(), GUILayout.Width(28f));
             GUILayout.EndHorizontal();
+            if (reset)
+            {
+                value = Mathf.Clamp(resetTo, min, max);
+                GUIUtility.keyboardControl = 0;
+                FieldFocus[controlName] = false;
+                input = value.ToString(format, CultureInfo.CurrentCulture);
+                return value;
+            }
 
             // Enter で確定して欄を離す（範囲外は端へ寄せる）
             Event current = Event.current;
@@ -422,6 +435,31 @@ namespace VRCast.UI
         private static bool TryParseField(string input, out float value)
         {
             return float.TryParse(input, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
+        }
+
+        private static Font _emojiFont;
+        private static GUIStyle _emojiButton;
+
+        private static GUIStyle EmojiButton()
+        {
+            // 通常のフォントには絵文字が無いので、ボタンのときだけ絵文字フォントを使う
+            if (_emojiFont == null)
+            {
+                _emojiFont = Font.CreateDynamicFontFromOSFont("Segoe UI Emoji", 13);
+            }
+
+            if (_emojiButton == null)
+            {
+                _emojiButton = new GUIStyle(GUI.skin.button)
+                {
+                    font = _emojiFont,
+                    fontSize = 12,
+                    alignment = TextAnchor.MiddleCenter,
+                    padding = new RectOffset(0, 0, 1, 0),
+                };
+            }
+
+            return _emojiButton;
         }
 
         /// <summary>

@@ -557,6 +557,9 @@ namespace VRCast.Tests
             Assert.That(deadzone.Apply(0.6f), Is.EqualTo(0.5f).Within(0.0001f));
             Assert.That(deadzone.Apply(1f), Is.EqualTo(1f).Within(0.0001f));
 
+            // 無視する開きが 1 以上なら、受信は 0〜1 なので常に閉じること
+            Assert.That(new JawOpenAdjustment { Deadzone = 50f, Gain = 1f }.Apply(1f), Is.EqualTo(0f).Within(0.0001f));
+
             // 倍率で抑え・強め、1 を超えないこと
             Assert.That(new JawOpenAdjustment { Gain = 0.5f }.Apply(0.8f), Is.EqualTo(0.4f).Within(0.0001f));
             Assert.That(new JawOpenAdjustment { Gain = 2f }.Apply(0.8f), Is.EqualTo(1f).Within(0.0001f));

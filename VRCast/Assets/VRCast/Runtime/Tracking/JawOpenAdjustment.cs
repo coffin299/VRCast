@@ -16,12 +16,17 @@ namespace VRCast.Tracking
         public float Gain;
 
         /// <summary>
-        /// 口の開きを補正して 0〜1 で返す。
+        /// 口の開きを補正して 0〜1 で返す。無視する開きが 1 以上なら、受信は 0〜1 なので常に閉じる。
         /// </summary>
         public float Apply(float value)
         {
             float gain = Gain > 0f ? Gain : 1f;
-            float opened = Deadzone > 0f ? Mathf.InverseLerp(Deadzone, 1f, value) : value;
+            float opened = value;
+            if (Deadzone > 0f)
+            {
+                opened = Deadzone >= 1f ? 0f : Mathf.InverseLerp(Deadzone, 1f, value);
+            }
+
             return Mathf.Clamp01(opened * gain);
         }
     }

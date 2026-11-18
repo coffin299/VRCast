@@ -109,9 +109,10 @@ namespace VRCast.Core
         public const float MaxBlinkInterval = 20f;
 
         // パーフェクトシンクの口の開きの倍率の範囲（1 = そのまま）と、閉じた口とみなす開きの上限
+        // （受信値は 0〜1。1 以上にすると、その開きはすべて閉じた口になる）
         public const float MinJawOpenGain = 0.2f;
         public const float MaxJawOpenGain = 3f;
-        public const float MaxJawOpenDeadzone = 0.5f;
+        public const float MaxJawOpenDeadzone = 50f;
 
         // 頬のふくらみの推定で、頬の幅の広がり（%）として選べる上限と、出し始め〜最大の最小の間隔（%）
         public const float MaxCheekWidenPercent = 15f;
