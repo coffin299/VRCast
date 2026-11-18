@@ -330,9 +330,9 @@
         </li>
     <li><span class="ja"><span class="ui">このアバターに無い部位</span> で <span class="ui">眉</span> / <span class="ui">鼻</span> / <span class="ui">口の中</span> を選ぶと、その部位の目印は打たずに済み、その部位の形状は既定で <span class="ui">なし</span> になります（口の中や舌が作られていないアバターは、「あ」などの既存の BlendShape で口を動かします）。別の歯・舌のメッシュが無いアバターでは <span class="ui">歯・舌のメッシュも顎と一緒に動かす</span> は選べません。存在しない部位があるアバターでは、期待どおりの動きにならない可能性があります。</span>
         </li>
-    <li><span class="ja"><span class="ui">自動で置く</span> の 2 つのボタンで、まだ打っていない目印を自動で置けます（打った目印は変わりません。<span class="ui">元に戻す</span> で取り消せます）。<span class="ui">BlendShape から</span> はアバターのまばたき・「あ」「う」・眉の BlendShape で動く部分から目・口・眉・鼻先を求めます。<span class="ui">画像認識</span> は顔を正面に向けてから押すと、今の画面の顔を MediaPipe で認識して置きます（アニメ調の顔は見つからないことがあります）。どちらも位置は目安なので、ずれた目印はドラッグで直してください。</span>
+    <li><span class="ja"><span class="ui">自動で置く</span> の 2 つのボタンで、まだ打っていない目印を自動で置けます（打った目印は変わりません。<span class="ui">元に戻す</span> で取り消せます）。<span class="ui">BlendShape から</span> はアバターのまばたき・「あ」「う」・眉の BlendShape で動く部分から目・口・眉・鼻先を求めます。<span class="ui">画像認識</span> は顔を正面に向けてから押すと、今の画面の顔を MediaPipe で認識して置きます。認識用の画像だけ、トゥーンと輪郭線を外し、顔の色が残るなめらかな陰影・正面からの白いライト・灰色の背景で撮ります（画面の見た目は変わりません。アニメ調の顔は見つからないことがあります）。どちらも位置は目安なので、ずれた目印はドラッグで直してください。</span>
         </li>
-    <li><span class="ja">保存する前に、<span class="ui">2. 形状</span> の <span class="ui">実際のトラッキングで試す（保存する前に）</span> を ON にすると、試している形状のまま自分の顔の動きで確かめられます（トラッキングタブでトラッキングと <span class="ui">パーフェクトシンク</span> を ON に）。形状を変えたら <span class="ui">反映</span> で更新されます。</span>
+    <li><span class="ja">保存する前に、<span class="ui">2. 形状</span> の <span class="ui">実際のトラッキングで試す（保存する前に）</span> を ON にすると、シェイプキーをアバター読み込み時の値へ戻してから、試している形状のまま自分の顔の動きで確かめられます（トラッキングタブでトラッキングと <span class="ui">パーフェクトシンク</span> を ON に）。編集を開いたときにも同じ値へ戻します。形状を変えたら <span class="ui">反映</span> で更新されます。</span>
         </li>
     <li><span class="ja"><span class="ui">別名で保存...</span>（既定は「元の名前_PerfectSync.vrcaster」）で保存し、<span class="ui">保存したアバターを読み込む</span> で開くと、トラッキングタブの <span class="ui">パーフェクトシンク</span> で顔が動きます。パーフェクトシンク版をもう一度編集すると、保存した目印の続きから直せます。このファイルは 2.0.0 より前の VRCast では開けません。<span class="ui">閉じる</span> を押すと確認が出て、<span class="ui">保存せずに閉じる</span> で保存していない変更を捨てて元の画面に戻ります。</span>
         </li>
