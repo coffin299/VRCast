@@ -340,10 +340,13 @@ namespace VRCast.UI
                 "이 창에서는 배경색이 보일 수 있습니다. OBS 게임 캡처 / Spout에서는 투명해집니다.",
                 "此窗口可能仍显示背景色；OBS 游戏采集 / Spout 中会透明。",
                 "此視窗可能仍顯示背景色；OBS 遊戲擷取 / Spout 中會透明。"));
+            GuiControls.EndCard();
+
+            // グラフィックタブと同じアンチエイリアスと高解像度描画
+            GraphicsSection.DrawAntiAliasing(_rendering);
 
             MoreTabButton(StartLink.Graphics, Loc.T("Graphics tab", "グラフィックタブへ", "그래픽 탭으로",
                 "前往图形标签页", "前往圖形分頁"));
-            GuiControls.EndCard();
         }
 
         private void DrawPerformance()

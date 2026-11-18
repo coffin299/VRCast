@@ -4,6 +4,14 @@ VRCast 更新履歴 / Changelog
 新しいものが上です。各バージョンは日本語、英語の順に書いています。
 Newest first. Each version is written in Japanese, then English.
 
+■ 4.6.3 (2026-11-18)
+
+[日本語]
+- クイック設定に、グラフィックタブと同じアンチエイリアスと高解像度描画を追加
+
+[English]
+- Quick settings now includes the same anti-aliasing and supersampling controls as the Graphics tab
+
 ■ 4.6.2 (2026-11-18)
 
 [日本語]

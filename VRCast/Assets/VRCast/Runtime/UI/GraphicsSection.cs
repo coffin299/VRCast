@@ -53,7 +53,7 @@ namespace VRCast.UI
         public void Draw()
         {
             DrawBackground();
-            DrawAntiAliasing();
+            DrawAntiAliasing(_rendering);
             DrawLightingSystem();
             if (_rendering.IsModern)
             {
@@ -138,7 +138,10 @@ namespace VRCast.UI
             GuiControls.EndCard();
         }
 
-        private void DrawAntiAliasing()
+        /// <summary>
+        /// アンチエイリアスと高解像度描画（グラフィックタブとクイック設定で同じカード）。
+        /// </summary>
+        public static void DrawAntiAliasing(RenderingController rendering)
         {
             GuiControls.BeginCard(Loc.T("Anti-aliasing", "アンチエイリアス", "안티앨리어싱", "抗锯齿", "抗鋸齒"));
             GuiControls.Hint(Loc.T(
@@ -158,7 +161,7 @@ namespace VRCast.UI
                 "MSAA",
                 "FXAA",
             };
-            AntiAliasingMode currentMode = _rendering.AntiAliasingMode;
+            AntiAliasingMode currentMode = rendering.AntiAliasingMode;
             if (currentMode == AntiAliasingMode.Unspecified || currentMode == AntiAliasingMode.Supersample)
             {
                 currentMode = AntiAliasingMode.Msaa;
@@ -169,32 +172,32 @@ namespace VRCast.UI
             int modeSelected = DrawChoiceGrid(modeLabels, modeIndex, 3);
             if (modeSelected != modeIndex)
             {
-                _rendering.AntiAliasingMode = modes[modeSelected];
-                if (_rendering.AntiAliasingMode == AntiAliasingMode.Msaa
-                    && _rendering.AntiAliasing == AntiAliasingQuality.Off)
+                rendering.AntiAliasingMode = modes[modeSelected];
+                if (rendering.AntiAliasingMode == AntiAliasingMode.Msaa
+                    && rendering.AntiAliasing == AntiAliasingQuality.Off)
                 {
-                    _rendering.AntiAliasing = AntiAliasingQuality.x4;
+                    rendering.AntiAliasing = AntiAliasingQuality.x4;
                 }
             }
 
-            if (_rendering.AntiAliasingMode == AntiAliasingMode.Msaa)
+            if (rendering.AntiAliasingMode == AntiAliasingMode.Msaa)
             {
                 AntiAliasingQuality[] qualities =
                 {
                     AntiAliasingQuality.x2, AntiAliasingQuality.x4, AntiAliasingQuality.x8,
                 };
-                AntiAliasingQuality current = _rendering.AntiAliasing == AntiAliasingQuality.Off
+                AntiAliasingQuality current = rendering.AntiAliasing == AntiAliasingQuality.Off
                     ? AntiAliasingQuality.x4
-                    : _rendering.AntiAliasing;
+                    : rendering.AntiAliasing;
                 int qualityIndex = IndexOf(qualities, current);
                 GUILayout.Label(Loc.T("MSAA quality", "MSAA の品質", "MSAA 품질", "MSAA 质量", "MSAA 品質"));
                 int qualitySelected = DrawChoiceGrid(new[] { "2x", "4x", "8x" }, qualityIndex, 3);
                 if (qualitySelected != qualityIndex)
                 {
-                    _rendering.AntiAliasing = qualities[qualitySelected];
+                    rendering.AntiAliasing = qualities[qualitySelected];
                 }
             }
-            else if (_rendering.AntiAliasingMode == AntiAliasingMode.Fxaa)
+            else if (rendering.AntiAliasingMode == AntiAliasingMode.Fxaa)
             {
                 GuiControls.Hint(Loc.T(
                     "FXAA smooths the whole image and may soften fine outlines.",
@@ -223,11 +226,11 @@ namespace VRCast.UI
                 Loc.T("Off", "オフ", "끄기", "关", "關"),
                 "125%", "150%", "200%",
             };
-            int scaleIndex = IndexOf(scales, _rendering.Supersample);
+            int scaleIndex = IndexOf(scales, rendering.Supersample);
             int scaleSelected = DrawChoiceGrid(scaleLabels, scaleIndex, 4);
             if (scaleSelected != scaleIndex)
             {
-                _rendering.Supersample = scales[scaleSelected];
+                rendering.Supersample = scales[scaleSelected];
             }
 
             GuiControls.EndCard();
