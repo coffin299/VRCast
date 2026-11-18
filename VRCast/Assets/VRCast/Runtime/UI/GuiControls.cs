@@ -360,9 +360,6 @@ namespace VRCast.UI
             return result;
         }
 
-        // 絵文字ボタン用（Yu Gothic には絵文字が無い）
-        private static Font _emojiFont;
-
         /// <summary>
         /// ラベル + スライダー + 数値欄。ドラッグでも、欄へ数値を入れても変えられる（Enter か欄を離すと確定）。
         /// input は入力途中の文字列（呼び出し側で保持）。controlName はフォーカス判定に使う。
@@ -437,6 +434,7 @@ namespace VRCast.UI
             return float.TryParse(input, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
         }
 
+        // 絵文字ボタン用（Yu Gothic には絵文字が無い）
         private static Font _emojiFont;
         private static GUIStyle _emojiButton;
 
