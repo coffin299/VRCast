@@ -102,7 +102,8 @@
 <section id="quick">
   <h2><span class="ja">かんたんスタート</span></h2>
   <p class="ja">VRCast は VRChat 用のアバターを単体で表示し、OBS などの配信ソフトに映すアプリです。
-    VRCast を起動すると左のパネルに <span class="ui">はじめに</span> タブが開き、同じ手順を画面上で案内します。</p>
+    VRCast を起動すると左のパネルに <span class="ui">はじめに</span> タブが開き、同じ手順を画面上で案内します。
+    <span class="ui">クイック設定</span> の直下の <span class="ui">サポート</span> を開くと、操作の質問や不具合の報告の案内と、<a href="https://discord.gg/zyf99zZNUx">Discord のリンク</a> が表示されます。</p>
   <ol class="steps">
     <li><span class="ja">Unity でアバターを <code>.vrcaster</code> ファイルに書き出す</span>
         </li>
@@ -325,6 +326,8 @@
         </li>
     <li><span class="ja"><span class="ui">2. 形状</span>: 形状ごとに <span class="ui">自動生成</span> / <span class="ui">既存の BlendShape</span> / <span class="ui">なし</span> と <span class="ui">強さ</span> を選び、<span class="ui">反映</span> で試します。目の動き（eyeLook）は目のボーンが視線で動くので、既定は <span class="ui">なし</span> です（目のボーンが無いアバターでは <span class="ui">自動生成</span>）。作っても動く部分が無かった形状には <span class="ui">動く部分なし</span> と出るので、<span class="ui">既存の BlendShape</span> か <span class="ui">なし</span> を選んでください。</span>
         </li>
+    <li><span class="ja"><span class="ui">作り方</span> で <span class="ui">これまでの式</span> と <span class="ui">形状の転写</span> を選んでから <span class="ui">生成して試す</span> を押します。これまでの式は部位ごとの決まった動きです。形状の転写は、手本の顔を打った目印に合わせて、まぶた・唇・顎の動きを写します。新しく編集を始めるときの既定は形状の転写で、保存したファイルを開き直すと保存したときの作り方になります。切り替えたあとは <span class="ui">反映</span> で作り直します。</span>
+        </li>
     <li><span class="ja"><span class="ui">このアバターに無い部位</span> で <span class="ui">眉</span> / <span class="ui">鼻</span> / <span class="ui">口の中</span> を選ぶと、その部位の目印は打たずに済み、その部位の形状は既定で <span class="ui">なし</span> になります（口の中や舌が作られていないアバターは、「あ」などの既存の BlendShape で口を動かします）。別の歯・舌のメッシュが無いアバターでは <span class="ui">歯・舌のメッシュも顎と一緒に動かす</span> は選べません。存在しない部位があるアバターでは、期待どおりの動きにならない可能性があります。</span>
         </li>
     <li><span class="ja"><span class="ui">自動で置く</span> の 2 つのボタンで、まだ打っていない目印を自動で置けます（打った目印は変わりません。<span class="ui">元に戻す</span> で取り消せます）。<span class="ui">BlendShape から</span> はアバターのまばたき・「あ」「う」・眉の BlendShape で動く部分から目・口・眉・鼻先を求めます。<span class="ui">画像認識</span> は顔を正面に向けてから押すと、今の画面の顔を MediaPipe で認識して置きます（アニメ調の顔は見つからないことがあります）。どちらも位置は目安なので、ずれた目印はドラッグで直してください。</span>
@@ -447,7 +450,7 @@
     <li><span class="ja">開発者・協力者とライセンスは <span class="ui">クレジット</span> で確認できます。
         開発者の <a href="https://www.twitch.tv/coffinnoob299">Twitch チャンネル</a> もここから開けます。フォローや Prime サブスクをしてくれると開発の励みになります。</span>
         </li>
-    <li><span class="ja">情報タブの下の <span class="ui">公式 Discord</span> タブでは、<a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> に参加するボタンと、サーバーのオンライン人数・オンラインのメンバー、コピーできる招待コード（<code>vM5RH52HdF</code>）を表示します。一番下には、次に対応してほしい機能などを募集する <span class="ui">アンケート</span> があります。</span>
+    <li><span class="ja"><span class="ui">サポート</span> タブの一番下には、<a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> に参加するボタンと、サーバーのオンライン人数・オンラインのメンバー、コピーできる招待コード（<code>vM5RH52HdF</code>）を表示します。そのさらに下に、次に対応してほしい機能などを募集する <span class="ui">アンケート</span> があります。</span>
         </li>
     <li><span class="ja">一番下の <span class="ui">デバッグログ</span> で、カメラ一覧・トラッカーの状態とログを確認できます（<a href="#trouble">困ったとき</a>）。</span>
         </li>
@@ -466,7 +469,7 @@
     <tr><td><span class="ja">パネル下部のリセット</span></td>
         <td><span class="ja">顔の向き / 視線 / 表情（ニュートラル）/ カメラ。どのタブを開いていても押せます（ボタンの下段に割り当て中のショートカットキーを表示）</span>
             </td></tr>
-    <tr><td><span class="ja">公式 Discord タブのアンケート</span></td>
+    <tr><td><span class="ja">サポートタブのアンケート</span></td>
         <td><span class="ja">次に対応してほしい機能などの募集です。<a href="https://github.com/coffin299/VRCast/issues/11">GitHub の Issue</a> か <a href="https://forms.gle/L8z1P6SXZ23SnwWa8">Google フォーム</a> から自由に書いてください。同じタブから <a href="https://discord.gg/vM5RH52HdF">公式 Discord</a> にも参加できます</span>
             </td></tr>
     <tr><td><span class="ja">テンキー 1〜5</span></td>
