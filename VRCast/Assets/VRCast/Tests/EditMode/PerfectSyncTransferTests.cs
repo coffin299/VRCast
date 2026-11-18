@@ -40,12 +40,12 @@ namespace VRCast.Tests
             var probe = new Vector3(0.25f, -0.4f, 0.2f);
             Vector3 mapped = spline.Evaluate(probe);
             Assert.That(Vector3.Distance(mapped, probe * 2f + new Vector3(1f, 0f, 0f)), Is.LessThan(0.05f));
-            spline.Jacobian(probe, out Vector3 x, out Vector3 y, out Vector3 z);
-            Assert.That(x.x, Is.EqualTo(2f).Within(0.08f));
-            Assert.That(y.y, Is.EqualTo(2f).Within(0.08f));
-            Assert.That(z.z, Is.EqualTo(2f).Within(0.08f));
-            Assert.That(x.y, Is.EqualTo(0f).Within(0.08f));
-            Assert.That(y.x, Is.EqualTo(0f).Within(0.08f));
+            spline.Jacobian(probe, out Vector3 axisX, out Vector3 axisY, out Vector3 axisZ);
+            Assert.That(axisX.x, Is.EqualTo(2f).Within(0.08f));
+            Assert.That(axisY.y, Is.EqualTo(2f).Within(0.08f));
+            Assert.That(axisZ.z, Is.EqualTo(2f).Within(0.08f));
+            Assert.That(axisX.y, Is.EqualTo(0f).Within(0.08f));
+            Assert.That(axisY.x, Is.EqualTo(0f).Within(0.08f));
         }
 
         [Test]
