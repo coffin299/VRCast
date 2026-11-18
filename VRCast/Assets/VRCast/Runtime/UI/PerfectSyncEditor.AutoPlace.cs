@@ -15,7 +15,7 @@ namespace VRCast.UI
     /// <summary>
     /// 目印の自動配置（パーフェクトシンク化の編集画面）。
     /// 「BlendShape から」はまばたき・口・眉の BlendShape で動く頂点から（LandmarkEstimator）、
-    /// 「画像認識」は今の視点の顔を画像にして同梱の MediaPipe トラッカー（--face-image）で点を求め、顔の肌へ光線を当てる。
+    /// 「画像認識」は今の視点の顔を、トゥーンを外した認識用の見た目で画像にして同梱の MediaPipe トラッカー（--face-image）で点を求め、顔の肌へ光線を当てる。
     /// 「BlendShape + 画像認識」は BlendShape から点を打ち、その点に合わせて補正した画像認識の点（ImageCorrection）で
     /// BlendShape では求められない目印（頬・小鼻・エラ・比率で推定しただけの目印など）を補う。
     /// どれも打っていない目印だけを置き（手で打った目印は変えない）、置く前の状態を履歴に積む。
@@ -374,26 +374,30 @@ namespace VRCast.UI
             int cropWidth = Mathf.Clamp(Mathf.RoundToInt(crop.width * width), 1, width - x);
             int cropHeight = Mathf.Clamp(Mathf.RoundToInt(crop.height * height), 1, height - y);
 
-            // カメラを一時的に別の描画先へ向けて 1 回描く（顔の線・目印は GUI で描くので写らない）
+            // カメラを一時的に別の描画先へ向けて 1 回描く（顔の線・目印は GUI で描くので写らない）。
+            // この 1 枚だけトゥーンを外す。画面のアバターは描き終わったら戻す
             RenderTexture target = RenderTexture.GetTemporary(width, height, 24);
             RenderTexture previousTarget = _camera.targetTexture;
             RenderTexture previousActive = RenderTexture.active;
             var texture = new Texture2D(cropWidth, cropHeight, TextureFormat.RGB24, false);
-            try
+            using (FaceRecognitionLook.Apply(_camera, _avatar != null ? _avatar.Instance : null))
             {
-                _camera.targetTexture = target;
-                _camera.Render();
-                RenderTexture.active = target;
-                texture.ReadPixels(new Rect(x, y, cropWidth, cropHeight), 0, 0);
-                texture.Apply();
-                File.WriteAllBytes(path, texture.EncodeToPNG());
-            }
-            finally
-            {
-                _camera.targetTexture = previousTarget;
-                RenderTexture.active = previousActive;
-                RenderTexture.ReleaseTemporary(target);
-                UnityEngine.Object.Destroy(texture);
+                try
+                {
+                    _camera.targetTexture = target;
+                    _camera.Render();
+                    RenderTexture.active = target;
+                    texture.ReadPixels(new Rect(x, y, cropWidth, cropHeight), 0, 0);
+                    texture.Apply();
+                    File.WriteAllBytes(path, texture.EncodeToPNG());
+                }
+                finally
+                {
+                    _camera.targetTexture = previousTarget;
+                    RenderTexture.active = previousActive;
+                    RenderTexture.ReleaseTemporary(target);
+                    UnityEngine.Object.Destroy(texture);
+                }
             }
 
             // 画像の点と光線を行き来するため、撮ったときのカメラと切り出した範囲を控える（結果を待つ間に視点を動かしてもよい）

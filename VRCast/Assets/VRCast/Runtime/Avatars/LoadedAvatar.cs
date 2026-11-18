@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using VRCast.Animations;
 using VRCast.AvatarFormat;
 using VRCast.PerfectSync;
 using Object = UnityEngine.Object;
@@ -51,6 +52,9 @@ namespace VRCast.Avatars
         // 生成した形状を足したメッシュの差し替え（足していなければ null）。破棄時に複製のメッシュも破棄する
         public PerfectSyncMeshes PerfectSyncMeshes { get; set; }
 
+        // 読み込み直後の BlendShape の重み（パーフェクトシンク化の前に、試し中の口の形などを戻す）
+        private readonly List<BlendShapeRest> _blendShapeRest = new List<BlendShapeRest>();
+
         // .vrcaster の manifest（VRM は null）
         public AvatarManifest Manifest { get; }
 
@@ -96,6 +100,65 @@ namespace VRCast.Avatars
             // ルートの Animator と描画対象数を記録
             Animator = instance.GetComponent<Animator>();
             RendererCount = instance.GetComponentsInChildren<Renderer>(true).Length;
+            CaptureBlendShapeRest(instance);
+        }
+
+        /// <summary>
+        /// 読み込み直後の BlendShape の重みへ戻し、まばたき・口パクなどの「元の値」もそれに合わせる。
+        /// </summary>
+        public void RestoreBlendShapeWeights()
+        {
+            foreach (BlendShapeRest rest in _blendShapeRest)
+            {
+                // 破棄済みのメッシュは飛ばす
+                if (rest.Renderer == null || rest.Weights == null)
+                {
+                    continue;
+                }
+
+                Mesh mesh = rest.Renderer.sharedMesh;
+                int count = mesh != null ? Mathf.Min(mesh.blendShapeCount, rest.Weights.Length) : 0;
+                for (int i = 0; i < count; i++)
+                {
+                    rest.Renderer.SetBlendShapeWeight(i, rest.Weights[i]);
+                }
+            }
+
+            // 上乗せ側が、戻す前の開きを「元の値」のまま持っていると、0 を書いても口が開いたままになる
+            BlendShapeOverlay.RebaseToCurrent();
+        }
+
+        private void CaptureBlendShapeRest(GameObject instance)
+        {
+            // パーフェクトシンクの形状を足す前の、ファイルに入っていた重み
+            foreach (SkinnedMeshRenderer renderer in instance.GetComponentsInChildren<SkinnedMeshRenderer>(true))
+            {
+                Mesh mesh = renderer.sharedMesh;
+                if (mesh == null || mesh.blendShapeCount == 0)
+                {
+                    continue;
+                }
+
+                var weights = new float[mesh.blendShapeCount];
+                for (int i = 0; i < weights.Length; i++)
+                {
+                    weights[i] = renderer.GetBlendShapeWeight(i);
+                }
+
+                _blendShapeRest.Add(new BlendShapeRest(renderer, weights));
+            }
+        }
+
+        private readonly struct BlendShapeRest
+        {
+            public BlendShapeRest(SkinnedMeshRenderer renderer, float[] weights)
+            {
+                Renderer = renderer;
+                Weights = weights;
+            }
+
+            public SkinnedMeshRenderer Renderer { get; }
+            public float[] Weights { get; }
         }
 
         /// <summary>

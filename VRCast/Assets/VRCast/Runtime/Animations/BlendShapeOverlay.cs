@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace VRCast.Animations
@@ -14,10 +15,14 @@ namespace VRCast.Animations
         private float _base;
         private float _lastWritten = float.NaN;
 
+        // 生きている上乗せ（アバターを破棄したあとは Renderer が null になるので、合わせ直すときに外す）
+        private static readonly List<BlendShapeOverlay> Live = new List<BlendShapeOverlay>();
+
         private BlendShapeOverlay(SkinnedMeshRenderer renderer, int index)
         {
             _renderer = renderer;
             _index = index;
+            Live.Add(this);
 
             // まばたき・口パク・パーフェクトシンクで動かす BlendShape として、上限の一覧の「顔」に出す
             BlendShapeLimiter.MarkFace(renderer, index);
@@ -93,6 +98,26 @@ namespace VRCast.Animations
                 BlendShapeLimiter.LimitAlways(_renderer, _index, Mathf.Clamp(overlay, 0f, 100f)));
             _renderer.SetBlendShapeWeight(_index, weight);
             _lastWritten = weight;
+        }
+
+        /// <summary>
+        /// 今の重みを「元の値」にする。読み込み時の重みへ戻したあと、開いていた口を元の値として覚えさせない。
+        /// </summary>
+        public static void RebaseToCurrent()
+        {
+            for (int i = Live.Count - 1; i >= 0; i--)
+            {
+                BlendShapeOverlay overlay = Live[i];
+                if (overlay._renderer == null)
+                {
+                    Live.RemoveAt(i);
+                    continue;
+                }
+
+                float current = overlay._renderer.GetBlendShapeWeight(overlay._index);
+                overlay._base = current;
+                overlay._lastWritten = current;
+            }
         }
     }
 }

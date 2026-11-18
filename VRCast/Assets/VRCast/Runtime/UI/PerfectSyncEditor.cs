@@ -283,6 +283,7 @@ namespace VRCast.UI
             avatar.PerfectSyncMeshes?.Restore();
             avatar.PerfectSyncMeshes = null;
             _faceDriver?.RebuildPerfectSync(null);
+            RestoreLoadedBlendShapes();
 
             // 形状を作れるメッシュと割り当ての候補を集める
             CollectRenderers();
@@ -444,6 +445,9 @@ namespace VRCast.UI
 
             if (on)
             {
+                // 試し中に口が開いたまま残らないよう、読み込み時のシェイプキーへ戻してから形状を足す
+                RestoreLoadedBlendShapes();
+
                 // 試す形状を最新にし（作れなければ始めない）、スライダーで試していた形状をやめる
                 if ((_dirty || _preview == null) && !ApplyChanges())
                 {
@@ -462,6 +466,13 @@ namespace VRCast.UI
             // 試す間は止めていた動き（トラッキング・まばたき・口パク・揺れもの・待機モーション）を設定どおりに動かす
             _trackingTest = on;
             SetMotionSuspended(!on);
+        }
+
+        private void RestoreLoadedBlendShapes()
+        {
+            // 表情の目標も読込時に戻してから、全シェイプキーを戻す（戻した値を口パクなどの元の値にする）
+            _avatar.Instance.GetComponent<ExpressionController>()?.SnapToBaseline();
+            _avatar.RestoreBlendShapeWeights();
         }
 
         private void SaveBoostChanges()

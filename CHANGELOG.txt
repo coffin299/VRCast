@@ -9,10 +9,14 @@ Newest first. Each version is written in Japanese, then English.
 [日本語]
 - パーフェクトシンク化で、これまでの式と、手本の顔の動きを写す形状の転写を選んで生成できるようにした
 - 左のタブのクイック設定の下にサポートを追加（操作の質問や不具合の報告用の Discord リンクを表示します。公式 Discord とアンケートもこのタブの一番下にまとめました）
+- パーフェクトシンク化の画像認識で、認識用の画像だけトゥーンと輪郭線を外し、顔の色が残るなめらかな陰影で撮るようにした
+- パーフェクトシンク化を開いたときと、保存前に実際のトラッキングを試すときに、シェイプキーをアバター読み込み時の値へ戻すようにした
 
 [English]
 - Perfect sync setup can build shapes with the current formulas or by transferring motion from a reference face
 - Added Support under Quick settings in the left tabs, showing the Discord link for questions and bug reports, with the official Discord and the survey at the bottom of the same tab
+- Perfect sync image recognition now takes its picture without toon shading or outlines, keeping the face colors under smooth shading
+- Opening perfect sync setup, and testing with live tracking before saving, now restores blend shapes to the values from when the avatar was loaded
 
 ■ 4.5.2 (2026-11-13)
 

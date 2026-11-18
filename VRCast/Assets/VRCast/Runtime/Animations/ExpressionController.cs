@@ -227,6 +227,22 @@ namespace VRCast.Animations
         }
 
         /// <summary>
+        /// ニュートラルの重み（読込時）へ即座に戻し、手動の固定も外す。フェードはしない。
+        /// </summary>
+        public void SnapToBaseline()
+        {
+            IsManual = false;
+            Current = -1;
+            _fading = false;
+            _tracked = false;
+            foreach (Slot slot in _slots)
+            {
+                slot.Weight = slot.Baseline;
+                slot.Goal = slot.Baseline;
+            }
+        }
+
+        /// <summary>
         /// 手動の固定を外して自動検出へ戻す（いったんニュートラルにし、検出中なら次のフレームで検出した表情になる）。
         /// </summary>
         public void ReleaseManual()
