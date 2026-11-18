@@ -3,7 +3,7 @@ using UnityEngine;
 namespace VRCast.UI
 {
     /// <summary>
-    /// 公式 Discord タブの下に出すアンケート欄（次に対応してほしい機能などの募集）。
+    /// サポートタブの一番下に出すアンケート欄（次に対応してほしい機能などの募集）。
     /// ほかのカードと同じ見た目で、GitHub の Issue か Google フォームへ誘導する。
     /// </summary>
     public class SurveyBar

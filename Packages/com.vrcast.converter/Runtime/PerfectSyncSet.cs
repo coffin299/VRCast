@@ -43,6 +43,12 @@ namespace VRCast.AvatarFormat
         public bool mirror = true;
         public bool includeMouthParts = true;
 
+        // 作り方（0 = これまでの式、1 = 形状の転写）。項目が無い古いファイルは式。版は上げない
+        // （古いアプリは未知の項目を無視し、形状のバイナリだけで再生できる）
+        public const int MethodFormula = 0;
+        public const int MethodTransfer = 1;
+        public int method = MethodFormula;
+
         // アバターに無い部位（ビットの組み合わせ。その部位の目印は打たず、形状は既定で作らない）
         public int absentParts;
 
@@ -73,6 +79,12 @@ namespace VRCast.AvatarFormat
             if (detail < 0 || detail > MaxDetail)
             {
                 return $"detail must be 0-{MaxDetail}.";
+            }
+
+            // 作り方は式か転写だけ（項目が無いファイルは 0）
+            if (method != MethodFormula && method != MethodTransfer)
+            {
+                return "method is invalid.";
             }
 
             // 無い部位は定義済みのビットだけ

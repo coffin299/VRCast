@@ -8,7 +8,8 @@ namespace VRCast.PerfectSync
 {
     /// <summary>
     /// 打った目印（FaceRig）から、ARKit 互換の形状（頂点の移動量）を作る。
-    /// 顔の各部位（目・眉・口・顎・頬・鼻）の領域をなめらかな重みで決め、部位ごとの向きに動かす。
+    /// 既定は、顔の各部位の領域をなめらかな重みで決め、部位ごとの向きに動かす方式。
+    /// 形状の転写を選ぶと、手本の顔の動きを目印に合わせて写す。
     /// 歯・舌などの別メッシュは顎の形状（jawOpen 等）だけ一緒に動かす。
     /// </summary>
     public static class PerfectSyncGenerator
@@ -44,12 +45,20 @@ namespace VRCast.PerfectSync
 
         /// <summary>
         /// strengths（ARKit の並びと同じ数。0 以下は作らない）の強さで形状を作る。
+        /// method を省略すると、これまでの式で作る。
         /// </summary>
-        public static List<PerfectSyncShape> Generate(FaceRig rig, IReadOnlyList<MeshInput> meshes, float[] strengths)
+        public static List<PerfectSyncShape> Generate(FaceRig rig, IReadOnlyList<MeshInput> meshes, float[] strengths,
+            PerfectSyncMethod method = PerfectSyncMethod.Formula)
         {
             if (strengths == null || strengths.Length != ArKitFace.BlendShapeNames.Length)
             {
                 throw new ArgumentException("strengths must match the ARKit blend shape count.", nameof(strengths));
+            }
+
+            // 形状の転写は別の計算。これまでの式はここから続ける
+            if (method == PerfectSyncMethod.Transfer)
+            {
+                return PerfectSyncTransfer.Generate(rig, meshes, strengths);
             }
 
             // 部位の領域は目印から一度だけ作る
@@ -91,6 +100,15 @@ namespace VRCast.PerfectSync
             }
 
             return shapes;
+        }
+
+        /// <summary>
+        /// 頂点ごとの動かす倍率（肌の外周で 0、離れるほど 1）。三角形が無い・外周が無ければ null。
+        /// 転写でも、別メッシュとの継ぎ目を動かさないために使う。
+        /// </summary>
+        public static float[] SeamPins(FaceRig rig, Vector3[] local, int[] triangles)
+        {
+            return new Regions(rig).Pins(local, triangles);
         }
 
         private static PerfectSyncShape Build(FaceRig rig, Regions regions, MeshInput mesh, string name,

@@ -136,6 +136,9 @@ namespace VRCast.UI
         private bool _mirror = true;
         private bool _includeMouthParts = true;
 
+        // 作り方（新しい編集の既定は形状の転写。保存したファイルは保存したときの作り方）
+        private int _method = PerfectSyncSet.MethodTransfer;
+
         // アバターに無い部位（その部位の目印は打たず、形状は既定で作らない）
         private FaceParts _absent;
 
@@ -294,6 +297,11 @@ namespace VRCast.UI
                 _mirror = saved.mirror;
                 _includeMouthParts = saved.includeMouthParts;
             }
+
+            // 作り方は保存してあればそれ、無ければ形状の転写（別のアバターの選択は持ち越さない）
+            _method = resume
+                ? Mathf.Clamp(saved.method, PerfectSyncSet.MethodFormula, PerfectSyncSet.MethodTransfer)
+                : PerfectSyncSet.MethodTransfer;
 
             // 無い部位は保存してあればそれ、無ければ全部ある（別のアバターの設定を持ち越さない）
             _absent = resume ? (FaceParts)saved.absentParts & FaceParts.All : FaceParts.None;
@@ -1444,7 +1452,7 @@ namespace VRCast.UI
                 AddMouthParts(inputs);
             }
 
-            _generated.Shapes.AddRange(PerfectSyncGenerator.Generate(rig, inputs, strengths));
+            _generated.Shapes.AddRange(PerfectSyncGenerator.Generate(rig, inputs, strengths, (PerfectSyncMethod)_method));
 
             // 作ろうとしたのに、どのメッシュでも動く頂点が無かった形状を控える
             var made = new HashSet<string>();
@@ -1624,6 +1632,7 @@ namespace VRCast.UI
                 detail = (int)_detail,
                 mirror = _mirror,
                 includeMouthParts = _includeMouthParts,
+                method = _method,
                 absentParts = (int)_absent,
                 facePath = _facePath,
                 landmarks = landmarks.ToArray(),

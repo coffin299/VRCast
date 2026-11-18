@@ -431,6 +431,9 @@ namespace VRCast.UI
             GUILayout.EndHorizontal();
             GuiControls.EndCard();
 
+            // 作り方（これまでの式 / 形状の転写）を選んでから生成する
+            DrawMethodSelector();
+
             // 形状を作って試す（最小の目印が揃っていなければ押せない）
             GUI.enabled = HasRequiredLandmarks();
             if (GUILayout.Button(Loc.T("Generate and preview", "生成して試す", "생성해서 확인", "生成并预览", "生成並預覽"),
@@ -619,6 +622,33 @@ namespace VRCast.UI
                 : Loc.T("Placed", "打った", "찍음", "已放置", "已放置");
         }
 
+        private void DrawMethodSelector()
+        {
+            // これまでの式と、手本の顔から写す方式を切り替える（変えたら作り直し）
+            int method = GuiControls.EnumSelector(
+                Loc.T("How to build", "作り方", "만드는 방법", "生成方式", "生成方式"),
+                PerfectSyncLabels.Methods(), _method);
+            if (method != _method)
+            {
+                _method = method;
+                _dirty = true;
+            }
+
+            GuiControls.Hint(_method == PerfectSyncSet.MethodTransfer
+                ? Loc.T(
+                    "Shape transfer fits a reference face to your points, then carries its eyelid, lip and jaw motion across. Saved files reopen with the method they were saved with.",
+                    "形状の転写は、手本の顔を目印に合わせ、まぶた・唇・顎の動きを写します。保存したファイルは、保存したときの作り方で開きます。",
+                    "형상 옮기기는 본보기 얼굴을 표시에 맞춘 뒤, 눈꺼풀·입술·턱의 움직임을 옮깁니다. 저장한 파일은 저장했을 때의 방식으로 엽니다.",
+                    "形状转移会把参考脸对齐到标记，再把眼睑、嘴唇和下巴的动作搬过来。已保存的文件会用保存时的方式打开。",
+                    "形狀轉移會把參考臉對齊到標記，再把眼瞼、嘴唇和下巴的動作搬過來。已儲存的檔案會用儲存時的方式開啟。")
+                : Loc.T(
+                    "Current formulas move each part by a fixed rule. Switch to Shape transfer to carry motion from a reference face.",
+                    "これまでの式は、部位ごとに決まった動きです。手本の顔の動きを写すときは「形状の転写」に切り替えます。",
+                    "기존 수식은 부위마다 정해진 움직임입니다. 본보기 얼굴의 움직임을 옮기려면 '형상 옮기기'로 바꿉니다.",
+                    "原有公式按每个部位的固定规则移动。要搬入参考脸的动作时，请切换到“形状转移”。",
+                    "原有公式按每個部位的固定規則移動。要搬入參考臉的動作時，請切換到「形狀轉移」。"));
+        }
+
         private bool HasRequiredLandmarks()
         {
             // 最小の段階の目印（無い部位の分を除く）が全部あるか
@@ -646,6 +676,9 @@ namespace VRCast.UI
                 "点击形状名称可用滑块测试，或选择要使用的现有 BlendShape。",
                 "每個形狀可選擇「自動生成」（由標記生成）·「現有 BlendShape」（使用形象的 BlendShape）·「無」。" +
                 "點擊形狀名稱可用滑桿測試，或選擇要使用的現有 BlendShape。"));
+
+            // 作り方を変えたら、反映で作り直す
+            DrawMethodSelector();
 
             // 目の動きの既定（目のボーンの有無で変わる）
             GuiControls.Hint(HasEyeBones

@@ -102,6 +102,14 @@ namespace VRCast.Tests
             Assert.That(set.Validate(), Is.Not.Null);
             set.absentParts = -1;
             Assert.That(set.Validate(), Is.Not.Null);
+            set.absentParts = 0;
+
+            // 作り方は式か転写だけ。項目が無いファイルは式（0）として有効
+            Assert.That(set.method, Is.EqualTo(PerfectSyncSet.MethodFormula));
+            set.method = PerfectSyncSet.MethodTransfer;
+            Assert.That(set.Validate(), Is.Null);
+            set.method = PerfectSyncSet.MethodTransfer + 1;
+            Assert.That(set.Validate(), Is.Not.Null);
         }
     }
 }

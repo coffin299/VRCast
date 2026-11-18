@@ -6,7 +6,7 @@ namespace VRCast.UI
 {
     /// <summary>
     /// 公式 Discord タブ（参加ボタンと、Discord のウィジェットと同じ内容: サーバー名・オンライン人数・オンラインのメンバー）。
-    /// 情報はタブを表示している間だけ取得する。
+    /// サポートタブの一番下（アンケートの上）に出す。情報はサポートタブを表示している間だけ取得する。
     /// </summary>
     public sealed class DiscordSection : IDisposable
     {

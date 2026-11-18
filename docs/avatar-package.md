@@ -305,6 +305,7 @@ Converter は書き出さない。Runtime の **Perfect sync setup**（パーフ
     "detail": 1,
     "mirror": true,
     "includeMouthParts": true,
+    "method": 1,
     "absentParts": 0,
     "facePath": "Body",
     "landmarks": [ { "id": 0, "triangle": 1234, "u": 0.25, "v": 0.4, "mirrored": false } ],
@@ -319,6 +320,7 @@ Converter は書き出さない。Runtime の **Perfect sync setup**（パーフ
 | `sourceName` / `sourceBundleSha256` | 元のファイル名と bundle の SHA-256（表示用。空可） |
 | `detail` | 目印の細かさ `0` 最小（約 10 点）/ `1` 標準（約 20 点）/ `2` 詳細（約 40 点） |
 | `mirror` / `includeMouthParts` | 左右対称で打つか / 歯・舌のメッシュにも顎の形状を作るか（編集の再開用） |
+| `method` | 作り方（`0` これまでの式 / `1` 形状の転写。省略時 `0`。編集の再開用。形状そのものは `perfect_sync_shapes.bin`） |
 | `absentParts` | アバターに無い部位のビットの和（`1` 眉 / `2` 鼻 / `4` 口の中、0〜7。省略時 0）。その部位の目印は打たずに推定し、形状は既定で「なし」（編集の再開用） |
 | `facePath` | 目印を打った顔メッシュ（アバタールートからの相対パス、空 = ルート） |
 | `landmarks[].id` | 目印の種類（0〜255。最小 0〜10、標準 20〜30、詳細 40〜55。未定義の番号は再開時に無視） |

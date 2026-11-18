@@ -16,8 +16,8 @@ using VRCast.Tracking;
 namespace VRCast.UI
 {
     /// <summary>
-    /// IMGUI の操作パネル。左のタブ（はじめに / クイック設定 / アバター・オブジェクト・シェイプキー / 顔・表情・体・ポーズ・トラッキング /
-    /// 表示・グラフィック・出力 / 操作・連携・パフォーマンス・設定・情報・公式 Discord / パーフェクトシンク化）で表示するセクションを切り替え、
+    /// IMGUI の操作パネル。左のタブ（はじめに / クイック設定 / サポート / アバター・オブジェクト・シェイプキー / 顔・表情・体・ポーズ・トラッキング /
+    /// 表示・グラフィック・出力 / 操作・連携・パフォーマンス・設定・情報 / パーフェクトシンク化）で表示するセクションを切り替え、
     /// 内容は縦スクロールする（タブ列も収まらなければ縦スクロール）。下部にはリセットボタン・動作状況を常に表示する。
     /// 画面に収まる高さに制限し、Tab キーで表示切替（隠している間は背景も透過）。
     /// 表示言語（見出しの下のボタンでいつでも切替）と UI の大きさは設定に従う。見出しの「?」でヘルプページを開く。
@@ -54,6 +54,7 @@ namespace VRCast.UI
         {
             Start,
             QuickSettings,
+            Support,
             Avatar,
             Objects,
             ShapeKeys,
@@ -67,13 +68,12 @@ namespace VRCast.UI
             Performance,
             Settings,
             Info,
-            Discord,
             PerfectSync,
         }
 
         private static readonly int TabCount = Enum.GetValues(typeof(Tab)).Length;
 
-        // 前に余白を空けて、まとまりの先頭にするタブ（はじめに＋クイック設定のあと、アバターから区切る）
+        // 前に余白を空けて、まとまりの先頭にするタブ（はじめに＋クイック設定＋サポートのあと、アバターから区切る）
         private static readonly Tab[] GroupStarts = { Tab.Avatar, Tab.Face, Tab.Display, Tab.Control, Tab.PerfectSync };
 
         private AvatarSession _session;
@@ -107,6 +107,7 @@ namespace VRCast.UI
         private PresetSection _presetSection;
         private InfoSection _infoSection;
         private readonly DiscordSection _discordSection = new DiscordSection();
+        private readonly SupportSection _supportSection = new SupportSection();
         private ResetBar _resetBar;
         private PerformanceBar _performanceBar;
         private readonly SurveyBar _surveyBar = new SurveyBar();
@@ -849,7 +850,7 @@ namespace VRCast.UI
 
         private GUIStyle SidebarTabStyle(Tab tab)
         {
-            if (tab == Tab.Start || tab == Tab.QuickSettings)
+            if (tab == Tab.Start || tab == Tab.QuickSettings || tab == Tab.Support)
             {
                 return _theme.HomeTab;
             }
@@ -872,6 +873,12 @@ namespace VRCast.UI
                     break;
                 case Tab.QuickSettings:
                     _quickSettingsSection.Draw();
+                    break;
+                case Tab.Support:
+                    // 上はサポート用の案内。その下に公式 Discord とアンケート
+                    _supportSection.Draw();
+                    _discordSection.Draw();
+                    _surveyBar.Draw();
                     break;
                 case Tab.Avatar:
                     _avatarSection.Draw();
@@ -913,11 +920,6 @@ namespace VRCast.UI
                 case Tab.Info:
                     _infoSection.Draw();
                     break;
-                case Tab.Discord:
-                    // 公式 Discord の下に、次に対応してほしい機能などのアンケート
-                    _discordSection.Draw();
-                    _surveyBar.Draw();
-                    break;
                 case Tab.PerfectSync:
                     _perfectSyncSection.Draw();
                     break;
@@ -936,6 +938,8 @@ namespace VRCast.UI
                     return Loc.T("Start", "はじめに", "시작하기", "开始", "開始");
                 case Tab.QuickSettings:
                     return Loc.T("Quick settings", "クイック設定", "빠른 설정", "快捷设置", "快速設定");
+                case Tab.Support:
+                    return Loc.T("Support", "サポート", "지원", "支持", "支援");
                 case Tab.Avatar:
                     return Loc.T("Avatar", "アバター", "아바타", "虚拟形象", "虛擬形象");
                 case Tab.Objects:
@@ -960,8 +964,6 @@ namespace VRCast.UI
                     return Loc.T("Performance", "パフォーマンス", "성능", "性能", "效能");
                 case Tab.Info:
                     return Loc.T("Info", "情報", "정보", "信息", "資訊");
-                case Tab.Discord:
-                    return Loc.T("Official Discord", "公式 Discord", "공식 Discord", "官方 Discord", "官方 Discord");
                 case Tab.PerfectSync:
                     return Loc.T("Perfect sync setup", "パーフェクトシンク化", "퍼펙트 싱크화", "完美同步化", "完美同步化");
                 default:

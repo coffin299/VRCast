@@ -42,7 +42,7 @@ OBS (Window Capture / Game Capture / Spout2) / 仮想カメラ (Discord / Zoom �
 
 ## 現在の状態
 
-**バージョン 4.5.2（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
+**バージョン 4.6.2（製品版）**。変更点は [CHANGELOG.txt](CHANGELOG.txt)（日本語 / 英語、配布 zip にも同梱）。
 
 **Milestone 1（Basic Avatar Runtime）**・**Milestone 2（Transparent Rendering）**・**Milestone 3（Expressions）**・**Milestone 4（Runtime Physics）**・**Milestone 5（Tracking）** 完了。
 VRChat アバターを書き出して `VRCast.exe` で表示し、待機ポーズ・表情切り替えをしつつ背景透過で OBS に取り込める。
@@ -228,6 +228,7 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 |---|---|
 | **Start**（はじめに） | 読み込み → 透過 → OBS → パネルを隠す、の手順案内 |
 | **Quick settings**（クイック設定） | テーマ・アバター画面・トラッキング・顔（マイク）・ポーズ・透過・パフォーマンス・出力など、他タブと同じ設定を一画面で変更 |
+| **Support**（サポート） | クイック設定の直下。操作の質問や不具合の報告の案内と Discord のリンク。一番下に公式 Discord（参加・オンラインのメンバー・招待コード）とアンケート |
 | **Avatar**（アバター） | アバターファイル・最近使ったアバター・状態 |
 | **Objects**（オブジェクト） | オブジェクト（衣装・小物）の表示 ON/OFF、パーティクル |
 | **Shape key setup**（シェイプキー設定） | BlendShape の上限 |
@@ -241,7 +242,6 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
 | **Performance**（パフォーマンス） | 軽量モード・垂直同期（オフ / オン / NVIDIA Fast Sync / VRR）・FPS 上限・動作状況の表示・プロセスの優先度、CPU、GPU、NVIDIA インスタントリプレイ |
 | **Settings**（設定） | パネル（表示言語・UI の大きさ・不透明度・テーマ）、設定プリセット、全設定のリセット |
 | **Info**（情報） | このアプリについて・アップデート・ヘルプ、クレジット、デバッグログ |
-| **Official Discord**（公式 Discord） | 公式 Discord への参加・オンラインのメンバー・招待コード、その下にアンケート |
 | **Perfect sync setup**（パーフェクトシンク化） | タブ列の一番下に紫色で表示。編集画面を開く |
 
 配色は背景のベージュに合わせた濃いめのベージュ（焦げ茶の文字、キャラメル色のアクセント）。
@@ -283,7 +283,8 @@ VRM（VRoid Studio などで作った `.vrm`）は書き出し不要で、その
     MediaPipe 版の `STATS:` 行（カメラ FPS・推定 FPS・モデルごとの推定時間・検出率・間引き / 失敗の件数。`--status-interval` 秒ごと、既定 5）。
   - **負荷対策**: 連続した同じログは 1 行にまとめて回数（×N）を表示、トラッカー出力の INFO は毎秒 30 行まで（超えた分は件数だけ警告）、
     不正パケットの警告は 10 秒に 1 回、統計は詳細ログ OFF なら文字列も作らない、一覧の作り直しは 0.25 秒に 1 回まで、配布版では通常ログ・警告のスタックトレースを取らない。
-- **Official Discord**（公式 Discord タブ。Info の下）: [公式 Discord](https://discord.gg/vM5RH52HdF) に参加するボタンと、Discord のウィジェットと同じ内容
+- **Support**（サポートタブ。クイック設定の直下）: 上に、操作の質問や不具合の報告用の案内と [サポート用 Discord](https://discord.gg/zyf99zZNUx) のリンク。
+  一番下に [公式 Discord](https://discord.gg/vM5RH52HdF) へ参加するボタンと、Discord のウィジェットと同じ内容
   （サーバー名・オンライン人数・オンラインのメンバーのアイコン・状態・名前。`widget.json` から取得。メンバーは 10 人まで並べ、残りは「ほか N 人」）を表示する。情報はこのタブを開いている間だけ取得し、1 分ごと・**Refresh** で取り直す。
   その下に招待コード（`vM5RH52HdF`）と招待リンクを表示し、それぞれ **Copy** でコピーできる（Discord アプリの「サーバーに参加」に入力する用）。
   タブの一番下にはアンケート欄（次に対応してほしい機能などの募集。[GitHub の Issue](https://github.com/coffin299/VRCast/issues/11) か [Google フォーム](https://forms.gle/L8z1P6SXZ23SnwWa8) を開くボタン）を表示する。
@@ -478,6 +479,7 @@ Mic gain（感度）と Mic gate（この音量以下は無音扱い）を Level
 - 「このアバターに無い部位」で **Brows**（眉）・**Nose**（鼻）・**Inside of the mouth**（口の中）を選ぶと、その部位の目印は打たずに済み（眉は目の上に推定する）、
   その部位の形状（眉: browDown / browInnerUp / browOuterUp、鼻: noseSneer、口の中: jawOpen・mouthClose・mouthFunnel・mouthLowerDown・mouthUpperUp）は既定で「なし」になる
   （既存の BlendShape を割り当てたものはそのまま。口の中が無いアバターは「あ」などの BlendShape で口を動かす）。選択はファイルに保存され、Undo で戻せる。
+- **How to build**（作り方）で **Current formulas**（これまでの式）と **Shape transfer**（形状の転写）を切り替えてから生成する。これまでの式は部位ごとの決まった動き。形状の転写は、手本の顔を打った目印に合わせ、まぶた・唇・顎の動きを写す。新しく編集を始めるときの既定は形状の転写。保存したファイルを開き直すと、保存したときの作り方になる。切り替えたあとは **Apply**（反映）で作り直す。
 - **Generate and preview**（生成して試す）で ARKit の 52 種を作り、アバターに足して試す。形状ごとに「自動生成」「既存の BlendShape」「なし」と強さ（0〜2）を選べる。
   既存の BlendShape は名前（VRChat の Viseme・まばたき・笑顔・眉など）から自動で割り当て（ジト目は目を開けていても半目になるため eyeSquint には割り当てない）、目の動き（eyeLook*）は目のボーンがあればボーンで動かすため既定で「なし」
   （目のボーンが無いアバターは「自動生成」で、顔メッシュに描かれた瞳を動かす）。

@@ -45,6 +45,18 @@ namespace VRCast.UI
         }
 
         /// <summary>
+        /// 作り方の選択肢（PerfectSyncSet.Method* の並び順）。
+        /// </summary>
+        public static string[] Methods()
+        {
+            return new[]
+            {
+                Loc.T("Current formulas", "これまでの式", "기존 수식", "原有公式", "原有公式"),
+                Loc.T("Shape transfer", "形状の転写", "형상 옮기기", "形状转移", "形狀轉移"),
+            };
+        }
+
+        /// <summary>
         /// 形状の出どころの選択肢（PerfectSyncSet.Source* の並び順）。
         /// </summary>
         public static string[] Sources()
