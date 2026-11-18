@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using NUnit.Framework;
 using UnityEngine;
+using VRCast.AvatarFormat;
 using VRCast.PerfectSync;
 using VRCast.Tracking;
 
